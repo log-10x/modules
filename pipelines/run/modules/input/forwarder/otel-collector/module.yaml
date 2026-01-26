@@ -1,0 +1,16 @@
+#
+# 🔟❎ 'run' OpenTelemetry Collector input module
+
+module:
+
+  name: otelCollector
+
+  title: OpenTelemetry Collector input
+
+  description: report, regulate, and optimize events collected by OpenTelemetry Collector forwarders
+
+  moduleSort: [otelCollectorReport,otelCollectorRegulate,otelCollectorOptimize]
+
+  # 'doc' specifies the markdown doc content, only required when generating docs.
+  doc: +include $=TenXEnv.get("docGenerate") ? "run/modules/input/forwarder/otel-collector/doc.md":""
+

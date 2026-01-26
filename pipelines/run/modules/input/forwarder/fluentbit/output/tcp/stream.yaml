@@ -1,0 +1,86 @@
+# 🔟❎ 'run' Fluent Bit TCP output stream configuration
+
+# This configuration defines a TCP output connection to write
+# encoded/plain-text events into a Fluent Bit forwarder process. This output is primarily
+# used on Windows where Fluent Bit unix domain sockets are not supported.
+
+# Set the 10x pipeline to 'run'
+tenx: run
+
+# =============================== Dependencies ================================
+
+include:
+
+  - source: match
+    options:
+
+      # Capture rawOutputSocketPort from tenx-tcp.conf as a 10x config variable
+      path: $=path("run/modules/input/forwarder/fluentbit/conf/tenx-tcp.conf")
+      regex: "^\\s*@SET\\s+socketPort\\s*=\\s*(?<rawOutputSocketPort>.*?)$"
+
+    # Load the TCP socket output module
+  - run/modules/output/event/socket
+
+# ============================= Output Options ================================
+
+# 'outputSocket' defines the output(s) used to write back to the Fluent Bit forwarder
+outputSocket:
+
+    # Write objects' text to the socket using the intrinsic 'fullText' field
+    # if 'fluentbitEncodeObjects' has NOT been set.
+  - protocol: TCP
+
+    host: 127.0.0.1
+
+    # 'port' is set to value read from tenx-tcp.conf (see above)
+    port: $=rawOutputSocketPort
+
+    # 'writeObjects' is only set to true if the 'fluentbitEncodeObjects' was NOT set
+    writeObjects: /$=!TenXEnv.get("fluentbitEncodeObjects")
+
+    # 'fields' is set to the 'fullText', which contains the object's original text
+    fields:
+      - fullText
+      - $?fluentbitOutputFields
+
+    encodeType: $?fluentbitOutputEncodeType
+    encodeDelimiter: ","
+
+    # Write objects in encoded form to the socket using the encode() function if 'fluentbitEncodeObjects' is set.
+    # To learn more see https://doc.log10x.com/api/js/#TenXObject+encode
+  - protocol: TCP
+
+    host: 127.0.0.1
+
+    # 'port' is set to value read from tenx-tcp.conf (see above)
+    port: $=rawOutputSocketPort
+
+    # Write objects in encoded form to the socket using the encode() function if 'fluentbitEncodeObjects' is set.
+    # To learn more see https://doc.log10x.com/api/js/#TenXObject+encode
+    writeObjects: /$=TenXEnv.get("fluentbitEncodeObjects")
+
+    # 'fields' is set to the return value of the 'encode' function
+    fields:
+      - encoded=encode()
+      - $?fluentbitOutputFields
+    encodeType: $?fluentbitOutputEncodeType
+    encodeDelimiter: ","
+
+    # Encode TenXTemplates in JSON form using if 'fluentbitEncodeObjects' is set.
+  - protocol: TCP
+
+    host: 127.0.0.1
+
+    # 'port' is set to value read from tenx-tcp.conf (see above)
+    port: $=rawOutputSocketPort
+
+    # 'writeObjects' is only set to true if the 'fluentbitEncodeObjects' was set
+    writeObjects: /$=TenXEnv.get("fluentbitEncodeObjects")
+
+    # 'filter' uses the 'isNewTemplate' 10x script function to skip templates
+    #  loaded via the https://doc.log10x.com/run/template/#templatefiles argument or previously written to this output
+    filter: isNewTemplate()
+
+    # 'fields' are set to encode custom TenXTemplate JSON,
+    #  with explicit 'tenx-template' as the 'tag' field.
+    fields: customTemplate=stringify("tag", "tenx-template", "templateHash", templateHash, "template", template)

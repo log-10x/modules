@@ -1,0 +1,40 @@
+#
+# 🔟❎ 'run' OpenTelemetry Collector Unix socket input module
+
+module:
+
+  name: otelCollectorInput
+
+  title: OpenTelemetry Collector Unix socket input
+
+  description: Configure Unix socket input for receiving logs from OpenTelemetry Collector via syslog
+
+  doc: '+include $=TenXEnv.get("docGenerate") ? "run/modules/input/forwarder/otel-collector/input/doc.md":""'
+
+  allowMultiple: false
+
+  options:
+
+    - names:
+      - otelCollectorInputPath
+      description: Unix socket path for input
+      type: String
+      required: false
+      defValue: /tmp/tenx-otel-in.sock
+      doc: |
+        Unix domain socket path where Log10x listens for incoming syslog messages
+        from OpenTelemetry Collector's syslog exporter.
+
+        Example: `/tmp/tenx-otel-in.sock`
+
+    - names:
+      - otelCollectorInputSyslog
+      description: enable syslog RFC5424 parsing
+      type: boolean
+      required: false
+      defValue: true
+      doc: |
+        When enabled (default), parses incoming data as RFC5424 syslog format
+        and extracts only the MSG field (the actual log content).
+
+        Set to `false` to receive raw lines without syslog parsing.

@@ -1,0 +1,58 @@
+# 🔟❎ 'run' Fluentd stdin input stream configuration
+
+# This configuration defines a stdin input from which
+# to read JSON objects from Fluentd for processing and an (optional)
+# output back to the Fluentd forwarder process.
+
+# Set the 10x pipeline to 'run'
+tenx: run
+
+# Adding a runtime attribute for metrics reporting
+runtimeAttributes:
+  - fwd_input:fluentd
+
+extractor:
+
+    # define an extractor to read event source and field values encoded into the
+    # stdin pipe by the host Fluentd forwarder process
+  - name: fluentd
+    type: json
+    actions:
+      # The actual message field inside the incoming JSON object
+      - $=yield "captureFirst:" + TenXEnv.get("fluentdMessageField", "log")
+
+      # Remove the synthetic tag element from the incoming JSON-injected
+      # via fluentd <inject> directive in:
+      # https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentd/conf/auxiliary/tenx-exec-filter.conf
+      - drop:tenx_tag
+
+# Events that are to transform into TenXObjects are read from the
+# host Fluentd process via a stdin input
+input:
+
+  - type: file
+
+    name: fluentd
+
+    # read from the stdin device
+    path: stdin
+
+    # apply the 'fluentd' extractor defined above to the input, as well as k8s extractor
+    extractors:
+      - fluentd
+      - "$=yield TenXEnv.get(\"k8sExtractorName\") ? \"fluentK8s\" : \"\""
+
+    # set the 'source' value of events read from input as 'tenx_tag'
+    sourcePattern: \"tenx_tag\":\"(.*?)\"
+
+    # Sets the recommended backpressure limit for the 10x pipeline when working with Fluentd.
+
+    # Increasing this value can result in faster data transfer from Fluentd into the 10x
+    # pipeline but can potentially risk memory issues, particularly if data is also being
+    # transmitted from 10x back into Fluentd, which in turn tries to send it to a slower
+    # output (such as a remote Elastic cluster), as that backpressure can cascade back into
+    # the 10x pipeline.
+
+    backpressure:
+      intervalBytesLimit: $=parseBytes("2MB")
+      intervalBytesDuration: $=parseDuration("1s")

@@ -1,0 +1,70 @@
+# 🔟❎ 'run' custom output stream configuration
+
+#    This configuration defines a request to fetch byte ranges from Object storage (e.g., AWS S3).
+#   
+#    This 'query' option group is instantiated by 
+#    the https://doc.log10x.com/run/input/objectStorage/query module to fetch bytes ranges from Object storage
+#    container (e.g., AWS S3 bucket) matching a search term, time range, and target app.
+
+# Set the 10x pipeline to 'run'
+tenx: run
+
+
+# ============================== Filter Options ===============================
+
+# 'groupFilters' apply the query's filters is set to the 'groupFilters' option.
+#  To learn more see: https://doc.log10x.com/run/transform/group/#groupfilters
+groupFilters:
+  - 'eval[TenXEnv.get("queryObjectFrom") ? "(!this.timestamp) || TenXDate.isAfterOrEqual(this.timestamp, TenXEnv.get(\"queryObjectFrom\"))" : ("")]'
+  - 'eval[TenXEnv.get("queryObjectTo") ? "(!this.timestamp) || TenXDate.isBefore(this.timestamp, TenXEnv.get(\"queryObjectTo\"))" : ("")]'
+  - 'eval[TenXEnv.get("queryObjectFilter")]'
+
+# ============================== Input Options ================================
+
+input:
+
+    # 'type' defines the type of input (e.g., stdin, file, stream).
+  - type: stream
+
+    # 'path is set to the 'IndexObjectReader' reader
+    #  See: https://github.com/log-10x/pipeline-extensions/blob/main/cloud-extensions/src/main/java/com/log10x/ext/cloud/index/object/IndexQueryObjectReader.java
+    path: com.log10x.ext.cloud.index.query.object.IndexObjectQueryReader
+
+    # 'printProgress' controls whether input stats are printed to the console
+    printProgress: $?queryObjectPrintProgress
+
+    # the 'foreach' macro will duplicate the input node for every instance of the
+    # 'fetchBlob' option group
+    foreach: fetchBlob
+
+# ============================== Output Options ===============================
+
+output:
+
+    # 'type' defines the type of input (e.g., stdout, file, stream).
+  - type: stream
+
+    # 'path' is set to the 'IndexObjectWriter' class to tally the size of events read from the blob
+    path: com.log10x.ext.cloud.index.query.object.IndexObjectQueryWriter
+
+    # 'name' assigns a logical name to this output instance
+    name: queryObjectUtf8Sizes
+
+    # --------------------------- Encoding Options ----------------------------
+
+    # 'filter' is set to write only TenXObject instances to output. 
+    filter: isObject          
+    
+    # 'fields' are set to extract the following values from each TenXObject read
+    #  from storage.
+    fields: 
+      - utf8Size
+      
+    encodeType: delimited 
+    
+    # 'async' is set to create a dedicated thread for this output.
+    async: true
+
+    # the 'foreach' macro will duplicate the input node for every instance of the
+    # 'fetchBlob' option group
+    foreach: fetchBlob

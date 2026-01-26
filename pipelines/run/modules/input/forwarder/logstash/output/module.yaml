@@ -1,0 +1,18 @@
+#
+# 🔟❎ 'run' Logstash output module
+
+module:
+
+  name: logstashOutput
+
+  title: Logstash output
+
+  description: write TenXObjects to a Logstash forwarder
+     
+  # 'doc' specifies the markdown doc content, only required when generating docs.
+  doc: +include $=TenXEnv.get("docGenerate") ? "run/modules/input/forwarder/logstash/output/doc.md":""
+
+  # 'allowMultiple' is disabled for this module. Pipeline command line arguments and configuration files
+  #  can specify a single value at max for each option defined below.
+  allowMultiple: false
+ 

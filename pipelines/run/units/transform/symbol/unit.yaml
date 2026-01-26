@@ -1,0 +1,94 @@
+#
+# 🔟❎ 'run' TenXTemplate symbol origin selector
+
+unit:
+
+  name: origin
+
+  title: Origin selector
+
+  description: select the source code/binary executable origin of TenXTemplate symbol values
+  
+  # 'configFolder' specifies a folder containing default configuration files for the settings defined by this unit/module
+  configFolder: run/transform/symbol 
+
+  # 'doc' specifies the markdown doc content, only required when generating docs.
+  doc: +include $=TenXEnv.get("docGenerate") ? "run/units/transform/symbol/doc.md":""
+    
+  # 'allowMultiple' is disabled for this unit. Pipeline command line arguments and configuration files
+  #  can specify a single value at max for each option defined below.
+  allowMultiple: false
+      
+  # 'optionsGroup' defines a group of named/typed configuration values to pass to a pipeline at startup
+  #  via command line arguments (e.g., '> tenx -myA X -myB Y') or YAML launch files (e.g., '> tenx @my.config').
+  #  Instances of this group passed are accessible at runtime via TenXEnv.get: https://doc.log10x.com/api/js/#TenXEnv.get
+
+  options:   
+    
+    - names: 
+      - symbolSequenceReserved
+      description: list of terms to ignore when scanning symbol tokens
+      type: list
+      required: false
+      category: symbol
+      defValue:  ["null", "nil", "true","false"]
+      doc: | 
+        defines a list of terms that to ignore when searching for the symbol tokens constituting an 
+        TenXTemplate's 'message' portion (i.e., the longest consecutive sequence of [symbol](https://doc.log10x.com/run/transform/structure/#symbols) tokens).
+        For example, for an TenXObject whose text contains: 'connect success = true',
+        the value 'true' will not be considered a part of the instance's message,
+        as it is mostly likely the result of a variable boolean state.
+        To learn more see [symbolSequence](https://doc.log10x.com/api/js/#TenXObject+symbolSequence).  
+
+    - names: 
+      - symbolMaxOrigins
+      description: max number of source/binary origins to list per symbol
+      type: number
+      required: false
+      category: symbol
+      doc: | 
+        controls the number of source code/binary origins to list 
+        per symbol token sequence. As a series of tokens within 
+        a given template (e.g., 'ERROR', 'could not connect to "{}') may appear 
+        in multiple source/binary files within the pipeline's symbol files,
+        the sorting algorithm selects [maxSymbolOrigins](https://doc.log10x.com/run/transform/symbol/#symbolmaxorigins) for comparison. 
+      defValue: 64
+
+    - names:
+      - symbolDebugOrigins
+      description: list of source scanned file names for which to log information
+      type: list
+      category: debug
+      required: false
+      doc: |
+        specifies a list of input file names within the loaded symbol library (e.g., 'my.scala', 'foo.java')
+        for which to log information on if/how they participate in selecting the origin of a target TenXTemplate symbol sequence.
+        This option helps debug how the [symbolSequence](https://doc.log10x.com/api/js/#TenXObject+symbolSequence) function selects 
+        origin values for a target TenXTemplate symbol sequence.
+        
+        Specify '*' for all input files.
+      
+    - names:
+       - symbolDebugSymbols
+      description: list of TenXTemplate symbol values for which to log information
+      type: list
+      required: false
+      category: debug
+      doc: |
+        list of symbol values such as class and method names(e.g., 'MyClass', 'foo') 
+        for which to log information on how their origin information is selected.
+        This option helps debug how the [symbolSequence](https://doc.log10x.com/api/js/#TenXObject+symbolSequence) function selects 
+        origin values for a target TenXTemplate symbol sequence.
+        
+        Specify '*' for all symbols.     
+
+    - names:
+       - symbolDebugLoggerName
+      description: debug logger name
+      type: string
+      required: false
+      category: debug
+      doc: |
+        controls the name of the log4j logger used by [debugOrigins](https://doc.log10x.com/run/transform/symbol/#symboldebugorigins) and [debugSymbols](https://doc.log10x.com/run/transform/symbol/#symboldebugsymbols). 
+      defValue: "[consoleOut](https://github.com/log-10x/config/blob/main/log4j2.yaml#L66)"
+    

@@ -1,0 +1,72 @@
+# 🔟❎ 'run' Logstash forward output stream configuration
+
+# This configuration defines a TCP socket output through which to write
+# TenXObject encoded/plain-text values are to a Logstash forwarder process via a TCP socket.
+
+# Set the 10x pipeline to 'run'
+tenx: run
+
+# =============================== Dependencies ================================
+
+include:
+  - source: match
+    options:
+
+      # Capture outputSocketPort from 'tenx-pipe-in-tcp.conf' as 10x env variable
+      #
+      path: '$="run/input/forwarder/logstash/" + (TenXEnv.get("logstashEncodeObjects") ? "optimize" : "regulate") + "/tenx-pipe-in-tcp.conf"'
+      regex: "port\\s=>\\s*\"\\$\\{tenx_marker_pipeline_tcp_port:\\s*(?<rawOutputSocketPort>\\d+)\\s*\\}\""
+
+    # Load the TCP socket module
+  - run/modules/output/event/socket
+
+# ============================= Output Options ================================
+
+# 'outputSocket' defines the output used to write back to the Logstash forwarder
+outputSocket:
+
+    # Write objects' text to the socket using the intrinsic 'fullText' field
+    # if 'logstashEncodeObjects' has NOT been set.
+  - protocol: TCP
+
+    host: 127.0.0.1
+
+    # 'port' is set to value read from tenx-pipe-in-tcp.conf (see above)
+    port: $=rawOutputSocketPort
+
+    # 'writeObjects' is only set to true if 'logstashEncodeObjects' is NOT set
+    writeObjects: /$=!TenXEnv.get("logstashEncodeObjects")
+
+    # 'fields' is set to the 'fullText', which contains the TenXObject's original text
+    fields:
+      - fullText
+      - $?logstashOutputFields
+    encodeType: $?logstashOutputEncodeType
+    encodeDelimiter: ","
+
+    # do not encode templates
+    writeTemplates: false
+
+    # Write objects in encoded form using the the encode() function if 'logstashEncodeObjects' is set.
+    # To learn more see https://doc.log10x.com/api/js/#TenXObject+encode
+  - protocol: TCP
+
+    host: 127.0.0.1
+
+    # 'port' is set to value read from tenx-pipe-in-tcp.conf (see above)
+    port: $=rawOutputSocketPort
+
+    # 'writeObjects' is only set to true if the 'logstashEncodeObjects' was set
+    writeObjects: /$=TenXEnv.get("logstashEncodeObjects")
+
+    # 'fields' is set to the return value of the encode() function
+    fields:
+      - encoded=encode()
+      - $?logstashOutputFields
+    encodeType: $?logstashOutputEncodeType
+    encodeDelimiter: ","
+
+    # Encode templates in JSON format.
+    # To learn more about TenXTemplates, see: https://doc.log10x.com/run/template
+    # Only write the templates when encoding objects.
+    writeTemplates: /$=TenXEnv.get("logstashEncodeObjects")

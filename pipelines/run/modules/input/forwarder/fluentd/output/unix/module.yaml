@@ -1,0 +1,31 @@
+#
+# 🔟❎ 'run' Fluentd Unix output module
+
+module:
+
+  name: fluentdUNIX
+
+  title: Fluentd Unix domain socket output
+
+  description: write TenXObjects to a Fluentd forwarder via a Unix domain socket
+    
+  # 'doc' specifies the markdown doc content, only required when generating docs.
+  doc: +include $=TenXEnv.get("docGenerate") ? "run/modules/input/forwarder/fluentd/output/unix/doc.md":""
+
+  # 'allowMultiple' is disabled for this module. Pipeline command line arguments and configuration files
+  #  can specify a single value at max for each option defined below.
+  allowMultiple: false
+
+  # 'optionsGroup' defines a group of named/typed configuration values to pass to a pipeline at startup
+  #  via command line arguments (e.g., '> tenx -myA X -myB Y') or YAML launch files (e.g., '> tenx @my.config').
+  #  Instances of this group passed are accessible at runtime via TenXEnv.get: https://doc.log10x.com/api/js/#TenXEnv.get
+  options:
+
+    - names:
+      - rawOutputForwardAddress
+      description: internal variable
+      type: string
+      required: false
+      doc: |
+        internal variable used to load socket address to multiple encoders
+      

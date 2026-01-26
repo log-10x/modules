@@ -1,0 +1,174 @@
+# 🔟❎ 'run' Policy function settings
+#
+
+# Set the 10x pipeline to 'run'
+tenx: run
+
+# --------------------------- Prometheus Input ----------------------------
+
+# define an extractor to extract results from the Prometheus query response
+extractor:
+
+  - name: result
+    type: json
+
+    actions:
+      - captureAll:result
+
+# define an Apache Camel route input stream to query the target Prometheus instance
+input:
+
+    # 'type' defines the type of input (e.g., stdin, file, stream).
+  - type: stream
+
+    # 'name' defines a logical name for this input.
+    #  This value identifies TenXObjects instantiated from this input via their 'inputName' field
+    name: PolicyTopCostsInput
+
+    # 'path' defines the InputSteam class to instantiate for reading events
+    path: com.log10x.ext.cloud.camel.CamelContextInputStream
+
+    # 'args' are passed as arguments to the Camel InputStream constructor
+    args:
+      - name
+      - policyOutput
+      - route
+      - +include run/modules/regulate/policy/route.yaml
+
+    extractors:
+      - result
+
+    escapeScheme: java
+
+    foreach: policyInput
+
+    # 'type' defines the type of input (e.g., stdin, file, stream).
+  - type: stream
+
+    # 'name' defines a logical name for this input.
+    #  This value identifies TenXObjects instantiated from this input via their 'inputName' field
+    name: PolicyAllCostsInput
+
+    # 'path' defines the InputSteam class to instantiate for reading events
+    path: com.log10x.ext.cloud.camel.CamelContextInputStream
+
+    # 'args' are passed as arguments to the Camel InputStream constructor
+    args:
+      - name
+      - policyOutput
+      - route
+      - +include run/modules/regulate/policy/route.yaml
+
+    extractors:
+      - result
+
+    escapeScheme: java
+
+    foreach: policyInput
+
+
+output:
+
+  # --------------------------- File Outpus ----------------------------
+
+    # 'type' defines the output type (e.g., stdout, log4j, micrometer).
+    #  The 'stream/file' output utilizes a native FileOutputStream to emit object/template values
+  - type: file
+
+    # 'enabled' sets whether to open the output. If true, any 'filter' value
+    #  set below is evaluated for each TenXObject to determine whether to write its instance/template field values to output.
+    enabled: $=yield TenXEnv.get("policyOutputGithubRepo")?false:true
+
+    # 'name' assigns a logical name to this output instance
+    name: $policyOutputPath
+
+    # 'path' points to the output file path to which to write
+    path: $policyOutputPath
+
+    # 'filter' is set to skip templates when encoding object field values.
+    #  A separate output stream is defined below to encode templates
+    filter: ((this.inputName == "PolicyAllCostsInput") || (this.inputName == "PolicyTopCostsInput")) && this.labelValue
+
+    # 'group' sets 'outputFilePath' as a key to group all file outputs
+    #  pointing to a location on disk to a single output stream. This
+    #  prevents a situation where multiple non-synchronized appenders may be trying
+    #  to write to the same file.
+    group:
+      - $policyOutputPath
+
+    # 'encodedLinePrefix', 'encodeType' and 'encodeDelimiter' control how TenXObject field values are
+    #  written to output. To learn more see https://doc.log10x.com/run/output/event/file/#outputfileencodetype
+    encodeType: delimited
+    encodeDelimiter: ","
+
+    args:
+      - outputFileHeader
+      - $=TenXString.join("_", TenXEnv.get("policyPrometheusLabels", "message_pattern")) + ",cost_per_hour\n"
+
+    # 'fields' defines the intrinsic/extracted/calculated field values
+    #  to write to for each TenXObject passed to this output.
+    fields:
+      - labelValue
+      - varValue
+
+    # 'async' controls whether to use a dedicated thread for this output
+    async: false
+
+    # 'foreach' sets 'fileOutput' as the options group for whose instances
+    #  to create matching output streams to allow multiple file stream outputs.
+    foreach: policyInput
+
+
+  # -------------------------- GitHub Outpus ---------------------------
+
+  - type: stream
+
+    # 'enabled' sets whether to open the output. If true, any 'filter' value
+    #  set below is evaluated for each TenXObject to determine whether to write its instance/template field values to output.
+    enabled: $=yield TenXEnv.get("policyOutputGithubRepo")?true:false
+
+    # 'name' assigns a logical name to this output instance
+    name: $="GH-" + TenXEnv.get("policyOutputPath")
+
+    # 'path' defines a class to instantiate and write [TenXObject](https://doc.log10x.com/api/js/#TenXObject) instance and template field values.
+    path: com.log10x.ext.cloud.github.GitHubOutputStream
+
+    # 'filter' is set to skip templates when encoding object field values.
+    #  A separate output stream is defined below to encode templates
+    filter: ((this.inputName == "PolicyAllCostsInput") || (this.inputName == "PolicyTopCostsInput")) && this.labelValue
+
+    # 'group' sets the output stream as a key to group GitHub outputs sharing command and argument values.
+    group:
+      - $policyOutputPath
+
+    # 'encodedLinePrefix', 'encodeType' and 'encodeDelimiter' control how TenXObject field values are
+    #  written to output. To learn more see https://doc.log10x.com/run/output/event/file/#outputfileencodetype
+    encodeType: delimited
+    encodeDelimiter: ","
+
+    args:
+      - githubOutputRepo
+      - $?policyOutputGithubRepo
+      - githubOutputPath
+      - $?policyOutputPath
+      - githubOutputToken
+      - $=TenXEnv.get("GH_TOKEN")
+      - githubOutputBranch
+      - $?policyOutputGithubBranch
+      - githubOutputHeader
+      - $=TenXString.join("_", TenXEnv.get("policyPrometheusLabels", "message_pattern")) + ",cost_per_hour"
+      - githubOutputSquashMerge
+      - $?policyOutputGithubSquashMerge=true
+
+    # 'fields' defines the intrinsic/extracted/calculated field values
+    #  to write to for each TenXObject passed to this output.
+    fields:
+      - labelValue
+      - varValue
+
+    # 'async' controls whether to use a dedicated thread for this output
+    async: false
+
+    # 'foreach' sets 'fileOutput' as the options group for whose instances
+    #  to create matching output streams to allow multiple file stream outputs.
+    foreach: policyInput

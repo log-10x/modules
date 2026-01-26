@@ -1,0 +1,120 @@
+# 🔟❎ 'run' Filebeat input options
+#
+# This configuration defines the input stream used for reading events
+# from a Filebeat forwarder via its stdout pipe (filebeat ... 2>&1 | tenx-edge run ...).
+#
+# IMPORTANT: Because the 10x engine reads events from Filebeat's stdout pipe,
+# Filebeat must NOT use 'output.console' as its output — console output writes to
+# the same stdout pipe and corrupts the event stream with multi-line JSON that
+# breaks the sourceFilter-based event/log separation below.
+# Use output.elasticsearch, output.logstash, output.file, or any other non-stdout output.
+
+# Set the 10x pipeline to 'run'
+tenx: run
+
+# Adding a runtime attribute for metrics reporting
+runtimeAttributes:
+  - fwd_input:filebeat
+
+# define an extractor to parse events JSON encoded into the 10x stdin pipe
+# by the '/script/tenx-<mode>.js' Filebeat 'script' processor.
+# If the '"tenx":true' marker is not found, the event is treated as an internal Filebeat log message.
+extractor:
+
+  - name: outerSelector
+    type: json
+    filter: '\\\"tenx\\\":true'
+    actions:
+      - setOuterText:message
+      - noTransform:log
+
+  - name: filebeat
+    type: json
+    actions:
+      - captureFirst:message
+
+# Events are read from Filebeat via its stdout pipe.
+# The 'fileBeat' pattern extractor above is used to determine whether
+# an event is transformed into an TenXObject or treated as a Filebeat internal
+# log message to emit based on the settings in 'filebeat.yml'
+input:
+  - name: filebeat
+    type: file
+    path: stdin
+    enabled: true
+    sourceFilter: '\\\"tenx\\\":true'
+
+    extractors:
+      - outerSelector
+      - filebeat
+      - "$=yield TenXEnv.get(\"k8sExtractorName\") ? \"filebeatK8s\" : \"\""
+
+    # Sets the recommended backpressure limit for the 10x pipeline when working with Filebeat.
+
+    # Increasing this value can result in faster data transfer from Filebeat into the 10x
+    # pipeline but can potentially risk memory issues, particularly if the filebeat output
+    # is a slower output (such as a remote Elastic cluster), as that backpressure can cascade
+    # back into the 10x pipeline.
+    backpressure:
+      intervalBytesLimit: $=parseBytes("2MB")
+      intervalBytesDuration: $=parseDuration("1s")
+
+# =============================== Dependencies ================================
+
+# Parse config vars from Filebeat configuration (i.e., 'filebeat.yml'):
+include:
+
+  # 'match' parses a file or stdin stream for config vars using a regex pattern.
+  #  matched capture groups are accessible as 10x startup arguments.
+  - source: match
+    options:
+
+      # Read information from Filebeat's stdout (i.e. our stdin)
+      path: stdin
+
+      # Capture Filebeat's config and log path values from stdin as respective
+      # 'filebeatConfigPath' and 'filebeatLogsPath' 10x startup arguments
+      regex: Config path:\s*\[(?<filebeatConfigPath>[^\]]*)\].*?Logs path:\s*\[(?<filebeatLogsPath>[^\]]*)\]
+
+      # The above regex uses back-tracking to resolve, we explicitly don't want to protect against that
+      # as this is being run a just once during startup, and isn't a real time issue
+      validateRegex: false
+
+      # Max lines to read from stdin if no match for 'regex'
+      maxLines: 20
+
+    # parse config vars from the 'filebeat.yml' file (i.e., the 'filebeatConfigPath' variable)
+    # These args are consumed by 'filebeat/input/log4j2.yaml'
+  - source: $=concat(filebeatConfigPath, fileSeperator, "filebeat.yml")
+
+    # If 'filebeat.yml' doesn't exist, default values defined in 'filebeat/input/log4j2.yaml' are used
+    required: false
+
+    options:
+      logging.to_files: filebeatLoggingToFiles
+      logging.files.path: filebeatPath
+      logging.files.name: filebeatName
+      logging.files.permissions: filebeatPermissions
+      logging.files.interval: filebeatInterval
+      logging.files.rotateonstartup: filebeatRotateOnStartup
+      logging.files.rotateeverybytes: filebeatRotateEveryBytes
+      logging.files.keepfiles: filebeatKeepFiles
+      logging.to_stderr: filebeatLoggingToStderr
+      logging.to_syslog: filebeatLoggingToSyslog
+
+output:
+
+  # logs messages emitted by Filebeat to its stderr are written to file|syslog|stderr
+  # using the 'tenxfilebeat logger defined in /filebeat/input/log4j2.yaml
+  - type: event
+    
+    # 'name' assigns a logical name to this output instance
+    name: filebeatLogger
+
+    path: run/modules/input/forwarder/filebeat/input/log4j2.yaml
+
+    # This output is only applied to events marked as Filebeat log messages
+    # by the 'outerSelector' extractor defined above
+    filter: extractorKey == "log"
+
+    fields: fullText

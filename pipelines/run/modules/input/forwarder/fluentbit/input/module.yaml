@@ -1,0 +1,30 @@
+#
+# 🔟❎ 'run' Fluentbit log output module
+
+module:
+
+  name: fluentbitConfig
+
+  title: Fluentbit internal log output
+
+  description: configure Fluentbit logging via 10x
+    
+  # 'doc' specifies the markdown doc content, only required when generating docs.
+  doc: '+include $=TenXEnv.get("docGenerate") ? "run/modules/input/forwarder/fluentbit/input/doc.md":""'
+
+  # 'allowMultiple' is disabled for this module. Pipeline command line arguments and configuration files
+  #  can specify a single value at max for each option defined below.
+  allowMultiple: false
+
+  # 'options' defines a group of named/typed configuration values to pass to a unit/module at startup
+  #  via command line arguments (e.g., '> tenx -myA X -myB Y') or YAML launch files (e.g., '> tenx @my.config').
+  #  Instances of this group passed are accessible at runtime via TenXEnv.get: https://doc.log10x.com/api/js/#TenXEnv.get
+  options:
+
+    - names:
+      - fluentbitMessageField
+      description: message field name
+      type: String
+      required: false
+      doc: |
+        Name of the actual message field in the event json emitted from fluentbit into the Log10x pipeline

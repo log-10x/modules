@@ -1,0 +1,139 @@
+#
+# 🔟❎ 'run' Filebeat log output module
+
+module:
+
+  name: filebeatConfig
+
+  title: Filebeat internal log output
+
+  description: configure Filebeat logging via 10x
+    
+  # 'doc' specifies the markdown doc content, only required when generating docs.
+  doc: '+include $=TenXEnv.get("docGenerate") ? "run/modules/input/forwarder/filebeat/input/doc.md":""'
+
+  # 'allowMultiple' is disabled for this module. Pipeline command line arguments and configuration files
+  #  can specify a single value at max for each option defined below.
+  allowMultiple: false
+
+  # 'options' defines a group of named/typed configuration values to pass to a unit/module at startup
+  #  via command line arguments (e.g., '> tenx -myA X -myB Y') or YAML launch files (e.g., '> tenx @my.config').
+  #  Instances of this group passed are accessible at runtime via TenXEnv.get: https://doc.log10x.com/api/js/#TenXEnv.get
+  options:
+
+    - names:
+      - filebeatConfigPath
+      description: configuration file path
+      type: file
+      required: false
+      doc: |
+        path containing Filebeat configuration files
+
+    - names:
+      - filebeatLogsPath
+      description: log file path
+      type: file
+      required: false
+      doc: |
+        path containing Filebeat log files
+
+    - names:
+      - filebeatLoggingToFiles
+      description:  control log file rotation
+      type: boolean
+      required: false
+      doc: |
+        sets Filebeat logging to rotating files.
+        Set logging.to_files to false to disable logging to files.
+
+    - names:
+      - filebeatLoggingToStderr
+      description: Filebeat logging to rotating files
+      type: boolean
+      required: false
+      doc: |
+        Filebeat logging to rotating files.
+        Set logging.to_stderr  to false to disable logging to stderr.
+
+    - names:
+      - filebeatLoggingToSyslog
+      description: logging to rotating files
+      type: boolean
+      required: false
+      doc: |
+        Filebeat logging to rotating files.
+        Set logging.to_syslog  to false to disable logging to stderr.
+
+    - names:
+      - filebeatName
+      description: Filebeat log name
+      type: file
+      required: false
+      doc: |
+        name of the Filebeat files where the logs are written to
+
+    - names:
+      - filebeatPath
+      description: output path for Filebeat logs
+      type: file
+      required: false
+      doc: |
+        configures the path where the Filebeat logs are written
+
+    - names:
+      - filebeatInterval
+      description: enable Filebeat log file rotation
+      type: String
+      required: false
+      doc: |
+        enable Filebeat log file rotation on time intervals in addition to the size-based rotation
+
+    - names:
+      - filebeatRotateEveryBytes
+      description: Filebeat log file size limit
+      type: number
+      required: false
+      doc: |
+        configure Filebeat log file size limit.
+        If limit is reached, log file will be automatically rotated
+
+    - names:
+      - filebeatRotateOnStartup
+      description: rotate existing Filebeat logs upon startup
+      type: boolean
+      required: false
+      doc: |
+        rotate existing Filebeat logs on startup rather than appending them to the existing file
+
+    - names:
+      - filebeatPermissions
+      description: log file permissions mask
+      type: string
+      required: false
+      doc: |
+        POSIX permissions mask to apply when rotating Filebeat log files
+
+    - names:
+      - filebeatKeepFiles
+      description: number of rotated Filebeat log files to keep
+      type: number
+      required: false
+      doc: |
+        number of rotated Filebeat log files to keep.
+        Oldest files will be deleted first
+
+    - names:
+      - rawOutputUnixSocketAddress
+      description: internal
+      type: string
+      required: false
+      doc: |
+        internal variable used to load socket address to be used in multiple encoders
+
+    - names:
+      - filebeatInputReady
+      description: internal
+      type: string
+      required: false
+      doc: |
+        an internal marker used to indicate Filebeat input ready

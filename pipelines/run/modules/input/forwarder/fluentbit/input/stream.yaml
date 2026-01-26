@@ -1,0 +1,42 @@
+# 🔟❎ 'run' Fluent Bit stdin input stream configuration
+
+# This configuration defines a stdin input device from which to
+# read JSON objects into the 10x pipeline for processing and (optional)
+# output back to the host Fluent Bit forwarder process.
+
+# Events are written into the stdin pipe by the Fluent Bit 'lua' processor
+# script defined in: https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentbit/conf/lua/tenx.lua
+
+# Set the 10x pipeline to 'run'
+tenx: run
+
+# Adding a runtime attribute for metrics reporting
+runtimeAttributes:
+  - fwd_input:fluentbit
+
+# Define an extractor to read event source and fields values encoded into the
+# stdin pipe by the host Fluent Bit forwarder process
+extractor:
+  - name: lua
+    type: json
+    actions:
+      # The actual message field inside the incoming JSON object
+      - $=yield "captureFirst:" + TenXEnv.get("fluentbitMessageField", "log")
+
+# Events to transform into TenXObjects are read from the Fluent Bit process via a stdin input
+input:
+
+  - type: file
+
+    name: lua
+
+    # read from the stdin device
+    path: stdin
+
+    # apply the 'lua' extractor defined above to the input, as well as k8s extractor
+    extractors:
+      - lua
+      - "$=yield TenXEnv.get(\"k8sExtractorName\") ? \"fluentK8s\" : \"\""
+
+    # set the 'source' value of events read from 'tag'
+    sourcePattern: \"tag\":\"(.*?)\"

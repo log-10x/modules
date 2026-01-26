@@ -1,0 +1,17 @@
+#
+# 🔟❎ 'run' Filebeat output module
+
+module:
+
+  name: filebeatOutput
+
+  title: Filebeat output
+
+  description: encode TenXObjects into Filebeat 
+
+  # 'allowMultiple' is disabled for this module. Pipeline command line arguments and configuration files
+  #  can specify a single value at max for each option defined below.
+  allowMultiple: false
+    
+  # 'doc' specifies the markdown doc content, only required when generating docs.
+  doc: '+include $=TenXEnv.get("docGenerate") ? "run/modules/input/forwarder/filebeat/output/doc.md":""'

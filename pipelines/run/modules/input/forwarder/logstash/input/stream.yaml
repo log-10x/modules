@@ -1,0 +1,48 @@
+# 🔟❎ 'run' Logstash stdin input stream configuration
+
+# This configuration defines a stdin input device from which to read
+# JSON objects from a host Logstash forwarder for processing and (optional) output
+# for returning regulated/optimized events.
+
+# Set the 10x pipeline to 'run'
+tenx: run
+
+# Adding a runtime attribute for metrics reporting
+runtimeAttributes:
+  - fwd_input:logstash
+
+# Define an extractor to read event source and field values that were encoded
+# into the stdin pipe by Logstash
+extractor:
+
+    # Define an extractor to read event source and field values filtered into the
+    # stdin pipe by the host Logstash forwarder process
+  - name: logstashRegulator
+    type: json
+    actions:
+        # capture the message field inside the incoming JSON object
+        # configurable via logstashMessageField option (default: message)
+      - $=yield "captureFirst:" + TenXEnv.get("logstashMessageField", "message")
+
+    # Define an extractor to read event source and field values encoded into the
+    # stdin pipe by the host Logstash forwarder process
+  - name: logstashOptimizer
+    type: json
+    actions:
+
+        # capture the message field inside the incoming JSON object
+        # configurable via logstashMessageField option (default: message)
+      - $=yield "captureFirst:" + TenXEnv.get("logstashMessageField", "message")
+
+        # drop the original raw event from the JSON to reduce the size of the overall event.
+      - drop:event
+
+# Events to transform into TenXObjects are read from the host Logstash process via a stdin input
+input:
+  - type: file
+    name: logstash
+    path: stdin
+    enabled: true
+    extractors:
+      - '/$=TenXEnv.get("logstashEncodeObjects") ? "logstashOptimizer" : "logstashRegulator"'
+    sourcePattern: \"file\":\"(.*?)\"

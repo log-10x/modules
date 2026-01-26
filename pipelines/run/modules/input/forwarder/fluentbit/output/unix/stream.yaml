@@ -1,0 +1,64 @@
+# 🔟❎ 'run' Fluent Bit forward output stream configuration
+
+# This configuration defines a Unix domain socket output to write
+# encoded/plain-text events to a Fluent Bit forwarder process via the native Fluentd 'forward' protocol.
+
+# To learn more see: https://github.com/fluent/fluent-bit-docs/blob/master/pipeline/outputs/forward.md
+
+# Set the 10x pipeline to 'run'
+tenx: run
+
+# =============================== Dependencies ================================
+
+include:
+
+  - source: match
+    options:
+
+      # Capture rawOutputSocketPort from tenx-unix.conf as an 10x config variable
+      path: run/modules/input/forwarder/fluentbit/conf/tenx-unix.conf
+      regex: "^\\s*@SET\\s+forwardAddress\\s*=\\s*(?<rawOutputForwardAddress>.*?)$"
+
+    # load the forward protocol over the Unix domain socket module
+  - run/modules/output/event/forward
+
+# ============================= Output Options ================================
+
+# 'outputForward' defines the output(s) used to write back to the Fluent Bit forwarder
+outputForward:
+
+    # Write objects in plain-text form using the intrinsic 'fullText' field if 'fluentbitEncodeObjects' has NOT been set.
+  - writeObjects: /$=!TenXEnv.get("fluentbitEncodeObjects")
+
+    # Sets Unix domain socket address from the value read from tenx-unix-source.conf (see above)
+    address: $=rawOutputForwardAddress
+
+    # 'fields' is set to the 'fullText', which contains the TenXObject's original text
+    fields:
+      - fullText
+      - $?fluentbitOutputFields
+    encodeType: $?fluentbitOutputEncodeType
+    encodeDelimiter: ","
+
+    # Do not encode templates
+    writeTemplates: false
+
+    # Write objects in encoded form using the encode() function if 'fluentbitEncodeObjects' is set.
+    # To learn more see https://doc.log10x.com/api/js/#TenXObject+encode
+  - writeObjects: /$=TenXEnv.get("fluentbitEncodeObjects")
+
+    # Sets Unix domain socket address from the value read from tenx-unix-source.conf (see above)
+    address: $=rawOutputForwardAddress
+
+    # 'fields' is set to the return value of the encode() function
+    #  https://doc.log10x.com/api/js/#TenXObject+encode
+    fields:
+      - encoded=encode()
+      - $?fluentbitOutputFields
+    encodeType: $?fluentbitOutputEncodeType
+    encodeDelimiter: ","
+
+    # Encode templates in JSON format.
+    # To learn more about TenXTemplates, see: https://doc.log10x.com/run/template
+    # Only write the templates when also encoding objects.
+    writeTemplates: /$=TenXEnv.get("fluentbitEncodeObjects")

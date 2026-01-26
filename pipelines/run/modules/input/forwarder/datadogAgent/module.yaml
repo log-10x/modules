@@ -1,0 +1,13 @@
+#
+# 🔟❎ 'run' Datadog Agent input module
+
+module:
+
+  name: datadogAgent
+  title: Datadog Agent input
+  description: report, regulate, and optimize events before shipping to Datadog via Datadog Agent
+
+  moduleSort: [datadogAgentReport,datadogAgentRegulate,datadogAgentOptimize]
+
+  # 'doc' specifies the markdown doc content, only required when generating docs.
+  doc: +include $=TenXEnv.get("docGenerate") ? "run/modules/input/forwarder/datadogAgent/doc.md":""

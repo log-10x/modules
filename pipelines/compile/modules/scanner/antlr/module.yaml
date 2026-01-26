@@ -1,0 +1,37 @@
+#
+# 🔟❎ 'compile' ANTLR scanner module
+
+module:
+
+  name: antlr
+
+  title: ANTLR scanner
+
+  description: extract symbols from any programming language using the ANTLR framework
+
+  # 'doc' specifies the markdown doc content, only required when generating docs.
+  doc: +include $=TenXEnv.get("docGenerate") ? "compile/modules/scanner/antlr/doc.md":""
+  
+  # 'configFolder' specifies a folder containing default configuration files for the settings defined by this unit/module
+  configFolder: compile/scanners/antlr
+
+  configSort:
+    antlr: [java, cpp, scala, go, javascript, python, csharp]
+
+  # 'allowMultiple' is disabled for this module. Pipeline command line arguments and configuration files
+  #  can specify a single value at max for each option defined below.
+  allowMultiple: false
+  
+  # 'options' defines a group of named/typed configuration values to pass to a unit/module at startup
+  #  via command line arguments (e.g., '> tenx -myA X -myB Y') or YAML launch files (e.g., '> tenx @my.config').
+  #  Instances of this group passed are accessible at runtime via TenXEnv.get: https://doc.log10x.com/api/js/#TenXEnv.get
+  options: 
+
+    - names:
+      - antlrParseUnitTimeout
+      description: source file parse timeout
+      type: string
+      required: false
+      doc: |
+        defines the timeout interval for parsing and scanning a source/binary input file before aborting.
+        default value: 60sec

@@ -1,0 +1,248 @@
+#
+# 🔟❎ 'run' rate regulator module
+
+module:
+
+  name: rateRegulator
+
+  title: Rate regulator
+
+  description: Filter TenXObjects from output based on cost-aware sampling using local or global budget policies.
+
+  # 'configFolder' specifies a folder containing default configuration files for the settings defined by this unit/module
+  configFolder: run/regulate/rate
+
+  # 'doc' specifies the markdown doc content, only required when generating docs.
+  doc: +include $=TenXEnv.get("docGenerate") ? "run/modules/regulate/rate/doc.md":""
+
+  # 'allowMultiple' is disabled for this module. Pipeline command line arguments and configuration files
+  #  can specify a single value at max for each option defined below.
+  allowMultiple: false
+
+  # 'optionsGroup' defines a group of named/typed configuration values to pass to a pipeline at startup
+  #  via command line arguments (e.g., '> tenx -myA X -myB Y') or YAML launch files (e.g., '> tenx @my.config').
+  #  Instances of this group passed are accessible at runtime via TenXEnv.get: https://doc.log10x.com/api/js/#TenXEnv.get
+  options:
+
+    - names:
+      - rateRegulatorFieldNames
+      description: list of TenXObject fields to identify rate counter buckets
+      type: list
+      required: false
+      doc: |
+        defines the list of TenXObject field names extracted to identify which rate counter bucket an event belongs to.
+        The list usually contains the `symbolMessage` field from the [message enrichment](https://doc.log10x.com/run/initialize/message/) module
+        but can include additional fields like [GeoIP](https://doc.log10x.com/run/initialize/geoIP/), [HTTP code](https://doc.log10x.com/run/initialize/httpCode/), [k8s container name](https://doc.log10x.com/run/initialize/k8s/), or custom enrichments for multi-dimensional rate tracking.
+
+        **Common Use Cases:**
+
+        **Single-app regulation (per event type):**
+        ```yaml
+        rateRegulatorFieldNames:
+          - symbolMessage
+        ```
+
+        **Multi-dimensional tracking (event type + geography + HTTP status):**
+        ```yaml
+        rateRegulatorFieldNames:
+          - symbolMessage
+          - country
+          - httpCode
+        ```
+
+        **Multi-app regulation in Kubernetes:**
+
+        *Option A: Cap total spend per app (all event types combined):*
+        ```yaml
+        rateRegulatorFieldNames:
+          - container  # Aggregates all event types for each app
+        ```
+        Each app's total spend (across all event types and pods) gets one cap. Simple but loses event-type intelligence.
+
+        *Option B: Cap spend per event type per app:*
+        ```yaml
+        rateRegulatorFieldNames:
+          - symbolMessage  # Event type
+          - container      # App identifier (same across all pods)
+        ```
+        Each (event type × app) combo gets its own cap. Provides fairness within apps but allows apps with many event types to potentially exceed one total cap.
+
+        Use `container` (not `pod`) for aggregation—`container` name is stable across replicas while `pod` names are unique per instance.
+      defValue: [symbolMessage]
+
+    - names:
+      - rateRegulatorResetIntervalMs
+      description: reset interval for rate counters in milliseconds
+      type: number
+      required: false
+      doc: |
+        defines the interval in milliseconds after which to reset rate counters.
+        Controls how frequently the regulator resets its tracking counters.
+
+        Default of 5 minutes (300000ms) provides stable cost averages and smooths out bursts while remaining responsive.
+        Shorter windows (e.g., 1 minute) are more reactive but noisier; longer windows (e.g., 10 minutes) are smoother but slower to adapt.
+
+        **Trade-offs:**
+        - **1 minute**: Very responsive for bursts, but unstable averages and over-reactive throttling
+        - **5 minutes**: Balanced—stable averages, catches sustained patterns, aligns with hourly budgets (1/12 hour)
+        - **10+ minutes**: Very stable for long-term trends, but slower to adapt and less suitable for short-lived nodes
+
+        **Validation:** Must be at least 60000 milliseconds (1 minute).
+      defValue: 300000
+
+    - names:
+      - rateRegulatorMinRetentionThreshold
+      description: minimum retention threshold for events when budget is exceeded
+      type: number
+      required: false
+      doc: |
+        defines the minimum retention rate (0.0 to 1.0) applied to events even when budget is exceeded.
+        Ensures some events are always retained even for very high-spend patterns, preventing complete data loss.
+
+        This value ensures a floor on retention, preventing complete data loss even when budget is exceeded.
+        The severity level boost (from `rateRegulatorLevelBoost`) is multiplied with this value to determine the actual minimum retention threshold for each severity level.
+
+        **How boost works:**
+        - Boost only affects the minimum retention threshold, not the calculated threshold based on budget
+        - When under budget: retention threshold is based on budget utilization (boost has no effect)
+        - When over budget: retention threshold is clamped to `minRetentionThreshold * boost`
+
+        **Examples:**
+        - `minRetentionThreshold: 0.1` with `boost: 1.0` (INFO) → minimum 10% retention when over budget
+        - `minRetentionThreshold: 0.1` with `boost: 2.0` (ERROR) → minimum 20% retention when over budget
+        - `minRetentionThreshold: 0.1` with `boost: 0.25` (DEBUG) → minimum 2.5% retention when over budget
+
+        **Important:** Boost values < 1.0 reduce minimum retention for low-priority events. This prevents them from consuming budget when over limit, while still ensuring some events are retained.
+
+        **Trade-offs:**
+        - **0.01 (1%)**: Very aggressive throttling, minimal retention when over budget. Use only if budget is critical.
+        - **0.1 (10%)**: Balanced default. Ensures observability even during budget overruns while still enforcing cost control.
+        - **0.25 (25%)**: Conservative. Prioritizes data retention over strict budget enforcement.
+
+        **Validation:** Must be greater than 0.01.
+      defValue: 0.1
+
+    - names:
+      - rateRegulatorLevelBoost
+      description: severity level boost mapping for retention rates
+      type: list
+      required: false
+      doc: |
+        defines a map of [severity levels](https://doc.log10x.com/run/initialize/level/) to boost multipliers for minimum retention thresholds.
+        Higher severity events can be given higher minimum retention rates through boost values.
+
+        The boost multiplier is applied only to `rateRegulatorMinRetentionThreshold`, not to the entire retention threshold.
+        This ensures critical events (ERROR, FATAL) have higher minimum retention floors when budget is exceeded,
+        while preventing boost values < 1.0 from reducing retention when under budget.
+
+        **How it works:**
+        - The regulator calculates a retention threshold based on budget utilization
+        - The threshold is clamped to at least `rateRegulatorMinRetentionThreshold * boost`
+        - Boost only affects the minimum floor, not the calculated threshold
+        - Higher boost values result in higher minimum retention for events of that severity when over budget
+        - Lower boost values (< 1.0) reduce minimum retention for low-priority events (e.g., DEBUG, TRACE)
+
+        For example:
+
+        ``` yaml
+        levelBoost:
+          - TRACE=0.25
+          - DEBUG=0.5
+          - INFO=1
+          - WARN=1.5
+          - ERROR=2
+          - FATAL=3
+        ```
+
+    - names:
+      - rateRegulatorLookupFile
+      description: lookup file containing global event type rates
+      type: string
+      required: false
+      doc: |
+        defines the path to a lookup file containing global event type frequency data.
+        Used to make sampling decisions based on [cluster-wide](https://doc.log10x.com/run/regulate/rate/#control-strategies) event patterns.
+      defValue: ""
+
+    - names:
+      - rateRegulatorLookupRetain
+      description: Retention period for the lookup file containing global event type rates
+      type: number
+      required: false
+      doc: |
+        Defines the retention period for the lookup file containing global event type frequency data.
+
+        If the file's last modified time is older than this period, the lookup is considered stale, and local counter rates are used.
+        Used to make sampling decisions based on cluster-wide event patterns.
+
+        **Validation:** Must be greater than 60000 milliseconds.
+      defValue: 300000
+
+    - names:
+      - rateRegulatorBudgetPerHour
+      description: target spending budget per hour in USD
+      type: number
+      required: false
+      doc: |
+        defines the soft target budget per hour for total cost across all event types on this node.
+        Actual spend may exceed this by 10-20% due to soft enforcement.
+
+        Hourly budgets align naturally with cloud infrastructure costs and work for both short-lived and long-lived nodes.
+
+        **Examples:**
+        - $1.50/hour → reasonable for a production log forwarder (~$36/day, ~$1080/month if running 24/7)
+        - $0.10/hour → conservative for dev/test environments
+        - $0.02/hour → minimal for low-volume services
+      defValue: 1.0
+
+    - names:
+      - rateRegulatorMaxSharePerFieldSet
+      description: maximum % of total spend any single field set can consume
+      type: number
+      required: false
+      doc: |
+        defines the maximum share (0.0 to 1.0) of the total budget that any single unique field set can use.
+        A "field set" is a unique combination of the field values specified in `rateRegulatorFieldNames`.
+
+        Enforced independently of whether the total budget is exceeded—prevents noisy field sets from dominating even when under budget.
+
+        In global mode, this is enforced cluster-wide based on aggregate spend data from the lookup file.
+
+        **Example with `rateRegulatorFieldNames: [symbolMessage]`:**
+        - 0.2 means no single event type (e.g., "heartbeat_debug") can use more than 20% of total spend
+        - If "heartbeat_debug" is costing 35% of total, it gets throttled to 20% regardless of whether you're over budget
+
+        **Example with `rateRegulatorFieldNames: [container]` (Kubernetes: per-app total):**
+        - Each app (e.g., "frontend", "backend", "payment-service") is tracked separately
+        - 0.2 means no single app can exceed 20% of total spend across ALL its event types
+        - Aggregates across all pods and all event types for each app
+        - If "frontend" app (all events, 5 pods) costs 30%, it gets throttled to 20%
+
+        **Example with `rateRegulatorFieldNames: [symbolMessage, container]` (Kubernetes: per event type per app):**
+        - Each unique combination (e.g., "error_login|frontend", "heartbeat_debug|backend") is tracked separately
+        - 0.2 means no single (event type × app) can exceed 20% of total spend
+        - If "frontend" app's "heartbeat_debug" events cost 30% across its 5 pods, they get throttled to 20%
+        - Note: "frontend" could have multiple event types, each with their own 20% cap
+      defValue: 0.2
+
+    - names:
+      - rateRegulatorIngestionCostPerGB
+      description: vendor ingestion cost per GB in USD
+      type: number
+      required: false
+      doc: |
+        defines the cost per GB charged by your observability vendor for log ingestion.
+        Used to calculate per-event costs (event byte size × cost per GB) for budget enforcement.
+
+        **Important:** If using global mode with a [policy module](https://doc.log10x.com/run/regulate/policy/) lookup, this value should match `policyIngestionCostPerGB` for consistency.
+
+        **Common vendor pricing (2025):**
+        - **Splunk Cloud**: ~$1.50/GB (varies by contract, SKU)
+        - **Datadog Logs**: ~$0.10-$0.25/GB (depends on tier: standard, flex, online archives)
+        - **Elastic Cloud**: ~$0.109/GB (standard logging tier)
+        - **New Relic**: ~$0.30/GB (Data Plus)
+        - **Sumo Logic**: ~$1.50/GB (depends on plan)
+        - **AWS CloudWatch Logs**: ~$0.50/GB ingestion + $0.03/GB storage
+
+        **Example:** A 10KB error log at $1.50/GB costs ~$0.000015. Over 1 million such events per hour, that's $15/hour ($360/day). The regulator tracks this spend per field set and enforces your `rateRegulatorBudgetPerHour` by probabilistically sampling events when over budget.
+      defValue: 1.5

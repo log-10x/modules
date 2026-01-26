@@ -1,0 +1,106 @@
+---
+icon: simple/fluentbit
+---
+
+Fluent Bit inputs execute a 10x Engine as [sidecar process](https://doc.log10x.com/engine/launcher/sidecar) to report, regulate, and optimize events _before_ they ship to output (e.g., ElasticSearch, Splunk, AWS S3).
+
+## Architecture
+
+<div style="text-align: center;">
+
+```mermaid
+graph LR
+    A["<div style='font-size: 14px;'>📂 Input</div><div style='font-size: 10px;'>tail, k8s</div>"] --> B["<div style='font-size: 14px;'>🔧 Lua Filter</div><div style='font-size: 10px;'>tenx.lua</div>"]
+    B --> E["<div style='font-size: 14px;'>⚡ 10x Engine</div><div style='font-size: 10px;'>Optimize/Regulate/Report</div>"]
+    E --> C["<div style='font-size: 14px;'>🔌 Forward</div><div style='font-size: 10px;'>Unix/TCP</div>"]
+    C --> D["<div style='font-size: 14px;'>📤 Output</div><div style='font-size: 10px;'>ES, S3</div>"]
+
+    classDef input fill:#2563eb,stroke:#1d4ed8,color:#ffffff,stroke-width:2px,rx:8,ry:8
+    classDef filter fill:#ea580c,stroke:#c2410c,color:#ffffff,stroke-width:2px,rx:8,ry:8
+    classDef socket fill:#0891b2,stroke:#0e7490,color:#ffffff,stroke-width:2px,rx:8,ry:8
+    classDef output fill:#16a34a,stroke:#15803d,color:#ffffff,stroke-width:2px,rx:8,ry:8
+    classDef engine fill:#7c3aed,stroke:#6d28d9,color:#ffffff,stroke-width:2px,rx:8,ry:8
+
+    class A input
+    class B filter
+    class C socket
+    class D output
+    class E engine
+```
+
+</div>
+
+### Data Flow
+
+| Component | Protocol | Description |
+|-----------|----------|-------------|
+| 🔧 Lua filter | `io.popen()` | Launches 10x subprocess on first event |
+| 🔧 tenx.lua | JSON/stdin | Encodes event as `{"tag":..., "tenx_fields":...}` |
+| ⚡ 10x Engine | Internal | Processes event (report/regulate/optimize) |
+| 🔄 Forward output | Unix or TCP | Returns processed event to Fluent Bit pipeline |
+| 🔧 Lua filter | Return code | Marks event as processed via `tenx` field |
+
+### Expected Event Format
+
+The 10x Engine expects JSON events from Fluent Bit containing:
+
+| Field | Description | Used For |
+|-------|-------------|----------|
+| `tag` | Event tag set by tenx.lua script | Source identification via `sourcePattern` |
+| `log` | The actual log message (configurable via `fluentbitMessageField`) | Message extraction |
+
+The `sourcePattern` regex `\"tag\":\"(.*?)\"` extracts the event source from the `tag` field for rate regulation grouping.
+
+??? tenx-keyfiles "Key Files"
+
+    | File | Purpose |
+    |------|---------|
+    | [`conf/lua/tenx-optimize.lua`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentbit/conf/lua/tenx-optimize.lua){target="_blank"} | Lua filter script for optimize mode |
+    | [`conf/tenx-optimize.conf`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-optimize.conf){target="_blank"} | Fluent Bit config for optimize mode |
+    | [`conf/tenx-unix.conf`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-unix.conf){target="_blank"} | Unix socket return path (Linux/macOS) |
+    | [`conf/tenx-tcp.conf`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-tcp.conf){target="_blank"} | TCP return path (Windows) |
+    | [`input/stream.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentbit/input/stream.yaml){target="_blank"} | 10x stdin input configuration |
+    | [`output/unix/stream.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentbit/output/unix/stream.yaml){target="_blank"} | 10x Forward protocol output configuration |
+
+## Quickstart
+
+**1. Set environment variables:**
+
+```bash
+export TENX_MODULES=/path/to/config/modules
+export TENX_HOME=/path/to/tenx/binary
+```
+
+**2. Include optimizer in your Fluent Bit config:**
+
+```toml title="fluent-bit.conf"
+[SERVICE]
+    Flush        1
+    Log_Level    info
+
+# Your input source
+[INPUT]
+    Name         tail
+    Path         /var/log/app.log
+    Tag          app.logs
+
+# Include 10x optimizer (Lua filter)
+@INCLUDE ${TENX_MODULES}/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-optimize.conf
+
+# Include return path (Unix socket for Linux/macOS, TCP for Windows)
+@INCLUDE ${TENX_MODULES}/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-unix.conf
+
+# Configure your output (e.g., Splunk, Elasticsearch)
+[OUTPUT]
+    Name         your_output_plugin
+    Match        *
+    # ... output config
+```
+
+**3. Run Fluent Bit:**
+
+```bash
+fluent-bit -c /path/to/fluent-bit.conf
+```
+
+For Splunk integration, see the [10x for Splunk](https://doc.log10x.com/apps/edge/optimizer/splunk/) documentation.

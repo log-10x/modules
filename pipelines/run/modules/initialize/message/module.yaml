@@ -1,0 +1,68 @@
+#
+# 🔟❎ 'run' Message lookup module
+
+module:
+
+  name: symbolLookup
+
+  title: Symbol Message Calculator
+
+  description: enrich TenXObjects with logical message symbol sequence and origin values
+
+  # 'configFolder' specifies a folder containing default configuration files for the settings defined by this unit/module
+  configFolder: run/initialize/message
+
+  # 'doc' specifies the markdown doc content, only required when generating docs.
+  doc: '+include $=TenXEnv.get("docGenerate") ? "run/modules/initialize/message/doc.md":""'
+ 
+  # 'allowMultiple' is disabled for this module. Pipeline command line arguments and configuration files
+  #  can specify a single value at max for each option defined below.
+  allowMultiple: false
+        
+  # 'options' defines a group of named/typed configuration values to pass to a unit/module at startup
+  #  via command line arguments (e.g., '> tenx -myA X -myB Y') or YAML launch files (e.g., '> tenx @my.config').
+  #  Instances of this group passed are accessible at runtime via TenXEnv.get: https://doc.log10x.com/api/js/#TenXEnv.get
+  options:
+
+    - names:
+      - symbolContexts
+      description: types of symbols to search
+      type: string
+      required: false
+      doc: |
+        Specifies a comma delimited list of [symbol contexts](https://doc.log10x.com/run/transform/symbol/#contexts) values.
+        
+        This is argument is passed as the `symbolContexts` argument value for the [symbolSequence](https://doc.log10x.com/api/js/#TenXObject+symbolSequence) function.
+        
+      defValue: log,exec
+
+    - names:
+      - symbolMaxLen
+      description: max number of output chars 
+      type: number
+      required: false
+      defValue: 0
+      doc: |
+        Specifies the max number of chars of the [symbolMessageField](https://doc.log10x.com/run/initialize/message/#symbolmessagefield). 
+        Set 0 to unlimited.
+        
+    - names:
+      - symbolMessageField
+      description: field name to assign with symbol sequence value
+      type: string
+      required: false
+      doc: |
+         specifies the name of the field to assign the return value of [symbolSequence](https://doc.log10x.com/api/js/#TenXObject+symbolSequence) function
+         when invoking it with the a symbolContext argument value of [symbolContexts](https://doc.log10x.com/run/initialize/message/#symbolcontexts). 
+
+         For an example, see [symbolInputField](https://doc.log10x.com/run/initialize/message/#symbolinputfield).
+      defValue: symbolMessage
+
+    - names:
+      - symbolOriginField
+      description: field name to assign with symbol message origin file
+      type: string
+      required: false
+      doc: |
+         specifies the name of the field to assign the return value of [symbolOrigin](https://doc.log10x.com/api/js/#TenXObject+symbolOrigin) function. 
+      defValue: symbolOrigin

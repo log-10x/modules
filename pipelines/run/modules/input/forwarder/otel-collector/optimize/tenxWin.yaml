@@ -1,0 +1,143 @@
+# OpenTelemetry Collector 10x 'optimize' configuration for Windows
+#
+# This OTel Collector configuration sends events to Log10x for optimization
+# and receives transformed events back for forwarding.
+#
+# Prerequisites:
+# - Log10x must be running with: tenx @run/input/forwarder/otel-collector/optimize @apps/edge/optimizer
+# - Log10x will listen on TCP port 4318 for incoming JSON events
+# - Log10x will write optimized events to TCP port 4319 (Windows doesn't support Unix sockets)
+#
+# Usage:
+# - Run Log10x first: tenx @run/input/forwarder/otel-collector/optimize @apps/edge/optimizer
+# - Then run: otelcol.exe --config=tenx-optimize-windows.yaml
+
+receivers:
+  # Primary receivers for incoming logs
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+  
+  windowseventlog:
+    channel: Application
+    start_at: beginning
+  
+  windowseventlog/system:
+    channel: System
+    start_at: beginning
+
+  # Receiver for optimized events from Log10x via TCP
+  otlp/tenx-return:
+    protocols:
+      http:
+        endpoint: localhost:4319
+
+processors:
+  # Batch processor for efficiency
+  batch:
+    timeout: 1s
+    send_batch_size: 100
+    send_batch_max_size: 1000
+
+  # Memory limiter to prevent OOM
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 512
+
+  # Resource processor to add metadata
+  resource:
+    attributes:
+      - key: service.name
+        value: ${SERVICE_NAME:unknown}
+        action: upsert
+      - key: deployment.environment
+        value: ${ENVIRONMENT:production}
+        action: upsert
+      - key: os.type
+        value: windows
+        action: upsert
+      - key: tenx.mode
+        value: optimize
+        action: upsert
+
+exporters:
+  # Export JSON logs to Log10x TCP input for optimization
+  otlphttp/tenx-optimize:
+    endpoint: http://localhost:4318
+    compression: none
+    encoding: json
+    timeout: 10s
+    retry_on_failure:
+      enabled: true
+      initial_interval: 1s
+      max_interval: 30s
+      max_elapsed_time: 300s
+
+  # Export optimized events to Splunk
+  splunk_hec:
+    endpoint: ${SPLUNK_HEC_ENDPOINT:https://splunk:8088/services/collector}
+    token: ${SPLUNK_HEC_TOKEN}
+    source: "otel"
+    sourcetype: "otel"
+    index: "main"
+    max_content_length_logs: 2097152
+    disable_compression: false
+    timeout: 10s
+    retry_on_failure:
+      enabled: true
+      initial_interval: 5s
+      max_interval: 30s
+      max_elapsed_time: 300s
+  
+  # TODO - make this not fail the documentation engine:
+  #
+  # Export optimized events to Elasticsearch
+  # elasticsearch:
+  #   endpoints: [${ELASTIC_ENDPOINT:http://elasticsearch:9200}]
+  #   index: logs-otel-%{+yyyy.MM.dd}
+  #   timeout: 90s
+  #   retry:
+  #     enabled: true
+  #     initial_interval: 5s
+  #     max_interval: 30s
+  #     max_elapsed_time: 300s
+  #   sending_queue:
+  #     enabled: true
+  #     num_consumers: 10
+  #     queue_size: 1000
+
+  # Debug exporter
+  debug:
+    verbosity: detailed
+    sampling_initial: 5
+    sampling_thereafter: 200
+
+service:
+  pipelines:
+    # Pipeline 1: Send original logs to Log10x for optimization
+    logs/to-tenx:
+      receivers: [otlp, windowseventlog, windowseventlog/system]
+      processors: [memory_limiter, batch, resource]
+      exporters: [otlphttp/tenx-optimize]
+    
+    # Pipeline 2: Receive optimized logs from Log10x and forward to destinations
+    logs/from-tenx:
+      receivers: [otlp/tenx-return]
+      processors: [batch]
+      exporters: [splunk_hec, elasticsearch]
+    
+    # Traces pipeline
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, batch, resource]
+      exporters: [otlphttp/tenx-optimize]
+
+  telemetry:
+    logs:
+      level: info
+      initial_fields:
+        service: otelcol-tenx-optimize
+

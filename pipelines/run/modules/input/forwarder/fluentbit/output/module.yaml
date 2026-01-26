@@ -1,0 +1,15 @@
+# 🔟❎ 'run' Fluent Bit output module
+
+module:
+
+  name: fluentbitOutput
+
+  title: Fluent Bit output
+
+  description: write TenXObjects to a Fluent Bit forwarder.
+    
+  # 'doc' specifies the markdown doc content, only required when generating docs.
+  doc: '+include $=TenXEnv.get("docGenerate") ? "run/modules/input/forwarder/fluentbit/output/doc.md":""'
+
+  # 'allowMultiple' is disabled for this module.
+  allowMultiple: false

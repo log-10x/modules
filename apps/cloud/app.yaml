@@ -1,0 +1,14 @@
+#
+# 🔟❎ 'run' Cloud apps
+
+app:
+
+  name: cloudApps
+
+  title: Cloud
+
+  description: provide granular cost insights, regulate and stream events from low-cost storage on-demand
+
+  # 'doc' specifies the markdown doc content, only required when generating docs.
+  doc: +include $=TenXEnv.get("docGenerate") ? "apps/cloud/doc.md":""
+  

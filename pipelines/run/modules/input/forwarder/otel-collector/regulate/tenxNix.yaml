@@ -1,0 +1,91 @@
+# OpenTelemetry Collector 10x 'regulate' configuration for Linux
+#
+# This OTel Collector configuration sends events to Log10x for regulation
+# via Unix domain socket using the syslog exporter (RFC5424 format).
+# Filtered events are returned via fluentforward protocol.
+#
+# REQUIREMENTS:
+# - OpenTelemetry Collector Contrib v0.143.0+ (for syslog exporter Unix socket support)
+#
+# Architecture:
+#   OTel Collector --[syslog/unix]--> Log10x Regulator --[forward/unix]--> OTel Collector --> Final destinations
+#
+# Prerequisites:
+# - Log10x must be running with: tenx @run/input/forwarder/otel-collector/regulate @apps/edge/regulator
+# - Log10x will listen on Unix socket: /tmp/tenx-otel-in.sock
+# - Log10x will write filtered events to: /tmp/tenx-otel-out.sock
+#
+# Usage:
+# - Run Log10x first: tenx @run/input/forwarder/otel-collector/regulate @apps/edge/regulator
+# - Then run: otelcol-contrib --config=tenxNix.yaml
+
+receivers:
+  # Primary receivers for incoming logs
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+  filelog:
+    include:
+      - /var/log/**/*.log
+    start_at: end
+
+  # Receive filtered logs back from Log10x via Forward protocol (Unix socket)
+  fluentforward/tenx:
+    endpoint: unix:///tmp/tenx-otel-out.sock
+
+processors:
+  # Batch processor for efficiency
+  batch:
+    timeout: 1s
+    send_batch_size: 100
+    send_batch_max_size: 1000
+
+  # Memory limiter to prevent OOM
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 512
+
+exporters:
+  # Export logs to Log10x via Unix socket using syslog protocol (RFC5424)
+  syslog/tenx:
+    endpoint: /tmp/tenx-otel-in.sock
+    network: unix
+    protocol: rfc5424
+    enable_octet_counting: false
+    tls:
+      insecure: true
+
+  # Debug exporter for troubleshooting (replace with your actual exporters)
+  debug:
+    verbosity: basic
+
+  # Add your final destination exporters here, e.g.:
+  # elasticsearch:
+  #   endpoint: https://elasticsearch:9200
+  # splunk_hec:
+  #   endpoint: https://splunk:8088/services/collector
+  #   token: ${SPLUNK_HEC_TOKEN}
+
+service:
+  pipelines:
+    # Pipeline 1: Send all logs to Log10x for regulation
+    logs/to-tenx:
+      receivers: [otlp, filelog]
+      processors: [memory_limiter, batch]
+      exporters: [syslog/tenx]
+
+    # Pipeline 2: Forward filtered (kept) logs to final destinations
+    logs/from-tenx:
+      receivers: [fluentforward/tenx]
+      processors: [batch]
+      exporters: [debug]  # Replace with your destination exporters
+
+  telemetry:
+    logs:
+      level: info
+      initial_fields:
+        service: otelcol-tenx-regulate

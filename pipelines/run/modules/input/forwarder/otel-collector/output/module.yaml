@@ -1,0 +1,28 @@
+#
+# 🔟❎ 'run' OpenTelemetry Collector output module
+
+module:
+
+  name: otelCollectorOutput
+
+  title: OpenTelemetry Collector Forward output
+
+  description: Configure Forward protocol output for returning processed events to OpenTelemetry Collector
+
+  doc: +include $=TenXEnv.get("docGenerate") ? "run/modules/input/forwarder/otel-collector/output/doc.md":""
+
+  allowMultiple: false
+
+  options:
+
+    - names:
+      - otelCollectorOutputForwardAddress
+      description: Forward output Unix socket address
+      type: String
+      required: false
+      defValue: /tmp/tenx-otel-out.sock
+      doc: |
+        Unix domain socket address for the Forward protocol output.
+        OTel Collector's fluentforward receiver should listen on this socket.
+
+        Example: `/tmp/tenx-otel-out.sock`

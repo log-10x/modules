@@ -1,0 +1,51 @@
+#
+# 🔟❎ 'run' Dev app
+
+app:
+
+  name: dev
+
+  title: Dev
+
+  description: test and validate log, symbol library and config files locally
+
+  # 'doc' specifies the markdown doc content, only required when generating docs.
+  doc: +include $=TenXEnv.get("docGenerate") ? "apps/dev/doc.md":""
+
+    # 'configFolders' specifies folders containing default configuration files for this module
+  configFolders:
+
+    dev: apps/dev
+
+    inputs+file input: run/input/file
+    inputs+stdin: run/input/stdin
+    
+    initializers+message: run/initialize/message
+    initializers+level: run/initialize/level
+    initializers+group: run/initialize/group
+    initializers+httpCode: run/initialize/httpCode
+    initializers+lookup: run/initialize/lookup
+    initializers+k8s: run/initialize/k8s
+    initializers+geoIP: run/initialize/geoIP
+
+    event Outputs+file: run/output/event/file
+    event Outputs+stdout: run/output/event/stdout
+
+  advancedConfigFolders:
+
+    bootstrap: run/bootstrap
+    github Sync: gitops
+    symbols: run/symbol
+    aggregators: run/aggregate/dev
+    template: run/template
+
+    transform+timestamp: run/transform/timestamp
+    transform+fieldParser: run/transform/fields
+    transform+origin: run/transform/symbol
+    transform+group: run/transform/group
+    transform+parallelize: run/transform/parallelize
+
+    event Outputs+processOutput: run/output/event/process
+    event Outputs+httpOutput: run/output/event/http
+    event Outputs+unixSocketOutput: run/output/event/unix
+

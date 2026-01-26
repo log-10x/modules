@@ -1,0 +1,51 @@
+# 🔟❎ 'run' k8s lookup configuration
+
+# Define the extractors for capturing k8s context from input events
+# To learn more see https://doc.log10x.com/run/initialize/k8s
+
+# Set the 10x pipeline to 'run'
+tenx: run
+
+# ======================= k8s Fluent/Filebeat Extractors ======================
+
+# Extractors for common k8s metadata based on the target forwarder format.
+# For more info on extractors see https://doc.log10x.com/run/input/extract
+extractor:
+  - name: fluentK8s
+    type: json
+
+    actions:
+      # Capture common k8s metadata
+      - captureField:kubernetes.namespace_name:namespace_name
+      - captureField:kubernetes.container_name:container_name
+      - captureField:kubernetes.pod_name:pod_name
+
+  - name: filebeatK8s
+    type: json
+
+    actions:
+      # Capture common k8s metadata
+      - $="captureField:kubernetes.namespace:" + TenXEnv.get("k8sNamespaceNameField", "namespace")
+      - $="captureField:kubernetes.container.name:" + TenXEnv.get("k8sContainerNameField", "container")
+      - $="captureField:kubernetes.pod.name:" + TenXEnv.get("k8sPodNameField", "pod")
+
+# ============================ Aggregation Settings ===========================
+
+# Install the k8s fields as default fields by which to aggregate TenXObjects
+# To learn more see https://doc.log10x.com/run/initialize/#enrichmentFields
+
+include:
+  - run/modules/initialize/module.yaml
+
+enrichmentFields:
+  # use yield to ensure all arguments are loaded
+  # getting the k8 metadata extracted
+  - $=yield TenXEnv.get("k8sExtractorName") ? TenXEnv.get("k8sPodNameField"):""
+  - $=yield TenXEnv.get("k8sExtractorName") ? TenXEnv.get("k8sContainerNameField"):""
+  - $=yield TenXEnv.get("k8sExtractorName") ? TenXEnv.get("k8sNamespaceNameField"):""
+
+  # using k8 metadata to populate user_service and user_process fields
+  # for k8 user service is defined as the container name
+  - $=yield TenXEnv.get("k8sExtractorName") ? "tenx_user_service":""
+  # for k8 user process is defined as podname/containername
+  - $=yield TenXEnv.get("k8sExtractorName") ? "tenx_user_process":""

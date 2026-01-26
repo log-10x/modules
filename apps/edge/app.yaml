@@ -1,0 +1,15 @@
+#
+# 🔟❎ 'run' Edge apps
+
+app:
+
+  name: edgeApps
+
+  title: Edge
+
+  description: report on, regulate, and optimize events _before_ they ship to log analyzers
+
+  # 'doc' specifies the markdown doc content, only required when generating docs.
+  doc: +include $=TenXEnv.get("docGenerate") ? "apps/edge/doc.md":""
+  
+  moduleSort: [edgeReporter,edgeRegulator,edgeOptimizer]

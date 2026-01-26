@@ -1,0 +1,16 @@
+# 🔟❎ Dev app settings
+
+# This configuration defines the settings for use by the Edge Reporter app.
+# To learn more see https://doc.log10x.com/apps/edge/reporter
+
+tenx: run                   
+
+# ======================== Application Dependencies ===========================
+
+runtimeAttributes:
+  - app:dev
+  - env:local
+
+include:
+  - apps/shared
+  - run/aggregate/dev    # https://doc.log10x.com/run/aggregate/#dev

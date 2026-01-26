@@ -1,0 +1,40 @@
+# 🔟❎ 'run' Query Stream application settings
+
+# This configuration defines the settings for use by the Query Stream operation of the Streamer app.
+# To learn more see https://doc.log10x.com/apps/cloud/analyzer/#query
+
+# ============================ Bootstrap Runtime ==============================
+
+tenx: run    # https://doc.log10x.com/run/bootstrap
+
+# ======================== Application Dependencies ===========================
+
+runtimeAttributes:
+  - app:streamer
+  - sub_app:stream
+  - env:cloud
+
+include:
+  - apps/shared
+  - run/modules/input/objectStorage/input   # https://doc.log10x.com/run/input/objectStorage/input
+  - run/modules/input/objectStorage/object  # https://doc.log10x.com/run/input/objectStorage/object
+  - run/aggregate/stream                    # https://doc.log10x.com/run/aggregate/#stream
+
+  # Allows setting of 'enrichmentFields'
+  - run/modules/initialize/module.yaml
+
+enrichmentFields:
+  - query_name=TenXEnv.get("queryObjectQueryName")
+  - index_app=TenXEnv.get("queryObjectTarget")
+  # If we extracted at construction time, use that. Else extract at publish time
+  - index_file=(this.index_file?this.index_file:TenXEnv.get("queryObjectTargetObject"))
+
+override:
+  # In the stream sub app the parallelization already happens from multi pipelines running.
+  # We don't want to swamp the running machine with too many inputs.
+  - key: threadPoolSize
+    value: $=parseInt(TenXEnv.get("TENX_THREAD_POOL_SIZE", 6))
+
+  # Adding a default tag for forwarded events
+  - key: outputForwardTagValue
+    value: tenx-cloud-streamer

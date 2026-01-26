@@ -1,0 +1,32 @@
+#
+# 🔟❎ 'run' OpenTelemetry Collector Unix output module
+
+module:
+
+  name: otelCollectorUNIX
+
+  title: OpenTelemetry Collector Unix domain socket output
+
+  description: write TenXObjects to an OpenTelemetry Collector forwarder via a Unix domain socket
+    
+  # 'doc' specifies the markdown doc content, only required when generating docs.
+  doc: +include $=TenXEnv.get("docGenerate") ? "run/modules/input/forwarder/otel-collector/output/unix/doc.md":""
+
+  # 'allowMultiple' is disabled for this module. Pipeline command line arguments and configuration files
+  #  can specify a single value at max for each option defined below.
+  allowMultiple: false
+
+  # 'optionsGroup' defines a group of named/typed configuration values to pass to a pipeline at startup
+  #  via command line arguments (e.g., '> tenx -myA X -myB Y') or YAML launch files (e.g., '> tenx @my.config').
+  #  Instances of this group passed are accessible at runtime via TenXEnv.get: https://doc.log10x.com/api/js/#TenXEnv.get
+  options:
+
+    - names:
+      - otelCollectorOutputForwardAddress
+      description: Unix socket address
+      type: string
+      required: false
+      doc: |
+        Unix domain socket path for forward protocol output to OTel Collector
+      
+

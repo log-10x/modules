@@ -1,0 +1,15 @@
+#
+# 🔟❎ 'run' Fluentd input module
+
+module:
+
+  name: fluentd
+
+  title: Fluentd input
+
+  description: report, regulate, and optimize events collected by Fluentd forwarders
+
+  moduleSort: [fluentdReport,fluentdRegulate,fluentdOptimize]
+
+  # 'doc' specifies the markdown doc content, only required when generating docs.
+  doc: +include $=TenXEnv.get("docGenerate") ? "run/modules/input/forwarder/fluentd/doc.md":""

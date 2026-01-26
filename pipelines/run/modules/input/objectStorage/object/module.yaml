@@ -1,0 +1,201 @@
+#
+# 🔟❎ 'run' Storage object input module
+
+module:
+
+  name: fetchBlob
+
+  title: Object storage fetch blob
+
+  description: read events from Storage blob byte range(s)
+
+  # 'doc' specifies the markdown doc content, only required when generating docs.
+  doc: +include $=TenXEnv.get("docGenerate") ? "run/modules/input/objectStorage/object/doc.md":""
+
+  # 'allowMultiple' is enabled for this module. Pipeline command line arguments and configuration files
+  #  can specify multiple groupings of the options defined below.
+  allowMultiple: true
+
+  # 'options' defines a group of named/typed configuration values to pass to a unit/module at startup
+  #  via command line arguments (e.g., '> tenx -myA X -myB Y') or YAML launch files (e.g., '> tenx @my.config').
+  #  Instances of this group passed are accessible at runtime via TenXEnv.get: https://doc.log10x.com/api/js/#TenXEnv.get
+  options:
+
+  # ----------------------------- General Options -----------------------------
+
+    - names:
+        - queryObjectQueryName
+      description: logical name to give this query
+      type: String
+      required: true
+      category: general
+      doc: |
+        Specifies a logical name associated with the query.
+        This value identifies this query operation in aggregated metrics reports.
+
+    - names:
+        - queryObjectPrintProgress
+      description: sets whether this input prints throughput stats to the console
+      type: boolean
+      required: false
+      category: general
+      doc: |
+        sets whether this input prints throughput stats to the console
+        This value is commonly used when testing an integration to a remote endpoint.
+
+  # ----------------------------- Container Options ---------------------------
+
+    - names:
+        - queryObjectObjectStorageName
+      description: object storage logical name
+      type: String
+      required: true
+      category: container
+      doc: |
+        identifies the [object storage](https://doc.log10x.com/run/input/objectStorage#objectstorageccessclassname) against which this query is made (e.g., `AWS`).
+
+    - names:
+        - queryObjectContainer
+      description: storage container of the target blob
+      type: String
+      required: true
+      category: container
+      doc: |
+        specifies the object storage container (e.g., AWS S3 bucket) of the target
+        blob (e.g., log file) byte range to fetch.
+
+    - names:
+        - queryObjectIndexContainer
+      description: object storage container containing index objects
+      type: String
+      required: true
+      category: container
+      doc: |
+        specifies the object storage container (e.g., AWS S3 bucket)
+        name in which to store [TenXTemplate Filters](https://doc.log10x.com/run/input/objectStorage/index/#tenxtemplate-filters)
+
+    - names:
+        - queryObjectTarget
+      description: logical name identifying the origin of 'queryObjectTargetObject'
+      type: string
+      required: true
+      category: container
+      doc: |
+        specifies the logical name used to store index objects produced by the index app.
+
+    - names:
+        - queryObjectTargetObject
+      description: the target object to retrieve from storage
+      type: String
+      required: true
+      category: container
+      doc: |
+        sets the name of the object (e.g., log file) to retrieve from [queryObjectContainer](https://doc.log10x.com/run/input/objectStorage/query/object/#queryobjectcontainer)
+
+    - names:
+        - queryObjectByteRanges
+      description: array of byte ranges to fetch
+      type: list
+      required: false
+      category: container
+      doc: |
+        defines an array of byte-range pairs (e.g., start1,length1..startN,lengthN)
+        to fetch from [queryObjectTargetObject](https://doc.log10x.com/run/input/objectStorage/query/object/#queryobjecttargetobject).
+
+        To learn more see [byte range fetches](https://docs.aws.amazon.com/whitepapers/latest/s3-optimizing-performance-best-practices/use-byte-range-fetches.html).
+
+        If not set, fetch the entire object.
+
+  # -------------------------------- Filter Options ---------------------------
+
+    - names:
+        - queryObjectFilter
+      description: filter applied on objects in range
+      type: string
+      required: false
+      category: filter
+      doc: |
+        Specifies filtering logic for TenXObjects in this query object.
+        Combines both the querySearch (Bloom filter pre-filtering from storage) and queryFilters (in-memory JavaScript expressions) from the originating query.
+        This ensures consistent application of both storage-level and in-memory filtering.
+
+    - names:
+        - queryObjectFrom
+      description: beginning of the search time range (inclusive)
+      type: number
+      required: true
+      category: filter
+      doc: |
+        defines the beginning of the search time range (inclusive)
+        expressed as a UNIX millisecond epoch value. This value commonly uses the
+        [now](https://doc.log10x.com/api/js/#TenXDate.now) function.
+
+        For example, setting this value to:
+        ``` yaml
+        queryObjectFrom: $=now("-1h")
+        ````
+        express the value of one hour before the current millisecond epoch.
+
+    - names:
+        - queryObjectTo
+      description: end of the search time range (exclusive)
+      type: number
+      category: filter
+      required: true
+      doc: |
+        defines the end of the search time range expressed as an
+        UNIX millisecond epoch value (exclusive). This value commonly uses the [now](https://doc.log10x.com/api/js/#TenXDate.now)
+        function.
+
+  # --------------------------- Advanced Options ------------------------------
+
+    - names:
+        - queryObjectObjectStorageArgs
+      description: custom object storage args
+      type: list
+      required: false
+      category: advanced
+      doc: |
+        custom arguments passed as a map to the constructor of the underlying [object storage](https://doc.log10x.com/run/input/objectStorage/query/object/#queryobjectobjectstoragename).
+        This list is expected to hold pairs of key values (e.g., args: [key1, value1, key2, value2])
+
+    - names:
+        - queryObjectID
+      description: unique ID of host query
+      type: string
+      required: true
+      category: advanced
+      doc: |
+        UUID of the query which has submitted this fetch request
+
+    - names:
+        - queryObjectElapseTime
+      description: epoch after which processing times out
+      type: number
+      required: true
+      category: advanced
+      doc: |
+        Epoch value which if exceeds the current system time will result in this request being cancelled
+
+    - names:
+        - queryObjectLogLevels
+      description: log levels to send to CloudWatch Logs for query progress tracking
+      type: list
+      required: false
+      category: advanced
+      doc: |
+        Specifies which query event log levels are sent to CloudWatch Logs for tracking query progress.
+        Valid values: `ERROR`, `INFO`, `DEBUG`, `PERF`.
+
+        If not specified, defaults to `ERROR`, `INFO`, `PERF`.
+
+    - names:
+        - queryObjectLogGroup
+      description: CloudWatch Logs log group for query event logging
+      type: string
+      required: false
+      category: advanced
+      doc: |
+        Specifies the CloudWatch Logs log group name for logging query lifecycle events.
+        The log group must be pre-created (e.g. by Terraform). If not specified or empty,
+        query event logging is disabled.

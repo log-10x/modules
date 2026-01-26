@@ -1,0 +1,76 @@
+# 🔟❎ 'run' Filebeat output module stream
+
+# This Configuration defines the output stream with which to write encoded/filtered
+# TenXObjects back to a Filebeat forwarder via a Unix domain socket.
+
+# Set the 10x pipeline to 'run'
+tenx: run
+
+# =============================== Dependencies ================================
+
+# Parse config vars from 'tenx.yml':
+include:
+
+  # Load the Unix domain socket path 'rawOutputUnixSocketAddress' variable from the 'path' value in 'tenx.yml'.
+  # This socket writes JSON-encoded TenXObject values into the Filebeat pipeline
+  - source: '$="run/modules/input/forwarder/filebeat/" + (TenXEnv.get("filebeatEncodeObjects") ? "optimize" : "regulate") + (TenXString.includes(TenXEnv.get("os.name"), "Windows") ? "/tenxWin.yml" : "/tenxNix.yml")'
+    options:
+      path: rawOutputUnixSocketAddress
+
+  # Load the Unix domain socket appender configuration
+  - run/modules/output/event/unix
+
+# ============================= Output Options ================================
+
+# Customize how events are written back to Filebeat via a Unix domain socket
+outputUnixSocket:
+
+  # regulate encoder - outputs filtered events
+  - writeObjects: /$=!TenXEnv.get("filebeatEncodeObjects")
+
+    filter: extractorKey == "message"
+
+    # Sets Unix domain socket address from the value read from tenxNix.yml/tenxWin.yml (see above)
+    address: $=rawOutputUnixSocketAddress
+
+    # Send the entire received JSON back
+    fields:
+      - fullText
+      - $?filebeatOutputFields
+    encodeType: $?filebeatOutputEncodeType
+    encodeDelimiter: ","
+
+    # When grouping events and emitting back to Filebeat, escape the line break to ensure a valid JSON
+    encodeGroupDelimiter: "\\n"
+
+  # optimize encoder - outputs encoded events
+  - writeObjects: /$=TenXEnv.get("filebeatEncodeObjects")
+
+    filter: extractorKey == "message"
+
+    # Sets Unix domain socket address from the value read from tenxNix.yml/tenxWin.yml (see above)
+    address: $=rawOutputUnixSocketAddress
+
+    # Send the entire received JSON back, with the message encoded.
+    fields:
+      - encoded=encode()
+      - $?filebeatOutputFields
+    encodeType: $?filebeatOutputEncodeType
+    encodeDelimiter: ","
+
+    # When grouping events and emitting back to Filebeat, escape the line break to ensure a valid JSON
+    encodeGroupDelimiter: "\\n"
+
+  # optimize template encoder - outputs all new templates.
+  - writeObjects: /$=TenXEnv.get("filebeatEncodeObjects")
+
+    filter: (extractorKey == "message") && isNewTemplate()
+
+    # Sets Unix domain socket address from the value read from tenxNix.yml/tenxWin.yml (see above)
+    address: $=rawOutputUnixSocketAddress
+
+    # Send custom TenXTemplate JSON, with duplicated templateHash field as 'templateHashDocId'.
+    # This is because Filebeat 'decode_json_fields' will use that to set the correct
+    # Document Id for ES indexing while also removing it from the JSON.
+    # See: https://www.elastic.co/guide/en/beats/filebeat/current/decode-json-fields.html
+    fields: customTemplate=stringify("templateHashDocId", templateHash, "templateHash", templateHash, "template", template)

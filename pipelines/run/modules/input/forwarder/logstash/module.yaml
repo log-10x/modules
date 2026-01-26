@@ -1,0 +1,34 @@
+#
+# 🔟❎ 'run' Logstash input module
+
+module:
+
+  name: logstash
+
+  title: Logstash input
+
+  description: report, regulate, and optimize events collected by Logstash forwarders
+
+  # 'configFolder' specifies a folder containing default configuration files for the settings defined by this unit/module
+  configFolder: run/input/forwarder/logstash
+
+  moduleSort: [logstashReport,logstashRegulate,logstashOptimize]
+
+  # 'doc' specifies the markdown doc content, only required when generating docs.
+  doc: +include $=TenXEnv.get("docGenerate") ? "run/modules/input/forwarder/logstash/doc.md":""
+
+  # 'allowMultiple' is disabled for this module
+  allowMultiple: false
+
+  # 'options' defines configuration values for the Logstash input
+  options:
+
+    - names:
+      - logstashMessageField
+      description: message field name
+      type: String
+      required: false
+      doc: |
+        Name of the actual message field in the event JSON emitted from Logstash into the Log10x pipeline.
+        Common values are 'message' (default) or 'log'.
+      defValue: message

@@ -10,7 +10,7 @@ Run the dev app on your log files locally to preview how edge and cloud apps wil
 ???+ tenx-bootstrap "Step 1: Install"
 
     - :simple-linux: [Single line script](https://doc.log10x.com/install/singleline/ "curl https://raw.githubusercontent.com/log-10x/pipeline-releases/main/install.sh | bash"){data-copy="curl https://raw.githubusercontent.com/log-10x/pipeline-releases/main/install.sh | bash"} | [DEB](https://doc.log10x.com/install/linux/#ubuntu-debian) | [RPM](https://doc.log10x.com/install/linux/#red-hat-centos-7)
-    - :simple-macos: [Homebrew](https://doc.log10x.com/install/macos/ "brew install --cask log-10x/tap/log10x"){data-copy="brew install --cask log-10x/tap/log10x"}
+    - :simple-macos: [Homebrew](https://doc.log10x.com/install/macos/ "brew install log-10x/tap/log10x"){data-copy="brew install log-10x/tap/log10x"}
     - :material-microsoft-windows: [PowerShell script](https://doc.log10x.com/install/win/)
     - :simple-docker: [Docker image](https://doc.log10x.com/install/docker/)
 

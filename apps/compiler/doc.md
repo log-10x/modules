@@ -14,7 +14,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
     Install the `Cloud` binary flavor:
 
     - :simple-linux: [Single line script](https://doc.log10x.com/install/singleline/ "curl https://raw.githubusercontent.com/log-10x/pipeline-releases/main/install.sh | bash"){data-copy="curl https://raw.githubusercontent.com/log-10x/pipeline-releases/main/install.sh | bash"} | [DEB](https://doc.log10x.com/install/linux/#ubuntu-debian) | [RPM](https://doc.log10x.com/install/linux/#red-hat-centos-7)
-    - :simple-macos: [Homebrew](https://doc.log10x.com/install/macos/ "brew install --cask log-10x/tap/log10x"){data-copy="brew install --cask log-10x/tap/log10x"}
+    - :simple-macos: [Homebrew](https://doc.log10x.com/install/macos/ "brew install --cask log-10x/tap/log10x-cloud"){data-copy="brew install --cask log-10x/tap/log10x-cloud"}
     - :material-microsoft-windows: [PowerShell script](https://doc.log10x.com/install/win/)
     - :simple-docker: [Docker image](https://doc.log10x.com/install/docker/)
 

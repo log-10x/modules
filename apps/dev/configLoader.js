@@ -1,6 +1,6 @@
 // @loader: tenx
 
-import {TenXUnit, TenXEnv, TenXConsole} from '@tenx/tenx'
+import {TenXUnit, TenXEnv, TenXConsole, TenXCounter} from '@tenx/tenx'
 
 export class ConfigLoadUnit extends TenXUnit {
 
@@ -12,13 +12,9 @@ export class ConfigLoadUnit extends TenXUnit {
     constructor() {
         TenXConsole.log("🚀 Launching 10x Engine: Dev app (local development & testing environment)");
 
-        TenXConsole.log("💰 Preview savings after processing: python3 " + TenXEnv.get("TENX_MODULES") +
-            "/apps/dev/extract_for_web.py " + TenXEnv.get("TENX_CONFIG") + "/data/sample/output --local");
     }
 
     close() {
-        TenXConsole.log("💰 Savings processing complete. View by running: python3 " + TenXEnv.get("TENX_MODULES") +
-            "/apps/dev/extract_for_web.py " + TenXEnv.get("TENX_CONFIG") + "/data/sample/output --local");
 
         if (!TenXEnv.get("TENX_API_KEY")) {
             TenXConsole.log("");

@@ -55,7 +55,7 @@ See which event types drive 80% of your analytics platform cost.
 
 Agentless — samples Splunk, Elasticsearch, Datadog, or CloudWatch via REST API.
 
-[Overview](https://doc.log10x.com/apps/cloud/reporter){ .md-button .md-button--primary } · [Architecture](https://doc.log10x.com/apps/cloud/reporter/#architecture) · [FAQ](https://doc.log10x.com/apps/cloud/reporter/faq/) · [Live Demo :octicons-link-external-16:](https://console.log10x.com?demo=true&step=5&apps=reporter,regulator,optimizer,streamer&timeframe=month&volume=20&cost=2.50)
+[Overview](https://doc.log10x.com/apps/cloud/reporter){ .md-button .md-button--primary } · [Architecture](https://doc.log10x.com/apps/cloud/reporter/#architecture) · [FAQ](https://doc.log10x.com/apps/cloud/reporter/faq/) · [Live Demo :octicons-link-external-16:](https://console.log10x.com?demo=true&step=5&apps=reporter,regulator,optimizer,streamer&timeframe=year&volume=20&cost=2.50)
 
 ___
 
@@ -65,7 +65,7 @@ Identify which event types account for the most volume and cost before events sh
 
 Runs as a sidecar alongside Fluentd, Fluent Bit, Filebeat, or OTel.
 
-[Overview](https://doc.log10x.com/apps/edge/reporter){ .md-button .md-button--primary } · [Architecture](https://doc.log10x.com/apps/edge/reporter/#architecture) · [FAQ](https://doc.log10x.com/apps/edge/reporter/faq/) · [Live Demo :octicons-link-external-16:](https://console.log10x.com?demo=true&step=3&apps=reporter-edge,regulator,optimizer&timeframe=month&volume=20&cost=2.50&highlight=reporter)
+[Overview](https://doc.log10x.com/apps/edge/reporter){ .md-button .md-button--primary } · [Architecture](https://doc.log10x.com/apps/edge/reporter/#architecture) · [FAQ](https://doc.log10x.com/apps/edge/reporter/faq/) · [Live Demo :octicons-link-external-16:](https://console.log10x.com?demo=true&step=3&apps=reporter-edge,regulator,optimizer&timeframe=year&volume=20&cost=2.50&highlight=reporter)
 
 ___
 
@@ -73,7 +73,7 @@ ___
 
 Budget policies drop noisy events before they reach your analytics platform — up to 80% reduction.
 
-[Overview](https://doc.log10x.com/apps/edge/regulator){ .md-button .md-button--primary } · [Architecture](https://doc.log10x.com/apps/edge/regulator/#architecture) · [FAQ](https://doc.log10x.com/apps/edge/regulator/faq/) · [Live Demo :octicons-link-external-16:](https://console.log10x.com?demo=true&step=3&apps=reporter-edge,regulator,optimizer&timeframe=month&volume=20&cost=2.50&highlight=regulator)
+[Overview](https://doc.log10x.com/apps/edge/regulator){ .md-button .md-button--primary } · [Architecture](https://doc.log10x.com/apps/edge/regulator/#architecture) · [FAQ](https://doc.log10x.com/apps/edge/regulator/faq/) · [Live Demo :octicons-link-external-16:](https://console.log10x.com?demo=true&step=3&apps=reporter-edge,regulator,optimizer&timeframe=year&volume=20&cost=2.50&highlight=regulator)
 
 ___
 
@@ -81,7 +81,7 @@ ___
 
 Losslessly compact events 50-80% before shipping (64% on K8s OTel logs). No changes to existing dashboards or queries.
 
-[Overview](https://doc.log10x.com/apps/edge/optimizer){ .md-button .md-button--primary } · [Architecture](https://doc.log10x.com/apps/edge/optimizer/#architecture) · [FAQ](https://doc.log10x.com/apps/edge/optimizer/faq/) · [Live Demo :octicons-link-external-16:](https://console.log10x.com?demo=true&step=3&apps=reporter-edge,regulator,optimizer&timeframe=month&volume=20&cost=2.50&highlight=optimizer)
+[Overview](https://doc.log10x.com/apps/edge/optimizer){ .md-button .md-button--primary } · [Architecture](https://doc.log10x.com/apps/edge/optimizer/#architecture) · [FAQ](https://doc.log10x.com/apps/edge/optimizer/faq/) · [Live Demo :octicons-link-external-16:](https://console.log10x.com?demo=true&step=3&apps=reporter-edge,regulator,optimizer&timeframe=year&volume=20&cost=2.50&highlight=optimizer)
 
 ___
 
@@ -89,7 +89,7 @@ ___
 
 Keep all events in S3 at ~$0.023/GB instead of paying analytics platform ingestion rates. Stream only what you need to your analytics platform on-demand — 70-80% lower analytics cost.
 
-[Overview](https://doc.log10x.com/apps/cloud/streamer){ .md-button .md-button--primary } · [Architecture](https://doc.log10x.com/apps/cloud/streamer/#architecture) · [FAQ](https://doc.log10x.com/apps/cloud/streamer/faq/) · [Live Demo :octicons-link-external-16:](https://console.log10x.com?demo=true&step=4&apps=reporter,regulator,optimizer,streamer&timeframe=month&volume=20&cost=2.50)
+[Overview](https://doc.log10x.com/apps/cloud/streamer){ .md-button .md-button--primary } · [Architecture](https://doc.log10x.com/apps/cloud/streamer/#architecture) · [FAQ](https://doc.log10x.com/apps/cloud/streamer/faq/) · [Live Demo :octicons-link-external-16:](https://console.log10x.com?demo=true&step=4&apps=reporter,regulator,optimizer,streamer&timeframe=year&volume=20&cost=2.50)
 
 ___
 

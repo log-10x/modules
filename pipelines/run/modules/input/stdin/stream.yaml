@@ -20,7 +20,7 @@ input:
     path: stdin
 
     # 'enabled' specifies wither the input is open
-    enabled: $?stdinEnabled=true
+    enabled: $=yield (TenXEnv.get("stdinEnabled")=="true") || (TenXEnv.get("stdinEnabled") == "-")
  
     # 'printProgress' is false to turn off printing to stdout
     printProgress: false

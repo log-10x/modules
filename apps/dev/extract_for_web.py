@@ -143,6 +143,144 @@ def count_templates(templates_path: Path) -> int:
     return count
 
 
+def extract_volume_reduction_samples(
+    templates_path: Path,
+    encoded_path: Path,
+    num_templates: int = 10,
+    events_per_template: int = 10,
+    prefix: str = '~',
+    delimiter: str = ',',
+) -> Optional[dict]:
+    """
+    Extract high-impact templates and matching encoded events for the
+    volume reduction proof dialog.
+
+    Selects templates that best demonstrate volume reduction: long templates
+    with many matching events (sorted by length * event_count).
+
+    Returns dict with 'templates' (JSONL string) and 'encoded' (newline-
+    separated encoded events), or None if files are missing.
+    """
+    if not templates_path.exists() or not encoded_path.exists():
+        return None
+
+    # 1. Load all templates, index by hash
+    templates_by_hash = {}  # hash -> (length, json_line)
+    with open(templates_path, 'r') as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                t = json.loads(line)
+                h = t['templateHash']
+                tpl_body = t.get('template', '')
+                templates_by_hash[h] = (len(tpl_body), line)
+            except (json.JSONDecodeError, KeyError):
+                continue
+
+    if not templates_by_hash:
+        return None
+
+    # 2. Single pass: count events and accumulate encoded sizes per hash
+    event_counts = defaultdict(int)
+    enc_sizes = defaultdict(int)
+    with open(encoded_path, 'r') as f:
+        for line in f:
+            line = line.rstrip('\n')
+            if not line:
+                continue
+            working = line
+            if prefix and working.startswith(prefix):
+                working = working[len(prefix):]
+            delim_pos = working.find(delimiter)
+            h = working[:delim_pos] if delim_pos != -1 else working
+            if h in templates_by_hash:
+                event_counts[h] += 1
+                enc_sizes[h] += len(line)
+
+    # 3. Score by reduction ratio (raw size / compact size), weighted by frequency.
+    #    Pick templates that look impressive AND are common.
+    candidates = []
+    for h, (tpl_len, json_line) in templates_by_hash.items():
+        count = event_counts.get(h, 0)
+        if count < 2:
+            continue
+        avg_enc = enc_sizes[h] / count
+        ratio = tpl_len / avg_enc if avg_enc > 0 else 0
+        candidates.append((ratio, count, tpl_len, h, json_line))
+
+    if not candidates:
+        return None
+
+    # Select: prefer ratio >= 2.0, sorted by ratio * count (impressive + frequent)
+    good = [c for c in candidates if c[0] >= 2.0]
+    if len(good) < num_templates:
+        ok = [c for c in candidates if c[0] >= 1.5 and c[0] < 2.0]
+        ok.sort(key=lambda c: c[0] * c[1], reverse=True)
+        good.extend(ok)
+    if len(good) < num_templates:
+        rest = [c for c in candidates if c[0] < 1.5]
+        rest.sort(key=lambda c: c[2] * c[1], reverse=True)
+        good.extend(rest)
+
+    good.sort(key=lambda c: c[0] * c[1], reverse=True)
+    selected = good[:num_templates]
+    target_hashes = {item[3] for item in selected}
+
+    # 4. Scan encoded.log for matching events
+    events_by_hash = defaultdict(list)
+    needed = {h: events_per_template for h in target_hashes}
+
+    with open(encoded_path, 'r') as f:
+        for line in f:
+            line = line.rstrip('\n')
+            if not line:
+                continue
+
+            working = line
+            if prefix and working.startswith(prefix):
+                working = working[len(prefix):]
+
+            delim_pos = working.find(delimiter)
+            h = working[:delim_pos] if delim_pos != -1 else working
+
+            if h in needed and needed[h] > 0:
+                events_by_hash[h].append(line)
+                needed[h] -= 1
+
+                if all(v <= 0 for v in needed.values()):
+                    break
+
+    # 5. Build output: templates (JSONL) and matching encoded events
+    template_lines = []
+    encoded_lines = []
+    total_orig_volume = 0
+    total_enc_volume = 0
+    total_event_count = 0
+
+    for ratio, count, tpl_len, h, tpl_json_line in selected:
+        events = events_by_hash.get(h, [])
+        if not events:
+            continue
+        template_lines.append(tpl_json_line)
+        encoded_lines.extend(events)
+        total_orig_volume += tpl_len * count
+        total_enc_volume += enc_sizes.get(h, 0)
+        total_event_count += count
+
+    if not encoded_lines:
+        return None
+
+    return {
+        'templates': '\n'.join(template_lines),
+        'encoded': '\n'.join(encoded_lines),
+        'events': total_event_count,
+        'origBytes': total_orig_volume,
+        'encBytes': total_enc_volume,
+    }
+
+
 def get_file_size(path: Path) -> int:
     """Get file size in bytes, return 0 if not exists."""
     return path.stat().st_size if path.exists() else 0
@@ -289,6 +427,14 @@ def extract_compact_data(base_path: Path, daily_gb: Optional[float] = None) -> T
     if daily_gb:
         data['dgb'] = daily_gb
 
+    # Extract volume reduction samples (longest templates + matching events)
+    vr = extract_volume_reduction_samples(
+        templates_path, output_dir / 'encoded.log',
+        num_templates=10, events_per_template=1,
+    )
+    if vr:
+        data['vr'] = vr
+
     return data, is_decode_mode, decoded_bytes
 
 
@@ -411,6 +557,12 @@ def main():
     if data['top']:
         top = data['top'][0]
         print(f"  Top pattern:     {top['m'][:40]}... ({top['p']}%)")
+
+    # Show volume reduction samples
+    if data.get('vr'):
+        vr_tpl = len(data['vr']['templates'].split('\n'))
+        vr_enc = len(data['vr']['encoded'].split('\n'))
+        print(f"  VR samples:      {vr_tpl} templates, {vr_enc} encoded events")
 
     # Show detected enrichments
     if data.get('dist'):

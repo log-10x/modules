@@ -26,8 +26,9 @@ module:
 
     - names:
       - stdinEnabled
+      - -in
       description: enable/disable stdin input
-      type: boolean
+      type: string
       required: false
       doc: |
         specifies whether to read event data from the stdin pipe

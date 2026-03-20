@@ -36,6 +36,7 @@ module:
 
     - names:
       - inputFilePath
+      - -f
       description: a file path or glob pattern to read from
       type: file
       required: false

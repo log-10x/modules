@@ -12,5 +12,7 @@ runtimeAttributes:
   - env:local
 
 include:
+  - run/modules/input/stdin
+  - run/modules/input/file
   - apps/shared
   - run/aggregate/dev    # https://doc.log10x.com/run/aggregate/#dev

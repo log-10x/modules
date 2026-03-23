@@ -1,0 +1,83 @@
+# 🔟❎ 'run' dev analysis output stream settings
+
+# The 'devOutput' module configures an output stream that accumulates
+# TenXObject summaries, templates and encoded events in memory, then
+# on close produces a compact JSON payload with a shareable console URL.
+#
+# Two output entries (summary, event) share a single DevOutputStream
+# instance via the 'group' mechanism. Each uses a JSON 'type' field
+# (S, E) to tag the data type.
+
+# Set the 10x pipeline to 'run'
+tenx: run
+
+# =============================== Dependencies ================================
+
+include: run/modules/output/event/dev/module.yaml
+
+# ============================= Output Options ================================
+
+output:
+
+    # ----------------------------- Summary Output --------------------------------
+
+    # Writes aggregated TenXSummaries with enrichment fields
+  - type: stream
+
+    enabled: $?devOutputEnabled=true
+
+    name: devOutput
+
+    # 'path' defines the class to instantiate
+    path: com.log10x.ext.edge.output.dev.DevOutputStream
+
+    foreach: devOutput
+
+    # 'filter' selects only TenXSummary instances (aggregated results)
+    filter: isSummary
+
+    # 'group' ensures both outputs (summary, event) write
+    #  to the same DevOutputStream instance
+    group:
+      - "*"
+
+    encodeType: json
+
+    # 'fields' outputs enrichment fields plus summary totals as JSON.
+    #  The constant 'type' field tags each line for parsing in DevOutputStream.
+    fields:
+      - type="S"
+      - $=yield TenXEnv.get("enrichmentFields")
+      - summaryVolume
+      - summaryBytes
+
+    # ----------------------------- Event Output ----------------------------------
+
+    # Writes TenXObject/encoded events with template hash, template body and
+    #  encoded form for compression stats and volume reduction samples.
+    #  Templates loaded from disk are not re-emitted through the pipeline,
+    #  so we extract templateHash + template from each object as it flows through.
+  - type: stream
+
+    enabled: $?devOutputEnabled=true
+
+    foreach: devOutput
+
+    name: devOutput
+
+    path: com.log10x.ext.edge.output.dev.DevOutputStream
+
+    # Same group key ensures shared instance
+    group:
+      - "*"
+
+    # 'filter' selects TenXObject and encoded instances
+    filter: $?devOutputFilter=isObject || isEncoded
+
+    encodeType: json
+
+    fields:
+      - type="E"
+      - templateHash
+      - template
+      - encoded=encode()

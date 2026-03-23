@@ -87,7 +87,7 @@ Run the dev app on your log files locally to preview how edge and cloud apps wil
           -v $TENX_CONFIG:/etc/tenx/config/ \
           -e TENX_CONFIG=/etc/tenx/config/ \
           -e TENX_API_KEY=${TENX_API_KEY} \
-          ghcr.io/log-10x/pipeline-10x:latest \
+          log10x/pipeline-10x:latest \
           @apps/dev
         ```
 
@@ -102,7 +102,7 @@ Run the dev app on your log files locally to preview how edge and cloud apps wil
         ```bash
         docker run --rm \
           -e TENX_API_KEY=${TENX_API_KEY} \
-          ghcr.io/log-10x/pipeline-10x:latest \
+          log10x/pipeline-10x:latest \
           '@github={"token": "<gh-token>", "repo": "my-user/my-repo"}' \
           @apps/dev
         ```
@@ -111,16 +111,11 @@ Run the dev app on your log files locally to preview how edge and cloud apps wil
 
 ???+ tenx-preview "Step 7: Preview Savings"
 
-    Generate a shareable link to visualize your results in the [Log10x Console](https://console.log10x.com):
+    When the pipeline completes, the [Dev Output](https://doc.log10x.com/run/output/event/dev/) module automatically generates a console URL and opens it in your browser — cost per event type, ROI projections, and top patterns by volume.
 
-    ```bash
-    python $TENX_MODULES/apps/dev/extract_for_web.py \
-      $TENX_CONFIG/data/sample/output --open
-    ```
+    To disable auto-open, set `openBrowser: false` in `$TENX_CONFIG/run/output/event/dev/config.yaml`. The URL is always printed to console.
 
-    The script generates a console URL and opens it in your browser — cost per event type, ROI projections, and top patterns by volume.
-
-    For privacy, use `--local` instead of `--open` — all processing stays on your machine, no data sent externally. Run with `--help` for all options.
+    For privacy, set `localOnly: true` — all processing stays on your machine, no data sent externally.
 
 ??? tenx-top10-events "Step 8: Analyze Output (Optional)"
 

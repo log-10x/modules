@@ -118,8 +118,8 @@ Transform capabilities are illustrated below for the following k8s log event ([:
         "container_name": "fluentd-10x",
         "namespace_name": "default",
         "pod_name": "foo-fluentd-10x-68s2p",
-        "container_image": "ghcr.io/log-10x/fluentd-10x:0.22.0-jit",
-        "container_image_id": "ghcr.io/log-10x/fluentd-10x@sha256:b5263a6bef925f47c1f43ee06bb46674461da74059bd99a773e5cef1a4e4f8f8",
+        "container_image": "log10x/fluentd-10x:0.22.0-jit",
+        "container_image_id": "log10x/fluentd-10x@sha256:b5263a6bef925f47c1f43ee06bb46674461da74059bd99a773e5cef1a4e4f8f8",
         "pod_id": "5a9cc9c8-3a71-41af-bffe-0a0914253361",
         "pod_ip": "192.168.33.78",
         "host": "ip-192-168-57-207.ec2.internal",
@@ -314,7 +314,7 @@ This approach mirrors [Protocol Buffers](https://blog.calvinsd.in/data-serializa
     In its original form each instance of the event type below will repeat low-cardinality values (e.g., `Error syncing pod`, `CrashLoopBackOff`) as well as structured patterns potentially millions of times at scale.
     
     ``` json
-    {"stream":"stdout","log":"E0925 14:32:45.678901 12345 pod_workers.go:836] Error syncing pod abc123-4567-890 (UID: def456-7890-1234-5678), skipping: failed to \"StartContainer\" for \"web\" with CrashLoopBackOff: \"back-off 5m0s restarting failed container=web pod=web-app_production(abc123-4567-890) in namespace=default, reason: high memory pressure on node worker-3.us-west-2 with current usage 89.45% (threshold: 80%), affected resources include disk I/O at 1200 ops/sec and network traffic of 4.56GB from source IP 192.168.5.42\"","docker":{"container_id":"a7ce4c736be5beb8ef0859791b3c77de7bcce8bfc307e017c2fb7bcfa29ccde7"},"kubernetes":{"container_name":"fluentd-10x","namespace_name":"default","pod_name":"foo-fluentd-10x-68s2p","container_image":"ghcr.io/log-10x/fluentd-10x:0.22.0-jit","container_image_id":"ghcr.io/log-10x/fluentd-10x@sha256:b5263a6bef925f47c1f43ee06bb46674461da74059bd99a773e5cef1a4e4f8f8","pod_id":"5a9cc9c8-3a71-41af-bffe-0a0914253361","pod_ip":"192.168.33.78","host":"ip-192-168-57-207.ec2.internal","labels":{"app.kubernetes.io/instance":"foo","app.kubernetes.io/name":"fluentd-10x","controller-revision-hash":"f4789b8fd","pod-template-generation":"1"}},"tenx_tag":"kubernetes.var.log.containers.foo-fluentd-10x-68s2p_default_fluentd-10x-a7ce4c736be5beb8ef0859791b3c77de7bcce8bfc307e017c2fb7bcfa29ccde7.log"}
+    {"stream":"stdout","log":"E0925 14:32:45.678901 12345 pod_workers.go:836] Error syncing pod abc123-4567-890 (UID: def456-7890-1234-5678), skipping: failed to \"StartContainer\" for \"web\" with CrashLoopBackOff: \"back-off 5m0s restarting failed container=web pod=web-app_production(abc123-4567-890) in namespace=default, reason: high memory pressure on node worker-3.us-west-2 with current usage 89.45% (threshold: 80%), affected resources include disk I/O at 1200 ops/sec and network traffic of 4.56GB from source IP 192.168.5.42\"","docker":{"container_id":"a7ce4c736be5beb8ef0859791b3c77de7bcce8bfc307e017c2fb7bcfa29ccde7"},"kubernetes":{"container_name":"fluentd-10x","namespace_name":"default","pod_name":"foo-fluentd-10x-68s2p","container_image":"log10x/fluentd-10x:0.22.0-jit","container_image_id":"log10x/fluentd-10x@sha256:b5263a6bef925f47c1f43ee06bb46674461da74059bd99a773e5cef1a4e4f8f8","pod_id":"5a9cc9c8-3a71-41af-bffe-0a0914253361","pod_ip":"192.168.33.78","host":"ip-192-168-57-207.ec2.internal","labels":{"app.kubernetes.io/instance":"foo","app.kubernetes.io/name":"fluentd-10x","controller-revision-hash":"f4789b8fd","pod-template-generation":"1"}},"tenx_tag":"kubernetes.var.log.containers.foo-fluentd-10x-68s2p_default_fluentd-10x-a7ce4c736be5beb8ef0859791b3c77de7bcce8bfc307e017c2fb7bcfa29ccde7.log"}
     ```
 
 === ":material-check: Compact"

@@ -30,6 +30,7 @@ app:
 
     event Outputs+file: run/output/event/file
     event Outputs+stdout: run/output/event/stdout
+    event Outputs+dev: run/output/event/dev
 
   advancedConfigFolders:
 

@@ -1,0 +1,130 @@
+#
+# 🔟❎ 'run' dev analysis output module
+#
+
+module:
+
+  name: devOutput
+
+  title: Dev output
+
+  description: generate a shareable console URL from dev app analysis results
+
+  # 'configFolder' specifies a folder containing default configuration files for the settings defined by this unit/module
+  configFolder: run/output/event/dev
+
+  # 'doc' specifies the markdown doc content, only required when generating docs.
+  doc: +include $=TenXEnv.get("docGenerate") ? "run/modules/output/event/dev/doc.md":""
+
+  # 'allowMultiple' is enabled for this module. Pipeline command line arguments and configuration files
+  #  can specify multiple groupings of the options defined below.
+  allowMultiple: true
+
+  # 'options' defines a group of named/typed configuration values to pass to a unit/module at startup
+  #  via command line arguments (e.g., '> tenx -myA X -myB Y') or YAML launch files (e.g., '> tenx @my.config').
+  #  Instances of this group passed are accessible at runtime via TenXEnv.get: https://doc.log10x.com/api/js/#TenXEnv.get
+  options:
+
+    - names:
+        - devOutputEnabled
+      description: enable/disable dev output
+      type: boolean
+      required: false
+      category: dev
+      defValue: true
+      doc: |
+        controls whether to generate a shareable console URL from the analysis results.
+
+    - names:
+        - devOutputBaseUrl
+      description: base URL of the console viewer
+      type: string
+      required: false
+      category: dev
+      defValue: https://console.log10x.com
+      doc: |
+        specifies the base URL of the Log10x Console used to view results.
+
+    - names:
+        - devOutputOpenBrowser
+      description: auto-open results in browser
+      type: boolean
+      required: false
+      category: dev
+      defValue: false
+      doc: |
+        if true, automatically opens the generated console URL in the default browser when the pipeline completes.
+
+    - names:
+        - devOutputLocalOnly
+      description: local-only mode, output JSON without generating a URL
+      type: boolean
+      required: false
+      category: dev
+      defValue: false
+      doc: |
+        if true, outputs the analysis JSON to the console without generating or opening a URL.
+        Use this for privacy when you prefer not to generate an external URL.
+
+    - names:
+        - devOutputFilePath
+      description: file path to write JSON output
+      type: file
+      required: false
+      category: dev
+      doc: |
+        specifies a path on disk to write the analysis JSON.
+        If not specified, the JSON is only printed to console (in local mode) or encoded into the URL.
+
+    - names:
+        - devOutputSourceName
+      description: display name of the input log source
+      type: string
+      required: false
+      category: dev
+      defValue: your logs
+      doc: |
+        specifies the display name of the input log source shown in the console viewer.
+
+    - names:
+        - devOutputDailyGb
+      description: estimated daily log volume in GB for ROI projections
+      type: number
+      required: false
+      category: dev
+      defValue: 100
+      doc: |
+        specifies an estimated daily log volume in gigabytes.
+        The console viewer uses this value to project cost savings and ROI.
+        Adjust to match your environment's actual daily log volume.
+
+    - names:
+        - devOutputTopPatterns
+      description: number of top patterns to include by bytes
+      type: number
+      required: false
+      category: advanced
+      defValue: 10
+      doc: |
+        sets the number of top log patterns (by bytes) to include in the output.
+
+    - names:
+        - devOutputVrTemplates
+      description: number of templates to include in volume reduction samples
+      type: number
+      required: false
+      category: advanced
+      defValue: 10
+      doc: |
+        sets the number of template samples to include for the volume reduction proof dialog in the console viewer.
+        Templates are selected by reduction ratio (compact size vs original size) weighted by frequency.
+
+    - names:
+        - devOutputVrEventsPerTemplate
+      description: number of encoded events per template in volume reduction samples
+      type: number
+      required: false
+      category: advanced
+      defValue: 1
+      doc: |
+        sets the number of encoded event samples to include per template for the volume reduction proof dialog.

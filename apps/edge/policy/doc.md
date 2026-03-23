@@ -82,7 +82,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
           -e TENX_CONFIG=/etc/tenx/config/ \
           -e TENX_API_KEY=${TENX_API_KEY} \
           -e GH_TOKEN=${GH_TOKEN} \
-          ghcr.io/log-10x/pipeline-10x:latest \
+          log10x/pipeline-10x:latest \
           @apps/edge/policy
         ```
 
@@ -94,7 +94,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
         docker run --rm \
           -e TENX_API_KEY=${TENX_API_KEY} \
           -e GH_TOKEN=${GH_TOKEN} \
-          ghcr.io/log-10x/pipeline-10x:latest \
+          log10x/pipeline-10x:latest \
           '@github={"token": "${GH_TOKEN}", "repo": "my-user/my-repo"}' \
           @apps/edge/policy
         ```

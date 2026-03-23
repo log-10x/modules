@@ -87,7 +87,7 @@ Run the dev app on your log files locally to preview how edge and cloud apps wil
           -v $TENX_CONFIG:/etc/tenx/config/ \
           -e TENX_CONFIG=/etc/tenx/config/ \
           -e TENX_API_KEY=${TENX_API_KEY} \
-          ghcr.io/log-10x/pipeline-10x:latest \
+          log10x/pipeline-10x:latest \
           @apps/dev
         ```
 
@@ -102,7 +102,7 @@ Run the dev app on your log files locally to preview how edge and cloud apps wil
         ```bash
         docker run --rm \
           -e TENX_API_KEY=${TENX_API_KEY} \
-          ghcr.io/log-10x/pipeline-10x:latest \
+          log10x/pipeline-10x:latest \
           '@github={"token": "<gh-token>", "repo": "my-user/my-repo"}' \
           @apps/dev
         ```

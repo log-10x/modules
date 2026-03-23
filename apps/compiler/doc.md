@@ -113,7 +113,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
           -e GH_TOKEN=${GH_TOKEN} \
           -e DOCKER_USERNAME=${DOCKER_USERNAME} \
           -e DOCKER_TOKEN=${DOCKER_TOKEN} \
-          ghcr.io/log-10x/pipeline-10x:latest \
+          log10x/pipeline-10x:latest \
           @apps/compiler
         ```
 
@@ -127,7 +127,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
           -e GH_TOKEN=${GH_TOKEN} \
           -e DOCKER_USERNAME=${DOCKER_USERNAME} \
           -e DOCKER_TOKEN=${DOCKER_TOKEN} \
-          ghcr.io/log-10x/pipeline-10x:latest \
+          log10x/pipeline-10x:latest \
           '@github={"token": "${GH_TOKEN}", "repo": "my-user/my-repo"}' \
           @apps/compiler
         ```

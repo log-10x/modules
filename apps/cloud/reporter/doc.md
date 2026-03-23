@@ -110,7 +110,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
           -e TENX_API_KEY=${TENX_API_KEY} \
           -e SPLUNK_USERNAME=${SPLUNK_USERNAME} \
           -e SPLUNK_PASSWORD=${SPLUNK_PASSWORD} \
-          ghcr.io/log-10x/pipeline-10x:latest \
+          log10x/pipeline-10x:latest \
           @apps/cloud/reporter
         ```
 
@@ -126,7 +126,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
               -e TENX_API_KEY=${TENX_API_KEY} \
               -e SPLUNK_USERNAME=${SPLUNK_USERNAME} \
               -e SPLUNK_PASSWORD=${SPLUNK_PASSWORD} \
-              ghcr.io/log-10x/pipeline-10x:latest \
+              log10x/pipeline-10x:latest \
               @apps/cloud/reporter
             ```
 
@@ -152,7 +152,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
           -e TENX_API_KEY=${TENX_API_KEY} \
           -e SPLUNK_USERNAME=${SPLUNK_USERNAME} \
           -e SPLUNK_PASSWORD=${SPLUNK_PASSWORD} \
-          ghcr.io/log-10x/pipeline-10x:latest \
+          log10x/pipeline-10x:latest \
           '@github={"token": "${GH_TOKEN}", "repo": "my-user/my-repo"}' \
           @apps/cloud/reporter
         ```
@@ -167,7 +167,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
               -e TENX_API_KEY=${TENX_API_KEY} \
               -e SPLUNK_USERNAME=${SPLUNK_USERNAME} \
               -e SPLUNK_PASSWORD=${SPLUNK_PASSWORD} \
-              ghcr.io/log-10x/pipeline-10x:latest \
+              log10x/pipeline-10x:latest \
               '@github={"token": "${GH_TOKEN}", "repo": "my-user/my-repo"}' \
               @apps/cloud/reporter
             ```

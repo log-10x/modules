@@ -12,9 +12,8 @@ export class ForwardInput extends TenXInput {
     constructor() {
 
         if (this.inputName == "forward") {
-            var path = TenXEnv.get("forwardInputPath", "");
-            if (path) {
-                TenXConsole.log("📥 Reading events via Forward protocol on unix://" + path);
+            if (TenXEnv.get("forwardInputPath")) {
+                TenXConsole.log("📥 Reading events via Forward protocol on unix://" + TenXEnv.get("forwardInputPath"));
             } else {
                 TenXConsole.log("📥 Reading events via Forward protocol on tcp://0.0.0.0:" + TenXEnv.get("forwardInputPort"));
             }

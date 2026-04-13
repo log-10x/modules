@@ -29,10 +29,10 @@ input:
     args:
       # TCP port where the forwarder's Forward output sends data (default: 24224)
       - port
-      - $=TenXEnv.get("forwardInputPort", "24224")
+      - $=yield TenXEnv.get("forwardInputPort", "24224")
       # Unix socket path (overrides TCP port when set)
-      - path
-      - $=TenXEnv.get("forwardInputPath", "")
+      - '$=yield TenXEnv.get("forwardInputPath", "") ? "path" : ""'
+      - $=yield TenXEnv.get("forwardInputPath", "")
 
     # Extract the event source from the injected "tag" field
     sourcePattern: $=TenXEnv.get("forwardSourcePattern", "\"tag\":\"(.*?)\"")

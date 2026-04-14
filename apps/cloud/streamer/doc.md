@@ -6,7 +6,7 @@ Test the Storage Streamer locally using [minikube](https://minikube.sigs.k8s.io/
 
 ## :material-clipboard-play-outline: Setup
 
-??? tenx-bootstrap "Step 1: Prerequisites"
+???+ tenx-bootstrap "Step 1: Prerequisites"
 
     | Requirement | Description |
     |-------------|-------------|

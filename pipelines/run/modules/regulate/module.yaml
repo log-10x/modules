@@ -16,6 +16,6 @@ module:
   #  can specify multiple groupings of the options defined below.
   allowMultiple: true
 
-  moduleSort: [rateRegulator,policyInput]
+  moduleSort: [rateRegulator]
 
   join: run/units/output/regulate

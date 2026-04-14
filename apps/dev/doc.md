@@ -156,3 +156,32 @@ Run the dev app on your log files locally to preview how edge and cloud apps wil
         # Compare with original—files match exactly
         diff $TENX_CONFIG/data/sample/output/decoded.log /path/to/original.log
         ```
+
+??? tenx-delete "Step 9: Teardown"
+
+    Nothing runs in the background — uninstall removes only what was installed.
+
+    === ":simple-macos: Homebrew"
+
+        ```bash
+        brew uninstall --cask log10x && rm -rf /etc/tenx
+        ```
+
+    === ":simple-linux: Linux"
+
+        ```bash
+        sudo rm -rf /opt/tenx-edge /etc/tenx /etc/profile.d/tenx-edge.sh
+        ```
+
+        If installed via DEB: `sudo apt-get remove tenx-edge`
+        If installed via RPM: `sudo yum remove tenx-edge`
+
+    === ":material-microsoft-windows: Windows"
+
+        Uninstall from **Settings > Apps > Installed apps**.
+
+    === ":simple-docker: Docker"
+
+        ```bash
+        docker rmi log10x/pipeline-10x:latest
+        ```

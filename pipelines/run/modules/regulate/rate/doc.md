@@ -12,23 +12,34 @@ This approach enables more precise control than regex-based rules which require 
 
 ## :material-filter-multiple-outline: Control Strategies
 
-The rate regulator supports both `Local` and `global` controls which differ in how they track and apply cost-based budgets for event sampling.
+The rate regulator supports two independent strategies for filtering events. They answer different questions and can be run in the same pipeline as layers — mute file as the surgical human-intent layer, per-node budget as the always-on safety net.
 
-=== ":material-check-network-outline: Local Control"
+=== ":material-check-network-outline: Per-Node Budget (Local)"
 
-    Forwarders maintain independent cost counters without cross-node communication, tracking spend per event type (symbolMessage) based on byte volume and configured ingestion costs. Value lies in simple per-service setup, quick processing without network delays, and fault isolation that contains issues to single nodes. 
+    Forwarders maintain independent cost counters without cross-node communication, tracking spend per event type (`symbolMessage`) based on byte volume and configured ingestion costs. Value lies in simple per-service setup, quick processing without network delays, and fault isolation that contains issues to single nodes.
 
-    **Trade-offs** include decisions limited to local data (risking cluster-wide budget overruns), no visibility into cross-service patterns.
+    **Trade-offs** include decisions limited to local data (risking cluster-wide budget overruns) and no visibility into cross-service patterns.
 
-    **Example**: A single application forwarder tracks its own $0.01/min budget, throttling high-cost debug logs based solely on its own traffic, ignoring cluster-wide spending patterns.
+    **Example**: A single application forwarder tracks its own $0.025/min budget, throttling high-cost debug logs probabilistically based solely on its own traffic.
 
-=== ":material-server-network: Global Control"
+    **Activated when** `rateRegulatorLookupFile` is **not** set.
 
-    Forwarders share cost data via [lookup tables](https://doc.log10x.com/run/regulate/policy/) (synchronized through centralized storage like GitHub) for unified budget decisions. Value comes from enforcing organization-wide budgets, detecting cross-service cost patterns, and applying consistent policies everywhere based on cluster-wide spend.
+=== ":material-file-document-edit-outline: Mute File (Declarative)"
 
-    **Trade-offs** involve requiring cluster communication, added setup complexity for coordination, and minor decision latency.
+    A declarative file keyed by the joined `rateRegulatorFieldNames` values (the same key the local regulator uses for its per-node counters) caps specific patterns with an explicit sample rate and expiry. Typically committed to a git repo alongside the pipeline config and pulled via gitops, so each mute has a diff, a reviewer, and an audit trail.
 
-    **Example**: Cluster aggregates spend data showing "api_trace" events cost $0.08/min across all nodes. Global lookup shares this intelligence, allowing all forwarders to throttle this pattern proportionally to stay under budget.
+    **File format**:
+    ```
+    <fieldSet>=<sampleRate>:<untilEpochSec>[:<reason>]
+    ```
+
+    With `rateRegulatorFieldNames: [symbolMessage]` the key is just the `symbolMessage` value (e.g. `Error_syncing_pod`); with `[symbolMessage, container]` it becomes `<symbolMessage>_<container>` (e.g. `heartbeat_debug_frontend`).
+
+    **Trade-offs**: does nothing about unknown patterns or runaway nodes — this is human-declared intent, not adaptive control. Pair with per-node budget mode (in a separate regulator instance) if you need a fallback safety net.
+
+    **Example**: An operator notices the Reporter attributing $12K/month to `Error_syncing_pod`. They append `Error_syncing_pod=0.10:1744848000:pod error spam OPS-4821` to the mute file, open a PR, merge it. All forwarders pulling the file apply the mute on their next reload. The mute self-expires at the epoch, so nobody has to remember to clean it up.
+
+    **Activated when** `rateRegulatorLookupFile` points at a mute file.
 
 ## :material-kubernetes: Multi-App Regulation
 
@@ -79,8 +90,8 @@ The rate regulator executes the following steps:
 ```mermaid
 graph LR
     A["<div style='font-size: 14px;'>📥 Input</div><div style='font-size: 10px; text-align: center;'>TenXObject</div>"] --> B["<div style='font-size: 14px;'>💰 Cost Calc</div><div style='font-size: 10px; text-align: center;'>Bytes × $/GB</div>"]
-    B --> C{"<div style='font-size: 14px;'>🗂️ Global</div><div style='font-size: 10px; text-align: center;'>Has Lookup?</div>"}
-    C -->|Yes| D["<div style='font-size: 14px;'>🌐 Global</div><div style='font-size: 10px; text-align: center;'>Cluster Spend</div>"]
+    B --> C{"<div style='font-size: 14px;'>🗂️ Mute File</div><div style='font-size: 10px; text-align: center;'>Set?</div>"}
+    C -->|Yes| D["<div style='font-size: 14px;'>🔇 Lookup</div><div style='font-size: 10px; text-align: center;'>Field Set</div>"]
     C -->|No| E["<div style='font-size: 14px;'>📈 Local</div><div style='font-size: 10px; text-align: center;'>Node Spend</div>"]
     D --> F["<div style='font-size: 14px;'>⚖️ Budget Check</div><div style='font-size: 10px; text-align: center;'>vs Target Rate</div>"]
     E --> F
@@ -124,8 +135,8 @@ graph LR
 function enlargeThresholdDiagram(button) {
     const thresholdDiagramCode = `graph LR
     A["<div style='font-size: 14px;'>📥 Input</div><div style='font-size: 10px; text-align: center;'>TenXObject</div>"] --> B["<div style='font-size: 14px;'>💰 Cost Calc</div><div style='font-size: 10px; text-align: center;'>Bytes × $/GB</div>"]
-    B --> C{"<div style='font-size: 14px;'>🗂️ Global</div><div style='font-size: 10px; text-align: center;'>Has Lookup?</div>"}
-    C -->|Yes| D["<div style='font-size: 14px;'>🌐 Global</div><div style='font-size: 10px; text-align: center;'>Cluster Spend</div>"]
+    B --> C{"<div style='font-size: 14px;'>🗂️ Mute File</div><div style='font-size: 10px; text-align: center;'>Set?</div>"}
+    C -->|Yes| D["<div style='font-size: 14px;'>🔇 Lookup</div><div style='font-size: 10px; text-align: center;'>Field Set</div>"]
     C -->|No| E["<div style='font-size: 14px;'>📈 Local</div><div style='font-size: 10px; text-align: center;'>Node Spend</div>"]
     D --> F["<div style='font-size: 14px;'>⚖️ Budget Check</div><div style='font-size: 10px; text-align: center;'>vs Target Rate</div>"]
     E --> F
@@ -195,49 +206,39 @@ function enlargeThresholdDiagram(button) {
 
 ---
 
-### **Global Mode (With Lookup): Cluster-Wide Filtering**
+### **Mute File Mode: Declarative Field-Set Caps**
 
-**Scenario:** Same app now across 10 nodes (30 pods total) with cluster-wide policy enforcement. The [policy module](https://doc.log10x.com/run/regulate/policy/) generates a lookup from Prometheus with 6-hour average spend:
+**Scenario:** A platform engineer sees the [Reporter](https://doc.log10x.com/apps/cloud/reporter/) attributing $12K/month to the `Error_syncing_pod` event type. They want to cap it at 10% sample rate for 24 hours while the application team ships a fix. The pipeline is configured with `rateRegulatorFieldNames: [symbolMessage]`, so mute keys are `symbolMessage` values.
 
-**Lookup file contents:**
-```csv
-field_set,cost_per_hour
-Error_syncing_pod,0.60
-Info_user_action,0.50
-Debug_heartbeat,0.40
-_global_cost_total,2.00
+**Mute file contents** (`mutes.csv`, pulled via gitops from a config repo):
+
+```
+Error_syncing_pod=0.10:1744848000:pod error spam OPS-4821
+heartbeat_debug=0.00:1744416000:k8s liveness 200s
+jwt_validated=0.25:1744502400:auth flood after deploy
 ```
 
-**Step-by-step for same [pod error event](https://doc.log10x.com/run/transform/#plain) on one node:**
+**Step-by-step for an incoming pod error event** (INFO level, 1.2KB, `symbolMessage = "Error_syncing_pod"`):
 
-1. **📥 Event Arrives**: Same 1.8KB ERROR event ([raw JSON](https://doc.log10x.com/run/transform/#plain))
+1. **📥 Event Arrives**: Forwarder receives the event and builds the field-set key by joining `rateRegulatorFieldNames` values — here just `Error_syncing_pod`.
 
-2. **💰 Cost Calculated**: `1835 bytes / 1GB × $1.50 = $0.0000028`
+2. **🗂️ Mute File Check**: Look up `Error_syncing_pod` in the mute file → entry found: `0.10:1744848000:...`
 
-3. **📊 Field Set Identified**: `Error_syncing_pod`
+3. **⏰ Expiry Check**: Compare `untilEpochSec = 1744848000` against current time.
+   - If **past expiry**: mute self-heals, event is retained with no further checks.
+   - If **still active**: proceed to the sample-rate decision.
 
-4. **🌐 Lookup Check**: 
-   - Lookup file modified 2 minutes ago (within 5-min retention) → **Fresh**
-   - Fetch cluster-wide data: `Error_syncing_pod` = $0.60/hour, total = $2.00/hour
+4. **🎯 Severity Floor**: This is an INFO event.
+   - `minRetentionThreshold = 0.1`, `levelBoost[INFO] = 1.0` → floor = `0.1`
+   - `retentionThreshold = max(0.10, 0.10) = 0.10`
+   - Had this been an ERROR event, the floor would be `0.1 × 2.0 = 0.20`, raising the retention to `max(0.10, 0.20) = 0.20` — even under a 10% mute, ERRORs stay at 20%.
 
-5. **📈 Track Spend (Global)**: Use cluster-wide spend from lookup
-   - Cluster spend rate: `Error_syncing_pod` = $0.60/hour = $0.01/min, total = $2.00/hour = $0.0333/min
-   - (Local counter still increments for fallback, but decision uses global data)
+5. **🎲 Sample Decision**: `random(0-1) = 0.73 > 0.10` → **🗑️ Event Dropped**
 
-6. **⚖️ Budget Check (Cluster-Wide)**: Is cluster over budget?
-   - Total cluster spend: $0.0333/min vs. per-node target $0.025/min → **Over budget** (33% above)
-   - Scale down globally: `globalScale = 0.025 / 0.0333 = 0.75` (retain 75% cluster-wide)
+**Result:** On average, 10% of `Error_syncing_pod` events are retained for the next 24 hours. Events with any other field-set are unaffected — the mute is surgical. When the engineer ships the fix, the mute expires automatically; no cleanup required.
 
-7. **📊 Event Share Check (Cluster-Wide)**: Is "Error_syncing_pod" dominating cluster?
-   - Cluster share: $0.60 / $2.00 = 30% vs. max 20% → **Over share**
-   - Scale down: `fieldSetRate = 0.2 / 0.3 = 0.67` (retain 67% of "Error_syncing_pod" events)
+**Key Difference from per-node budget mode:**
 
-8. **🎯 Severity Boost**: ERROR level boost = 2.0
-   - `baseRate = 0.75 × 0.67 = 0.50`
-   - `finalRate = 0.50 × 2.0 = 1.0` (clamped to max 1.0) → **100% retention**
-
-9. **🎲 Sample Decision**: `random(0-1) = 0.7 < 1.0` → **✅ Event Kept**
-
-**Result:** Even though the cluster is over budget (133% of target) and "Error_syncing_pod" exceeds 20% share (at 30%), the ERROR boost ensures full retention. All 10 nodes see the same cluster-wide spend data and make consistent decisions. If this were a DEBUG "Debug_heartbeat" event (boost=0.5), final rate would be `0.50 × 0.5 = 0.25` → 75% dropped cluster-wide.
-
-**Key Difference:** Local mode only sees this node's $0.10 total spend (under budget), while global mode sees cluster's $2.00/hour (over budget), enabling coordinated throttling across all nodes.
+- **Scope**: per-node mode throttles *any* pattern that pushes spend over a budget; mute-file mode only touches explicitly declared field-sets and leaves everything else alone.
+- **Authority**: per-node mode makes autonomous probabilistic decisions based on counters; mute-file mode applies human-declared intent reviewed via PR.
+- **Workflow fit**: the mute file is edited by operators (often via an AI assistant like Claude Code using the [Log10x MCP](https://github.com/log-10x/log10x-mcp) + GitHub MCP), committed to git, and pulled into each forwarder's config via gitops. The file is the interface.

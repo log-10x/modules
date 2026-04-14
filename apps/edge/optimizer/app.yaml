@@ -22,7 +22,6 @@ app:
     initializers+geoIP: run/initialize/geoIP
 
     regulators+rate Regulator: run/regulate/rate
-    regulators+policy Regulator: run/regulate/policy
 
     metric Outputs+log10x metrics: run/output/metric/log10x
     metric Outputs+Prometheus: run/output/metric/prometheus/scrape

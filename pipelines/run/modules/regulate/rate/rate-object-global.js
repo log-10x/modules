@@ -1,10 +1,35 @@
 // @loader: tenx
 
-import { TenXObject, TenXEnv, TenXCounter, TenXMap, TenXMath, TenXLog, TenXLookup, TenXConsole, TenXDate } from '@tenx/tenx'
+import { TenXObject, TenXEnv, TenXMap, TenXMath, TenXLog, TenXLookup, TenXConsole, TenXDate, TenXString } from '@tenx/tenx'
+
+// Declarative, field-set keyed mute regulator.
+//
+// Loads a lookup file where each line declares a mute for a specific field-set
+// value. The field-set is the same joined list of fields used by the local
+// regulator (via `rateRegulatorFieldNames`), so mute keys read like
+// `Error_syncing_pod`, `heartbeat_debug_frontend`, `timeout_payment-service`,
+// etc. — the same identity the Reporter attributes cost to.
+//
+// Entry format:
+//
+//     <fieldSet>=<sampleRate>:<untilEpochSec>[:<reason>]
+//
+// Example (with rateRegulatorFieldNames: [symbolMessage]):
+//     Error_syncing_pod=0.10:1744848000:pod error spam OPS-4821
+//     heartbeat_debug=0.00:1744416000:k8s liveness 200s
+//
+// Semantics per event:
+//   - If no entry for this event's field-set                → retain.
+//   - If an entry exists but untilEpochSec has passed       → retain (expired mute self-heals).
+//   - Otherwise                                             → retain with probability = sampleRate.
+//
+// The minRetentionThreshold + severity boost map still applies as a floor so
+// that high-severity events (ERROR, FATAL) are never fully suppressed even by a
+// 0.0 mute.
 
 export class GlobalRegulatorInput extends TenXInput {
 
-    // only load class if a global lookup file is not available
+    // only load class if a mute file is configured
     // https://doc.log10x.com/api/js/#TenXEngine.shouldLoad
     static shouldLoad(config) {
        return TenXEnv.get("rateRegulatorLookupFile");
@@ -12,24 +37,22 @@ export class GlobalRegulatorInput extends TenXInput {
 
     constructor() {
 
-        if (!TenXEnv.get("quiet")) {           
-            TenXConsole.log("🚦 Applying global rate regulator to: " + this.inputName + " using: " + TenXEnv.get("rateRegulatorLookupFile"));
+        if (!TenXEnv.get("quiet")) {
+            TenXConsole.log("🚦 Applying mute-file rate regulator to: " + this.inputName + " using: " + TenXEnv.get("rateRegulatorLookupFile"));
         }
 
         if (!TenXEnv.get("levelField")) {
             throw new Error("the rate regulator module requires 'level' enrichment: https://doc.log10x.com/run/initialize/level/");
         }
 
-        var resetIntervalMs = TenXEnv.get("rateRegulatorResetIntervalMs", 300000);
-
-        if (!(resetIntervalMs >= 60000)) {
-            throw new Error("the 'rateRegulatorResetIntervalMs' argument must be at least 60000 (1 minute), received: " + resetIntervalMs);
+        if (!TenXEnv.get("rateRegulatorFieldNames")) {
+            throw new Error("the 'rateRegulatorFieldNames' argument must be set to identify mute-file entries");
         }
 
-        var minSampleRate = TenXEnv.get("rateRegulatorMinRetentionThreshold", 0.01);
+        var minSampleRate = TenXEnv.get("rateRegulatorMinRetentionThreshold", 0.1);
 
         if (!(minSampleRate >= 0.01)) {
-            throw new Error("the 'rateRegulatorLookupRetain' argument must be greater than  0.01, received: " + minSampleRate);
+            throw new Error("the 'rateRegulatorMinRetentionThreshold' argument must be greater than 0.01, received: " + minSampleRate);
         }
 
         var lastModified = TenXLookup.load(TenXEnv.get("rateRegulatorLookupFile"), true);
@@ -37,14 +60,13 @@ export class GlobalRegulatorInput extends TenXInput {
         var rateRegulatorLookupRetain = TenXEnv.get("rateRegulatorLookupRetain", 300000);
 
         if (TenXDate.now() - lastModified > rateRegulatorLookupRetain) {
-            
-            if (!TenXEnv.get("quiet")) {
 
-                TenXConsole.log("⚠️ Global rate regulator lookup file is stale, lastModified: {}, retainInterval: {}",
+            if (!TenXEnv.get("quiet")) {
+                TenXConsole.log("⚠️ Rate regulator mute file is stale, lastModified: {}, retainInterval: {}",
                     lastModified, rateRegulatorLookupRetain);
             }
 
-            TenXLog.info("Global rate regulator lookup file is stale, lastModified: {}, retainInterval: {}",
+            TenXLog.info("Rate regulator mute file is stale, lastModified: {}, retainInterval: {}",
                 lastModified, rateRegulatorLookupRetain);
         }
     }
@@ -56,154 +78,51 @@ export class GlobalRegulatorObject extends TenXObject {
 
         if ((!this.isObject) || (this.isDropped)) return true;
 
-        var ingestionCostPerGB = TenXEnv.get("rateRegulatorIngestionCostPerGB", 1.5);
-        var maxSharePerFieldSet = TenXEnv.get("rateRegulatorMaxSharePerFieldSet", 0.2);
-        var budgetPerHour = TenXEnv.get("rateRegulatorBudgetPerHour", 1);
+        // Build the field-set key the same way the local regulator does, so mute
+        // entries are keyed by human-readable field values (e.g. symbolMessage,
+        // container) rather than an internal hash.
+        var fieldSetKey = this.joinFields("_", TenXEnv.get("rateRegulatorFieldNames"));
+        if (!fieldSetKey) return true;
 
-        // Calculate event cost based on byte size and ingestion cost per GB
-        var utf8Size = this.utf8Size();
-        var eventCost = utf8Size * ingestionCostPerGB / 1e9;
+        // Look up the mute entry for this field-set.
+        // Entry format: "<sampleRate>:<untilEpochSec>[:<reason>]"
+        var entry = TenXLookup.get("rateRegulatorLookupFile", fieldSetKey);
+        if (!entry) return true;
 
-        if (TenXLog.isDebug()) {
-            TenXLog.debug("utf8Size: {}, eventCost: {}", utf8Size, eventCost);
+        var parts = TenXString.split(entry, ":");
+        var sampleRate = TenXMath.parseDouble(parts[0]);
+        var untilEpochSec = TenXMath.parseDouble(parts[1]);
+
+        // Expired mute → self-heal, always retain.
+        var nowSec = TenXDate.now() / 1000;
+        if (nowSec >= untilEpochSec) {
+            if (TenXLog.isDebug()) {
+                TenXLog.debug("mute expired. fieldSet={}, untilEpochSec={}, nowSec={}",
+                    fieldSetKey, untilEpochSec, nowSec);
+            }
+            return true;
         }
 
-        var usedGlobalLookup = false;
-        var retentionThreshold = 1;
-        var localFieldSetSuffix = this.joinFields("_", TenXEnv.get("rateRegulatorFieldNames"));
-        
-        // Variables for debug logging (initialized to defaults)
-        var globalBudgetUtilization = -1; // -1 indicates not calculated
-        var fieldSetBudgetUtilization = -1; // -1 indicates not calculated
-        var totalSpend = -1; // -1 indicates not calculated
-        var budgetPerWindow = -1; // -1 indicates not calculated
-        var lookupTotalHourlySpend = 0; // For debug logging when using global lookup
-
-        // First, attempt to apply regulation using global lookup
-        var lookupFresh = TenXLookup.lastModified("rateRegulatorLookupFile", TenXEnv.get("rateRegulatorLookupRetain", 300000)); //5min
-
-        if (lookupFresh) {
-            lookupTotalHourlySpend = TenXMath.parseDouble(TenXLookup.get("rateRegulatorLookupFile", "global_cost_total"));
-
-            if (lookupTotalHourlySpend > 0) {
-
-                globalBudgetUtilization = TenXMath.min(lookupTotalHourlySpend / budgetPerHour, 1);
-                
-                // Probability-based throttling: inversely proportional to remaining budget
-                // retentionThreshold represents the threshold above which we drop events
-                // At 0% utilization → retentionThreshold = 1.0 → never drop (random() > 1.0 never true)
-                // At 100% utilization → retentionThreshold = 0.0 → always drop (random() > 0.0 always true)
-                retentionThreshold = 1 - globalBudgetUtilization;
-
-                if (localFieldSetSuffix) {
-                    var lookupFieldSetHourlySpend = TenXMath.parseDouble(TenXLookup.get("rateRegulatorLookupFile", localFieldSetSuffix));
-
-                    if (lookupFieldSetHourlySpend > 0) {
-
-                        var fieldSetBudgetPerHour = maxSharePerFieldSet * budgetPerHour;
-                        var lookupFieldSetBudgetUtilization = TenXMath.min(lookupFieldSetHourlySpend / fieldSetBudgetPerHour, 1);
-                        fieldSetBudgetUtilization = lookupFieldSetBudgetUtilization;
-
-                        var lookupFieldSetRetentionThreshold = 1 - lookupFieldSetBudgetUtilization;
-                        retentionThreshold = TenXMath.min(retentionThreshold, lookupFieldSetRetentionThreshold);
-                    }
-                }
-
-                usedGlobalLookup = true;
-            }
-        }
-
-        if (!usedGlobalLookup) {
-            // No global regulation applied, fallback to local strategy using counters
-            var resetIntervalMs = TenXEnv.get("rateRegulatorResetIntervalMs", 300000); // 5min default
-
-            // Track spending per field set (e.g., per event type identified by symbolMessage)
-            // fieldSetSpend = -1 indicates no field set tracking (fieldNames not configured, or event lacks values for them)
-            var fieldSetSpend = -1;
-
-            if (localFieldSetSuffix) {
-                // Increment field set counter and get value before increment
-                // Counter resets every resetIntervalMs, tracking spend per field set
-                fieldSetSpend = TenXCounter.getAndInc("GlobalRegulator_" + localFieldSetSuffix, eventCost, resetIntervalMs);
-            }
-
-            // Track global spending across all events
-            // Counter resets every resetIntervalMs, tracking total spend in current window
-            totalSpend = TenXCounter.getAndInc("GlobalRegulator_global_cost_total", eventCost, resetIntervalMs);
-
-            // Always retain the first event in a window (for both global and field set counters)
-            // This ensures we never drop the very first event, which helps establish baseline metrics
-            if ((totalSpend == 0) || (fieldSetSpend == 0)) {
-                return true;
-            }
-
-            // Calculate projected spending if we retain this event
-            // This accounts for the current event cost to prevent overspending
-            var projectedGlobalSpend = totalSpend + eventCost;
-            budgetPerWindow = ((budgetPerHour * resetIntervalMs) / 3600000);
-
-            globalBudgetUtilization = TenXMath.min(projectedSpend / budgetPerWindow, 1);
-
-            // Probability-based throttling: inversely proportional to remaining budget
-            // retentionThreshold represents the threshold above which we drop events
-            // At 0% utilization → retentionThreshold = 1.0 → never drop (random() > 1.0 never true)
-            // At 100% utilization → retentionThreshold = 0.0 → always drop (random() > 0.0 always true)
-            retentionThreshold = 1 - globalBudgetUtilization;
-
-            // Apply field set budget limit if possible
-            // Prevents any single field set from consuming more than maxSharePerFieldSet of total budget
-            fieldSetBudgetUtilization = -1; // -1 indicates field set tracking not used
-            
-            if (fieldSetSpend > 0) {
-                var projectedFieldSetSpend = fieldSetSpend + eventCost;
-                var fieldSetBudgetPerWindow = budgetPerWindow * maxSharePerFieldSet;
-
-                fieldSetBudgetUtilization = TenXMath.min(projectedFieldSetSpend / fieldSetBudgetPerWindow, 1);
-
-                // Use the more restrictive (lower) retention threshold
-                // This ensures we throttle if EITHER global or field set budget is exceeded
-                var fieldSetRetentionThreshold = 1 - fieldSetBudgetUtilization;
-                retentionThreshold = TenXMath.min(retentionThreshold, fieldSetRetentionThreshold);
-            }
-        }
-
-        // Apply minimum retention threshold to ensure critical events are always retained
-        // Boost multiplier only applies to the minimum threshold, not the entire threshold
-        // This prevents boost values < 1.0 from reducing retention when under budget
+        // Apply severity floor: a 0.0 mute on INFO drops everything, but an
+        // ERROR/FATAL event under the same mute still gets minRetentionThreshold * boost.
         var minRetentionThreshold = TenXEnv.get("rateRegulatorMinRetentionThreshold", 0.1);
         var boostMap = TenXMap.fromEntries(TenXEnv.get("rateRegulatorLevelBoost"));
         var level = this.get(TenXEnv.get("levelField"));
         var boost = TenXMap.get(boostMap, level, 1);
-        
-        // Ensure retentionThreshold never falls below minimum retention threshold (adjusted by boost)
-        // Boost only affects the minimum floor: higher severity events get higher minimum retention
-        // The calculated threshold (based on budget) is unaffected by boost
-        retentionThreshold = TenXMath.max(retentionThreshold, minRetentionThreshold * boost);
 
-        // Probabilistic drop decision
-        // retentionThreshold is the threshold: drop when random() > retentionThreshold
-        // Higher retentionThreshold → lower drop rate → more retention
+        var retentionThreshold = TenXMath.max(sampleRate, minRetentionThreshold * boost);
+
         if (TenXMath.random() > retentionThreshold) {
             this.drop();
 
             if (TenXLog.isDebug()) {
-                if (usedGlobalLookup) {
-                    TenXLog.debug("drop by cost (global). fieldSetSuffix={}, clusterHourlySpend={}, budgetPerHour={}, globalBudgetUtilization={}, fieldSetBudgetUtilization={}, retentionThreshold={}, boost={}, eventCost={}",
-                        localFieldSetSuffix, lookupTotalHourlySpend, budgetPerHour, globalBudgetUtilization, fieldSetBudgetUtilization, retentionThreshold, boost, eventCost);
-                } else {
-                    TenXLog.debug("drop by cost (global, fallback). fieldSetSuffix={}, totalSpend={}, budgetPerWindow={}, globalBudgetUtilization={}, fieldSetBudgetUtilization={}, retentionThreshold={}, boost={}, eventCost={}",
-                        localFieldSetSuffix, totalSpend, budgetPerWindow, globalBudgetUtilization, fieldSetBudgetUtilization, retentionThreshold, boost, eventCost);
-                }
+                TenXLog.debug("drop by mute. fieldSet={}, sampleRate={}, untilEpochSec={}, boost={}, retentionThreshold={}",
+                    fieldSetKey, sampleRate, untilEpochSec, boost, retentionThreshold);
             }
         } else {
             if (TenXLog.isDebug()) {
-                if (usedGlobalLookup) {
-                    TenXLog.debug("retained (global). fieldSetSuffix={}, clusterHourlySpend={}, budgetPerHour={}, globalBudgetUtilization={}, retentionThreshold={}, boost={}, eventCost={}", 
-                        localFieldSetSuffix, lookupTotalHourlySpend, budgetPerHour, globalBudgetUtilization, retentionThreshold, boost, eventCost);
-                } else {
-                    TenXLog.debug("retained (global, fallback). fieldSetSuffix={}, totalSpend={}, budgetPerWindow={}, globalBudgetUtilization={}, retentionThreshold={}, boost={}, eventCost={}", 
-                        localFieldSetSuffix, totalSpend, budgetPerWindow, globalBudgetUtilization, retentionThreshold, boost, eventCost);
-                }
+                TenXLog.debug("retained under mute. fieldSet={}, sampleRate={}, untilEpochSec={}, boost={}, retentionThreshold={}",
+                    fieldSetKey, sampleRate, untilEpochSec, boost, retentionThreshold);
             }
         }
 

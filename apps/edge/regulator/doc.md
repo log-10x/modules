@@ -8,7 +8,7 @@ Filter noisy telemetry from shipping to analytics platforms using [rate-based](h
 
 Follow the steps below. Steps that require customization link to the relevant [Config Files](#config-files) section where you can edit on github.dev or locally.
 
-??? tenx-bootstrap "Step 1: Install"
+???+ tenx-bootstrap "Step 1: Install"
 
     Install the `Edge` or `JIT-Edge` binary flavor on the same machine as your log forwarder:
 
@@ -380,7 +380,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
     Configure your forwarder to duplicate the event stream — one copy to S3 (all events), one through the regulator (filtered events to SIEM):
 
-    === ":simple-fluentbit: Fluent Bit"
+    === ":simple-fluentbit: Fluent-bit"
 
         Use the `rewrite_tag` filter to copy events before the 10x Lua filter:
 
@@ -570,18 +570,20 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
         Each (event type &times; app) combination gets its own 20% cap. Scaling from 1 to 10 pods doesn't bypass limits because `container` name is stable across replicas.
 
-    === ":material-bank-outline: Global Policy (Cluster-Wide)"
+    === ":material-file-document-edit-outline: Mute File (GitOps)"
 
-        Use cluster-wide spend data from the [Edge Policy app](https://doc.log10x.com/apps/edge/policy/) for coordinated throttling across all nodes.
+        Apply a declarative, field-set keyed mute file pulled from a git repo. Entries are keyed by the same `rateRegulatorFieldNames` values the local regulator uses (e.g. `symbolMessage`), so mutes target the same patterns the Reporter attributes cost to. Each entry caps a specific pattern with an explicit sample rate and epoch expiry, so mutes are diff-reviewed, audited, and self-healing.
 
         ```yaml
         rateRegulator:
+          fieldNames:
+            - symbolMessage
           lookup:
-            file: /etc/log10x/config/data/sample/policy/policy.csv
-            retain: 300000                 # 5 minutes — fall back to local if stale
+            file: /etc/log10x/config/data/sample/mutes/mutes.csv
+            retain: 300000                 # 5 minutes — log a drift warning if stale
         ```
 
-        The policy module periodically queries Prometheus for cluster-wide event costs and writes a lookup CSV. Each node reads this file for coordinated budget decisions. If the file becomes stale, the regulator falls back to [local mode](https://doc.log10x.com/run/regulate/rate/#local-control).
+        Entries in `mutes.csv` look like `Error_syncing_pod=0.10:1744848000:pod error spam OPS-4821`. See [mute file mode](https://doc.log10x.com/run/regulate/rate/#mute-file-mode-declarative-field-set-caps) for the full format and workflow.
 
 ??? tenx-initializers "Step 7: Enrichments (optional)"
 
@@ -712,3 +714,32 @@ Follow the steps below. Steps that require customization link to the relevant [C
     **View results in the dashboard:**
 
     Once running, view your cost analytics in the [Edge Regulator Dashboard](https://doc.log10x.com/roi-analytics/#edge-regulator).
+
+??? tenx-delete "Step 11: Teardown"
+
+    Nothing runs in the background — uninstall removes only what was installed.
+
+    === ":simple-macos: Homebrew"
+
+        ```bash
+        brew uninstall --cask log10x && rm -rf /etc/tenx
+        ```
+
+    === ":simple-linux: Linux"
+
+        ```bash
+        sudo rm -rf /opt/tenx-edge /etc/tenx /etc/profile.d/tenx-edge.sh
+        ```
+
+        If installed via DEB: `sudo apt-get remove tenx-edge`
+        If installed via RPM: `sudo yum remove tenx-edge`
+
+    === ":material-microsoft-windows: Windows"
+
+        Uninstall from **Settings > Apps > Installed apps**.
+
+    === ":simple-docker: Docker"
+
+        ```bash
+        docker rmi log10x/pipeline-10x:latest
+        ```

@@ -26,7 +26,6 @@ app:
     initializers+geoIP: run/initialize/geoIP
 
     regulators+rate: run/regulate/rate
-    regulators+policy: run/regulate/policy
 
     event Forward Output: run/output/event/forward
 

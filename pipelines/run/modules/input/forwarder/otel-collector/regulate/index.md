@@ -47,5 +47,5 @@ OTel Collector → TCP JSON (4318) → Log10x Regulator → Unix Socket → OTel
 
 - [OpenTelemetry Collector Reporter](../report/index.md)
 - [OpenTelemetry Collector Optimizer](../optimize/index.md)
-- [Regulation Policies](https://doc.log10x.com/run/regulate/policy/)
+- [Rate Regulator](https://doc.log10x.com/run/regulate/rate/)
 

@@ -16,7 +16,7 @@ The `inputField` parameter limits searches to specific JSON fields. Setting `inp
 
 Building on this process, here's how it applies to real events:
 
-=== ":simple-opentelemetry: OTEL Demo"
+=== ":simple-opentelemetry: OTel Demo"
 
     **Kubernetes Example:**
 

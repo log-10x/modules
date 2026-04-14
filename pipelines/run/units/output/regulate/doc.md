@@ -2,7 +2,7 @@
 icon: material/pipe-valve
 ---
 
-Filters noisy telemetry before shipping to output (Splunk, Elastic) using [node-specific](https://doc.log10x.com/run/regulate/rate/) and [environment-wide](https://doc.log10x.com/run/regulate/policy/) thresholds to control costs.
+Filters noisy telemetry before shipping to output (Splunk, Elastic) using [per-node budget sampling or a declarative field-set mute file](https://doc.log10x.com/run/regulate/rate/) to control costs.
 
 ### :material-pipe-valve: Output Filters
 

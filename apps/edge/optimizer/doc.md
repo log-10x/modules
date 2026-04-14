@@ -8,7 +8,7 @@ Reduce log volume 50-80% by losslessly [compacting](https://doc.log10x.com/run/t
 
 Follow the steps below. Steps that require customization link to the relevant [Config Files](#config-files) section where you can edit on github.dev or locally.
 
-??? tenx-bootstrap "Step 1: Install"
+???+ tenx-bootstrap "Step 1: Install"
 
     Install the `Edge` or `JIT-Edge` binary flavor on the same machine as your log forwarder:
 
@@ -532,3 +532,32 @@ Follow the steps below. Steps that require customization link to the relevant [C
     **View results in the dashboard:**
 
     Once running, view your cost analytics in the [Edge Optimizer Dashboard](https://doc.log10x.com/roi-analytics/#edge-optimizer).
+
+??? tenx-delete "Step 9: Teardown"
+
+    Nothing runs in the background — uninstall removes only what was installed.
+
+    === ":simple-macos: Homebrew"
+
+        ```bash
+        brew uninstall --cask log10x && rm -rf /etc/tenx
+        ```
+
+    === ":simple-linux: Linux"
+
+        ```bash
+        sudo rm -rf /opt/tenx-edge /etc/tenx /etc/profile.d/tenx-edge.sh
+        ```
+
+        If installed via DEB: `sudo apt-get remove tenx-edge`
+        If installed via RPM: `sudo yum remove tenx-edge`
+
+    === ":material-microsoft-windows: Windows"
+
+        Uninstall from **Settings > Apps > Installed apps**.
+
+    === ":simple-docker: Docker"
+
+        ```bash
+        docker rmi log10x/pipeline-10x:latest
+        ```

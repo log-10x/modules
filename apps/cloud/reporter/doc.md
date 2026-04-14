@@ -8,7 +8,7 @@ Identify high-cost log events in your analytics platforms (Splunk, Elasticsearch
 
 Follow the steps below. Steps that require customization link to the relevant [Config Files](#config-files) section where you can edit on github.dev or locally.
 
-??? tenx-bootstrap "Step 1: Install"
+???+ tenx-bootstrap "Step 1: Install"
 
     Install the `Cloud` binary flavor:
 
@@ -240,3 +240,32 @@ Follow the steps below. Steps that require customization link to the relevant [C
     **View results in the dashboard:**
 
     Once running, view your cost analytics in the [Cloud Reporter Dashboard](https://doc.log10x.com/roi-analytics/#cloud-reporter).
+
+??? tenx-delete "Step 9: Teardown"
+
+    Nothing runs in the background — uninstall removes only what was installed.
+
+    === ":simple-macos: Homebrew"
+
+        ```bash
+        brew uninstall --cask log10x && rm -rf /etc/tenx
+        ```
+
+    === ":simple-linux: Linux"
+
+        ```bash
+        sudo rm -rf /opt/tenx-cloud /etc/tenx /etc/profile.d/tenx-cloud.sh
+        ```
+
+        If installed via DEB: `sudo apt-get remove tenx-cloud`
+        If installed via RPM: `sudo yum remove tenx-cloud`
+
+    === ":material-microsoft-windows: Windows"
+
+        Uninstall from **Settings > Apps > Installed apps**.
+
+    === ":simple-docker: Docker"
+
+        ```bash
+        docker rmi log10x/pipeline-10x:latest
+        ```

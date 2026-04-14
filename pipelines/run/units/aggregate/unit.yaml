@@ -148,7 +148,7 @@ unit:
           filter: myAggregatorFilter()
         ```
 
-        For an example function, see [policy-regulator-object.js](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/regulate/policy/policy-regulator-object.js).
+        For a real-world aggregator example see [aggregate/stream.yaml](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/aggregate/stream.yaml).
 
     - names:
       - aggregatorFlushThreshold

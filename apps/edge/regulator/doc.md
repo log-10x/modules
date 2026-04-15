@@ -144,7 +144,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
         # Windows
         # @INCLUDE c:/program files/tenx-edge/config/pipelines/run/modules/forwarder/fluentbit/conf/tenx-regulate.conf
-        # @INCLUDE c:/program files/tenx-edge/config/pipelines/run/modules/forwarder/fluentbit/conf/tenx-tcp.conf
+        # @INCLUDE c:/program files/tenx-edge/config/pipelines/run/modules/forwarder/fluentbit/conf/tenx-forward.conf
         ```
 
         **Step 2**: The Lua filter catches all events by default. To regulate a subset, update the `Match` field:

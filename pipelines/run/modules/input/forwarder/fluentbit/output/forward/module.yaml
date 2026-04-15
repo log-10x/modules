@@ -1,16 +1,16 @@
 #
-# 🔟❎ 'run' Fluent Bit TCP output module
+# 🔟❎ 'run' Fluent Bit forward output module (Windows)
 
 module:
 
-  name: fluentbitTCP
+  name: fluentbitForward
 
-  title: Fluent Bit TCP output
+  title: Fluent Bit Forward protocol output (Windows)
 
-  description: write regulated/optimized TenXObjects into Fluent Bit via a TCP socket
-       
+  description: write regulated/optimized TenXObjects into Fluent Bit via the Forward protocol over TCP
+
   # 'doc' specifies the markdown doc content, only required when generating docs.
-  doc: '+include $=TenXEnv.get("docGenerate") ? "run/modules/input/forwarder/fluentbit/output/tcp/doc.md":""'
+  doc: '+include $=TenXEnv.get("docGenerate") ? "run/modules/input/forwarder/fluentbit/output/forward/doc.md":""'
 
   # 'allowMultiple' is disabled for this module. Pipeline command line arguments and configuration files
   #  can specify a single value at max for each option defined below.
@@ -22,10 +22,9 @@ module:
   options:
 
     - names:
-      - rawOutputSocketPort
+      - rawOutputForwardPort
       description: internal variable
       type: number
       required: false
-      doc: | 
-        internal variable used to load socket port to use in multiple encoders
-      
+      doc: |
+        internal variable used to load forward port for use in multiple encoders

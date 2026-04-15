@@ -7,7 +7,7 @@ app:
 
   title: Edge Regulator
 
-  description: filter ‘noisy’ log/trace events _before_ they ship to output
+  description: regulate and optionally optimize log/trace events _before_ they ship to output
 
   # 'configFolders' specifies folders containing default configuration files for this module
   configFolders:

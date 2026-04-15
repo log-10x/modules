@@ -25,6 +25,31 @@ module:
   options:
 
     - names:
+      - rateRegulatorOptimize
+      description: enable optimization mode to encode emitted events for volume reduction
+      type: boolean
+      required: false
+      defValue: false
+      doc: |
+        enables optimization mode on the regulator. When true, the regulator encodes
+        emitted events using the [encode](https://doc.log10x.com/api/js/#TenXObject+encode)
+        function, reducing log volume by 50-80% before shipping to the destination.
+
+        When false (default), the regulator filters events but emits them in their
+        original plain-text form via the [fullText](https://doc.log10x.com/api/js/#TenXBaseObject+fullText) field.
+
+        **Effect on forwarder output:**
+        When optimization is enabled, the forwarder output `encodeObjects` option
+        defaults to `true`, and the aggregator tracks `optimized_size` metrics
+        to measure optimization effectiveness.
+
+        **Usage:**
+        ```yaml
+        rateRegulator:
+          optimize: true
+        ```
+
+    - names:
       - rateRegulatorFieldNames
       description: list of TenXObject fields to identify rate counter buckets
       type: list

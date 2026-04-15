@@ -1,6 +1,8 @@
 # 🔟❎ 'run' Edge Regulator settings
 
 # This configuration defines the settings for use by the Edge Regulator app.
+# When 'rateRegulatorOptimize' is enabled, the regulator also encodes emitted
+# events for volume reduction (formerly the separate Edge Optimizer app).
 # To learn more see https://doc.log10x.com/apps/edge/regulator
 
 tenx: run
@@ -12,5 +14,5 @@ runtimeAttributes:
   - env:edge
 
 include:
-  - apps/shared      
+  - apps/shared
   - run/aggregate/regulate # https://doc.log10x.com/run/aggregate/#regulate

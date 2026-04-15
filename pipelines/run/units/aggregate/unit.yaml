@@ -14,7 +14,6 @@ unit:
     dev: run/aggregate/dev
     report: run/aggregate/report
     regulate: run/aggregate/regulate
-    optimize: run/aggregate/optimize
     index: run/aggregate/index
     stream: run/aggregate/stream
 

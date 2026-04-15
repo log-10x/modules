@@ -35,16 +35,23 @@ export class GroupTemplate extends TenXTemplate {
             // templates with an assigned severity level are assumed to be a group head
             isGroup = true;
 
-        } else {
+        } else if (TenXString.startsWith(event, TenXEnv.get("groupIndicators"))) {
 
             // instances starting with a group indicator term are assumed to be a group head
             // https://doc.log10x.com/run/transform/group/#groupindicators
-            isGroup = TenXString.startsWith(event, TenXEnv.get("groupIndicators"));
+            isGroup = true;
+
+        } else if (!TenXString.startsWith(event, TenXEnv.get("groupNegators"))) {
+
+            // Default to standalone when no known-continuation (negator) matches.
+            // Negators are the authoritative definition of stack-frame continuations;
+            // anything else is a standalone log line, not a child of the previous group.
+            isGroup = true;
         }
 
         GroupTemplate.isGroup = isGroup;
 
-        if (isGroup || !TenXString.startsWith(event, TenXEnv.get("groupNegators"))) {            
+        if (isGroup || !TenXString.startsWith(event, TenXEnv.get("groupNegators"))) {
             GroupTemplate.isStandalone = true;
         }
     }  

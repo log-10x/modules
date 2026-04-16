@@ -9,7 +9,7 @@ module:
 
   description: report, regulate, and optimize events collected by Filebeat forwarders
 
-  moduleSort: [filebeatReport,filebeatRegulate,filebeatOptimize]
+  moduleSort: [filebeatReport,filebeatRegulate]
 
   # 'doc' specifies the markdown doc content, only required when generating docs.
   doc: +include $=TenXEnv.get("docGenerate") ? "run/modules/input/forwarder/filebeat/doc.md":""

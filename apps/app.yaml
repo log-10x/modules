@@ -13,7 +13,7 @@ app:
   #  can specify a single value at max for each option defined below.
   allowMultiple: false
 
-  moduleSort: [reporter,regulator,compiler,dev,cloudReporter,cloudStreamer]
+  moduleSort: [reporter,regulator,streamer,compiler,dev]
 
   # 'doc' specifies the markdown doc content, only required when generating docs.
   doc: +include $=TenXEnv.get("docGenerate") ? "apps/doc.md":""

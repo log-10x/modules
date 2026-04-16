@@ -1,19 +1,19 @@
 #
-# 🔟❎ 'run' Cloud storage streamer app
+# 🔟❎ 'run' Storage streamer app
 
 app:
 
-  name: cloudStreamer
+  name: streamer
 
-  title: Storage Streamer
+  title: Streamer
 
   description: Stream events from object storage to log analyzers and metrics on-demand
 
   # 'configFolders' specifies folders containing default configuration files for this module
   configFolders:
-    index Config: apps/cloud/streamer/index
-    query Config: apps/cloud/streamer/query
-    stream Config: apps/cloud/streamer/stream
+    index Config: apps/streamer/index
+    query Config: apps/streamer/query
+    stream Config: apps/streamer/stream
 
     object Storage Query: run/input/objectStorage/query
 
@@ -58,4 +58,4 @@ app:
     object Storage Query: [criteria, s3, actions]
 
   # 'doc' specifies the markdown doc content, only required when generating docs.
-  doc: +include $=TenXEnv.get("docGenerate") ? "apps/cloud/streamer/doc.md":""
+  doc: +include $=TenXEnv.get("docGenerate") ? "apps/streamer/doc.md":""

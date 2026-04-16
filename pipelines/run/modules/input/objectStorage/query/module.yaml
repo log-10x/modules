@@ -81,6 +81,32 @@ module:
         queryLogGroup: /log10x/query
         ```
 
+    - names:
+        - queryWriteResults
+      description: sets whether matched events are buffered to JSONL and uploaded to object storage
+      type: boolean
+      required: false
+      defValue: false
+      category: general
+      doc: |
+        Controls whether the stream pipeline launches the JSONL results writer
+        in addition to the byte-count marker backstop used by the query
+        coordinator.
+
+        Defaults to `false` so the extra JSONL upload only runs when a caller
+        explicitly opts in. The query coordinator forwards this flag to each
+        stream worker it dispatches via a `queryObjectWriteResults=<value>`
+        bootstrap arg on the stream pipeline launch.
+
+        Out-of-band consumers like the Log10x MCP server set this to `true`
+        so they can retrieve full event payloads from S3 under
+        `{indexObjectPath(queryResults)}/{queryId}/*.jsonl`. Deployments that
+        only rely on the coordinator's numeric-key poll leave this off.
+
+        ``` yaml
+        queryWriteResults: true
+        ```
+
   # -------------------------------- Filter Options ---------------------------
 
     - names:

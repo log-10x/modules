@@ -1,17 +1,17 @@
 #
-# 🔟❎ 'run' Edge regulator app
+# 🔟❎ 'run' Regulator app
 
 app:
 
-  name: edgeRegulator
+  name: regulator
 
-  title: Edge Regulator
+  title: Regulator
 
   description: regulate and optionally optimize log/trace events _before_ they ship to output
 
   # 'configFolders' specifies folders containing default configuration files for this module
   configFolders:
-    edgeRegulator: apps/edge/regulator
+    regulator: apps/regulator
 
     initializers+message: run/initialize/message
     initializers+level: run/initialize/level
@@ -48,4 +48,4 @@ app:
     transform+parallelize: run/transform/parallelize
 
   # 'doc' specifies the markdown doc content, only required when generating docs.
-  doc: +include $=TenXEnv.get("docGenerate") ? "apps/edge/regulator/doc.md":""
+  doc: +include $=TenXEnv.get("docGenerate") ? "apps/regulator/doc.md":""

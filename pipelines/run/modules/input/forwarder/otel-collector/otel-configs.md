@@ -60,17 +60,17 @@ First, start the Log10x pipeline in the desired mode:
 
 **Report:**
 ```bash
-tenx @run/input/forwarder/otel-collector/report @apps/edge/reporter
+tenx @run/input/forward @apps/reporter
 ```
 
 **Regulate:**
 ```bash
-tenx @run/input/forwarder/otel-collector/regulate @apps/edge/regulator
+tenx @run/input/forwarder/otel-collector/regulate @apps/regulator
 ```
 
-**Optimize:**
+**Regulate with optimization:**
 ```bash
-tenx @run/input/forwarder/otel-collector/optimize @apps/edge/optimizer
+tenx @run/input/forwarder/otel-collector/regulate @apps/regulator regulatorOptimize true
 ```
 
 ### Step 2: Start OpenTelemetry Collector

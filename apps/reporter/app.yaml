@@ -1,17 +1,17 @@
 #
-# 🔟❎ 'run' Edge reporter app
+# 🔟❎ 'run' Reporter app
 
 app:
 
-  name: edgeReporter
+  name: reporter
 
-  title: Edge Reporter
+  title: Reporter
 
   description: report on costly log/trace events _before_ they ship to output
 
   # 'configFolders' specifies folders containing default configuration files for this module
   configFolders:
-    edgeReporter: apps/edge/reporter
+    reporter: apps/reporter
 
     initializers+message: run/initialize/message
     initializers+level: run/initialize/level
@@ -46,4 +46,4 @@ app:
     transform+parallelize: run/transform/parallelize
 
   # 'doc' specifies the markdown doc content, only required when generating docs.
-  doc: +include $=TenXEnv.get("docGenerate") ? "apps/edge/reporter/doc.md":""
+  doc: +include $=TenXEnv.get("docGenerate") ? "apps/reporter/doc.md":""

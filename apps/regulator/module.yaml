@@ -1,19 +1,19 @@
 #
-# 🔟❎ 'run' Edge Regulator module
+# 🔟❎ 'run' Regulator module
 
 module:
 
-  name: edgeRegulator
+  name: regulator
 
-  title: Edge Regulator
+  title: Regulator
 
   description: regulate and optionally optimize log/trace events before they ship to output
 
   # 'configFolder' specifies a folder containing default configuration files for the settings defined by this module
-  configFolder: apps/edge/regulator
+  configFolder: apps/regulator
 
   # 'doc' specifies the markdown doc content, only required when generating docs.
-  doc: '+include $=TenXEnv.get("docGenerate") ? "apps/edge/regulator/doc.md":""'
+  doc: '+include $=TenXEnv.get("docGenerate") ? "apps/regulator/doc.md":""'
 
   # 'allowMultiple' is disabled for this module.
   allowMultiple: false

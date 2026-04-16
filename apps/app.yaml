@@ -7,13 +7,13 @@ app:
 
   title: Application
 
-  description: Launch 10x applications to report, regulate and optimize log/trace events in edge and cloud environments. 
+  description: Launch 10x applications to report, regulate and optimize log/trace events.
 
   # 'allowMultiple' is disabled for this module. Pipeline command line arguments and configuration files
   #  can specify a single value at max for each option defined below.
   allowMultiple: false
 
-  moduleSort: []
+  moduleSort: [reporter,regulator,compiler,dev,cloudReporter,cloudStreamer]
 
   # 'doc' specifies the markdown doc content, only required when generating docs.
   doc: +include $=TenXEnv.get("docGenerate") ? "apps/doc.md":""

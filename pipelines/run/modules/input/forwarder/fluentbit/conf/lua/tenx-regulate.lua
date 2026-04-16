@@ -23,7 +23,7 @@
 	-- to launch the 10x process to which to write events
 
 	-- Define 10x arguments for running in 'regulate' mode
-	tenx_run_args = "@run/input/forwarder/fluentbit/regulate/config.yaml @apps/edge/regulator"
+	tenx_run_args = "@run/input/forwarder/fluentbit/regulate/config.yaml @apps/regulator"
 
 	-- get the path of this config script
 	configPath = assert(debug.getinfo(1).source:match("@?(.*[/\\])"))

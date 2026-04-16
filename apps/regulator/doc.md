@@ -376,7 +376,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
 <span id="pair-with-streamer"></span>
 ??? tenx-integration "Step 5: Pair with Storage Streamer (optional)"
 
-    Archive all events to S3 before regulation for full retention alongside cost control. The regulator filters what reaches your SIEM; filtered events remain in S3, queryable via [Storage Streamer](https://doc.log10x.com/apps/cloud/streamer/) for incident investigation, compliance, and auditing.
+    Archive all events to S3 before regulation for full retention alongside cost control. The regulator filters what reaches your SIEM; filtered events remain in S3, queryable via [Storage Streamer](https://doc.log10x.com/apps/streamer/) for incident investigation, compliance, and auditing.
 
     Configure your forwarder to duplicate the event stream — one copy to S3 (all events), one through the regulator (filtered events to SIEM):
 
@@ -622,11 +622,11 @@ Follow the steps below. Steps that require customization link to the relevant [C
     === ":simple-beats: Filebeat"
 
         ```console title="Nix/OSX"
-        $ filebeat -c my-filebeat.yml -e 2>&1 | /opt/tenx-edge/bin/tenx run @run/input/forwarder/filebeat/regulate/config.yaml @run/apps/edge/regulator
+        $ filebeat -c my-filebeat.yml -e 2>&1 | /opt/tenx-edge/bin/tenx run @run/input/forwarder/filebeat/regulate/config.yaml @apps/regulator
         ```
 
         ```console title="Windows"
-        $ filebeat -c my-filebeat.yml -e 2>&1 | "c:\program files\tenx-edge\tenx" run @run/input/forwarder/filebeat/regulate/config.yaml @run/apps/edge/regulator
+        $ filebeat -c my-filebeat.yml -e 2>&1 | "c:\program files\tenx-edge\tenx" run @run/input/forwarder/filebeat/regulate/config.yaml @apps/regulator
         ```
 
     === ":simple-logstash: Logstash"
@@ -640,7 +640,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
         **Step 1**: Start Log10x Regulator first:
 
         ```console
-        $ tenx run @run/input/forwarder/otel-collector/regulate @apps/edge/regulator
+        $ tenx run @run/input/forwarder/otel-collector/regulate @apps/regulator
         ```
 
         **Step 2**: Start OTel Collector with the 10x configuration:
@@ -713,7 +713,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
     **View results in the dashboard:**
 
-    Once running, view your cost analytics in the [Edge Regulator Dashboard](https://doc.log10x.com/roi-analytics/#edge-regulator).
+    Once running, view your cost analytics in the [Regulator Dashboard](https://doc.log10x.com/roi-analytics/#edge-regulator).
 
 ??? tenx-delete "Step 11: Teardown"
 

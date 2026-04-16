@@ -2,7 +2,7 @@
 icon: material/pipe-valve
 ---
 
-Read events from a Filebeat forwarder to transform them into typed [TenXObjects](https://doc.log10x.com/api/js/#TenXObject) to filter using local/centralized [regulator](https://doc.log10x.com/run/output/regulate) policy. This module is a component of the [Edge Regulator](https://doc.log10x.com/apps/edge/regulator/) app.
+Read events from a Filebeat forwarder to transform them into typed [TenXObjects](https://doc.log10x.com/api/js/#TenXObject) to filter using local/centralized [regulator](https://doc.log10x.com/run/output/regulate) policy. This module is a component of the [Regulator](https://doc.log10x.com/apps/regulator/) app.
 
 ## Architecture
 
@@ -55,10 +55,10 @@ This [module](https://doc.log10x.com/engine/module/) configures a Filebeat [scri
 
 === ":material-laptop: Nix/Win/OSX"
 
-    See the Log10x Edge Regulator Filebeat [run instructions](https://doc.log10x.com/apps/edge/regulator/run/#filebeat)
+    See the Log10x Regulator Filebeat [run instructions](https://doc.log10x.com/apps/regulator/run/#filebeat)
 
 === ":material-kubernetes: k8s"
 
     Deploy to k8s via [Helm](https://helm.sh/){target="_blank"}
 
-    See the Log10x Edge Regulator Filebeat [deployment instructions](https://doc.log10x.com/apps/edge/regulator/deploy/#filebeat)
+    See the Log10x Regulator Filebeat [deployment instructions](https://doc.log10x.com/apps/regulator/deploy/#filebeat)

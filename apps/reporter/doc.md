@@ -123,10 +123,10 @@ Follow the steps below. Steps that require customization link to the relevant [C
             ttl => -1
 
             # Nix
-            command => "${TENX_BIN:/opt/tenx-edge/bin/tenx} run @run/input/forwarder/logstash/report/config.yaml @run/apps/edge/reporter"
+            command => "${TENX_BIN:/opt/tenx-edge/bin/tenx} run @run/input/forwarder/logstash/report/config.yaml @apps/reporter"
 
             # Windows
-            # command => "${TENX_BIN:'c:\\program files\\tenx\\tenx-edge.exe'} run @run/input/forwarder/logstash/report/config.yaml @run/apps/edge/reporter"
+            # command => "${TENX_BIN:'c:\\program files\\tenx\\tenx-edge.exe'} run @run/input/forwarder/logstash/report/config.yaml @apps/reporter"
           }
         }
         ```
@@ -316,11 +316,11 @@ Follow the steps below. Steps that require customization link to the relevant [C
     === ":simple-beats: Filebeat"
 
         ```console title="Nix/OSX"
-        $ filebeat -c my-filebeat.yml -e 2>&1 | /opt/tenx-edge/bin/tenx run @run/input/forwarder/filebeat/report/config.yaml @run/apps/edge/reporter
+        $ filebeat -c my-filebeat.yml -e 2>&1 | /opt/tenx-edge/bin/tenx run @run/input/forwarder/filebeat/report/config.yaml @apps/reporter
         ```
 
         ```console title="Windows"
-        $ filebeat -c my-filebeat.yml -e 2>&1 | "c:\program files\tenx-edge\tenx" run @run/input/forwarder/filebeat/report/config.yaml @run/apps/edge/reporter
+        $ filebeat -c my-filebeat.yml -e 2>&1 | "c:\program files\tenx-edge\tenx" run @run/input/forwarder/filebeat/report/config.yaml @apps/reporter
         ```
 
     === ":simple-logstash: Logstash"
@@ -334,7 +334,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
         **Step 1**: Start Log10x Reporter first:
 
         ```console
-        $ tenx run @run/input/forwarder/otel-collector/report @apps/edge/reporter
+        $ tenx run @run/input/forwarder/otel-collector/report @apps/reporter
         ```
 
         **Step 2**: Start OTel Collector with the 10x configuration:
@@ -401,7 +401,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
     **View results in the dashboard:**
 
-    Once running, view your cost analytics in the [Edge Reporter Dashboard](https://doc.log10x.com/roi-analytics/#edge-reporter).
+    Once running, view your cost analytics in the [Reporter Dashboard](https://doc.log10x.com/roi-analytics/#edge-reporter).
 
 ??? tenx-delete "Step 9: Teardown"
 

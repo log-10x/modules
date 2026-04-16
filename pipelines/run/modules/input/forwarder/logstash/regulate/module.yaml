@@ -34,7 +34,7 @@ module:
         If false, write events in their original form as read from the Logstash forwarder
         using the [fullText](https://doc.log10x.com/api/js/#TenXBaseObject+fullText) field.
 
-        Defaults to the value of `regulatorOptimize` when used with the Edge Regulator app.
+        Defaults to the value of `regulatorOptimize` when used with the Regulator app.
 
     - names:
       - logstashOutputFields

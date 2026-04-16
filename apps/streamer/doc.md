@@ -2,7 +2,7 @@
 icon: material/play-circle-outline
 ---
 
-Test the Storage Streamer locally using [minikube](https://minikube.sigs.k8s.io/) with either [LocalStack](https://localstack.cloud/) (local AWS emulation) or real AWS services. Each step below provides tabs for both backends. For production deployment via Helm, see the [deployment guide](https://doc.log10x.com/apps/cloud/streamer/deploy/).
+Test the Storage Streamer locally using [minikube](https://minikube.sigs.k8s.io/) with either [LocalStack](https://localstack.cloud/) (local AWS emulation) or real AWS services. Each step below provides tabs for both backends. For production deployment via Helm, see the [deployment guide](https://doc.log10x.com/apps/streamer/deploy/).
 
 ## :material-clipboard-play-outline: Setup
 
@@ -274,7 +274,7 @@ Test the Storage Streamer locally using [minikube](https://minikube.sigs.k8s.io/
 
     **Example: Enable Prometheus Remote Write** in your local pipeline config:
 
-    ```yaml title="apps/cloud/streamer/stream/config.yaml"
+    ```yaml title="apps/streamer/stream/config.yaml"
     # Comment in the line enabling a custom remote write
     - run/output/metric/prometheus/remote-write  # https://doc.log10x.com/run/output/metric/prometheus/remote-write
     ```
@@ -290,7 +290,7 @@ Test the Storage Streamer locally using [minikube](https://minikube.sigs.k8s.io/
       password: my-password # (REQUIRED)
     ```
 
-    See the [Storage Streamer run guide](https://doc.log10x.com/apps/cloud/streamer/run/#config-files) for the full list of configurable modules.
+    See the [Storage Streamer run guide](https://doc.log10x.com/apps/streamer/run/#config-files) for the full list of configurable modules.
 
 ??? tenx-terraform "Step 7: Deploy with Terraform"
 
@@ -431,7 +431,7 @@ Test the Storage Streamer locally using [minikube](https://minikube.sigs.k8s.io/
 
     === ":fontawesome-brands-aws: AWS"
 
-        **Send a query** using the [Query Console](https://doc.log10x.com/apps/cloud/streamer/query/) web GUI or CLI. The query page documents all methods, includes sample queries, and shows real-time query progress via CloudWatch Logs.
+        **Send a query** using the [Query Console](https://doc.log10x.com/apps/streamer/query/) web GUI or CLI. The query page documents all methods, includes sample queries, and shows real-time query progress via CloudWatch Logs.
 
         Monitor streamed events via Fluent Bit:
 

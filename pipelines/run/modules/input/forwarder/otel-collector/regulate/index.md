@@ -6,7 +6,7 @@ icon: material/filter
 
 Read events from an OpenTelemetry Collector forwarder, apply regulation policies to filter events, and write filtered events back to OTel Collector.
 
-This module is a component of the [Edge Regulator](https://doc.log10x.com/apps/regulator/) app.
+This module is a component of the [Regulator](https://doc.log10x.com/apps/regulator/) app.
 
 ## Overview
 
@@ -20,13 +20,13 @@ The OpenTelemetry Collector Regulator configures:
 
 === ":material-laptop: Nix/Win/OSX"
 
-    See the Log10x Edge Regulator OpenTelemetry Collector [run instructions](https://doc.log10x.com/apps/regulator/run/#otel-collector)
+    See the Log10x Regulator OpenTelemetry Collector [run instructions](https://doc.log10x.com/apps/regulator/run/#otel-collector)
 
 === ":material-kubernetes: k8s"
 
     Deploy to k8s via [Helm](https://helm.sh/){target="_blank"}
 
-    See the Log10x Edge Regulator OpenTelemetry Collector [deployment instructions](https://doc.log10x.com/apps/regulator/deploy/#otel-collector)
+    See the Log10x Regulator OpenTelemetry Collector [deployment instructions](https://doc.log10x.com/apps/regulator/deploy/#otel-collector)
 
 ## Configuration
 

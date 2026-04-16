@@ -2,7 +2,7 @@
 icon: material/pipe-leak
 ---
 
-Read events from application logs to transform into typed [TenXObjects](https://doc.log10x.com/api/js/#TenXObject) to aggregate and report on, before Splunk UF ships them to indexers. This module is a component of the [Edge Reporter](https://doc.log10x.com/apps/edge/reporter/) app.
+Read events from application logs to transform into typed [TenXObjects](https://doc.log10x.com/api/js/#TenXObject) to aggregate and report on, before Splunk UF ships them to indexers. This module is a component of the [Reporter](https://doc.log10x.com/apps/reporter/) app.
 
 ## Architecture
 
@@ -63,7 +63,7 @@ This [module](https://doc.log10x.com/engine/module/) configures a file relay whe
 
 === ":material-laptop: Nix/OSX"
 
-    See the [Quickstart](#quickstart) below or the Log10x Edge Reporter [run instructions](https://doc.log10x.com/apps/edge/reporter/run/#splunk-uf)
+    See the [Quickstart](#quickstart) below or the Log10x Reporter [run instructions](https://doc.log10x.com/apps/reporter/run/#splunk-uf)
 
 ## Quickstart
 

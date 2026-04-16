@@ -208,7 +208,7 @@ function enlargeThresholdDiagram(button) {
 
 ### **Mute File Mode: Declarative Field-Set Caps**
 
-**Scenario:** A platform engineer sees the [Reporter](https://doc.log10x.com/apps/cloud/reporter/) attributing $12K/month to the `Error_syncing_pod` event type. They want to cap it at 10% sample rate for 24 hours while the application team ships a fix. The pipeline is configured with `rateRegulatorFieldNames: [symbolMessage]`, so mute keys are `symbolMessage` values.
+**Scenario:** A platform engineer sees the [Reporter](https://doc.log10x.com/apps/dev/) attributing $12K/month to the `Error_syncing_pod` event type. They want to cap it at 10% sample rate for 24 hours while the application team ships a fix. The pipeline is configured with `rateRegulatorFieldNames: [symbolMessage]`, so mute keys are `symbolMessage` values.
 
 **Mute file contents** (`mutes.csv`, pulled via gitops from a config repo):
 

@@ -106,4 +106,4 @@ export TENX_HOME=/path/to/tenx/binary
 fluent-bit -c /path/to/fluent-bit.conf
 ```
 
-For Splunk integration, see the [10x for Splunk](https://doc.log10x.com/apps/edge/regulator/splunk/) documentation.
+For Splunk integration, see the [10x for Splunk](https://doc.log10x.com/apps/regulator/splunk/) documentation.

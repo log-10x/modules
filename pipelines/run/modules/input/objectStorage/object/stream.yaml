@@ -68,3 +68,53 @@ output:
     # the 'foreach' macro will duplicate the input node for every instance of the
     # 'fetchBlob' option group
     foreach: fetchBlob
+
+    # --------------------------- Results Output ----------------------------
+
+    # A second output that buffers matched events to a local temp file as JSONL
+    # and uploads the file to object storage on close. Enables out-of-band
+    # consumers (e.g. the Log10x MCP server) to retrieve query results by
+    # polling S3 under {indexObjectPath(queryResults)}/{queryId}/.
+    #
+    # Runs alongside the byte-count marker writer above, which remains the
+    # completion backstop used by the query coordinator. Results are written
+    # under a separate top-level prefix (IndexObjectType.queryResults, key
+    # "qr") so the coordinator's numeric-key poll is not disturbed.
+  - type: stream
+
+    # 'path' is set to the 'IndexObjectQueryResultsWriter' class which buffers
+    # events to disk and uploads them to object storage on close.
+    path: com.log10x.ext.cloud.index.query.object.IndexObjectQueryResultsWriter
+
+    # 'name' assigns a logical name to this output instance
+    name: queryObjectResults
+
+    # 'enabled' gates the results writer. Defaults to false so the extra
+    # JSONL upload only runs when a caller explicitly opts in (e.g. the
+    # Log10x MCP server passes writeResults=true on its query request,
+    # which the coordinator forwards as queryObjectWriteResults=true on
+    # the stream pipeline launch). Deployments that rely solely on the
+    # byte-count marker backstop leave this off and pay no results-writer
+    # overhead.
+    enabled: $?queryObjectWriteResults=false
+
+    # 'filter' is set to write only TenXObject instances to output.
+    filter: isObject
+
+    # 'fields' list the values serialized to JSON per event. Defaults to
+    # 'timestamp' + 'text' (raw event text) plus every field name registered
+    # by initializer modules in the global 'enrichmentFields' option, so the
+    # output automatically tracks whatever enrichments the pipeline produces.
+    fields:
+      - timestamp
+      - text
+      - $=yield TenXEnv.get("enrichmentFields")
+
+    encodeType: json
+
+    # 'async' is set to create a dedicated thread for this output.
+    async: true
+
+    # the 'foreach' macro will duplicate the input node for every instance of the
+    # 'fetchBlob' option group
+    foreach: fetchBlob

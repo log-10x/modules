@@ -89,6 +89,29 @@ export class HttpCodeTemplate extends TenXTemplate {
             return; // Exit for other precluders.
         }
 
+        // Structural adjacency guard. The full-template keyword check at the
+        // top of this constructor is only a cheap pre-filter — it proves
+        // SOMEWHERE in the template body there's an HTTP-ish word, not that
+        // THIS specific candidate is an HTTP code. Any numeric variable whose
+        // first observed value lands in 100..599 (e.g. kafka `max.request.size
+        // = 200`, JVM `-Dclk.tck=100`) would otherwise get bound as httpToken
+        // and subsequent events at the same position would carry through
+        // arbitrary non-HTTP values as http_code.
+        //
+        // Require a strict HTTP marker (status, HTTP/, code, GET, Completed,
+        // ...) within ±5 tokens of the candidate. Real HTTP status codes
+        // always appear adjacent to such a marker; config values and metric
+        // counts generally do not.
+        var nearbyKeyword = this.findTokenNear(
+            "symbol",
+            TenXEnv.get("httpCodeStrictKeywords"),
+            token,
+            5);
+
+        if (nearbyKeyword < 0) {
+            return;
+        }
+
         // assign the token to a static variable for all instances of this template
         HttpCodeTemplate.httpToken = token;
     }
@@ -102,21 +125,46 @@ export class HttpCodeObject extends TenXObject {
         return TenXEnv.get("httpCodeField");
     }
 
-    // Invoked by the engine for each log event matching the template, 
-    // using shared state (e.g., token position) set by HttpCodeTemplate 
+    // Invoked by the engine for each log event matching the template,
+    // using shared state (e.g., token position) set by HttpCodeTemplate
     // to extract and assign the HTTP status code to the target 'httpCodeField' field.
+    //
+    // NOTE: HttpCodeTemplate records `httpToken` as the token *position* where
+    // findToken located a valid HTTP code on the template-initializing event.
+    // Within a single template the token position is stable — but the VALUE
+    // at a variable position varies by definition. A kafka config-dump line
+    // like `max.request.size = 200` initializes the template with a valid HTTP
+    // code at the size-variable position; subsequent events (`size = 3`,
+    // `size = 2000`) carry non-HTTP values at the same position, and a raw
+    // parseInt emits them as http_code garbage. Re-validate against the
+    // configured valid-codes set at event time so only events whose current
+    // token value is actually a valid HTTP code get the enrichment.
     constructor() {
 
         var httpToken = HttpCodeTemplate.httpToken;
 
-        if (httpToken) {
-
-            // make sure for the current instance the token points to a valid number
-            var httpCodeNum = TenXMath.parseInt(this.token(httpToken));
-
-            if (httpCodeNum) {
-                this.set(TenXEnv.get("httpCodeField"), httpCodeNum);
-            } 
+        if (!httpToken) {
+            return;
         }
+
+        var tokenValue = this.token(httpToken);
+
+        if (!tokenValue) {
+            return;
+        }
+
+        var httpCodeNum = TenXMath.parseInt(tokenValue);
+
+        // Range-check the parsed integer against the valid HTTP status code
+        // window. Every code in the configured httpCodeValidValues list is a
+        // 3-digit 1xx–5xx value, so (100..599) is the exact admissible range.
+        // A substring check against the validValues list would let "3" slip
+        // through because "3" is a substring of "300"/"403"/"503"; the
+        // explicit numeric bound is the simplest correct check.
+        if ((httpCodeNum < 100) || (httpCodeNum > 599)) {
+            return;
+        }
+
+        this.set(TenXEnv.get("httpCodeField"), httpCodeNum);
     }
 }

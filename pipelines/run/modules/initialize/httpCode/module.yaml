@@ -72,4 +72,27 @@ module:
         This list filters logs likely containing HTTP status codes, reducing false positives.
         Keywords cover HTTP methods, common log fields, and format-specific terms from sources like Apache, Nginx, HAProxy, Squid, IIS, Spring Boot.
 
+    - names:
+      - httpCodeStrictKeywords
+      description: Array of strict HTTP markers that must appear near a candidate HTTP code token
+      type: list
+      required: false
+      doc: |
+        Short, high-signal subset of HTTP markers used as a structural guard during template
+        initialization. After a candidate HTTP status variable token is found via
+        [httpCodeValidValues](#httpcodevalidvalues), the template initializer requires that at
+        least one of these strict markers appear within a small token window (±5 by default)
+        around the candidate. Without this check, any numeric variable that happens to hold
+        a value in 100..599 on its first observed event (e.g., a kafka config limit like
+        `max.request.size = 200`, a JVM `-Dclk.tck=100`) gets wrongly bound as an HTTP code
+        and subsequent events carry through arbitrary non-HTTP values at that position.
+
+        The strict list should contain only tokens that unambiguously mark an HTTP exchange:
+        HTTP method verbs (`GET`, `POST`, ...), protocol versions (`HTTP/1.1`, `HTTP/2`),
+        status-keyed JSON fields (`status`, `statusCode`, `http_status`, `upstream_status`),
+        and framework-specific phrases that always precede a status code in real traffic
+        (`Completed`, `DispatcherServlet`, `TCP_MISS`). It is intentionally much smaller
+        than [httpCodeKeywords](#httpcodekeywords), which is used as a cheap pre-filter
+        over the full template body and can include loose terms.
+
 

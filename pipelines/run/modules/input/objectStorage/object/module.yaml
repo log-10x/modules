@@ -43,6 +43,33 @@ module:
         sets whether this input prints throughput stats to the console
         This value is commonly used when testing an integration to a remote endpoint.
 
+    - names:
+        - queryObjectWriteResults
+      description: sets whether matched events are buffered to JSONL and uploaded to object storage
+      type: boolean
+      required: false
+      defValue: false
+      category: general
+      doc: |
+        Controls whether a second output alongside the byte-count marker writer
+        buffers matched TenXObject events to a local temp file as JSONL and
+        uploads them to object storage on close.
+
+        Defaults to `false` so the extra JSONL upload only runs when a caller
+        explicitly opts in. When set to `true`, query results are written
+        under the `queryResults` index prefix so out-of-band consumers
+        (e.g. the Log10x MCP server) can retrieve them by polling S3 for
+        `{indexObjectPath(queryResults)}/{queryId}/*.jsonl`. The fields
+        serialized per event default to `timestamp` + `text` plus every name
+        registered in the global `enrichmentFields` option.
+
+        The MCP server opts in by sending `writeResults=true` on its query
+        request; the coordinator forwards the flag to stream workers as a
+        `queryObjectWriteResults=true` bootstrap arg on the stream pipeline
+        launch. Deployments that rely solely on the byte-count marker
+        backstop used by the query coordinator leave this off and pay no
+        results-writer overhead.
+
   # ----------------------------- Container Options ---------------------------
 
     - names:

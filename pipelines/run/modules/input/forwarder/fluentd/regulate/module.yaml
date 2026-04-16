@@ -22,7 +22,7 @@ module:
     - names:
       - fluentdEncodeObjects
       description: controls whether events written to a Fluentd forwarder are encoded or written in raw form
-      type: boolean
+      type: string
       required: false
       defValue: false
       doc: |
@@ -30,6 +30,8 @@ module:
         If true, write events using the [encode](https://doc.log10x.com/api/js/#TenXObject+encode) function.
         If false, write events in their original form as read from the Fluentd forwarder
         using the [fullText](https://doc.log10x.com/api/js/#TenXBaseObject+fullText) field.
+
+        Defaults to the value of `regulatorOptimize` when used with the Edge Regulator app.
 
     - names:
       - fluentdOutputFields

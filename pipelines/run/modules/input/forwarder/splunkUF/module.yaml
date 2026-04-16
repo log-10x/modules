@@ -5,9 +5,9 @@ module:
 
   name: splunkUF
   title: Splunk UF input
-  description: report, regulate, and optimize events before shipping to Splunk via Universal Forwarder
+  description: regulate and optimize events before shipping to Splunk via Universal Forwarder
 
-  moduleSort: [splunkUFReport,splunkUFRegulate,splunkUFOptimize]
+  moduleSort: [splunkUFRegulate]
 
   # 'doc' specifies the markdown doc content, only required when generating docs.
   doc: +include $=TenXEnv.get("docGenerate") ? "run/modules/input/forwarder/splunkUF/doc.md":""

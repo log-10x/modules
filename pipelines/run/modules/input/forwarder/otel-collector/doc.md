@@ -80,13 +80,13 @@ export TENX_API_KEY=your-api-key
 
 ```bash
 # Reporter (read-only analytics)
-tenx run @run/input/forwarder/otel-collector/report @apps/edge/reporter
+tenx run @run/input/forwarder/otel-collector/report @apps/reporter
 
 # Regulator (filter noisy logs)
-tenx run @run/input/forwarder/otel-collector/regulate @apps/edge/regulator
+tenx run @run/input/forwarder/otel-collector/regulate @apps/regulator
 
 # Optimizer (Lossless Compact)
-tenx run @run/input/forwarder/otel-collector/optimize @apps/edge/optimizer
+tenx run @run/input/forwarder/otel-collector/optimize @apps/regulator regulatorOptimize true
 ```
 
 **3. Copy and customize OTel Collector config:**

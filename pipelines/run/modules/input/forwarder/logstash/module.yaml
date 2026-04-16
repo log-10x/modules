@@ -7,12 +7,12 @@ module:
 
   title: Logstash input
 
-  description: report, regulate, and optimize events collected by Logstash forwarders
+  description: regulate and optimize events collected by Logstash forwarders
 
   # 'configFolder' specifies a folder containing default configuration files for the settings defined by this unit/module
   configFolder: run/input/forwarder/logstash
 
-  moduleSort: [logstashReport,logstashRegulate,logstashOptimize]
+  moduleSort: [logstashRegulate]
 
   # 'doc' specifies the markdown doc content, only required when generating docs.
   doc: +include $=TenXEnv.get("docGenerate") ? "run/modules/input/forwarder/logstash/doc.md":""

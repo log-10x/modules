@@ -2,7 +2,7 @@
 icon: material/pipe-leak
 ---
 
-Read events from a Filebeat forwarder to transform into typed [TenXObjects](https://doc.log10x.com/api/js/#TenXObject) to aggregate and report on. This module is a component of the [Edge Reporter](https://doc.log10x.com/apps/edge/reporter/) app.
+Read events from a Filebeat forwarder to transform into typed [TenXObjects](https://doc.log10x.com/api/js/#TenXObject) to aggregate and report on. This module is a component of the [Reporter](https://doc.log10x.com/apps/reporter/) app.
 
 ## Architecture
 
@@ -55,10 +55,10 @@ This [module](https://doc.log10x.com/engine/module/) configures a Filebeat [scri
 
 === ":material-laptop: Nix/Win/OSX"
 
-    See the Log10x Edge Reporter Filebeat [run instructions](https://doc.log10x.com/apps/edge/reporter/run/#filebeat)
+    See the Log10x Reporter Filebeat [run instructions](https://doc.log10x.com/apps/reporter/run/#filebeat)
 
 === ":material-kubernetes: k8s"
 
     Deploy to k8s via [Helm](https://helm.sh/){target="_blank"}
 
-    See the Log10x Edge Reporter Filebeat [deployment instructions](https://doc.log10x.com/apps/edge/reporter/deploy/#filebeat)
+    See the Log10x Reporter Filebeat [deployment instructions](https://doc.log10x.com/apps/reporter/deploy/#filebeat)

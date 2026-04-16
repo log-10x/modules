@@ -7,7 +7,7 @@ module:
 
   title: Output regulator
 
-  description: filter and sample TenXObjects based on local and global policies
+  description: filter and sample TenXObjects based on per-node budget sampling or a declarative field-set mute file
 
   # 'configFolder' specifies a folder containing default configuration files for the settings defined by this unit/module
   configFolder: run/regulate
@@ -19,7 +19,7 @@ module:
   #  can specify a single value at max for each option defined below.
   allowMultiple: false
 
-  moduleSort: [rateRegulator,policyInput]
+  moduleSort: [rateRegulator]
 
   # 'options' defines a group of named/typed configuration values to pass to a pipeline unit/module at startup
   #  via command line arguments (e.g., '> tenx -myA X -myB Y') or YAML launch files (e.g., '> tenx @my.config').

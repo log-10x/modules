@@ -179,7 +179,7 @@ TenXTemplates are shared hidden classes — one per event type. Each template ma
 
     The [Message enrichment](https://doc.log10x.com/run/initialize/message) module calculates a shared Prometheus-compliant logical identity for all instances of an app/infra event type. 
     
-    This field is used by apps such as the [Cloud Reporter](https://doc.log10x.com/apps/cloud/reporter/) to aggregate and report on costly event types to [time-series](https://doc.log10x.com/run/output/metric/) outputs.
+    This field is used by apps such as the [Dev app](https://doc.log10x.com/apps/dev/) to aggregate and report on costly event types to [time-series](https://doc.log10x.com/run/output/metric/) outputs.
     
     For the sample [event](#plain) above: 
     

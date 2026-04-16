@@ -250,18 +250,6 @@ function tenx_process(tag, timestamp, record)
         return 0, timestamp, record
     end
 
-    -- when the 10x pipeline is emitting events back to fluent-bit in TCP mode,
-    -- the tag of the TCP input is 'tenx-pipeline'
-    --
-    -- If the lua filter was applied to '*', those events can be handled by this
-    -- lua filter before reaching the rewrite_tag filter that should process them
-    -- which is defined in 'tenx-tcp.conf', depending on the include order.
-    --
-    -- This makes sure we don't accidentally process them.
-    if (tag == "tenx-pipeline") then
-    	return 0, timestamp, record
-    end
-
     -- no need to process TenXTemplates
     if (tag == "tenx-template") then
         return 0, timestamp, record

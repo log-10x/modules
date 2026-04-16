@@ -16,7 +16,7 @@ The `inputField` parameter limits searches to specific JSON fields. Setting `inp
 
 Building on this process, here's how it applies to real events:
 
-=== ":simple-opentelemetry: OTEL Demo"
+=== ":simple-opentelemetry: OTel Demo"
 
     **Kubernetes Example:**
 
@@ -117,9 +117,9 @@ Building on this process, here's how it applies to real events:
 
 ## :material-rocket-launch-outline: Applications
 
-💰 **Cost tracking**: Identifies high-volume event types consuming log budgets with the [Cloud Reporter](https://doc.log10x.com/apps/cloud/reporter/) app
+💰 **Cost tracking**: Identifies high-volume event types consuming log budgets with the [Dev app](https://doc.log10x.com/apps/dev/) app
 
-📈 **Cost control**: Apply intelligent filtering using the [Edge Regulator](https://doc.log10x.com/apps/edge/regulator/) app to prevent over-billing
+📈 **Cost control**: Apply intelligent filtering using the [Regulator](https://doc.log10x.com/apps/regulator/) app to prevent over-billing
 
 🤖 **Multi-platform analytics**: Feed patterns into AIOps and monitoring systems via [metric outputs](https://doc.log10x.com/run/output/metric/) for Datadog, CloudWatch, SignalFx, and Prometheus
 

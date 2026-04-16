@@ -7,7 +7,7 @@ module:
 
   title: Rate regulator
 
-  description: Filter TenXObjects from output based on cost-aware sampling using local or global budget policies.
+  description: Filter TenXObjects from output using either local per-node budget sampling or a declarative field-set keyed mute file.
 
   # 'configFolder' specifies a folder containing default configuration files for the settings defined by this unit/module
   configFolder: run/regulate/rate
@@ -156,12 +156,65 @@ module:
 
     - names:
       - rateRegulatorLookupFile
-      description: lookup file containing global event type rates
+      description: declarative mute file keyed by field-set
       type: string
       required: false
       doc: |
-        defines the path to a lookup file containing global event type frequency data.
-        Used to make sampling decisions based on [cluster-wide](https://doc.log10x.com/run/regulate/rate/#control-strategies) event patterns.
+        defines the path to a declarative **mute file** that caps specific log patterns by
+        the joined field-set defined in `rateRegulatorFieldNames` (e.g. `symbolMessage`,
+        `container`, `httpCode`). The key format is the same one the local regulator uses
+        for per-node counters.
+
+        When this option is set, the regulator switches from local per-node budget sampling
+        to mute-file mode: it does nothing until an event's field-set matches an entry in
+        the file, at which point that entry's `sampleRate` and `untilEpochSec` decide retention.
+
+        **File format** — one entry per line, keyed by the joined field-set value:
+
+        ```
+        <fieldSet>=<sampleRate>:<untilEpochSec>[:<reason>]
+        ```
+
+        - `fieldSet` — the joined values of the fields named in `rateRegulatorFieldNames`,
+          separated by `_`. With `rateRegulatorFieldNames: [symbolMessage]` the key is just
+          `symbolMessage` (e.g. `Error_syncing_pod`). With `[symbolMessage, container]` the
+          key is `symbolMessage_container` (e.g. `heartbeat_debug_frontend`).
+        - `sampleRate` — probability in `[0.0, 1.0]` that a matching event is retained.
+          `0.0` = full mute; `0.1` = keep 10%; `1.0` = no-op.
+        - `untilEpochSec` — mute expires at this Unix epoch (seconds). Past that, the
+          entry becomes a no-op until someone edits or removes it. Self-healing by design.
+        - `reason` — optional free-text string for audit. Not used at runtime.
+
+        **Example** (with `rateRegulatorFieldNames: [symbolMessage]`):
+
+        ```
+        Error_syncing_pod=0.10:1744848000:pod error spam OPS-4821
+        heartbeat_debug=0.00:1744416000:k8s liveness 200s
+        jwt_validated=0.25:1744502400:auth flood after deploy
+        ```
+
+        **Why this shape:**
+
+        - **Field-set keyed**, not regex keyed → mute keys are the exact identifiers the
+          Reporter attributes cost to (same `rateRegulatorFieldNames` on both sides), so a
+          "top spender" in the Reporter maps 1:1 to a mute entry.
+        - **Git-friendly**: the file is a human-readable declaration that can live in a
+          config repo, reviewed via PR, `git blame`-d for who/why.
+        - **Self-healing**: every mute has an explicit expiry, so forgotten entries
+          eventually stop filtering instead of silently dropping production data forever.
+        - **AI-editable**: an operator can ask an assistant (e.g., Claude Code via the
+          Log10x MCP) to "mute `Error_syncing_pod` for 24 hours at 10%" — the assistant
+          reads the Reporter's cost attribution, appends the entry, and opens a PR. The
+          mute file is the interface.
+
+        **Severity floor still applies.** Even a `0.0` mute will retain high-severity
+        events at `rateRegulatorMinRetentionThreshold * boost` (see `rateRegulatorLevelBoost`).
+        This prevents a poorly-scoped mute from silencing ERROR/FATAL traffic.
+
+        When `rateRegulatorLookupFile` is **unset**, the regulator falls back to the local
+        per-node budget strategy driven by `rateRegulatorBudgetPerHour`,
+        `rateRegulatorMaxSharePerFieldSet`, and `rateRegulatorIngestionCostPerGB`. Those
+        options are ignored in mute-file mode.
       defValue: ""
 
     - names:
@@ -234,7 +287,7 @@ module:
         defines the cost per GB charged by your observability vendor for log ingestion.
         Used to calculate per-event costs (event byte size × cost per GB) for budget enforcement.
 
-        **Important:** If using global mode with a [policy module](https://doc.log10x.com/run/regulate/policy/) lookup, this value should match `policyIngestionCostPerGB` for consistency.
+        **Note:** `ingestionCostPerGB` only affects per-node budget mode. In mute-file mode, sampling is declarative and does not use cost calculations.
 
         **Common vendor pricing (2025):**
         - **Splunk Cloud**: ~$1.50/GB (varies by contract, SKU)

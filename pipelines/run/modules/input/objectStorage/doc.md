@@ -34,7 +34,7 @@ graph LR
 
 </div>
 
-[Index](https://doc.log10x.com/run/input/objectStorage/index) outputs execute when S3 event notifications are sent directly to [SQS queues](https://doc.log10x.com/apps/cloud/streamer/#sqs-based-architecture), triggering index workers to fetch and transform log/trace events enclosed within new blobs into typed TenXObjects.
+[Index](https://doc.log10x.com/run/input/objectStorage/index) outputs execute when S3 event notifications are sent directly to [SQS queues](https://doc.log10x.com/apps/streamer/#sqs-based-architecture), triggering index workers to fetch and transform log/trace events enclosed within new blobs into typed TenXObjects.
 
 A dedicated output stream utilizes the TenXObjects to generate lightweight [TenXTemplate Filters](https://doc.log10x.com/run/input/objectStorage/index/#tenxtemplate-filters) to enable fast querying of the blob's enclosed event in-place, without first requiring its contents to be duplicated to a log analyzer.
 

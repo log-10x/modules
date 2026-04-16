@@ -2,7 +2,7 @@
 icon: material/pipe-valve
 ---
 
-Read events from a Fluent Bit forwarder to transform into typed [TenXObjects](https://doc.log10x.com/api/js/#TenXObject) and filter using local/centralized [regulator](https://doc.log10x.com/run/output/regulate) policies. This module is a component of the [Edge Regulator](https://doc.log10x.com/apps/edge/regulator/) app.
+Read events from a Fluent Bit forwarder to transform into typed [TenXObjects](https://doc.log10x.com/api/js/#TenXObject) and filter using local/centralized [regulator](https://doc.log10x.com/run/output/regulate) policies. This module is a component of the [Regulator](https://doc.log10x.com/apps/regulator/) app.
 
 ## Architecture
 
@@ -55,10 +55,10 @@ This [module](https://doc.log10x.com/engine/module/) configures a Fluent Bit [Lu
 
 === ":material-laptop: Nix/Win/OSX"
 
-    See the Log10x Edge Regulator Fluent Bit [run instructions](https://doc.log10x.com/apps/edge/regulator/run/#fluent-bit)
+    See the Log10x Regulator Fluent Bit [run instructions](https://doc.log10x.com/apps/regulator/run/#fluent-bit)
 
 === ":material-kubernetes: k8s"
 
     Deploy to k8s via [Helm](https://helm.sh/){target="_blank"}
 
-    See the Log10x Edge Regulator Fluent Bit [deployment instructions](https://doc.log10x.com/apps/edge/regulator/deploy/#fluent-bit)
+    See the Log10x Regulator Fluent Bit [deployment instructions](https://doc.log10x.com/apps/regulator/deploy/#fluent-bit)

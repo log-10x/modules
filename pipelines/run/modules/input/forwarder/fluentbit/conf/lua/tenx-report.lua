@@ -23,7 +23,7 @@
 	-- to launch the 10x process to which to write events
 
 	-- Define 10x arguments for running in 'report' mode
-	tenx_run_args = "@run/input/forwarder/fluentbit/report/config.yaml @apps/edge/reporter"
+	tenx_run_args = "@run/input/forwarder/fluentbit/report/config.yaml @apps/reporter"
 
 	-- get the path of this config script
 	configPath = assert(debug.getinfo(1).source:match("@?(.*[/\\])"))

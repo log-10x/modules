@@ -9,7 +9,7 @@ Generate a [symbol library](https://doc.log10x.com/compile/link/#symbol-library)
 
 Follow the steps below. Steps that require customization link to the relevant [Config Files](#config-files) section where you can edit on github.dev or locally.
 
-??? tenx-bootstrap "Step 1: Install"
+???+ tenx-bootstrap "Step 1: Install"
 
     Install the `Cloud` binary flavor:
 
@@ -139,3 +139,32 @@ Follow the steps below. Steps that require customization link to the relevant [C
     **Check output files:**
 
     Verify symbol files were generated in your configured [outputSymbolFolder](https://doc.log10x.com/compile/scan/#outputsymbolfolder) and [outputSymbolLibraryFile](https://doc.log10x.com/compile/link/#outputsymbollibraryfile) paths.
+
+??? tenx-delete "Step 8: Teardown"
+
+    Nothing runs in the background — uninstall removes only what was installed.
+
+    === ":simple-macos: Homebrew"
+
+        ```bash
+        brew uninstall --cask log10x && rm -rf /etc/tenx
+        ```
+
+    === ":simple-linux: Linux"
+
+        ```bash
+        sudo rm -rf /opt/tenx-cloud /etc/tenx /etc/profile.d/tenx-cloud.sh
+        ```
+
+        If installed via DEB: `sudo apt-get remove tenx-cloud`
+        If installed via RPM: `sudo yum remove tenx-cloud`
+
+    === ":material-microsoft-windows: Windows"
+
+        Uninstall from **Settings > Apps > Installed apps**.
+
+    === ":simple-docker: Docker"
+
+        ```bash
+        docker rmi log10x/pipeline-10x:latest
+        ```

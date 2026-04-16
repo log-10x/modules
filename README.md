@@ -57,9 +57,8 @@ modules/
 │   ├── dev/                        # Development/testing apps
 │   ├── edge/                       # Edge (forwarder sidecar) apps
 │   │   ├── optimizer/              # Template extraction & volume reduction
-│   │   ├── regulator/              # Policy-based filtering
-│   │   ├── reporter/               # Cost attribution metrics
-│   │   └── policy/                 # Compliance enforcement
+│   │   ├── regulator/              # Rate regulation & mute files
+│   │   └── reporter/               # Cost attribution metrics
 │   └── cloud/                      # Cloud platform apps
 │       ├── reporter/               # Splunk/Elastic/Datadog cost analysis
 │       └── streamer/               # S3 data lake indexing
@@ -85,9 +84,8 @@ Deployed as sidecars alongside log forwarders (Fluentd, Fluent Bit, Filebeat, Lo
 | App | Purpose | Documentation | Run Guide |
 |-----|---------|---------------|-----------|
 | **Edge Optimizer** | Reduce log volume via template extraction | [Overview](https://doc.log10x.com/apps/edge/optimizer/) | [Run](https://doc.log10x.com/apps/edge/optimizer/run/) |
-| **Edge Regulator** | Policy-based filtering & sampling | [Overview](https://doc.log10x.com/apps/edge/regulator/) | [Run](https://doc.log10x.com/apps/edge/regulator/run/) |
+| **Edge Regulator** | Per-node budget sampling & declarative field-set mute files | [Overview](https://doc.log10x.com/apps/edge/regulator/) | [Run](https://doc.log10x.com/apps/edge/regulator/run/) |
 | **Edge Reporter** | Cost attribution metrics | [Overview](https://doc.log10x.com/apps/edge/reporter/) | [Run](https://doc.log10x.com/apps/edge/reporter/run/) |
-| **Edge Policy** | PII detection & compliance | [Overview](https://doc.log10x.com/apps/edge/policy/) | [Run](https://doc.log10x.com/apps/edge/policy/run/) |
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐

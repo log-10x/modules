@@ -101,4 +101,4 @@ export TENX_HOME=/path/to/tenx/binary
 fluentd -c /path/to/fluentd.conf
 ```
 
-For Splunk integration, see the [10x for Splunk](https://doc.log10x.com/apps/edge/optimizer/splunk/) documentation.
+For Splunk integration, see the [10x for Splunk](https://doc.log10x.com/apps/regulator/splunk/) documentation.

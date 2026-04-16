@@ -2,7 +2,7 @@
 icon: material/pipe-valve
 ---
 
-Read events from a Logstash forwarder to transform them into typed [TenXObjects](https://doc.log10x.com/api/js/#TenXObject) to filter using local/centralized [regulator](https://doc.log10x.com/run/output/regulate) policy. This module is a component of the [Edge Regulator](https://doc.log10x.com/apps/edge/regulator/) app.
+Read events from a Logstash forwarder to transform them into typed [TenXObjects](https://doc.log10x.com/api/js/#TenXObject) to filter using local/centralized [regulator](https://doc.log10x.com/run/output/regulate) policy. This module is a component of the [Regulator](https://doc.log10x.com/apps/regulator/) app.
 
 ## Architecture
 
@@ -55,7 +55,7 @@ This [module](https://doc.log10x.com/engine/module/) configures a Logstash [pipe
 
 === ":material-laptop: Nix/Win/OSX"
 
-    See the Log10x Edge Regulator Logstash [run instructions](https://doc.log10x.com/apps/edge/regulator/run/#logstash)
+    See the Log10x Regulator Logstash [run instructions](https://doc.log10x.com/apps/regulator/run/#logstash)
 
 === ":material-kubernetes: k8s"
 

@@ -2,7 +2,7 @@
 icon: material/pipe-valve
 ---
 
-Read events from application logs to transform into typed [TenXObjects](https://doc.log10x.com/api/js/#TenXObject) and filter using local/centralized [regulator](https://doc.log10x.com/run/output/regulate) policies, before the Datadog Agent ships them to Datadog. This module is a component of the [Edge Regulator](https://doc.log10x.com/apps/edge/regulator/) app.
+Read events from application logs to transform into typed [TenXObjects](https://doc.log10x.com/api/js/#TenXObject) and filter using local/centralized [regulator](https://doc.log10x.com/run/output/regulate) policies, before the Datadog Agent ships them to Datadog. This module is a component of the [Regulator](https://doc.log10x.com/apps/regulator/) app.
 
 ## Architecture
 
@@ -59,7 +59,7 @@ This [module](https://doc.log10x.com/engine/module/) configures a file relay whe
 
 === ":material-laptop: Nix/OSX"
 
-    See the [Quickstart](#quickstart) below or the Log10x Edge Regulator [run instructions](https://doc.log10x.com/apps/edge/regulator/run/#datadog-agent)
+    See the [Quickstart](#quickstart) below or the Log10x Regulator [run instructions](https://doc.log10x.com/apps/regulator/run/#datadog-agent)
 
 ## Quickstart
 

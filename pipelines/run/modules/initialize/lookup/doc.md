@@ -8,4 +8,4 @@ Example: map [HTTP status codes](https://github.com/Mr-Pi/httpStatusCodes/blob/m
 
 Lookup files [reload](https://doc.log10x.com/run/reload/) on disk changes and can [sync](https://doc.log10x.com/config/github/) from GitHub for dynamic updates.
 
-The [policy regulator](https://doc.log10x.com/run/regulate/policy/) generates centralized lookup tables on GitHub, enabling edge instances to filter noisy telemetry based on environment-wide conditions.
+The [rate regulator](https://doc.log10x.com/run/regulate/rate/) consumes a field-set keyed mute file pulled from GitHub, letting operators declaratively cap noisy patterns with diff-reviewed, self-expiring entries.

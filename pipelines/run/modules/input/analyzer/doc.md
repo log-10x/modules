@@ -4,7 +4,7 @@ icon: material/text-search
 
 Analyzer inputs retrieve events from log analytics backends via REST APIs to [transform](https://doc.log10x.com/run/transform/) them into typed TenXObjects.  
 
-The [Cloud Reporter](https://doc.log10x.com/apps/cloud/reporter/) app launches analyzer inputs within scheduled tasks (e.g., k8s CronJob) to read a sample amount of events (e.g., 10Mb of events in the last 5min) to identify and report on the app/infra events that incur the highest costs. 
+The [Dev app](https://doc.log10x.com/apps/dev/) app launches analyzer inputs within scheduled tasks (e.g., k8s CronJob) to read a sample amount of events (e.g., 10Mb of events in the last 5min) to identify and report on the app/infra events that incur the highest costs. 
 
 ### :material-toy-brick-outline: Extensibility
 

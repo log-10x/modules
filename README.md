@@ -1,6 +1,6 @@
 # Log10x Modules
 
-Core module definitions for the Log10x engine - the brain that powers log optimization, regulation, and cost analysis across edge and cloud environments.
+Core module definitions for the Log10x engine — the brain that powers log cost analysis, regulation, and optimization. Start with the [MCP Server](https://doc.log10x.com/manage/mcp-server/) — it guides you through installing and configuring the apps below based on k8s discovery of your environment.
 
 **Full Documentation**: [doc.log10x.com](https://doc.log10x.com/)
 
@@ -14,21 +14,12 @@ Core module definitions for the Log10x engine - the brain that powers log optimi
 │  │                          Applications                               │  │
 │  │                                                                     │  │
 │  │  ┌─────────────────────────┐  ┌─────────────────────────────────┐   │  │
-│  │  │       Edge Apps         │  │         Cloud Apps              │   │  │
+│  │  │     Runtime Apps        │  │        Setup / Tools            │   │  │
 │  │  │                         │  │                                 │   │  │
-│  │  │  ├─ Optimizer           │  │  ├─ Reporter (cost analysis)    │   │  │
-│  │  │  ├─ Regulator           │  │  └─ Streamer (S3 data lake)     │   │  │
-│  │  │  ├─ Reporter            │  │                                 │   │  │
-│  │  │  └─ Policy              │  │                                 │   │  │
-│  │  └─────────────────────────┘  └─────────────────────────────────┘   │  │
-│  │                                                                     │  │
-│  │  ┌─────────────────────────┐  ┌─────────────────────────────────┐   │  │
-│  │  │       Dev Apps          │  │        Compiler App             │   │  │
-│  │  │                         │  │                                 │   │  │
-│  │  │  ├─ Analyzer            │  │  ├─ Pull (github, docker, helm) │   │  │
-│  │  │  ├─ Optimizer           │  │  ├─ Scan (Java, Python, Go...)  │   │  │
-│  │  │  ├─ Regulator           │  │  └─ Push (symbol generation)    │   │  │
-│  │  │  └─ Reporter            │  │                                 │   │  │
+│  │  │  ├─ Reporter (DaemonSet)│  │  ├─ Dev (local CLI)             │   │  │
+│  │  │  ├─ Regulator (sidecar) │  │  ├─ Compiler (symbol generation)│   │  │
+│  │  │  │  Filter + Compact    │  │  └─ MCP scaffold (validation)   │   │  │
+│  │  │  └─ Streamer (S3 query) │  │                                 │   │  │
 │  │  └─────────────────────────┘  └─────────────────────────────────┘   │  │
 │  └─────────────────────────────────────────────────────────────────────┘  │
 │                                                                           │
@@ -52,16 +43,13 @@ Core module definitions for the Log10x engine - the brain that powers log optimi
 
 ```
 modules/
-├── apps/                           # Pre-built applications
+├── apps/                           # Pre-built applications (flat topology)
 │   ├── compiler/                   # Symbol compilation app
-│   ├── dev/                        # Development/testing apps
-│   ├── edge/                       # Edge (forwarder sidecar) apps
-│   │   ├── optimizer/              # Template extraction & volume reduction
-│   │   ├── regulator/              # Rate regulation & mute files
-│   │   └── reporter/               # Cost attribution metrics
-│   └── cloud/                      # Cloud platform apps
-│       ├── reporter/               # Splunk/Elastic/Datadog cost analysis
-│       └── streamer/               # S3 data lake indexing
+│   ├── dev/                        # Local preview CLI
+│   ├── mcp/                        # stdin/stdout scaffold used by the MCP server
+│   ├── reporter/                   # DaemonSet pre-SIEM cost insight
+│   ├── regulator/                  # Sidecar: Filter + Compact modes
+│   └── streamer/                   # S3 data lake indexing + on-demand query
 │
 ├── pipelines/                      # Core pipeline definitions
 │   ├── compile/                    # Symbol compilation pipeline
@@ -77,43 +65,45 @@ modules/
 
 ## Applications
 
-### Edge Applications
+### In-Cluster Applications
 
-Deployed as sidecars alongside log forwarders (Fluentd, Fluent Bit, Filebeat, Logstash).
+Deployed alongside log forwarders (Fluentd, Fluent Bit, Filebeat, Logstash).
 
 | App | Purpose | Documentation | Run Guide |
 |-----|---------|---------------|-----------|
-| **Edge Optimizer** | Reduce log volume via template extraction | [Overview](https://doc.log10x.com/apps/edge/optimizer/) | [Run](https://doc.log10x.com/apps/edge/optimizer/run/) |
-| **Edge Regulator** | Per-node budget sampling & declarative field-set mute files | [Overview](https://doc.log10x.com/apps/edge/regulator/) | [Run](https://doc.log10x.com/apps/edge/regulator/run/) |
-| **Edge Reporter** | Cost attribution metrics | [Overview](https://doc.log10x.com/apps/edge/reporter/) | [Run](https://doc.log10x.com/apps/edge/reporter/run/) |
+| **Reporter** | Cost attribution metrics (DaemonSet, pre-SIEM, not in log path) | [Overview](https://doc.log10x.com/apps/reporter/) | [Run](https://doc.log10x.com/apps/reporter/run/) |
+| **Regulator** | Two modes: Filter (lossy — budget sampling, mute files) and Compact (lossless — 50-80% volume reduction via SIEM-side expand plugin) | [Overview](https://doc.log10x.com/apps/regulator/) | [Run](https://doc.log10x.com/apps/regulator/run/) |
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                    Edge Deployment                               │
+│                    In-Cluster Deployment                         │
 │                                                                  │
-│   Application ──► Log Forwarder ──► Log10x Sidecar ──► Analyzer │
-│   (logs)          (Fluentd,         (Optimizer/       (Splunk,   │
-│                    Filebeat)         Regulator)        Elastic)  │
+│   Reporter (DaemonSet) ─── tails pre-SIEM ────► Metrics          │
+│                                                                  │
+│   Application ──► Log Forwarder ──► Regulator ──► Analyzer       │
+│   (logs)          (Fluentd,         (sidecar,     (Splunk,       │
+│                    Filebeat)         Filter or     Elastic)      │
+│                                      Compact)                    │
 │                                                                  │
 │   Metrics: ───────────────────────► Prometheus ────► Grafana    │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### Cloud Applications
-
-Run as containers analyzing logs already in observability platforms.
+### Storage & Agent Applications
 
 | App | Purpose | Documentation | Run Guide |
 |-----|---------|---------------|-----------|
-| **Cloud Reporter** | Query analyzers, calculate spend per app | [Overview](https://doc.log10x.com/apps/cloud/reporter/) | [Run](https://doc.log10x.com/apps/cloud/reporter/run/) |
-| **Storage Streamer** | S3 data lake indexing & queries | [Overview](https://doc.log10x.com/apps/cloud/streamer/) | [Run](https://doc.log10x.com/apps/cloud/streamer/run/) |
+| **Storage Streamer** | S3 data lake indexing & queries | [Overview](https://doc.log10x.com/apps/streamer/) | [Run](https://doc.log10x.com/apps/streamer/run/) |
+| **MCP** | Agent control plane — reads Reporter metrics, commands Regulator/Streamer via GitOps | [Overview](https://doc.log10x.com/manage/mcp-server/) | [Run](https://doc.log10x.com/manage/mcp-server/tools/) |
 
-### Development & Compiler Applications
+For agentless SIEM-side cost analysis (the evolution of the old Cloud Reporter app), use the [log10x-mcp](https://github.com/log-10x/log10x-mcp) server's `log10x_poc_from_siem_submit` tool.
+
+### Setup & Developer Tools
 
 | App | Purpose | Documentation | Run Guide |
 |-----|---------|---------------|-----------|
-| **Dev Apps** | Local testing of optimizer/regulator/reporter | [Overview](https://doc.log10x.com/apps/dev/) | [Run](https://doc.log10x.com/apps/dev/run/) |
-| **Compiler** | Generate symbol files from source code | [Overview](https://doc.log10x.com/apps/compiler/) | [Run](https://doc.log10x.com/apps/compiler/run/) |
+| **Dev** | Local CLI to preview savings on your logs | [Overview](https://doc.log10x.com/apps/dev/) | [Run](https://doc.log10x.com/apps/dev/run/) |
+| **Compile** | Generate symbol libraries from source code (optional — default library covers 150+ frameworks) | [Overview](https://doc.log10x.com/compile/) | [Test](https://doc.log10x.com/compile/test/) / [Deploy](https://doc.log10x.com/compile/deploy/) |
 
 ## Pipelines
 

@@ -38,4 +38,4 @@ python3 console.py \
 
 ## Documentation
 
-Full CLI options, REST API reference, and sample queries: [Defining Queries](https://doc.log10x.com/apps/cloud/streamer/query/)
+Full CLI options, REST API reference, and sample queries: [Defining Queries](https://doc.log10x.com/apps/streamer/query/)

@@ -59,6 +59,6 @@ This [module](https://doc.log10x.com/engine/module/) configures a Filebeat [scri
 
 === ":material-kubernetes: k8s"
 
-    Deploy to k8s via [Helm](https://helm.sh/){target="_blank"}
+    Deploy to k8s via [Helm](https://helm.sh/)
 
     See the Log10x Regulator Filebeat [deployment instructions](https://doc.log10x.com/apps/regulator/deploy/#filebeat)

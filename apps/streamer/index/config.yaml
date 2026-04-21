@@ -1,7 +1,7 @@
 # 🔟❎ 'run' Indexer application settings
 
 # This configuration defines general for use by the Index operation of the Streamer app.
-# To learn more see https://doc.log10x.com/apps/cloud/analyzer/#index
+# To learn more see https://doc.log10x.com/apps/streamer/#index
 
 # ============================ Bootstrap Runtime ==============================
 

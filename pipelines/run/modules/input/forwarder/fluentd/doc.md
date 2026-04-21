@@ -55,12 +55,12 @@ The `sourcePattern` regex `\"tenx_tag\":\"(.*?)\"` extracts the event source fro
 
     | File | Purpose |
     |------|---------|
-    | [`conf/auxiliary/tenx-unix-exec-filter.conf`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentd/conf/auxiliary/tenx-unix-exec-filter.conf){target="_blank"} | exec_filter plugin configuration for Unix socket mode |
-    | [`conf/auxiliary/tenx-unix-source.conf`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentd/conf/auxiliary/tenx-unix-source.conf){target="_blank"} | Unix socket input for return path |
-    | [`conf/tenx-optimize-unix.conf`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentd/conf/tenx-optimize-unix.conf){target="_blank"} | Optimize mode with Unix socket return |
-    | [`conf/tenx-optimize-stdio.conf`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentd/conf/tenx-optimize-stdio.conf){target="_blank"} | Optimize mode with stdio return (alternative) |
-    | [`input/stream.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentd/input/stream.yaml){target="_blank"} | 10x stdin input configuration |
-    | [`output/unix/stream.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentd/output/unix/stream.yaml){target="_blank"} | 10x Forward protocol output configuration |
+    | [`conf/auxiliary/tenx-unix-exec-filter.conf`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentd/conf/auxiliary/tenx-unix-exec-filter.conf) | exec_filter plugin configuration for Unix socket mode |
+    | [`conf/auxiliary/tenx-unix-source.conf`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentd/conf/auxiliary/tenx-unix-source.conf) | Unix socket input for return path |
+    | [`conf/tenx-optimize-unix.conf`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentd/conf/tenx-optimize-unix.conf) | Optimize mode with Unix socket return |
+    | [`conf/tenx-optimize-stdio.conf`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentd/conf/tenx-optimize-stdio.conf) | Optimize mode with stdio return (alternative) |
+    | [`input/stream.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentd/input/stream.yaml) | 10x stdin input configuration |
+    | [`output/unix/stream.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentd/output/unix/stream.yaml) | 10x Forward protocol output configuration |
 
 ## Quickstart
 

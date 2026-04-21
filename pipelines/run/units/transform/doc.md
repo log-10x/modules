@@ -234,7 +234,7 @@ The 10x Engine includes built-in enrichment [modules](com/concepts/module/) that
 
 === ":material-kubernetes: K8s"
 
-    Enrich TenXObjects with Kubernetes metadata by extracting container, pod, and namespace [k8s names](https://kubernetes.io/docs/concepts/overview/working-with-objects/names/){target="\_blank"} from their surrounding text or JSON structure.
+    Enrich TenXObjects with Kubernetes metadata by extracting container, pod, and namespace [k8s names](https://kubernetes.io/docs/concepts/overview/working-with-objects/names/) from their surrounding text or JSON structure.
     
     For example, for the sample [event](#plain) with Fluentd metadata, this module extracts Kubernetes metadata such as `container_name: "fluentd-10x"`, `pod_name: "foo-fluentd-10x-68s2p"`, and `namespace_name: "default"` as named fields for further processing and aggregation. To learn more see [k8s Enrichment](https://doc.log10x.com/run/initialize/k8s/).
 

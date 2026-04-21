@@ -18,6 +18,7 @@ groupFilters:
   - 'eval[TenXEnv.get("queryObjectFrom") ? "(!this.timestamp) || TenXDate.isAfterOrEqual(this.timestamp, TenXEnv.get(\"queryObjectFrom\"))" : ("")]'
   - 'eval[TenXEnv.get("queryObjectTo") ? "(!this.timestamp) || TenXDate.isBefore(this.timestamp, TenXEnv.get(\"queryObjectTo\"))" : ("")]'
   - 'eval[TenXEnv.get("queryObjectFilter")]'
+  - 'eval[Block(TenXLog_info("QOF-COMPILE: val=["+TenXEnv.get("queryObjectFilter")+"]"),"true")]'
 
 # ============================== Input Options ================================
 

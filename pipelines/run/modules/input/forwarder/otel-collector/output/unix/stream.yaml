@@ -49,7 +49,7 @@ outputForward:
     writeTemplates: /$=TenXEnv.get("otelCollectorEncodeObjects")
 
 
-  - writeObjects: /$=TenXEnv.get("otelCollectorEncodeObjects") && TenXEnv.get("compactRegulatorLookupFile")
+  - writeObjects: /$=TenXEnv.get("otelCollectorEncodeObjects") && !!TenXEnv.get("compactRegulatorLookupFile")
 
     address: $=TenXEnv.get("otelCollectorOutputForwardAddress", "/tmp/tenx-otel-out.sock")
 

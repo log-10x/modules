@@ -25,7 +25,8 @@ include:
 # Customize how events are written back to Filebeat via a Unix domain socket
 outputUnixSocket:
 
-  # regulate encoder - outputs filtered events
+  # Regulate-only mode (filebeatEncodeObjects=false): every event goes out as fullText.
+  # Compact decisions are a no-op here because Filebeat isn't wired to decode compact form.
   - writeObjects: /$=!TenXEnv.get("filebeatEncodeObjects")
 
     filter: extractorKey == "message"
@@ -33,40 +34,42 @@ outputUnixSocket:
     # Sets Unix domain socket address from the value read from tenxNix.yml/tenxWin.yml (see above)
     address: $=rawOutputUnixSocketAddress
 
-    # Send the entire received JSON back
     fields:
       - fullText
       - $?filebeatOutputFields
     encodeType: $?filebeatOutputEncodeType
     encodeDelimiter: ","
-
-    # When grouping events and emitting back to Filebeat, escape the line break to ensure a valid JSON
     encodeGroupDelimiter: "\\n"
 
-  # optimize encoder - outputs encoded events
+  # Compact-capable mode (filebeatEncodeObjects=true): per-event decision via the
+  # compactRegulator predicate. `shouldEncode()` returns the lookup-backed bool
+  # (see run/modules/regulate/compact), falling back to `compactRegulatorDefault`
+  # when no entry applies. One stream, ternary output field.
   - writeObjects: /$=TenXEnv.get("filebeatEncodeObjects")
 
     filter: extractorKey == "message"
 
-    # Sets Unix domain socket address from the value read from tenxNix.yml/tenxWin.yml (see above)
     address: $=rawOutputUnixSocketAddress
 
-    # Send the entire received JSON back, with the message encoded.
+    # Per-event: call encode() if shouldEncode() says yes, otherwise emit fullText.
+    # When no compact module is loaded, shouldEncode() isn't defined — in that case
+    # the deployer should either omit the compact module (keeping regulate-only mode
+    # above by setting filebeatEncodeObjects=false) or default the predicate to true
+    # via `compactRegulatorDefault: true` so every event is encoded.
     fields:
-      - encoded=encode()
+      - 'output=shouldEncode() ? encode() : fullText'
       - $?filebeatOutputFields
     encodeType: $?filebeatOutputEncodeType
     encodeDelimiter: ","
-
-    # When grouping events and emitting back to Filebeat, escape the line break to ensure a valid JSON
     encodeGroupDelimiter: "\\n"
 
-  # optimize template encoder - outputs all new templates.
+  # New-template emission: fires only when an event is actually being compacted
+  # (so the downstream has the template to decode it). Gated on shouldEncode() so
+  # we don't ship templates for events that went out as fullText.
   - writeObjects: /$=TenXEnv.get("filebeatEncodeObjects")
 
     filter: (extractorKey == "message") && isNewTemplate()
 
-    # Sets Unix domain socket address from the value read from tenxNix.yml/tenxWin.yml (see above)
     address: $=rawOutputUnixSocketAddress
 
     # Send custom TenXTemplate JSON, with duplicated templateHash field as 'templateHashDocId'.

@@ -25,48 +25,53 @@ include:
 # 'outputSocket' defines the output used to write back to the Logstash forwarder
 outputSocket:
 
-    # Write objects' text to the socket using the intrinsic 'fullText' field
-    # if 'logstashEncodeObjects' has NOT been set.
+    # Regulate-only mode (logstashEncodeObjects=false): every event goes out as fullText.
   - protocol: TCP
 
     host: 127.0.0.1
 
-    # 'port' is set to value read from tenx-pipe-in-tcp.conf (see above)
     port: $=rawOutputSocketPort
 
-    # 'writeObjects' is only set to true if 'logstashEncodeObjects' is NOT set
     writeObjects: /$=!TenXEnv.get("logstashEncodeObjects")
 
-    # 'fields' is set to the 'fullText', which contains the TenXObject's original text
     fields:
       - fullText
       - $?logstashOutputFields
     encodeType: $?logstashOutputEncodeType
     encodeDelimiter: ","
 
-    # do not encode templates
     writeTemplates: false
 
-    # Write objects in encoded form using the the encode() function if 'logstashEncodeObjects' is set.
-    # To learn more see https://doc.log10x.com/api/js/#TenXObject+encode
+    # Compact-capable mode (logstashEncodeObjects=true): per-event decision via
+    # the compactRegulator predicate. One stream, ternary output field.
   - protocol: TCP
 
     host: 127.0.0.1
 
-    # 'port' is set to value read from tenx-pipe-in-tcp.conf (see above)
     port: $=rawOutputSocketPort
 
-    # 'writeObjects' is only set to true if the 'logstashEncodeObjects' was set
-    writeObjects: /$=TenXEnv.get("logstashEncodeObjects")
+    writeObjects: /$=TenXEnv.get("logstashEncodeObjects") && !TenXEnv.get("compactRegulatorLookupFile")
 
-    # 'fields' is set to the return value of the encode() function
     fields:
       - encoded=encode()
       - $?logstashOutputFields
     encodeType: $?logstashOutputEncodeType
     encodeDelimiter: ","
 
-    # Encode templates in JSON format.
-    # To learn more about TenXTemplates, see: https://doc.log10x.com/run/template
-    # Only write the templates when encoding objects.
+    writeTemplates: /$=TenXEnv.get("logstashEncodeObjects")
+
+  - protocol: TCP
+
+    host: 127.0.0.1
+
+    port: $=rawOutputSocketPort
+
+    writeObjects: /$=TenXEnv.get("logstashEncodeObjects") && TenXEnv.get("compactRegulatorLookupFile")
+
+    fields:
+      - 'output=shouldEncode() ? encode() : fullText'
+      - $?logstashOutputFields
+    encodeType: $?logstashOutputEncodeType
+    encodeDelimiter: ","
+
     writeTemplates: /$=TenXEnv.get("logstashEncodeObjects")

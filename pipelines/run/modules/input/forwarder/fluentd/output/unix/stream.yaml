@@ -27,13 +27,11 @@ include:
 # 'outputForward' defines the output used to write to the Fluentd forwarder
 outputForward:
 
-    # Write objects in plain-text form using the intrinsic 'fullText' field if 'fluentdEncodeObjects' is NOT set.
+    # Regulate-only mode (fluentdEncodeObjects=false): every event goes out as fullText.
   - writeObjects: /$=!TenXEnv.get("fluentdEncodeObjects")
 
-    # Sets Unix domain socket address from the value read from tenx-unix-source.conf (see above)
     address: $=rawOutputForwardAddress
 
-    # 'fields' is set to the 'fullText', which contains the TenXObject's original text
     fields:
       - fullText
       - $?fluentdOutputFields
@@ -43,22 +41,31 @@ outputForward:
     # Do not encode templates
     writeTemplates: false
 
-    # Write objects in encoded form using encode() function if 'fluentdEncodeObjects' is set.
-    # To learn more see https://doc.log10x.com/api/js/#TenXObject+encode
-  - writeObjects: /$=TenXEnv.get("fluentdEncodeObjects")
+    # Compact-capable mode (fluentdEncodeObjects=true): per-event decision via
+    # the compactRegulator predicate. One stream, ternary output field.
+  - writeObjects: /$=TenXEnv.get("fluentdEncodeObjects") && !TenXEnv.get("compactRegulatorLookupFile")
 
-    # Sets Unix domain socket address from the value read from tenx-unix-source.conf (see above)
     address: $=rawOutputForwardAddress
 
-    # 'fields' is set to the return value of the encode() function
-    #  https://doc.log10x.com/api/js/#TenXObject+encode
     fields:
       - encoded=encode()
       - $?fluentdOutputFields
     encodeType: $?fluentdOutputEncodeType
     encodeDelimiter: ","
 
-    # Encode templates in JSON format.
-    # To learn more about TenXTemplates, see: https://doc.log10x.com/run/template
-    # Only write the templates when also encoding objects.
+    # Only ship templates for events actually being compacted.
+    writeTemplates: /$=TenXEnv.get("fluentdEncodeObjects")
+
+
+  - writeObjects: /$=TenXEnv.get("fluentdEncodeObjects") && TenXEnv.get("compactRegulatorLookupFile")
+
+    address: $=rawOutputForwardAddress
+
+    fields:
+      - 'output=shouldEncode() ? encode() : fullText'
+      - $?fluentdOutputFields
+    encodeType: $?fluentdOutputEncodeType
+    encodeDelimiter: ","
+
+    # Only ship templates for events actually being compacted.
     writeTemplates: /$=TenXEnv.get("fluentdEncodeObjects")

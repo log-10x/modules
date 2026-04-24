@@ -49,6 +49,29 @@ module "streamer" {
 }
 ```
 
+## ⚠ Recursion guard
+
+When `source_bucket_name == index_bucket_name` (the single-bucket layout),
+`source_prefix` must scope the notification to where raw logs land — not
+to where the engine writes its index artifacts (under the `tenx/`
+prefix). Without a scoped prefix, the indexer's bloom/reverse-index
+writes re-trigger the S3 notification → indexer → write → loop. AWS's
+Lambda recursive-invocation detector stops it, but you'll still see
+unexpected invocations.
+
+The module refuses this configuration at `terraform plan` time with:
+
+```
+Recursive-invocation risk: source_bucket_name == index_bucket_name with
+empty source_prefix means indexer writes re-trigger the indexer via the
+S3 notification.
+```
+
+Fixes:
+- Set `source_prefix` to the directory where raw uploads land (`app/`, `raw/`, etc.)
+- Or use separate buckets for `source_bucket_name` / `index_bucket_name`
+- Or set `manage_s3_notification = false` and wire the notification yourself (use the queue ARN from the module output)
+
 ## Measured perf
 
 From benchmarks against this deployment on `us-east-1`, x86_64, 6144 MB:

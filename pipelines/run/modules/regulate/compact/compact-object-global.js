@@ -94,12 +94,10 @@ export class CompactObject extends TenXObject {
         var defaultEncodeRaw = TenXEnv.get("compactRegulatorDefault", false);
         var defaultEncode = (defaultEncodeRaw == true) || (defaultEncodeRaw == "true");
 
-        // TEMP DEBUG: hardcode fieldSetKey to test lookup in isolation
-        var fieldSetKey = "otel-demo";
+        var fieldSetKey = this.joinFields("_", TenXEnv.get("compactRegulatorFieldNames"));
         if (!fieldSetKey) return defaultEncode;
 
-        // TEMP DEBUG: try resolved path as lookup name
-        var entry = TenXLookup.get(TenXEnv.get("compactRegulatorLookupFile"), fieldSetKey);
+        var entry = TenXLookup.get("compactRegulatorLookupFile", fieldSetKey);
         if (!entry) return defaultEncode;
 
         var parts = TenXString.split(entry, ":");

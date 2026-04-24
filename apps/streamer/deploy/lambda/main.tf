@@ -218,6 +218,21 @@ resource "aws_s3_bucket_notification" "source_to_index" {
   }
 
   depends_on = [aws_sqs_queue_policy.index_s3]
+
+  # Recursion guard. The indexer Lambda writes bloom + reverse index
+  # artifacts back to the index bucket. If the same bucket is used for
+  # source + index AND the notification filter is wide open, each write
+  # re-triggers the indexer via SQS → Lambda → S3 → SQS → Lambda → …
+  # AWS's Lambda recursive-invocation detector eventually stops it, but
+  # by then a bill has accrued. Refuse this configuration at plan time.
+  # Escape hatch: set manage_s3_notification=false and wire the
+  # notification outside the module if you need a custom scope.
+  lifecycle {
+    precondition {
+      condition     = var.source_bucket_name != var.index_bucket_name || var.source_prefix != ""
+      error_message = "Recursive-invocation risk: source_bucket_name == index_bucket_name with empty source_prefix means indexer writes re-trigger the indexer via the S3 notification. Set source_prefix to scope the trigger to where raw logs land (e.g. \"app/\", \"raw/\"), or use different buckets, or set manage_s3_notification=false to wire the notification yourself."
+    }
+  }
 }
 
 resource "aws_lambda_event_source_mapping" "index" {

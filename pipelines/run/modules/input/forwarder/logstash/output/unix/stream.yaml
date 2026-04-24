@@ -39,23 +39,13 @@ outputUnixSocket:
     # Do not encode templates
     writeTemplates: false
 
-    # Compact-capable mode (logstashEncodeObjects=true): per-event decision via
-    # the compactRegulator predicate. One stream, ternary output field.
-  - writeObjects: /$=TenXEnv.get("logstashEncodeObjects") && !TenXEnv.get("compactRegulatorLookupFile")
-
-    address: $=rawOutputUnixSocketAddress
-
-    fields:
-      - encoded=encode()
-      - $?logstashOutputFields
-    encodeType: $?logstashOutputEncodeType
-    encodeDelimiter: ","
-
-    # Only ship templates for events actually being compacted.
-    writeTemplates: /$=TenXEnv.get("logstashEncodeObjects")
-
-
-  - writeObjects: /$=TenXEnv.get("logstashEncodeObjects") && TenXString.length(TenXEnv.get("compactRegulatorLookupFile")) > 0
+    # Encode-active mode (logstashEncodeObjects=true). The `shouldEncode`
+    # getter on CompactObject returns TRUE by default (including when the
+    # compact module is not configured), so the ternary field emits
+    # encode() — matching pre-compact-module semantics. When the compact
+    # lookup file IS configured, shouldEncode makes a per-event decision
+    # via the lookup, routing individual patterns to fullText.
+  - writeObjects: /$=TenXEnv.get("logstashEncodeObjects")
 
     address: $=rawOutputUnixSocketAddress
 

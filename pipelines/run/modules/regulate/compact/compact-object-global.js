@@ -70,16 +70,14 @@ export class CompactInput extends TenXInput {
 
 export class CompactObject extends TenXObject {
 
-    // Gate class loading on lookup file presence. The engine's static
-    // analyzer resolves every reachable statement in shouldEncode at init
-    // time, including `TenXLookup.get("compactRegulatorLookupFile", ...)`.
-    // That reference FAILS when no lookup named compactRegulatorLookupFile
-    // is loaded. Blocking the whole class from loading when no file is set
-    // avoids the issue — the stream.yaml's writeObjects block uses the
-    // same gate, so the shouldEncode reference in the field expression is
-    // also only analyzed when the class is loaded.
+    // Always load so the shouldEncode getter is safe to call from the
+    // forwarder output stream even when the lookup file isn't set.
+    // shouldEncode early-returns before any TenXLookup.get call if the
+    // compactRegulatorLookupFile env is empty — so the static analyzer
+    // still sees the lookup name reference as reachable, but at runtime
+    // it's never executed unless lookupFile is actually set.
     static shouldLoad(config) {
-       return TenXEnv.get("compactRegulatorLookupFile");
+       return true;
     }
 
     // Per-event compact decision. Pure — returns the bool, doesn't mutate
@@ -90,6 +88,12 @@ export class CompactObject extends TenXObject {
     get shouldEncode() {
 
         if ((!this.isObject) || (this.isDropped)) return false;
+
+        // No lookup file set → compact inactive, legacy encode-all semantics
+        // wanted by the stream ternary gate. Return true so the ternary
+        // emits encode(). Stream gates on fluentbitEncodeObjects to choose
+        // between this stream and the fullText-only one.
+        if (TenXString.length(TenXEnv.get("compactRegulatorLookupFile")) == 0) return true;
 
         var defaultEncodeRaw = TenXEnv.get("compactRegulatorDefault", false);
         var defaultEncode = (defaultEncodeRaw == true) || (defaultEncodeRaw == "true");

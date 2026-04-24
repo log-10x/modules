@@ -41,27 +41,13 @@ outputForward:
     # Do not encode templates
     writeTemplates: false
 
-    # Compact-capable, compact module NOT active: legacy all-encode behavior.
-    # Every event emits via encode(). Matches pre-compact-module semantics so
-    # `fluentbitEncodeObjects=true` alone (without loading the compact module)
-    # is unchanged.
-  - writeObjects: /$=TenXEnv.get("fluentbitEncodeObjects") && !TenXEnv.get("compactRegulatorLookupFile")
-
-    address: $=rawOutputForwardAddress
-
-    fields:
-      - encoded=encode()
-      - $?fluentbitOutputFields
-    encodeType: $?fluentbitOutputEncodeType
-    encodeDelimiter: ","
-
-    writeTemplates: /$=TenXEnv.get("fluentbitEncodeObjects")
-
-    # Compact-capable, compact module active: per-event decision via
-    # `shouldEncode()`. Gated on `compactRegulatorLookupFile` being set so the
-    # engine only static-analyzes this fields expression when the CompactObject
-    # class is loaded (shouldLoad gates on the same condition).
-  - writeObjects: /$=TenXEnv.get("fluentbitEncodeObjects") && TenXString.length(TenXEnv.get("compactRegulatorLookupFile")) > 0
+    # Encode-active mode (fluentbitEncodeObjects=true). The `shouldEncode`
+    # getter on CompactObject returns TRUE by default (including when the
+    # compact module is not configured), so the ternary field emits
+    # encode() — matching pre-compact-module semantics. When the compact
+    # lookup file IS configured, shouldEncode makes a per-event decision
+    # via the lookup, routing individual patterns to fullText.
+  - writeObjects: /$=TenXEnv.get("fluentbitEncodeObjects")
 
     address: $=rawOutputForwardAddress
 

@@ -44,25 +44,13 @@ outputForward:
     # Do not encode templates
     writeTemplates: false
 
-    # Compact-capable mode (fluentbitEncodeObjects=true): per-event decision via
-    # the compactRegulator predicate. One stream, ternary output field — events
-    # with a lookup entry encoding=true emit encode(); otherwise fullText.
-  - writeObjects: /$=TenXEnv.get("fluentbitEncodeObjects") && !TenXEnv.get("compactRegulatorLookupFile")
-
-    hostAddress: 127.0.0.1
-    hostPort: $=rawOutputForwardPort
-
-    fields:
-      - encoded=encode()
-      - $?fluentbitOutputFields
-    encodeType: $?fluentbitOutputEncodeType
-    encodeDelimiter: ","
-
-    # Only ship templates for events actually being compacted.
-    writeTemplates: /$=TenXEnv.get("fluentbitEncodeObjects")
-
-
-  - writeObjects: /$=TenXEnv.get("fluentbitEncodeObjects") && TenXString.length(TenXEnv.get("compactRegulatorLookupFile")) > 0
+    # Encode-active mode (fluentbitEncodeObjects=true). The `shouldEncode`
+    # getter on CompactObject returns TRUE by default (including when the
+    # compact module is not configured), so the ternary field emits
+    # encode() — matching pre-compact-module semantics. When the compact
+    # lookup file IS configured, shouldEncode makes a per-event decision
+    # via the lookup, routing individual patterns to fullText.
+  - writeObjects: /$=TenXEnv.get("fluentbitEncodeObjects")
 
     hostAddress: 127.0.0.1
     hostPort: $=rawOutputForwardPort
@@ -73,5 +61,5 @@ outputForward:
     encodeType: $?fluentbitOutputEncodeType
     encodeDelimiter: ","
 
-    # Only ship templates for events actually being compacted.
+    # Only ship templates when encoding is active.
     writeTemplates: /$=TenXEnv.get("fluentbitEncodeObjects")

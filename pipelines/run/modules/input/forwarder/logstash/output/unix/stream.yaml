@@ -55,7 +55,7 @@ outputUnixSocket:
     writeTemplates: /$=TenXEnv.get("logstashEncodeObjects")
 
 
-  - writeObjects: /$=TenXEnv.get("logstashEncodeObjects") && If(TenXEnv.get("compactRegulatorLookupFile"), true, false)
+  - writeObjects: /$=TenXEnv.get("logstashEncodeObjects") && TenXString.length(TenXEnv.get("compactRegulatorLookupFile")) > 0
 
     address: $=rawOutputUnixSocketAddress
 

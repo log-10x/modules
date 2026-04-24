@@ -57,7 +57,7 @@ outputForward:
     writeTemplates: /$=TenXEnv.get("fluentdEncodeObjects")
 
 
-  - writeObjects: /$=TenXEnv.get("fluentdEncodeObjects") && If(TenXEnv.get("compactRegulatorLookupFile"), true, false)
+  - writeObjects: /$=TenXEnv.get("fluentdEncodeObjects") && TenXString.length(TenXEnv.get("compactRegulatorLookupFile")) > 0
 
     address: $=rawOutputForwardAddress
 

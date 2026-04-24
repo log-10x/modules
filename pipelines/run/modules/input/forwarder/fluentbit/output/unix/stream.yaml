@@ -27,13 +27,11 @@ include:
 # 'outputForward' defines the output(s) used to write back to the Fluent Bit forwarder
 outputForward:
 
-    # Write objects in plain-text form using the intrinsic 'fullText' field if 'fluentbitEncodeObjects' has NOT been set.
+    # Regulate-only mode (fluentbitEncodeObjects=false): every event goes out as fullText.
   - writeObjects: /$=!TenXEnv.get("fluentbitEncodeObjects")
 
-    # Sets Unix domain socket address from the value read from tenx-unix-source.conf (see above)
     address: $=rawOutputForwardAddress
 
-    # 'fields' is set to the 'fullText', which contains the TenXObject's original text
     fields:
       - fullText
       - $?fluentbitOutputFields
@@ -43,22 +41,34 @@ outputForward:
     # Do not encode templates
     writeTemplates: false
 
-    # Write objects in encoded form using the encode() function if 'fluentbitEncodeObjects' is set.
-    # To learn more see https://doc.log10x.com/api/js/#TenXObject+encode
-  - writeObjects: /$=TenXEnv.get("fluentbitEncodeObjects")
+    # Compact-capable, compact module NOT active: legacy all-encode behavior.
+    # Every event emits via encode(). Matches pre-compact-module semantics so
+    # `fluentbitEncodeObjects=true` alone (without loading the compact module)
+    # is unchanged.
+  - writeObjects: /$=TenXEnv.get("fluentbitEncodeObjects") && !TenXEnv.get("compactRegulatorLookupFile")
 
-    # Sets Unix domain socket address from the value read from tenx-unix-source.conf (see above)
     address: $=rawOutputForwardAddress
 
-    # 'fields' is set to the return value of the encode() function
-    #  https://doc.log10x.com/api/js/#TenXObject+encode
     fields:
       - encoded=encode()
       - $?fluentbitOutputFields
     encodeType: $?fluentbitOutputEncodeType
     encodeDelimiter: ","
 
-    # Encode templates in JSON format.
-    # To learn more about TenXTemplates, see: https://doc.log10x.com/run/template
-    # Only write the templates when also encoding objects.
+    writeTemplates: /$=TenXEnv.get("fluentbitEncodeObjects")
+
+    # Compact-capable, compact module active: per-event decision via
+    # `shouldEncode()`. Gated on `compactRegulatorLookupFile` being set so the
+    # engine only static-analyzes this fields expression when the CompactObject
+    # class is loaded (shouldLoad gates on the same condition).
+  - writeObjects: /$=TenXEnv.get("fluentbitEncodeObjects") && !!TenXEnv.get("compactRegulatorLookupFile")
+
+    address: $=rawOutputForwardAddress
+
+    fields:
+      - 'output=shouldEncode() ? encode() : fullText'
+      - $?fluentbitOutputFields
+    encodeType: $?fluentbitOutputEncodeType
+    encodeDelimiter: ","
+
     writeTemplates: /$=TenXEnv.get("fluentbitEncodeObjects")

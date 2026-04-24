@@ -1,7 +1,7 @@
 # 🔟❎ 'run' OpenTelemetry Collector forward output stream configuration
 
 # This configuration defines a Unix domain socket output to write
-# encoded/plain-text TenXObjects to an OpenTelemetry Collector forwarder host process 
+# encoded/plain-text TenXObjects to an OpenTelemetry Collector forwarder host process
 # via the native forward protocol.
 
 # Set the 10x pipeline to 'run'
@@ -19,30 +19,25 @@ include:
 # 'outputForward' defines the output used to write to the OTel Collector forwarder
 outputForward:
 
-    # Write objects in plain-text form using the intrinsic 'fullText' field if 'otelCollectorEncodeObjects' is NOT set.
+    # Regulate-only mode (otelCollectorEncodeObjects=false): every event goes out as fullText.
   - writeObjects: /$=!TenXEnv.get("otelCollectorEncodeObjects")
 
-    # Sets Unix domain socket address
     address: $=TenXEnv.get("otelCollectorOutputForwardAddress", "/tmp/tenx-otel-out.sock")
 
-    # 'fields' is set to the 'fullText', which contains the TenXObject's original text
     fields:
       - fullText
       - $?otelCollectorOutputFields
     encodeType: $?otelCollectorOutputEncodeType
     encodeDelimiter: ","
 
-    # Do not encode templates
     writeTemplates: false
 
-    # Write objects in encoded form using encode() function if 'otelCollectorEncodeObjects' is set.
-    # To learn more see https://doc.log10x.com/api/js/#TenXObject+encode
-  - writeObjects: /$=TenXEnv.get("otelCollectorEncodeObjects")
+    # Compact-capable mode (otelCollectorEncodeObjects=true): per-event decision via
+    # the compactRegulator predicate. One stream, ternary output field.
+  - writeObjects: /$=TenXEnv.get("otelCollectorEncodeObjects") && !TenXEnv.get("compactRegulatorLookupFile")
 
-    # Sets Unix domain socket address
     address: $=TenXEnv.get("otelCollectorOutputForwardAddress", "/tmp/tenx-otel-out.sock")
 
-    # 'fields' is set to the return value of the encode() function
     fields:
       - encoded=encode()
       - $?otelCollectorOutputFields
@@ -50,8 +45,20 @@ outputForward:
     # Use JSON encoding to properly handle 10x-encoded strings that contain special characters
     encodeType: json
 
-    # Encode templates in JSON format.
-    # To learn more about TenXTemplates, see: https://doc.log10x.com/run/template
-    # Only write the templates when also encoding objects.
+    # Only ship templates for events actually being compacted.
     writeTemplates: /$=TenXEnv.get("otelCollectorEncodeObjects")
 
+
+  - writeObjects: /$=TenXEnv.get("otelCollectorEncodeObjects") && !!TenXEnv.get("compactRegulatorLookupFile")
+
+    address: $=TenXEnv.get("otelCollectorOutputForwardAddress", "/tmp/tenx-otel-out.sock")
+
+    fields:
+      - 'output=shouldEncode() ? encode() : fullText'
+      - $?otelCollectorOutputFields
+
+    # Use JSON encoding to properly handle 10x-encoded strings that contain special characters
+    encodeType: json
+
+    # Only ship templates for events actually being compacted.
+    writeTemplates: /$=TenXEnv.get("otelCollectorEncodeObjects")

@@ -28,14 +28,13 @@ include:
 # 'outputForward' defines the output(s) used to write back to the Fluent Bit forwarder
 outputForward:
 
-    # Write objects in plain-text form using the intrinsic 'fullText' field if 'fluentbitEncodeObjects' has NOT been set.
+    # Regulate-only mode (fluentbitEncodeObjects=false): every event goes out as fullText.
   - writeObjects: /$=!TenXEnv.get("fluentbitEncodeObjects")
 
     # Use TCP host/port for Forward protocol (Windows does not support Unix domain sockets)
     hostAddress: 127.0.0.1
     hostPort: $=rawOutputForwardPort
 
-    # 'fields' is set to the 'fullText', which contains the TenXObject's original text
     fields:
       - fullText
       - $?fluentbitOutputFields
@@ -45,23 +44,34 @@ outputForward:
     # Do not encode templates
     writeTemplates: false
 
-    # Write objects in encoded form using the encode() function if 'fluentbitEncodeObjects' is set.
-    # To learn more see https://doc.log10x.com/api/js/#TenXObject+encode
-  - writeObjects: /$=TenXEnv.get("fluentbitEncodeObjects")
+    # Compact-capable mode (fluentbitEncodeObjects=true): per-event decision via
+    # the compactRegulator predicate. One stream, ternary output field — events
+    # with a lookup entry encoding=true emit encode(); otherwise fullText.
+  - writeObjects: /$=TenXEnv.get("fluentbitEncodeObjects") && !TenXEnv.get("compactRegulatorLookupFile")
 
-    # Use TCP host/port for Forward protocol (Windows does not support Unix domain sockets)
     hostAddress: 127.0.0.1
     hostPort: $=rawOutputForwardPort
 
-    # 'fields' is set to the return value of the encode() function
-    #  https://doc.log10x.com/api/js/#TenXObject+encode
     fields:
       - encoded=encode()
       - $?fluentbitOutputFields
     encodeType: $?fluentbitOutputEncodeType
     encodeDelimiter: ","
 
-    # Encode templates in JSON format.
-    # To learn more about TenXTemplates, see: https://doc.log10x.com/run/template
-    # Only write the templates when also encoding objects.
+    # Only ship templates for events actually being compacted.
+    writeTemplates: /$=TenXEnv.get("fluentbitEncodeObjects")
+
+
+  - writeObjects: /$=TenXEnv.get("fluentbitEncodeObjects") && !!TenXEnv.get("compactRegulatorLookupFile")
+
+    hostAddress: 127.0.0.1
+    hostPort: $=rawOutputForwardPort
+
+    fields:
+      - 'output=shouldEncode() ? encode() : fullText'
+      - $?fluentbitOutputFields
+    encodeType: $?fluentbitOutputEncodeType
+    encodeDelimiter: ","
+
+    # Only ship templates for events actually being compacted.
     writeTemplates: /$=TenXEnv.get("fluentbitEncodeObjects")

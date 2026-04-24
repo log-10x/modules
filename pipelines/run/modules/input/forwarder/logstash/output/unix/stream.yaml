@@ -25,11 +25,14 @@ include:
 # 'outputUnixSocket' defines the output used to write back to the Logstash forwarder
 outputUnixSocket:
 
-    # Regulate-only mode (logstashEncodeObjects=false): every event goes out as fullText.
+    # Write objects in plain-text form using the intrinsic 'fullText' field
+    # if 'logstashEncodeObjects' has NOT been set.
   - writeObjects: /$=!TenXEnv.get("logstashEncodeObjects")
 
+    # Sets Unix domain socket address from the value read from tenx-pipe-in-unix.conf (see above)
     address: $=rawOutputUnixSocketAddress
 
+    # 'fields' is set to the 'fullText' which contains the object's original text
     fields:
       - fullText
       - $?logstashOutputFields
@@ -39,21 +42,21 @@ outputUnixSocket:
     # Do not encode templates
     writeTemplates: false
 
-    # Encode-active mode (logstashEncodeObjects=true). The `shouldEncode`
-    # getter on CompactObject returns TRUE by default (including when the
-    # compact module is not configured), so the ternary field emits
-    # encode() — matching pre-compact-module semantics. When the compact
-    # lookup file IS configured, shouldEncode makes a per-event decision
-    # via the lookup, routing individual patterns to fullText.
+    # Write objects in encoded form using the encode() function if 'logstashEncodeObjects' is set.
+    # To learn more see https://doc.log10x.com/api/js/#TenXObject+encode
   - writeObjects: /$=TenXEnv.get("logstashEncodeObjects")
 
+    # Sets Unix domain socket address from the value read from tenx-pipe-in-unix.conf (see above)
     address: $=rawOutputUnixSocketAddress
 
+    # 'fields' is set to the return value of the encode() function
     fields:
-      - 'output=shouldEncode() ? encode() : fullText'
+      - encoded=encode()
       - $?logstashOutputFields
     encodeType: $?logstashOutputEncodeType
     encodeDelimiter: ","
 
-    # Only ship templates for events actually being compacted.
+    # Encode templates in JSON format.
+    # To learn more about TenXTemplates, see: https://doc.log10x.com/run/template
+    # Only write the templates when encoding objects.
     writeTemplates: /$=TenXEnv.get("logstashEncodeObjects")

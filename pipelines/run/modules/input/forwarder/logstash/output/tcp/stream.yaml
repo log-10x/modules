@@ -25,41 +25,48 @@ include:
 # 'outputSocket' defines the output used to write back to the Logstash forwarder
 outputSocket:
 
-    # Regulate-only mode (logstashEncodeObjects=false): every event goes out as fullText.
+    # Write objects' text to the socket using the intrinsic 'fullText' field
+    # if 'logstashEncodeObjects' has NOT been set.
   - protocol: TCP
 
     host: 127.0.0.1
 
+    # 'port' is set to value read from tenx-pipe-in-tcp.conf (see above)
     port: $=rawOutputSocketPort
 
+    # 'writeObjects' is only set to true if 'logstashEncodeObjects' is NOT set
     writeObjects: /$=!TenXEnv.get("logstashEncodeObjects")
 
+    # 'fields' is set to the 'fullText', which contains the TenXObject's original text
     fields:
       - fullText
       - $?logstashOutputFields
     encodeType: $?logstashOutputEncodeType
     encodeDelimiter: ","
 
+    # do not encode templates
     writeTemplates: false
 
-    # Encode-active mode (logstashEncodeObjects=true). The `shouldEncode`
-    # getter on CompactObject returns TRUE by default (including when the
-    # compact module is not configured), so the ternary field emits
-    # encode() — matching pre-compact-module semantics. When the compact
-    # lookup file IS configured, shouldEncode makes a per-event decision
-    # via the lookup, routing individual patterns to fullText.
+    # Write objects in encoded form using the the encode() function if 'logstashEncodeObjects' is set.
+    # To learn more see https://doc.log10x.com/api/js/#TenXObject+encode
   - protocol: TCP
 
     host: 127.0.0.1
 
+    # 'port' is set to value read from tenx-pipe-in-tcp.conf (see above)
     port: $=rawOutputSocketPort
 
+    # 'writeObjects' is only set to true if the 'logstashEncodeObjects' was set
     writeObjects: /$=TenXEnv.get("logstashEncodeObjects")
 
+    # 'fields' is set to the return value of the encode() function
     fields:
-      - 'output=shouldEncode() ? encode() : fullText'
+      - encoded=encode()
       - $?logstashOutputFields
     encodeType: $?logstashOutputEncodeType
     encodeDelimiter: ","
 
+    # Encode templates in JSON format.
+    # To learn more about TenXTemplates, see: https://doc.log10x.com/run/template
+    # Only write the templates when encoding objects.
     writeTemplates: /$=TenXEnv.get("logstashEncodeObjects")

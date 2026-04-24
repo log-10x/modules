@@ -27,11 +27,13 @@ include:
 # 'outputForward' defines the output used to write to the Fluentd forwarder
 outputForward:
 
-    # Regulate-only mode (fluentdEncodeObjects=false): every event goes out as fullText.
+    # Write objects in plain-text form using the intrinsic 'fullText' field if 'fluentdEncodeObjects' is NOT set.
   - writeObjects: /$=!TenXEnv.get("fluentdEncodeObjects")
 
+    # Sets Unix domain socket address from the value read from tenx-unix-source.conf (see above)
     address: $=rawOutputForwardAddress
 
+    # 'fields' is set to the 'fullText', which contains the TenXObject's original text
     fields:
       - fullText
       - $?fluentdOutputFields
@@ -41,21 +43,22 @@ outputForward:
     # Do not encode templates
     writeTemplates: false
 
-    # Encode-active mode (fluentdEncodeObjects=true). The `shouldEncode`
-    # getter on CompactObject returns TRUE by default (including when the
-    # compact module is not configured), so the ternary field emits
-    # encode() — matching pre-compact-module semantics. When the compact
-    # lookup file IS configured, shouldEncode makes a per-event decision
-    # via the lookup, routing individual patterns to fullText.
+    # Write objects in encoded form using encode() function if 'fluentdEncodeObjects' is set.
+    # To learn more see https://doc.log10x.com/api/js/#TenXObject+encode
   - writeObjects: /$=TenXEnv.get("fluentdEncodeObjects")
 
+    # Sets Unix domain socket address from the value read from tenx-unix-source.conf (see above)
     address: $=rawOutputForwardAddress
 
+    # 'fields' is set to the return value of the encode() function
+    #  https://doc.log10x.com/api/js/#TenXObject+encode
     fields:
-      - 'output=shouldEncode() ? encode() : fullText'
+      - encoded=encode()
       - $?fluentdOutputFields
     encodeType: $?fluentdOutputEncodeType
     encodeDelimiter: ","
 
-    # Only ship templates for events actually being compacted.
+    # Encode templates in JSON format.
+    # To learn more about TenXTemplates, see: https://doc.log10x.com/run/template
+    # Only write the templates when also encoding objects.
     writeTemplates: /$=TenXEnv.get("fluentdEncodeObjects")

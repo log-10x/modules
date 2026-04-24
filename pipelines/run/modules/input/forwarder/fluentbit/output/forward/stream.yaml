@@ -28,13 +28,14 @@ include:
 # 'outputForward' defines the output(s) used to write back to the Fluent Bit forwarder
 outputForward:
 
-    # Regulate-only mode (fluentbitEncodeObjects=false): every event goes out as fullText.
+    # Write objects in plain-text form using the intrinsic 'fullText' field if 'fluentbitEncodeObjects' has NOT been set.
   - writeObjects: /$=!TenXEnv.get("fluentbitEncodeObjects")
 
     # Use TCP host/port for Forward protocol (Windows does not support Unix domain sockets)
     hostAddress: 127.0.0.1
     hostPort: $=rawOutputForwardPort
 
+    # 'fields' is set to the 'fullText', which contains the TenXObject's original text
     fields:
       - fullText
       - $?fluentbitOutputFields
@@ -44,22 +45,23 @@ outputForward:
     # Do not encode templates
     writeTemplates: false
 
-    # Encode-active mode (fluentbitEncodeObjects=true). The `shouldEncode`
-    # getter on CompactObject returns TRUE by default (including when the
-    # compact module is not configured), so the ternary field emits
-    # encode() — matching pre-compact-module semantics. When the compact
-    # lookup file IS configured, shouldEncode makes a per-event decision
-    # via the lookup, routing individual patterns to fullText.
+    # Write objects in encoded form using the encode() function if 'fluentbitEncodeObjects' is set.
+    # To learn more see https://doc.log10x.com/api/js/#TenXObject+encode
   - writeObjects: /$=TenXEnv.get("fluentbitEncodeObjects")
 
+    # Use TCP host/port for Forward protocol (Windows does not support Unix domain sockets)
     hostAddress: 127.0.0.1
     hostPort: $=rawOutputForwardPort
 
+    # 'fields' is set to the return value of the encode() function
+    #  https://doc.log10x.com/api/js/#TenXObject+encode
     fields:
-      - 'output=shouldEncode() ? encode() : fullText'
+      - encoded=encode()
       - $?fluentbitOutputFields
     encodeType: $?fluentbitOutputEncodeType
     encodeDelimiter: ","
 
-    # Only ship templates when encoding is active.
+    # Encode templates in JSON format.
+    # To learn more about TenXTemplates, see: https://doc.log10x.com/run/template
+    # Only write the templates when also encoding objects.
     writeTemplates: /$=TenXEnv.get("fluentbitEncodeObjects")

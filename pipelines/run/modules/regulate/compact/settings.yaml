@@ -9,7 +9,7 @@ tenx: run
 # in field expressions of the form:
 #
 #     fields:
-#       - 'output=shouldEncode ? encode() : text'
+#       - 'output=shouldEncode() ? encode() : fullText'
 #
 # The class is loaded when `compactRegulatorLookupFile` is set (see the
 # shouldLoad gate on CompactInput). No hook needed here.

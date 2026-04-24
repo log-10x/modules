@@ -52,13 +52,8 @@ outputForward:
 
     # 'fields' is set to the return value of the encode() function
     #  https://doc.log10x.com/api/js/#TenXObject+encode
-    # 'encoded' value is per-event:
-    #   - shouldEncode()=true (default when compact module not configured)
-    #       → encode() as before
-    #   - shouldEncode()=false (when compact lookup routes this pattern to fullText)
-    #       → fullText
     fields:
-      - 'encoded=shouldEncode() ? encode() : fullText'
+      - encoded=encode()
       - $?fluentbitOutputFields
     encodeType: $?fluentbitOutputEncodeType
     encodeDelimiter: ","

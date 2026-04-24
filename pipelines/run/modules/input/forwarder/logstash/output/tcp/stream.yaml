@@ -61,7 +61,7 @@ outputSocket:
 
     # 'fields' is set to the return value of the encode() function
     fields:
-      - 'encoded=shouldEncode() ? encode() : fullText'
+      - encoded=encode()
       - $?logstashOutputFields
     encodeType: $?logstashOutputEncodeType
     encodeDelimiter: ","

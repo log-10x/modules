@@ -44,7 +44,7 @@ outputForward:
 
     # 'fields' is set to the return value of the encode() function
     fields:
-      - 'encoded=shouldEncode() ? encode() : fullText'
+      - encoded=encode()
       - $?otelCollectorOutputFields
 
     # Use JSON encoding to properly handle 10x-encoded strings that contain special characters

@@ -30,39 +30,34 @@ import { TenXObject, TenXEnv, TenXMath, TenXLog, TenXLookup, TenXConsole, TenXDa
 // TenXObject fields are immutable after construction, so the routing lives
 // in the stream expression, not on the event.
 //
-// IMPORTANT: CompactInput ALWAYS loads and always registers the
-// `compactRegulatorLookupFile` lookup — either the user's configured
-// file or a shipped empty default. This makes TenXLookup.get() in
-// shouldEncode safe to call regardless of user config. When the user
-// hasn't configured a file, the lookup is effectively empty → get()
-// returns null for every key → shouldEncode falls through to the
-// no-entry branch (below).
+// IMPORTANT: both CompactInput and CompactObject gate loading on
+// `compactRegulatorLookupFile`. Without that gate, the engine's static
+// analyzer resolves the TenXLookup.get("compactRegulatorLookupFile", ...)
+// reference at init — and fails because no lookup with that name is loaded.
+// The matching gate on the stream.yaml's writeObjects block ensures the
+// ternary field expression is only analyzed when the class is loaded.
 
 export class CompactInput extends TenXInput {
 
     static shouldLoad(config) {
-       return true;
+       return TenXEnv.get("compactRegulatorLookupFile");
     }
 
     constructor() {
 
-        var userFile = TenXEnv.get("compactRegulatorLookupFile");
-
-        // Resolve the file to load: user's override or the empty default.
-        var file = userFile;
-        if (TenXString.length(userFile) == 0) {
-            file = TenXEnv.path("run/modules/regulate/compact/compact-lookup-default.csv");
+        if (!TenXEnv.get("quiet")) {
+            TenXConsole.log("🗜️ Applying compaction predicate to: " + this.inputName + " using: " + TenXEnv.get("compactRegulatorLookupFile"));
         }
 
-        if (TenXString.length(userFile) > 0 && !TenXEnv.get("quiet")) {
-            TenXConsole.log("🗜️ Applying compaction predicate to: " + this.inputName + " using: " + userFile);
+        if (!TenXEnv.get("compactRegulatorFieldNames")) {
+            throw new Error("the 'compactRegulatorFieldNames' argument must be set to identify compact-lookup entries");
         }
 
-        var lastModified = TenXLookup.load(file, true);
+        var lastModified = TenXLookup.load(TenXEnv.get("compactRegulatorLookupFile"), true);
 
         var compactRegulatorLookupRetain = TenXEnv.get("compactRegulatorLookupRetain", 300000);
 
-        if (TenXString.length(userFile) > 0 && TenXDate.now() - lastModified > compactRegulatorLookupRetain) {
+        if (TenXDate.now() - lastModified > compactRegulatorLookupRetain) {
             if (!TenXEnv.get("quiet")) {
                 TenXConsole.log("⚠️ Compact lookup file is stale, lastModified: {}, retainInterval: {}",
                     lastModified, compactRegulatorLookupRetain);

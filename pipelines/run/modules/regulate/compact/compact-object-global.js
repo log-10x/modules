@@ -100,6 +100,9 @@ export class CompactObject extends TenXObject {
         var entry = TenXLookup.get("compactRegulatorLookupFile", fieldSetKey);
         if (!entry) return defaultEncode;
 
+        // TEMP DEBUG: bypass parts parsing to isolate
+        return true;
+
         var parts = TenXString.split(entry, ":");
         var encode = parts[0] == "true";
         var untilEpochSec = TenXMath.parseDouble(parts[1]);

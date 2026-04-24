@@ -30,11 +30,12 @@ import { TenXObject, TenXEnv, TenXMath, TenXLog, TenXLookup, TenXConsole, TenXDa
 // TenXObject fields are immutable after construction, so the routing lives
 // in the stream expression, not on the event.
 //
-// shouldEncode references TenXLookup.getOrNull (not .get) so the lookup
-// name is resolved lazily at call time. This means CompactObject can load
-// unconditionally — when no compact lookup is configured, shouldEncode's
-// early-return handles the "no compact module" case and the getOrNull
-// reference remains parse-safe.
+// shouldEncode's reference to TenXLookup.get("compactRegulatorLookupFile", ...)
+// is parse-safe — the 2-arg form defers lookup-name resolution until first
+// call, and returns NO_VALUE at runtime when the named lookup isn't
+// registered. CompactObject therefore loads unconditionally; shouldEncode's
+// "compact inactive" early-return (first statement) short-circuits the
+// TenXLookup call for deployments that aren't using the compact module.
 
 export class CompactInput extends TenXInput {
 
@@ -98,11 +99,12 @@ export class CompactObject extends TenXObject {
         var fieldSetKey = this.joinFields("_", TenXEnv.get("compactRegulatorFieldNames"));
         if (!fieldSetKey) return defaultEncode;
 
-        // TenXLookup.getOrNull is parse-safe — no parse-time name resolution.
-        // This compiles whether or not any compact lookup is registered;
-        // at runtime it returns NO_VALUE when unregistered, so the code above
-        // (the "compact inactive" early-return) is the usual path for that case.
-        var entry = TenXLookup.getOrNull("compactRegulatorLookupFile", fieldSetKey);
+        // TenXLookup.get with two args defers lookup-name resolution until
+        // first invoke, so this reference compiles whether or not any compact
+        // lookup is registered. At runtime it returns NO_VALUE when the lookup
+        // isn't registered — the "compact inactive" early-return above makes
+        // this path unreachable in the no-config case.
+        var entry = TenXLookup.get("compactRegulatorLookupFile", fieldSetKey);
         if (!entry) return defaultEncode;
 
         // Entry format: "<encode>:<untilEpochSec>[:<reason>]"

@@ -55,10 +55,6 @@ export class CompactInput extends TenXInput {
 
         var lastModified = TenXLookup.load(TenXEnv.get("compactRegulatorLookupFile"), true);
 
-        TenXConsole.log("compact lookup load returned lastModified=" + lastModified + " path=" + TenXEnv.get("compactRegulatorLookupFile"));
-        var probeEntry = TenXLookup.get("compactRegulatorLookupFile", "otel-demo");
-        TenXConsole.log("compact lookup probe otel-demo = " + probeEntry);
-
         var compactRegulatorLookupRetain = TenXEnv.get("compactRegulatorLookupRetain", 300000);
 
         if (TenXDate.now() - lastModified > compactRegulatorLookupRetain) {
@@ -102,7 +98,8 @@ export class CompactObject extends TenXObject {
         var fieldSetKey = "otel-demo";
         if (!fieldSetKey) return defaultEncode;
 
-        var entry = TenXLookup.get("compactRegulatorLookupFile", fieldSetKey);
+        // TEMP DEBUG: try resolved path as lookup name
+        var entry = TenXLookup.get(TenXEnv.get("compactRegulatorLookupFile"), fieldSetKey);
         if (!entry) return defaultEncode;
 
         var parts = TenXString.split(entry, ":");

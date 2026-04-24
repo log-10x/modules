@@ -62,7 +62,7 @@ outputForward:
     writeTemplates: /$=TenXEnv.get("fluentbitEncodeObjects")
 
 
-  - writeObjects: /$=TenXEnv.get("fluentbitEncodeObjects") && TenXEnv.get("compactRegulatorLookupFile") != null
+  - writeObjects: /$=TenXEnv.get("fluentbitEncodeObjects") && If(TenXEnv.get("compactRegulatorLookupFile"), true, false)
 
     hostAddress: 127.0.0.1
     hostPort: $=rawOutputForwardPort

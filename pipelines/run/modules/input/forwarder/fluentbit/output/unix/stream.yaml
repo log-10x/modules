@@ -61,7 +61,7 @@ outputForward:
     # `shouldEncode()`. Gated on `compactRegulatorLookupFile` being set so the
     # engine only static-analyzes this fields expression when the CompactObject
     # class is loaded (shouldLoad gates on the same condition).
-  - writeObjects: /$=TenXEnv.get("fluentbitEncodeObjects") && TenXEnv.get("compactRegulatorLookupFile") != null
+  - writeObjects: /$=TenXEnv.get("fluentbitEncodeObjects") && If(TenXEnv.get("compactRegulatorLookupFile"), true, false)
 
     address: $=rawOutputForwardAddress
 

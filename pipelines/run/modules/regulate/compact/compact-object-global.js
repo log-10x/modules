@@ -55,6 +55,10 @@ export class CompactInput extends TenXInput {
 
         var lastModified = TenXLookup.load(TenXEnv.get("compactRegulatorLookupFile"), true);
 
+        TenXConsole.log("compact lookup load returned lastModified=" + lastModified + " path=" + TenXEnv.get("compactRegulatorLookupFile"));
+        var probeEntry = TenXLookup.get("compactRegulatorLookupFile", "otel-demo");
+        TenXConsole.log("compact lookup probe otel-demo = " + probeEntry);
+
         var compactRegulatorLookupRetain = TenXEnv.get("compactRegulatorLookupRetain", 300000);
 
         if (TenXDate.now() - lastModified > compactRegulatorLookupRetain) {

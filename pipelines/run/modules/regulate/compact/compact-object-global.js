@@ -92,13 +92,13 @@ export class CompactObject extends TenXObject {
         if ((!this.isObject) || (this.isDropped)) return false;
 
         var defaultEncodeRaw = TenXEnv.get("compactRegulatorDefault", false);
-        var defaultEncode = (defaultEncodeRaw === true) || (String(defaultEncodeRaw).toLowerCase() === "true");
+        var defaultEncode = (defaultEncodeRaw == true) || (defaultEncodeRaw == "true");
 
         var fieldSetKey = this.joinFields("_", TenXEnv.get("compactRegulatorFieldNames"));
 
         if (!TenXEnv.get("compactRegulatorDebugged")) {
             TenXEnv.set("compactRegulatorDebugged", "1");
-            TenXConsole.log("compact shouldEncode debug: defaultEncodeRaw=" + defaultEncodeRaw + " (type=" + (typeof defaultEncodeRaw) + ") defaultEncode=" + defaultEncode + " fieldSetKey=" + fieldSetKey);
+            TenXConsole.log("compact shouldEncode debug: defaultEncodeRaw=" + defaultEncodeRaw + " defaultEncode=" + defaultEncode + " fieldSetKey=" + fieldSetKey);
         }
 
         if (!fieldSetKey) return defaultEncode;

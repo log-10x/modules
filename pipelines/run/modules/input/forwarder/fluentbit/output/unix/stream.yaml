@@ -53,7 +53,7 @@ outputForward:
     # 'fields' is set to the return value of the encode() function
     #  https://doc.log10x.com/api/js/#TenXObject+encode
     fields:
-      - encoded=encode()
+      - 'encoded=shouldEncode() ? encode() : fullText'
       - $?fluentbitOutputFields
     encodeType: $?fluentbitOutputEncodeType
     encodeDelimiter: ","

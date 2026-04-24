@@ -89,41 +89,39 @@ export class CompactObject extends TenXObject {
 
         if ((!this.isObject) || (this.isDropped)) return false;
 
-        // No lookup file set → compact inactive, legacy encode-all semantics
-        // wanted by the stream ternary gate. Return true so the ternary
-        // emits encode(). Stream gates on fluentbitEncodeObjects to choose
-        // between this stream and the fullText-only one.
-        if (TenXString.length(TenXEnv.get("compactRegulatorLookupFile")) == 0) return true;
+        // The tenx DSL does NOT short-circuit on Return() inside If()
+        // — all statements in this function execute regardless. So every
+        // TenXLookup.get() reachable here must be wrapped in a conditional
+        // that short-circuits its BODY, not its flow. Result: all real
+        // compact logic is nested inside one top-level If that only
+        // evaluates its body when the lookup file is actually configured.
+        //
+        // When the lookup file is NOT set, this function returns true —
+        // preserving the legacy encode-all semantics for forwarder streams
+        // that unconditionally gate only on <fwd>EncodeObjects.
+        if (TenXString.length(TenXEnv.get("compactRegulatorLookupFile")) > 0) {
 
-        var defaultEncodeRaw = TenXEnv.get("compactRegulatorDefault", false);
-        var defaultEncode = (defaultEncodeRaw == true) || (defaultEncodeRaw == "true");
+            var defaultEncodeRaw = TenXEnv.get("compactRegulatorDefault", false);
+            var defaultEncode = (defaultEncodeRaw == true) || (defaultEncodeRaw == "true");
 
-        var fieldSetKey = this.joinFields("_", TenXEnv.get("compactRegulatorFieldNames"));
-        if (!fieldSetKey) return defaultEncode;
+            var fieldSetKey = this.joinFields("_", TenXEnv.get("compactRegulatorFieldNames"));
+            if (!fieldSetKey) return defaultEncode;
 
-        var entry = TenXLookup.get("compactRegulatorLookupFile", fieldSetKey);
-        if (!entry) return defaultEncode;
+            var entry = TenXLookup.get("compactRegulatorLookupFile", fieldSetKey);
+            if (!entry) return defaultEncode;
 
-        // Entry format: "<encode>:<untilEpochSec>[:<reason>]"
-        // Use startsWith for robust CharSequence-safe comparison.
-        var encode = TenXString.startsWith(entry, "true:");
-        var parts = TenXString.split(entry, ":");
-        var untilEpochSec = TenXMath.parseDouble(parts[1]);
+            // Entry format: "<encode>:<untilEpochSec>[:<reason>]"
+            var encode = TenXString.startsWith(entry, "true:");
+            var parts = TenXString.split(entry, ":");
+            var untilEpochSec = TenXMath.parseDouble(parts[1]);
 
-        // Expired → self-heal to default.
-        var nowSec = TenXDate.now() / 1000;
-        if (nowSec >= untilEpochSec) {
-            if (TenXLog.isDebug()) {
-                TenXLog.debug("compact entry expired. fieldSet={}, untilEpochSec={}, nowSec={}, falling back to default={}",
-                    fieldSetKey, untilEpochSec, nowSec, defaultEncode);
-            }
-            return defaultEncode;
+            // Expired → self-heal to default.
+            var nowSec = TenXDate.now() / 1000;
+            if (nowSec >= untilEpochSec) return defaultEncode;
+
+            return encode;
         }
 
-        if (TenXLog.isDebug()) {
-            TenXLog.debug("compact lookup hit. fieldSet={}, encode={}, untilEpochSec={}",
-                fieldSetKey, encode, untilEpochSec);
-        }
-        return encode;
+        return true;
     }
 }

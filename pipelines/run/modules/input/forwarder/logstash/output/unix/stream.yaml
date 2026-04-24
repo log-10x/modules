@@ -14,7 +14,7 @@ include:
 
       # Capture outputUnixSocketAddress from 'tenx-pipe-in-unix.conf' as 10x env variable
       #
-      path: '$="run/input/forwarder/logstash/" + (TenXEnv.get("logstashEncodeObjects") ? "optimize" : "regulate") + "/tenx-pipe-in-unix.conf"'
+      path: '$="run/input/forwarder/logstash/" + (TenXEnv.get("encodeObjects") ? "optimize" : "regulate") + "/tenx-pipe-in-unix.conf"'
       regex: "path\\s=>\\s*\"\\$\\{tenx_marker_pipeline_unix_address:\\s*(?<rawOutputUnixSocketAddress>.*?)\\s*\\}\""
 
   # load the unix domain socket module
@@ -26,8 +26,8 @@ include:
 outputUnixSocket:
 
     # Write objects in plain-text form using the intrinsic 'fullText' field
-    # if 'logstashEncodeObjects' has NOT been set.
-  - writeObjects: /$=!TenXEnv.get("logstashEncodeObjects")
+    # if 'encodeObjects' has NOT been set.
+  - writeObjects: /$=!TenXEnv.get("encodeObjects")
 
     # Sets Unix domain socket address from the value read from tenx-pipe-in-unix.conf (see above)
     address: $=rawOutputUnixSocketAddress
@@ -42,9 +42,9 @@ outputUnixSocket:
     # Do not encode templates
     writeTemplates: false
 
-    # Write objects in encoded form using the encode() function if 'logstashEncodeObjects' is set.
+    # Write objects in encoded form using the encode() function if 'encodeObjects' is set.
     # To learn more see https://doc.log10x.com/api/js/#TenXObject+encode
-  - writeObjects: /$=TenXEnv.get("logstashEncodeObjects")
+  - writeObjects: /$=TenXEnv.get("encodeObjects")
 
     # Sets Unix domain socket address from the value read from tenx-pipe-in-unix.conf (see above)
     address: $=rawOutputUnixSocketAddress
@@ -59,4 +59,4 @@ outputUnixSocket:
     # Encode templates in JSON format.
     # To learn more about TenXTemplates, see: https://doc.log10x.com/run/template
     # Only write the templates when encoding objects.
-    writeTemplates: /$=TenXEnv.get("logstashEncodeObjects")
+    writeTemplates: /$=TenXEnv.get("encodeObjects")

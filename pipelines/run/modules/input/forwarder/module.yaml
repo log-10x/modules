@@ -16,3 +16,22 @@ module:
   configFolder: run/input/forwarder
 
   moduleSort: [fluentbit,fluentd,otelCollector,filebeat,logstash,splunkUF,datadogAgent]
+
+  # Shared options applicable across all forwarder flavors (fluentbit, fluentd,
+  # logstash, filebeat, otel-collector, …). Each flavor's stream.yaml reads the
+  # flat name via TenXEnv.get; user YAML sets it at top level.
+  options:
+
+    - names:
+      - encodeObjects
+      description: controls whether events written to the forwarder are encoded or written in raw form
+      type: string
+      required: false
+      defValue: false
+      doc: |
+        sets the format in which to serialize TenXObjects back to the log forwarder.
+        If true, write events using the [encode](https://doc.log10x.com/api/js/#TenXObject+encode) function.
+        If false, write events in their original form as read from the forwarder using the
+        [fullText](https://doc.log10x.com/api/js/#TenXBaseObject+fullText) field.
+
+        Defaults to the value of `regulatorOptimize` when used with the Regulator app.

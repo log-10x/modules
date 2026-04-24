@@ -36,6 +36,6 @@ graph LR
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `otelCollectorEncodeObjects` | `false` | Enable lossless compact for optimizer mode |
+| `encodeObjects` | `false` | Enable lossless compact for optimizer mode |
 | `otelCollectorOutputForwardAddress` | `/tmp/tenx-otel-out.sock` | Unix socket path for output |
 

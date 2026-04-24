@@ -27,8 +27,8 @@ include:
 # 'outputForward' defines the output(s) used to write back to the Fluent Bit forwarder
 outputForward:
 
-    # Write objects in plain-text form using the intrinsic 'fullText' field if 'fluentbitEncodeObjects' has NOT been set.
-  - writeObjects: /$=!TenXEnv.get("fluentbitEncodeObjects")
+    # Write objects in plain-text form using the intrinsic 'fullText' field if 'encodeObjects' has NOT been set.
+  - writeObjects: /$=!TenXEnv.get("encodeObjects")
 
     # Sets Unix domain socket address from the value read from tenx-unix-source.conf (see above)
     address: $=rawOutputForwardAddress
@@ -43,9 +43,9 @@ outputForward:
     # Do not encode templates
     writeTemplates: false
 
-    # Write objects in encoded form using the encode() function if 'fluentbitEncodeObjects' is set.
+    # Write objects in encoded form using the encode() function if 'encodeObjects' is set.
     # To learn more see https://doc.log10x.com/api/js/#TenXObject+encode
-  - writeObjects: /$=TenXEnv.get("fluentbitEncodeObjects")
+  - writeObjects: /$=TenXEnv.get("encodeObjects")
 
     # Sets Unix domain socket address from the value read from tenx-unix-source.conf (see above)
     address: $=rawOutputForwardAddress
@@ -61,4 +61,4 @@ outputForward:
     # Encode templates in JSON format.
     # To learn more about TenXTemplates, see: https://doc.log10x.com/run/template
     # Only write the templates when also encoding objects.
-    writeTemplates: /$=TenXEnv.get("fluentbitEncodeObjects")
+    writeTemplates: /$=TenXEnv.get("encodeObjects")

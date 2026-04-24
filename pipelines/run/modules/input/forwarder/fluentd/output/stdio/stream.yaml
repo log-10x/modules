@@ -17,20 +17,20 @@ include: run/modules/output/event/stdout
 stdout:
 
     # Write objects' text to stdout in TSV format using joinFields
-    # if 'fluentdEncodeObjects' has NOT been set and 'fluentdOutputFields' has NOT been set.
+    # if 'encodeObjects' has NOT been set and 'fluentdOutputFields' has NOT been set.
   - target: SYSTEM_OUT
 
-    writeObjects: /$=!TenXEnv.get("fluentdEncodeObjects") && !TenXEnv.get("fluentdOutputFields")
+    writeObjects: /$=!TenXEnv.get("encodeObjects") && !TenXEnv.get("fluentdOutputFields")
 
     # 'fields' is set to join the TenXObject's intrinsic 'source' and 'fullText' fields
     #  with a tab separator to be read by Fluentd in TSV format.
     fields: event=joinFields("\t", "source", "fullText")
 
     # Write objects' text to stdout with additional output fields
-    # if 'fluentdEncodeObjects' has NOT been set and 'fluentdOutputFields' HAS been set.
+    # if 'encodeObjects' has NOT been set and 'fluentdOutputFields' HAS been set.
   - target: SYSTEM_OUT
 
-    writeObjects: /$=!TenXEnv.get("fluentdEncodeObjects") && TenXEnv.get("fluentdOutputFields")
+    writeObjects: /$=!TenXEnv.get("encodeObjects") && TenXEnv.get("fluentdOutputFields")
 
     # 'fields' includes 'source', 'fullText', and the configured output fields
     fields:
@@ -41,10 +41,10 @@ stdout:
     encodeDelimiter: ","
 
     # Write objects in encoded form to stdout in TSV format using joinFields
-    # if 'fluentdEncodeObjects' has been set and 'fluentdOutputFields' has NOT been set.
+    # if 'encodeObjects' has been set and 'fluentdOutputFields' has NOT been set.
   - target: SYSTEM_OUT
 
-    writeObjects: /$=TenXEnv.get("fluentdEncodeObjects") && !TenXEnv.get("fluentdOutputFields")
+    writeObjects: /$=TenXEnv.get("encodeObjects") && !TenXEnv.get("fluentdOutputFields")
 
     # 'fields' is set to join the TenXObject's source field and return value of the encode() function
     # with a tab separator to be read by Fluentd in TSV format.
@@ -52,10 +52,10 @@ stdout:
     fields: event=joinFields("\t", "source", "encoded=encode()")
 
     # Write objects in encoded form to stdout with additional output fields
-    # if 'fluentdEncodeObjects' has been set and 'fluentdOutputFields' HAS been set.
+    # if 'encodeObjects' has been set and 'fluentdOutputFields' HAS been set.
   - target: SYSTEM_OUT
 
-    writeObjects: /$=TenXEnv.get("fluentdEncodeObjects") && TenXEnv.get("fluentdOutputFields")
+    writeObjects: /$=TenXEnv.get("encodeObjects") && TenXEnv.get("fluentdOutputFields")
 
     # 'fields' includes 'source', encoded output, and the configured output fields
     # To learn more see https://doc.log10x.com/api/js/#TenXObject+encode
@@ -66,11 +66,11 @@ stdout:
     encodeType: $?fluentdOutputEncodeType
     encodeDelimiter: ","
 
-    # Write TenXTemplates to stdout if 'fluentdEncodeObjects' has been set.
+    # Write TenXTemplates to stdout if 'encodeObjects' has been set.
   - target: SYSTEM_OUT
 
-    # 'writeObjects' is only set to true if the 'fluentdEncodeObjects' was set
-    writeObjects: /$=TenXEnv.get("fluentdEncodeObjects")
+    # 'writeObjects' is only set to true if the 'encodeObjects' was set
+    writeObjects: /$=TenXEnv.get("encodeObjects")
 
     # 'filter' uses the 'isNewTemplate' 10x script function to skip TenXTemplates
     #  loaded via the https://doc.log10x.com/run/template/#templatefiles argument or previously written to this output

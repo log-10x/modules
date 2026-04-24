@@ -13,7 +13,7 @@ include:
 
   # Load the Unix domain socket path 'rawOutputUnixSocketAddress' variable from the 'path' value in 'tenx.yml'.
   # This socket writes JSON-encoded TenXObject values into the Filebeat pipeline
-  - source: '$="run/modules/input/forwarder/filebeat/" + (TenXEnv.get("filebeatEncodeObjects") ? "optimize" : "regulate") + (TenXString.includes(TenXEnv.get("os.name"), "Windows") ? "/tenxWin.yml" : "/tenxNix.yml")'
+  - source: '$="run/modules/input/forwarder/filebeat/" + (TenXEnv.get("encodeObjects") ? "optimize" : "regulate") + (TenXString.includes(TenXEnv.get("os.name"), "Windows") ? "/tenxWin.yml" : "/tenxNix.yml")'
     options:
       path: rawOutputUnixSocketAddress
 
@@ -26,7 +26,7 @@ include:
 outputUnixSocket:
 
   # regulate encoder - outputs filtered events
-  - writeObjects: /$=!TenXEnv.get("filebeatEncodeObjects")
+  - writeObjects: /$=!TenXEnv.get("encodeObjects")
 
     filter: extractorKey == "message"
 
@@ -44,7 +44,7 @@ outputUnixSocket:
     encodeGroupDelimiter: "\\n"
 
   # optimize encoder - outputs encoded events
-  - writeObjects: /$=TenXEnv.get("filebeatEncodeObjects")
+  - writeObjects: /$=TenXEnv.get("encodeObjects")
 
     filter: extractorKey == "message"
 
@@ -62,7 +62,7 @@ outputUnixSocket:
     encodeGroupDelimiter: "\\n"
 
   # optimize template encoder - outputs all new templates.
-  - writeObjects: /$=TenXEnv.get("filebeatEncodeObjects")
+  - writeObjects: /$=TenXEnv.get("encodeObjects")
 
     filter: (extractorKey == "message") && isNewTemplate()
 

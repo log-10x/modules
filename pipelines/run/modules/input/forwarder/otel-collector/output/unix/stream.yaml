@@ -19,8 +19,8 @@ include:
 # 'outputForward' defines the output used to write to the OTel Collector forwarder
 outputForward:
 
-    # Write objects in plain-text form using the intrinsic 'fullText' field if 'otelCollectorEncodeObjects' is NOT set.
-  - writeObjects: /$=!TenXEnv.get("otelCollectorEncodeObjects")
+    # Write objects in plain-text form using the intrinsic 'fullText' field if 'encodeObjects' is NOT set.
+  - writeObjects: /$=!TenXEnv.get("encodeObjects")
 
     # Sets Unix domain socket address
     address: $=TenXEnv.get("otelCollectorOutputForwardAddress", "/tmp/tenx-otel-out.sock")
@@ -35,9 +35,9 @@ outputForward:
     # Do not encode templates
     writeTemplates: false
 
-    # Write objects in encoded form using encode() function if 'otelCollectorEncodeObjects' is set.
+    # Write objects in encoded form using encode() function if 'encodeObjects' is set.
     # To learn more see https://doc.log10x.com/api/js/#TenXObject+encode
-  - writeObjects: /$=TenXEnv.get("otelCollectorEncodeObjects")
+  - writeObjects: /$=TenXEnv.get("encodeObjects")
 
     # Sets Unix domain socket address
     address: $=TenXEnv.get("otelCollectorOutputForwardAddress", "/tmp/tenx-otel-out.sock")
@@ -53,5 +53,5 @@ outputForward:
     # Encode templates in JSON format.
     # To learn more about TenXTemplates, see: https://doc.log10x.com/run/template
     # Only write the templates when also encoding objects.
-    writeTemplates: /$=TenXEnv.get("otelCollectorEncodeObjects")
+    writeTemplates: /$=TenXEnv.get("encodeObjects")
 

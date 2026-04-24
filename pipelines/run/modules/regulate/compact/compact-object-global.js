@@ -19,23 +19,19 @@ import { TenXObject, TenXEnv, TenXMath, TenXLog, TenXLookup, TenXConsole, TenXDa
 //     payment_retry_gateway_timeout,true:1745856000:OPS-5123 spike mitigation
 //     auth_audit_trail,false:1745856000:compliance — keep verbose
 //
-// Exposes a `shouldEncode` getter on every TenXObject. Returns:
-//   - No entry for the event's field-set          → `compactRegulatorDefault` (env)
-//   - Entry exists but untilEpochSec has passed   → `compactRegulatorDefault` (self-heal)
-//   - Otherwise                                   → entry's <encode> value
+// Exposes a `shouldEncode` getter on every TenXObject via one of two
+// sibling classes — exactly one loads based on whether the compact lookup
+// file is configured. This split keeps shouldEncode resolvable in every
+// deployment (forwarder stream.yaml Path 2 references it unconditionally)
+// while letting the active class's body parse only when the lookup is
+// actually registered — no parse-time name-resolution against a missing
+// lookup.
 //
 // The forwarder output stream.yaml calls `shouldEncode` in a single ternary
 // field expression: `output=shouldEncode() ? encode() : fullText`. One stream
 // per output, per-event decision at serialization time. No field mutation —
 // TenXObject fields are immutable after construction, so the routing lives
 // in the stream expression, not on the event.
-//
-// shouldEncode's reference to TenXLookup.get("compactRegulatorLookupFile", ...)
-// is parse-safe — the 2-arg form defers lookup-name resolution until first
-// call, and returns NO_VALUE at runtime when the named lookup isn't
-// registered. CompactObject therefore loads unconditionally; shouldEncode's
-// "compact inactive" early-return (first statement) short-circuits the
-// TenXLookup call for deployments that aren't using the compact module.
 
 export class CompactInput extends TenXInput {
 
@@ -68,30 +64,31 @@ export class CompactInput extends TenXInput {
     }
 }
 
-export class CompactObject extends TenXObject {
+// Inactive variant — loads when compact lookup is NOT configured.
+// Preserves pre-compact-module semantics: every event is eligible to encode
+// when the forwarder's Path 2 fires (encodeObjects=true).
+export class CompactObjectInactive extends TenXObject {
 
-    // Always load — shouldEncode is safe to parse and call even when no
-    // lookup is registered, thanks to TenXLookup.getOrNull's lazy binding.
     static shouldLoad(config) {
-       return true;
+       return !TenXEnv.get("compactRegulatorLookupFile");
     }
 
-    // Per-event compact decision. Pure — returns the bool, doesn't mutate
-    // the event (fields are immutable after construction).
-    //
-    // Called from the forwarder output stream.yaml ternary:
-    //     output=shouldEncode() ? encode() : fullText
+    get shouldEncode() {
+        return this.isObject && !this.isDropped;
+    }
+}
+
+// Active variant — loads when compact lookup IS configured. Per-event
+// decision based on a field-set key lookup into the compact CSV.
+export class CompactObjectActive extends TenXObject {
+
+    static shouldLoad(config) {
+       return TenXEnv.get("compactRegulatorLookupFile");
+    }
+
     get shouldEncode() {
 
         if ((!this.isObject) || (this.isDropped)) return false;
-
-        // "Compact inactive" path: when the lookup file isn't configured,
-        // return true so the forwarder stream ternary emits encode() —
-        // matching pre-compact-module semantics. Checking the env here at
-        // per-event time is reliable (runtime TenXEnv.get returns "" for
-        // unset); the init-time truthiness quirk that affected stream-level
-        // gates doesn't apply inside a function body.
-        if (TenXString.length(TenXEnv.get("compactRegulatorLookupFile")) == 0) return true;
 
         var defaultEncodeRaw = TenXEnv.get("compactRegulatorDefault", false);
         var defaultEncode = (defaultEncodeRaw == true) || (defaultEncodeRaw == "true");
@@ -99,11 +96,6 @@ export class CompactObject extends TenXObject {
         var fieldSetKey = this.joinFields("_", TenXEnv.get("compactRegulatorFieldNames"));
         if (!fieldSetKey) return defaultEncode;
 
-        // TenXLookup.get with two args defers lookup-name resolution until
-        // first invoke, so this reference compiles whether or not any compact
-        // lookup is registered. At runtime it returns NO_VALUE when the lookup
-        // isn't registered — the "compact inactive" early-return above makes
-        // this path unreachable in the no-config case.
         var entry = TenXLookup.get("compactRegulatorLookupFile", fieldSetKey);
         if (!entry) return defaultEncode;
 

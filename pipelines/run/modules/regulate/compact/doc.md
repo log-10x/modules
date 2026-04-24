@@ -48,4 +48,4 @@ Expired entries (past `untilEpochSec`) self-heal to `compactRegulatorDefault` on
 
 - Set `compactRegulatorLookupFile` to the CSV path — that's the single gate that loads the module (both `CompactInput` and `CompactObject` check it in `shouldLoad`).
 - The forwarder output streams then branch on a single ternary field expression: `output=shouldEncode() ? encode() : fullText`. No field mutation — the decision lives in the stream expression, not on the event.
-- When `compactRegulatorLookupFile` is *not* set, the pre-compact path is preserved unchanged (regulate-only emits `fullText`; `fluentbitEncodeObjects=true` emits `encoded=encode()` for every event).
+- When `compactRegulatorLookupFile` is *not* set, the pre-compact path is preserved unchanged (regulate-only emits `fullText`; `encodeObjects=true` emits `encoded=encode()` for every event).

@@ -23,20 +23,6 @@ module:
   options:
 
     - names:
-      - logstashEncodeObjects
-      description: controls whether events written to a Logstash forwarder are encoded or written in raw form
-      type: string
-      required: false
-      defValue: false
-      doc: |
-        sets the format in which to serialize TenXObjects back to the Logstash forwarder.
-        If true, write events using the [encode](https://doc.log10x.com/api/js/#TenXObject+encode) function.
-        If false, write events in their original form as read from the Logstash forwarder
-        using the [fullText](https://doc.log10x.com/api/js/#TenXBaseObject+fullText) field.
-
-        Defaults to the value of `regulatorOptimize` when used with the Regulator app.
-
-    - names:
       - logstashOutputFields
       description: list of TenXObject field names to include alongside the main event in output
       type: list

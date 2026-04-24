@@ -20,20 +20,6 @@ module:
   options:
 
     - names:
-      - otelCollectorEncodeObjects
-      description: controls whether events written to a OTel Collector forwarder are encoded or written in raw form
-      type: string
-      required: false
-      defValue: false
-      doc: |
-        sets the format in which to serialize TenXObjects back to the OTel Collector forwarder.
-        If true, write events using the [encode](https://doc.log10x.com/api/js/#TenXObject+encode) function.
-        If false, write events in their original form as read from the OTel Collector forwarder
-        using the [fullText](https://doc.log10x.com/api/js/#TenXBaseObject+fullText) field.
-
-        Defaults to the value of `regulatorOptimize` when used with the Regulator app.
-
-    - names:
       - otelCollectorOutputFields
       description: list of TenXObject field names to include alongside the main event in output
       type: list

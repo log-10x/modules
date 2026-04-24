@@ -94,7 +94,8 @@ export class CompactObject extends TenXObject {
         var defaultEncodeRaw = TenXEnv.get("compactRegulatorDefault", false);
         var defaultEncode = (defaultEncodeRaw == true) || (defaultEncodeRaw == "true");
 
-        var fieldSetKey = this.joinFields("_", TenXEnv.get("compactRegulatorFieldNames"));
+        // TEMP DEBUG: hardcode fieldNames to isolate lookup-match
+        var fieldSetKey = this.joinFields("_", ["k8s_namespace"]);
         if (!fieldSetKey) return defaultEncode;
 
         var entry = TenXLookup.get("compactRegulatorLookupFile", fieldSetKey);

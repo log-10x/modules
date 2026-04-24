@@ -89,6 +89,9 @@ export class CompactObject extends TenXObject {
     //     output=shouldEncode() ? encode() : fullText
     get shouldEncode() {
 
+        // TEMP DEBUG: unconditional true to prove ternary plumbing
+        return true;
+
         if ((!this.isObject) || (this.isDropped)) return false;
 
         var defaultEncodeRaw = TenXEnv.get("compactRegulatorDefault", false);

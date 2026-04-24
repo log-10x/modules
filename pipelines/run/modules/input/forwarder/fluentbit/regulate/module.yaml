@@ -20,20 +20,6 @@ module:
   options:
 
     - names:
-      - fluentbitEncodeObjects
-      description: controls whether events written to a Fluent Bit forwarder are encoded or written in raw form
-      type: string
-      required: false
-      defValue: false
-      doc: |
-        sets the format in which to serialize TenXObjects back to the Fluent Bit forwarder.
-        If true, write events using the [encode](https://doc.log10x.com/api/js/#TenXObject+encode) function.
-        If false, write events in their original form as read from the Fluent Bit forwarder
-        using the [fullText](https://doc.log10x.com/api/js/#TenXBaseObject+fullText) field.
-
-        Defaults to the value of `regulatorOptimize` when used with the Regulator app.
-
-    - names:
       - fluentbitOutputFields
       description: list of TenXObject field names to include alongside the main event in output
       type: list

@@ -16,3 +16,52 @@ module:
   configFolder: run/input/forwarder
 
   moduleSort: [fluentbit,fluentd,otelCollector,filebeat,logstash,splunkUF,datadogAgent]
+
+  # Shared options applicable across all forwarder flavors. Mode selection
+  # (regulate / compact-all / compact-lookup) is driven by outputEncodeField,
+  # which each forwarder's user-facing config.yaml derives from `regulatorOptimize`
+  # and `compactRegulatorLookupFile` via a `$=yield` expression. Substitution
+  # into the transport stream.yaml happens at config-load before DSL parse, so
+  # `shouldEncode()` only appears in the parsed field expression when the
+  # compact lookup is actually configured — and CompactObject only loads under
+  # that same condition.
+  options:
+
+    - names:
+      - outputEncodeField
+      description: the single field expression each forwarder's output stream writes per event
+      type: string
+      required: false
+      defValue: fullText
+      doc: |
+        Selected per forwarder mode by the user-facing config.yaml:
+
+        - **regulate** (default): `fullText` — plain passthrough, no encoding
+        - **compact-all**: `encoded=encode()` — every event compacted
+        - **compact-lookup**: `encoded=shouldEncode() ? encode() : fullText` — per-pattern
+          decision via the compactRegulator module (requires `compactRegulatorLookupFile`)
+
+        Advanced users can override directly to customize the output field expression.
+
+    - names:
+      - outputWriteTemplates
+      description: whether the forwarder emits new TenXTemplates alongside encoded events
+      type: boolean
+      required: false
+      defValue: false
+      doc: |
+        True for encoding modes (compact-all, compact-lookup) so decoders can
+        reconstruct events from templateHash + vars. False for regulate mode
+        (no encoding → no templates needed).
+
+    - names:
+      - encodeObjects
+      description: legacy shared flag; used only by fluentd/stdio and logstash-input to gate internal behavior
+      type: string
+      required: false
+      defValue: false
+      doc: |
+        Primarily kept for fluentd/stdio (which emits TSV with a "source" prefix
+        via joinFields and can't use the outputEncodeField substitution cleanly)
+        and the Logstash input extractor name selector. New transports should
+        use `outputEncodeField` / `outputWriteTemplates` instead.

@@ -1,10 +1,12 @@
-# 🔟❎ 'run' Fluent Bit forward output stream configuration (Windows)
+# 🔟❎ 'run' Fluent Bit forward output stream configuration (Windows / TCP)
 
-# This configuration defines a Forward protocol output over TCP to write
-# encoded/plain-text events to a Fluent Bit forwarder process.
-# This is the Windows equivalent of the Unix domain socket output.
+# This configuration defines a Forward protocol output over TCP to write events
+# back to a Fluent Bit forwarder process. Used on Windows (no Unix domain sockets).
 
 # To learn more see: https://github.com/fluent/fluent-bit-docs/blob/master/pipeline/outputs/forward.md
+
+# Mode is selected by `outputEncodeField` and `outputWriteTemplates` — see
+# run/modules/input/forwarder/module.yaml for the shared-option model.
 
 # Set the 10x pipeline to 'run'
 tenx: run
@@ -25,43 +27,16 @@ include:
 
 # ============================= Output Options ================================
 
-# 'outputForward' defines the output(s) used to write back to the Fluent Bit forwarder
 outputForward:
 
-    # Write objects in plain-text form using the intrinsic 'fullText' field if 'fluentbitEncodeObjects' has NOT been set.
-  - writeObjects: /$=!TenXEnv.get("fluentbitEncodeObjects")
-
-    # Use TCP host/port for Forward protocol (Windows does not support Unix domain sockets)
-    hostAddress: 127.0.0.1
+  - hostAddress: 127.0.0.1
     hostPort: $=rawOutputForwardPort
 
-    # 'fields' is set to the 'fullText', which contains the TenXObject's original text
     fields:
-      - fullText
+      - $?outputEncodeField=fullText
       - $?fluentbitOutputFields
+
     encodeType: $?fluentbitOutputEncodeType
     encodeDelimiter: ","
 
-    # Do not encode templates
-    writeTemplates: false
-
-    # Write objects in encoded form using the encode() function if 'fluentbitEncodeObjects' is set.
-    # To learn more see https://doc.log10x.com/api/js/#TenXObject+encode
-  - writeObjects: /$=TenXEnv.get("fluentbitEncodeObjects")
-
-    # Use TCP host/port for Forward protocol (Windows does not support Unix domain sockets)
-    hostAddress: 127.0.0.1
-    hostPort: $=rawOutputForwardPort
-
-    # 'fields' is set to the return value of the encode() function
-    #  https://doc.log10x.com/api/js/#TenXObject+encode
-    fields:
-      - encoded=encode()
-      - $?fluentbitOutputFields
-    encodeType: $?fluentbitOutputEncodeType
-    encodeDelimiter: ","
-
-    # Encode templates in JSON format.
-    # To learn more about TenXTemplates, see: https://doc.log10x.com/run/template
-    # Only write the templates when also encoding objects.
-    writeTemplates: /$=TenXEnv.get("fluentbitEncodeObjects")
+    writeTemplates: $?outputWriteTemplates=false

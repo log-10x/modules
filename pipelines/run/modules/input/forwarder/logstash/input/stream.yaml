@@ -44,5 +44,5 @@ input:
     path: stdin
     enabled: true
     extractors:
-      - '/$=TenXEnv.get("logstashEncodeObjects") ? "logstashOptimizer" : "logstashRegulator"'
+      - '/$=TenXEnv.get("encodeObjects") ? "logstashOptimizer" : "logstashRegulator"'
     sourcePattern: \"file\":\"(.*?)\"

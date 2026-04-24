@@ -1,7 +1,9 @@
 # 🔟❎ 'run' Logstash Unix output stream configuration
 
-# This configuration defines a Unix domain socket output through which
-# to write TenXObjects to a Logstash forwarder via a Unix domain socket.
+# Writes events to a Logstash forwarder via a Unix domain socket.
+#
+# Mode is selected by `outputEncodeField` and `outputWriteTemplates` — see
+# run/modules/input/forwarder/module.yaml for the shared-option model.
 
 # Set the 10x pipeline to 'run'
 tenx: run
@@ -12,9 +14,10 @@ include:
   - source: match
     options:
 
-      # Capture outputUnixSocketAddress from 'tenx-pipe-in-unix.conf' as 10x env variable
-      #
-      path: '$="run/input/forwarder/logstash/" + (TenXEnv.get("logstashEncodeObjects") ? "optimize" : "regulate") + "/tenx-pipe-in-unix.conf"'
+      # Capture outputUnixSocketAddress from 'tenx-pipe-in-unix.conf' as 10x env variable.
+      # The optimize/regulate selection here is for the Logstash-side config, not an
+      # engine writeObjects gate — so key it off outputWriteTemplates.
+      path: '$="run/input/forwarder/logstash/" + (TenXEnv.get("outputWriteTemplates") ? "optimize" : "regulate") + "/tenx-pipe-in-unix.conf"'
       regex: "path\\s=>\\s*\"\\$\\{tenx_marker_pipeline_unix_address:\\s*(?<rawOutputUnixSocketAddress>.*?)\\s*\\}\""
 
   # load the unix domain socket module
@@ -22,41 +25,15 @@ include:
 
 # ============================= Output Options ================================
 
-# 'outputUnixSocket' defines the output used to write back to the Logstash forwarder
 outputUnixSocket:
 
-    # Write objects in plain-text form using the intrinsic 'fullText' field
-    # if 'logstashEncodeObjects' has NOT been set.
-  - writeObjects: /$=!TenXEnv.get("logstashEncodeObjects")
+  - address: $=rawOutputUnixSocketAddress
 
-    # Sets Unix domain socket address from the value read from tenx-pipe-in-unix.conf (see above)
-    address: $=rawOutputUnixSocketAddress
-
-    # 'fields' is set to the 'fullText' which contains the object's original text
     fields:
-      - fullText
+      - $?outputEncodeField=fullText
       - $?logstashOutputFields
+
     encodeType: $?logstashOutputEncodeType
     encodeDelimiter: ","
 
-    # Do not encode templates
-    writeTemplates: false
-
-    # Write objects in encoded form using the encode() function if 'logstashEncodeObjects' is set.
-    # To learn more see https://doc.log10x.com/api/js/#TenXObject+encode
-  - writeObjects: /$=TenXEnv.get("logstashEncodeObjects")
-
-    # Sets Unix domain socket address from the value read from tenx-pipe-in-unix.conf (see above)
-    address: $=rawOutputUnixSocketAddress
-
-    # 'fields' is set to the return value of the encode() function
-    fields:
-      - encoded=encode()
-      - $?logstashOutputFields
-    encodeType: $?logstashOutputEncodeType
-    encodeDelimiter: ","
-
-    # Encode templates in JSON format.
-    # To learn more about TenXTemplates, see: https://doc.log10x.com/run/template
-    # Only write the templates when encoding objects.
-    writeTemplates: /$=TenXEnv.get("logstashEncodeObjects")
+    writeTemplates: $?outputWriteTemplates=false

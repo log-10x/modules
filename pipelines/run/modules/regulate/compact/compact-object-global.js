@@ -1,6 +1,6 @@
 // @loader: tenx
 
-import { TenXObject, TenXEnv, TenXMath, TenXLog, TenXLookup, TenXConsole, TenXDate, TenXString } from '@tenx/tenx'
+import { TenXObject, TenXEnv, TenXMath, TenXLookup, TenXConsole, TenXDate, TenXString } from '@tenx/tenx'
 
 // Declarative, field-set keyed compaction predicate.
 //
@@ -19,19 +19,16 @@ import { TenXObject, TenXEnv, TenXMath, TenXLog, TenXLookup, TenXConsole, TenXDa
 //     payment_retry_gateway_timeout,true:1745856000:OPS-5123 spike mitigation
 //     auth_audit_trail,false:1745856000:compliance — keep verbose
 //
-// Exposes a `shouldEncode` getter on every TenXObject via one of two
-// sibling classes — exactly one loads based on whether the compact lookup
-// file is configured. This split keeps shouldEncode resolvable in every
-// deployment (forwarder stream.yaml Path 2 references it unconditionally)
-// while letting the active class's body parse only when the lookup is
-// actually registered — no parse-time name-resolution against a missing
-// lookup.
+// Exposes a `shouldEncode` getter on every TenXObject. Returns:
+//   - No entry for the event's field-set          → `compactRegulatorDefault` (env)
+//   - Entry exists but untilEpochSec has passed   → `compactRegulatorDefault` (self-heal)
+//   - Otherwise                                   → entry's <encode> value
 //
-// The forwarder output stream.yaml calls `shouldEncode` in a single ternary
-// field expression: `output=shouldEncode() ? encode() : fullText`. One stream
-// per output, per-event decision at serialization time. No field mutation —
-// TenXObject fields are immutable after construction, so the routing lives
-// in the stream expression, not on the event.
+// Both classes gate on compactRegulatorLookupFile. When that env isn't set,
+// neither class loads — and the forwarder stream.yaml's compact-lookup path
+// (the only place that references `shouldEncode`) is disabled by its own
+// writeObjects gate on the same flag. No dangling references, no parse
+// failures, no engine changes required.
 
 export class CompactInput extends TenXInput {
 
@@ -58,34 +55,25 @@ export class CompactInput extends TenXInput {
                 TenXConsole.log("⚠️ Compact lookup file is stale, lastModified: {}, retainInterval: {}",
                     lastModified, compactRegulatorLookupRetain);
             }
-            TenXLog.info("Compact lookup file is stale, lastModified: {}, retainInterval: {}",
-                lastModified, compactRegulatorLookupRetain);
         }
     }
 }
 
-// Inactive variant — loads when compact lookup is NOT configured.
-// Preserves pre-compact-module semantics: every event is eligible to encode
-// when the forwarder's Path 2 fires (encodeObjects=true).
-export class CompactObjectInactive extends TenXObject {
+export class CompactObject extends TenXObject {
 
-    static shouldLoad(config) {
-       return !TenXEnv.get("compactRegulatorLookupFile");
-    }
-
-    get shouldEncode() {
-        return this.isObject && !this.isDropped;
-    }
-}
-
-// Active variant — loads when compact lookup IS configured. Per-event
-// decision based on a field-set key lookup into the compact CSV.
-export class CompactObjectActive extends TenXObject {
-
+    // Gate on the same flag as CompactInput. CompactInput's constructor runs
+    // first (top-to-bottom file order) so TenXLookup.load has already
+    // registered the lookup by the time shouldEncode's body is parsed —
+    // no parse-time name-resolution failure.
     static shouldLoad(config) {
        return TenXEnv.get("compactRegulatorLookupFile");
     }
 
+    // Per-event compact decision. Pure — returns the bool, doesn't mutate
+    // the event (fields are immutable after construction).
+    //
+    // Called from the forwarder output stream.yaml's compact-lookup path:
+    //     encoded=shouldEncode() ? encode() : fullText
     get shouldEncode() {
 
         if ((!this.isObject) || (this.isDropped)) return false;

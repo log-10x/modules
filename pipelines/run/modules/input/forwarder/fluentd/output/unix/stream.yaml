@@ -1,7 +1,10 @@
 # 🔟❎ 'run' Fluentd forward output stream configuration
 
-# This configuration defines a Unix domain socket output to write
-# encoded/plain-text TenXObjects to a Fluentd forwarder host process via the native Fluentd 'forward' protocol.
+# Unix domain socket output to write events back to a Fluentd forwarder
+# process via the native Fluentd 'forward' protocol.
+#
+# Mode is selected by `outputEncodeField` and `outputWriteTemplates`
+# (shared forwarder options) — see run/modules/input/forwarder/module.yaml.
 
 #  To learn more see: https://github.com/fluent/fluent-bit-docs/blob/master/pipeline/outputs/forward.md
 
@@ -24,41 +27,15 @@ include:
 
 # ============================= Output Options ================================
 
-# 'outputForward' defines the output used to write to the Fluentd forwarder
 outputForward:
 
-    # Write objects in plain-text form using the intrinsic 'fullText' field if 'encodeObjects' is NOT set.
-  - writeObjects: /$=!TenXEnv.get("encodeObjects")
+  - address: $=rawOutputForwardAddress
 
-    # Sets Unix domain socket address from the value read from tenx-unix-source.conf (see above)
-    address: $=rawOutputForwardAddress
-
-    # 'fields' is set to the 'fullText', which contains the TenXObject's original text
     fields:
-      - fullText
+      - $?outputEncodeField=fullText
       - $?fluentdOutputFields
+
     encodeType: $?fluentdOutputEncodeType
     encodeDelimiter: ","
 
-    # Do not encode templates
-    writeTemplates: false
-
-    # Write objects in encoded form using encode() function if 'encodeObjects' is set.
-    # To learn more see https://doc.log10x.com/api/js/#TenXObject+encode
-  - writeObjects: /$=TenXEnv.get("encodeObjects")
-
-    # Sets Unix domain socket address from the value read from tenx-unix-source.conf (see above)
-    address: $=rawOutputForwardAddress
-
-    # 'fields' is set to the return value of the encode() function
-    #  https://doc.log10x.com/api/js/#TenXObject+encode
-    fields:
-      - 'encoded=shouldEncode() ? encode() : fullText'
-      - $?fluentdOutputFields
-    encodeType: $?fluentdOutputEncodeType
-    encodeDelimiter: ","
-
-    # Encode templates in JSON format.
-    # To learn more about TenXTemplates, see: https://doc.log10x.com/run/template
-    # Only write the templates when also encoding objects.
-    writeTemplates: /$=TenXEnv.get("encodeObjects")
+    writeTemplates: $?outputWriteTemplates=false

@@ -1,8 +1,10 @@
 # 🔟❎ 'run' OpenTelemetry Collector forward output stream configuration
 
-# This configuration defines a Unix domain socket output to write
-# encoded/plain-text TenXObjects to an OpenTelemetry Collector forwarder host process 
-# via the native forward protocol.
+# Writes events to an OpenTelemetry Collector forwarder host process via the
+# native forward protocol over a Unix domain socket.
+#
+# Mode is selected by `outputEncodeField` and `outputWriteTemplates` — see
+# run/modules/input/forwarder/module.yaml for the shared-option model.
 
 # Set the 10x pipeline to 'run'
 tenx: run
@@ -16,42 +18,16 @@ include:
 
 # ============================= Output Options ================================
 
-# 'outputForward' defines the output used to write to the OTel Collector forwarder
 outputForward:
 
-    # Write objects in plain-text form using the intrinsic 'fullText' field if 'encodeObjects' is NOT set.
-  - writeObjects: /$=!TenXEnv.get("encodeObjects")
+  - address: $=TenXEnv.get("otelCollectorOutputForwardAddress", "/tmp/tenx-otel-out.sock")
 
-    # Sets Unix domain socket address
-    address: $=TenXEnv.get("otelCollectorOutputForwardAddress", "/tmp/tenx-otel-out.sock")
-
-    # 'fields' is set to the 'fullText', which contains the TenXObject's original text
     fields:
-      - fullText
-      - $?otelCollectorOutputFields
-    encodeType: $?otelCollectorOutputEncodeType
-    encodeDelimiter: ","
-
-    # Do not encode templates
-    writeTemplates: false
-
-    # Write objects in encoded form using encode() function if 'encodeObjects' is set.
-    # To learn more see https://doc.log10x.com/api/js/#TenXObject+encode
-  - writeObjects: /$=TenXEnv.get("encodeObjects")
-
-    # Sets Unix domain socket address
-    address: $=TenXEnv.get("otelCollectorOutputForwardAddress", "/tmp/tenx-otel-out.sock")
-
-    # 'fields' is set to the return value of the encode() function
-    fields:
-      - 'encoded=shouldEncode() ? encode() : fullText'
+      - $?outputEncodeField=fullText
       - $?otelCollectorOutputFields
 
-    # Use JSON encoding to properly handle 10x-encoded strings that contain special characters
+    # Use JSON encoding to properly handle 10x-encoded strings that contain special characters.
+    # (The regulate-mode fullText path also goes through json fine.)
     encodeType: json
 
-    # Encode templates in JSON format.
-    # To learn more about TenXTemplates, see: https://doc.log10x.com/run/template
-    # Only write the templates when also encoding objects.
-    writeTemplates: /$=TenXEnv.get("encodeObjects")
-
+    writeTemplates: $?outputWriteTemplates=false

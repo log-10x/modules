@@ -1,7 +1,9 @@
 # 🔟❎ 'run' Filebeat output module stream
 
-# This Configuration defines the output stream with which to write encoded/filtered
-# TenXObjects back to a Filebeat forwarder via a Unix domain socket.
+# Writes TenXObjects back to a Filebeat forwarder via a Unix domain socket.
+#
+# Mode is selected by `outputEncodeField` and `outputWriteTemplates` — see
+# run/modules/input/forwarder/module.yaml for the shared-option model.
 
 # Set the 10x pipeline to 'run'
 tenx: run
@@ -12,8 +14,10 @@ tenx: run
 include:
 
   # Load the Unix domain socket path 'rawOutputUnixSocketAddress' variable from the 'path' value in 'tenx.yml'.
-  # This socket writes JSON-encoded TenXObject values into the Filebeat pipeline
-  - source: '$="run/modules/input/forwarder/filebeat/" + (TenXEnv.get("encodeObjects") ? "optimize" : "regulate") + (TenXString.includes(TenXEnv.get("os.name"), "Windows") ? "/tenxWin.yml" : "/tenxNix.yml")'
+  # This socket writes JSON-encoded TenXObject values into the Filebeat pipeline.
+  # The optimize/regulate split stays for the filebeat-side yml selection —
+  # it's a Filebeat runtime-config artifact, not an engine writeObjects gate.
+  - source: '$="run/modules/input/forwarder/filebeat/" + (TenXEnv.get("outputWriteTemplates") ? "optimize" : "regulate") + (TenXString.includes(TenXEnv.get("os.name"), "Windows") ? "/tenxWin.yml" : "/tenxNix.yml")'
     options:
       path: rawOutputUnixSocketAddress
 
@@ -22,51 +26,27 @@ include:
 
 # ============================= Output Options ================================
 
-# Customize how events are written back to Filebeat via a Unix domain socket
 outputUnixSocket:
 
-  # regulate encoder - outputs filtered events
-  - writeObjects: /$=!TenXEnv.get("encodeObjects")
-
-    filter: extractorKey == "message"
-
-    # Sets Unix domain socket address from the value read from tenxNix.yml/tenxWin.yml (see above)
+  # Main event emitter
+  - filter: extractorKey == "message"
     address: $=rawOutputUnixSocketAddress
 
-    # Send the entire received JSON back
     fields:
-      - fullText
+      - $?outputEncodeField=fullText
       - $?filebeatOutputFields
+
     encodeType: $?filebeatOutputEncodeType
     encodeDelimiter: ","
 
     # When grouping events and emitting back to Filebeat, escape the line break to ensure a valid JSON
     encodeGroupDelimiter: "\\n"
 
-  # optimize encoder - outputs encoded events
-  - writeObjects: /$=TenXEnv.get("encodeObjects")
-
-    filter: extractorKey == "message"
-
-    # Sets Unix domain socket address from the value read from tenxNix.yml/tenxWin.yml (see above)
-    address: $=rawOutputUnixSocketAddress
-
-    # Send the entire received JSON back, with the message encoded.
-    fields:
-      - encoded=encode()
-      - $?filebeatOutputFields
-    encodeType: $?filebeatOutputEncodeType
-    encodeDelimiter: ","
-
-    # When grouping events and emitting back to Filebeat, escape the line break to ensure a valid JSON
-    encodeGroupDelimiter: "\\n"
-
-  # optimize template encoder - outputs all new templates.
-  - writeObjects: /$=TenXEnv.get("encodeObjects")
+  # Template emitter — only fires in encoding modes (outputWriteTemplates=true)
+  - writeObjects: $=yield TenXEnv.get("outputWriteTemplates", false)
 
     filter: (extractorKey == "message") && isNewTemplate()
 
-    # Sets Unix domain socket address from the value read from tenxNix.yml/tenxWin.yml (see above)
     address: $=rawOutputUnixSocketAddress
 
     # Send custom TenXTemplate JSON, with duplicated templateHash field as 'templateHashDocId'.

@@ -1,9 +1,16 @@
 # 🔟❎ 'run' Fluent Bit forward output stream configuration
 
-# This configuration defines a Unix domain socket output to write
-# encoded/plain-text events to a Fluent Bit forwarder process via the native Fluentd 'forward' protocol.
+# This configuration defines a Unix domain socket output to write events
+# back to a Fluent Bit forwarder process via the native Fluentd 'forward' protocol.
 
 # To learn more see: https://github.com/fluent/fluent-bit-docs/blob/master/pipeline/outputs/forward.md
+
+# Single output entry. Mode is selected by `outputEncodeField` and
+# `outputWriteTemplates` (shared forwarder options), which the user-facing
+# config.yaml sets via a `$=yield` expression that reads regulatorOptimize and
+# compactRegulatorLookupFile. Substitution happens at config-load time, so
+# shouldEncode() only appears in the parsed field when compactRegulator is
+# actually configured.
 
 # Set the 10x pipeline to 'run'
 tenx: run
@@ -15,7 +22,7 @@ include:
   - source: match
     options:
 
-      # Capture rawOutputSocketPort from tenx-unix.conf as an 10x config variable
+      # Capture rawOutputForwardAddress from tenx-unix.conf as an 10x config variable
       path: run/modules/input/forwarder/fluentbit/conf/tenx-unix.conf
       regex: "^\\s*@SET\\s+forwardAddress\\s*=\\s*(?<rawOutputForwardAddress>.*?)$"
 
@@ -24,41 +31,18 @@ include:
 
 # ============================= Output Options ================================
 
-# 'outputForward' defines the output(s) used to write back to the Fluent Bit forwarder
 outputForward:
 
-    # Write objects in plain-text form using the intrinsic 'fullText' field if 'encodeObjects' has NOT been set.
-  - writeObjects: /$=!TenXEnv.get("encodeObjects")
+  - address: $=rawOutputForwardAddress
 
-    # Sets Unix domain socket address from the value read from tenx-unix-source.conf (see above)
-    address: $=rawOutputForwardAddress
-
-    # 'fields' is set to the 'fullText', which contains the TenXObject's original text
+    # 'fields' is driven by the mode. The $?outputEncodeField substitution
+    # happens before DSL parse, so the field expression only references
+    # shouldEncode() when the user picked compact-lookup mode.
     fields:
-      - fullText
+      - $?outputEncodeField=fullText
       - $?fluentbitOutputFields
+
     encodeType: $?fluentbitOutputEncodeType
     encodeDelimiter: ","
 
-    # Do not encode templates
-    writeTemplates: false
-
-    # Write objects in encoded form using the encode() function if 'encodeObjects' is set.
-    # To learn more see https://doc.log10x.com/api/js/#TenXObject+encode
-  - writeObjects: /$=TenXEnv.get("encodeObjects")
-
-    # Sets Unix domain socket address from the value read from tenx-unix-source.conf (see above)
-    address: $=rawOutputForwardAddress
-
-    # 'fields' is set to the return value of the encode() function
-    #  https://doc.log10x.com/api/js/#TenXObject+encode
-    fields:
-      - 'encoded=shouldEncode() ? encode() : fullText'
-      - $?fluentbitOutputFields
-    encodeType: $?fluentbitOutputEncodeType
-    encodeDelimiter: ","
-
-    # Encode templates in JSON format.
-    # To learn more about TenXTemplates, see: https://doc.log10x.com/run/template
-    # Only write the templates when also encoding objects.
-    writeTemplates: /$=TenXEnv.get("encodeObjects")
+    writeTemplates: $?outputWriteTemplates=false

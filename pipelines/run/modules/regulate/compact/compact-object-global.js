@@ -1,34 +1,37 @@
 // @loader: tenx
 
-import { TenXObject, TenXEnv, TenXMath, TenXLookup, TenXConsole, TenXDate, TenXString } from '@tenx/tenx'
+import { TenXObject, TenXEnv, TenXLookup, TenXConsole, TenXDate, TenXString } from '@tenx/tenx'
 
 // Declarative, field-set keyed compaction predicate.
 //
-// Reads a lookup file where each line declares a compaction decision for a
+// Reads a lookup file where each row declares a compaction decision for a
 // specific field-set value. Same identity semantics as the rate regulator's
 // mute file, so users can target the same patterns the Reporter attributes
 // cost to.
 //
-// Entry format (first row is the standard `key,value` CSV header):
+// Entry format (standard CSV with `key,value` header):
 //
-//     <fieldSet>,<encode>:<untilEpochSec>[:<reason>]
+//     <fieldSet>,<true|false>
 //
-// `encode` is "true" (compact via encode()) or "false" (preserve fullText).
+// `true`  → compact via encode()
+// `false` → preserve fullText
 //
 // Example (with compactRegulatorFieldNames: [symbolMessage]):
-//     payment_retry_gateway_timeout,true:1745856000:OPS-5123 spike mitigation
-//     auth_audit_trail,false:1745856000:compliance — keep verbose
+//     payment_retry_gateway_timeout,true
+//     auth_audit_trail,false
 //
-// Exposes a `shouldEncode` getter on every TenXObject. Returns:
-//   - No entry for the event's field-set          → `compactRegulatorDefault` (env)
-//   - Entry exists but untilEpochSec has passed   → `compactRegulatorDefault` (self-heal)
-//   - Otherwise                                   → entry's <encode> value
+// For time-bounded overrides, users remove the entry (e.g. via GitOps PR) to
+// fall back to compactRegulatorDefault. An earlier design embedded an
+// `untilEpochSec` in the value string (`true:1745856000:reason`), but the
+// tenx DSL doesn't support local-array access — `parts[1]` translates to a
+// field lookup that returns empty. Keeping the format to a single bare value
+// sidesteps that quirk and matches the rate regulator's mute-file shape.
 //
-// Both classes gate on compactRegulatorLookupFile. When that env isn't set,
-// neither class loads — and the forwarder stream.yaml's compact-lookup path
-// (the only place that references `shouldEncode`) is disabled by its own
-// writeObjects gate on the same flag. No dangling references, no parse
-// failures, no engine changes required.
+// Exposes a `shouldEncode` getter on every TenXObject (when loaded) that
+// returns:
+//   - No entry for the event's field-set → `compactRegulatorDefault` (env)
+//   - Entry is "true"                    → true
+//   - Entry is anything else             → false
 
 export class CompactInput extends TenXInput {
 
@@ -46,16 +49,7 @@ export class CompactInput extends TenXInput {
             throw new Error("the 'compactRegulatorFieldNames' argument must be set to identify compact-lookup entries");
         }
 
-        var lastModified = TenXLookup.load(TenXEnv.get("compactRegulatorLookupFile"), true);
-
-        var compactRegulatorLookupRetain = TenXEnv.get("compactRegulatorLookupRetain", 300000);
-
-        if (TenXDate.now() - lastModified > compactRegulatorLookupRetain) {
-            if (!TenXEnv.get("quiet")) {
-                TenXConsole.log("⚠️ Compact lookup file is stale, lastModified: {}, retainInterval: {}",
-                    lastModified, compactRegulatorLookupRetain);
-            }
-        }
+        TenXLookup.load(TenXEnv.get("compactRegulatorLookupFile"), true);
     }
 }
 
@@ -87,15 +81,6 @@ export class CompactObject extends TenXObject {
         var entry = TenXLookup.get("compactRegulatorLookupFile", fieldSetKey);
         if (!entry) return defaultEncode;
 
-        // Entry format: "<encode>:<untilEpochSec>[:<reason>]"
-        var encode = TenXString.startsWith(entry, "true:");
-        var parts = TenXString.split(entry, ":");
-        var untilEpochSec = TenXMath.parseDouble(parts[1]);
-
-        // Expired → self-heal to default.
-        var nowSec = TenXDate.now() / 1000;
-        if (nowSec >= untilEpochSec) return defaultEncode;
-
-        return encode;
+        return TenXString.startsWith(entry, "true");
     }
 }

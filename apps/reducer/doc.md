@@ -644,11 +644,11 @@ Follow the steps below. Steps that require customization link to the relevant [C
     === ":simple-beats: Filebeat"
 
         ```console title="Nix/OSX"
-        $ filebeat -c my-filebeat.yml -e 2>&1 | /opt/tenx-edge/bin/tenx run @run/input/forwarder/filebeat/regulate/config.yaml __SAVE_APPS_REDUCER__
+        $ filebeat -c my-filebeat.yml -e 2>&1 | /opt/tenx-edge/bin/tenx run @run/input/forwarder/filebeat/regulate/config.yaml @apps/reducer
         ```
 
         ```console title="Windows"
-        $ filebeat -c my-filebeat.yml -e 2>&1 | "c:\program files\tenx-edge\tenx" run @run/input/forwarder/filebeat/regulate/config.yaml __SAVE_APPS_REDUCER__
+        $ filebeat -c my-filebeat.yml -e 2>&1 | "c:\program files\tenx-edge\tenx" run @run/input/forwarder/filebeat/regulate/config.yaml @apps/reducer
         ```
 
     === ":simple-logstash: Logstash"
@@ -662,7 +662,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
         **Step 1**: Start Log10x Reducer first:
 
         ```console
-        $ tenx run @run/input/forwarder/otel-collector/regulate __SAVE_APPS_REDUCER__
+        $ tenx run @run/input/forwarder/otel-collector/regulate @apps/reducer
         ```
 
         **Step 2**: Start OTel Collector with the 10x configuration:

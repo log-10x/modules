@@ -23,7 +23,7 @@
 	-- to launch the 10x process to which to write events
 
 	-- Define 10x arguments for running in 'optimize' mode (reducer with optimization enabled)
-	tenx_run_args = "@run/input/forwarder/fluentbit/regulate/config.yaml __SAVE_APPS_REDUCER__ reducerOptimize true"
+	tenx_run_args = "@run/input/forwarder/fluentbit/regulate/config.yaml @apps/reducer reducerOptimize true"
 
 	-- get the path of this config script
 	configPath = assert(debug.getinfo(1).source:match("@?(.*[/\\])"))

@@ -19,8 +19,8 @@ module:
 
   # Shared options applicable across all forwarder flavors. Mode selection
   # (regulate / compact-all / compact-lookup) is driven by outputEncodeField,
-  # which each forwarder's user-facing config.yaml derives from `regulatorOptimize`
-  # and `compactRegulatorLookupFile` via a `$=yield` expression. Substitution
+  # which each forwarder's user-facing config.yaml derives from `reducerOptimize`
+  # and `compactReducerLookupFile` via a `$=yield` expression. Substitution
   # into the transport stream.yaml happens at config-load before DSL parse, so
   # `shouldEncode()` only appears in the parsed field expression when the
   # compact lookup is actually configured — and CompactObject only loads under
@@ -39,7 +39,7 @@ module:
         - **regulate** (default): `fullText` — plain passthrough, no encoding
         - **compact-all**: `encoded=encode()` — every event compacted
         - **compact-lookup**: `encoded=shouldEncode() ? encode() : fullText` — per-pattern
-          decision via the compactRegulator module (requires `compactRegulatorLookupFile`)
+          decision via the compactReducer module (requires `compactReducerLookupFile`)
 
         Advanced users can override directly to customize the output field expression.
 

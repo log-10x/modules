@@ -50,7 +50,7 @@ unit:
       doc: |
         defines a JavaScript expression an TenXObject must evaluate as truthy against 
         to be written the target output. This filter operates in an AND relationship with the
-         [outputFilters](https://doc.log10x.com/run/output/regulate/#outputfilters) regulator argument (i.e., both must be evaluated as truthy to pass)  
+         [outputFilters](https://doc.log10x.com/run/output/regulate/#outputfilters) reducer argument (i.e., both must be evaluated as truthy to pass)  
  
     - names:
       - outputType

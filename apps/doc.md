@@ -10,7 +10,7 @@ Start with the [**MCP Server**](https://doc.log10x.com/manage/mcp-server/) — i
 
 ```mermaid
 graph LR
-    Forwarders["Log Forwarders"] -->|IPC| Edge["10x Regulator"]
+    Forwarders["Log Forwarders"] -->|IPC| Edge["10x Reducer"]
     Edge --> Analyzers["Analyzers & Storage"]
     Forwarders -.->|IPC| Reporter["10x Reporter (DaemonSet)"]
     Analyzers --> Cloud["10x Retriever"]
@@ -40,7 +40,7 @@ Suggested adoption path (guided by the [MCP Server](https://doc.log10x.com/manag
 
 :material-chart-bar: **Reporter** — pinpoint the event types driving 80% of cost (MCP generates the Helm values)
 
-:material-pipe-valve: **Regulator** — filter noisy events and losslessly compact survivors (MCP proposes filter configs)
+:material-pipe-valve: **Reducer** — filter noisy events and losslessly compact survivors (MCP proposes filter configs)
 
 :material-cloud-arrow-right-outline: **Retriever** — store events in S3, stream on-demand (MCP recommends the setup)
 
@@ -58,20 +58,20 @@ See which event types drive 80% of your analytics platform cost, observed **pre-
 
 **MCP can generate tailored Helm values** — ask "set me up with the Reporter" after installing the MCP Server.
 
-[Overview](https://doc.log10x.com/apps/reporter){ .md-button .md-button--primary } · [Architecture](https://doc.log10x.com/apps/reporter/#architecture) · [FAQ](https://doc.log10x.com/apps/reporter/faq/) · [Live Demo :octicons-link-external-16:](https://console.log10x.com?demo=true&step=3&apps=reporter,regulator,retriever&timeframe=year&volume=20&cost=2.50&highlight=reporter)
+[Overview](https://doc.log10x.com/apps/reporter){ .md-button .md-button--primary } · [Architecture](https://doc.log10x.com/apps/reporter/#architecture) · [FAQ](https://doc.log10x.com/apps/reporter/faq/) · [Live Demo :octicons-link-external-16:](https://console.log10x.com?demo=true&step=3&apps=reporter,reducer,retriever&timeframe=year&volume=20&cost=2.50&highlight=reporter)
 
 ___
 
-## :material-pipe-valve: Regulator
+## :material-pipe-valve: Reducer
 
 Execution arm. **Two modes**, one app:
 
 - **Filter** (lossy): drop events matching a rule — up to 80% volume reduction. Safe defaults are deny; explicit allow required.
-- **Compact** (lossless): replace events with a compact wire-form that the downstream SIEM plugin expands at query time. 50–80% reduction (64% on K8s OTel logs), no dashboard/query changes. Requires the expand plugin installed in [Splunk](https://doc.log10x.com/apps/regulator/splunk/) or [Elasticsearch](https://doc.log10x.com/apps/regulator/elasticsearch/).
+- **Compact** (lossless): replace events with a compact wire-form that the downstream SIEM plugin expands at query time. 50–80% reduction (64% on K8s OTel logs), no dashboard/query changes. Requires the expand plugin installed in [Splunk](https://doc.log10x.com/apps/reducer/splunk/) or [Elasticsearch](https://doc.log10x.com/apps/reducer/elasticsearch/).
 
 **MCP can propose filter configs per pattern** based on the Reporter's cost attribution.
 
-[Overview](https://doc.log10x.com/apps/regulator){ .md-button .md-button--primary } · [Architecture](https://doc.log10x.com/apps/regulator/#architecture) · [FAQ](https://doc.log10x.com/apps/regulator/faq/) · [Live Demo :octicons-link-external-16:](https://console.log10x.com?demo=true&step=3&apps=reporter,regulator,retriever&timeframe=year&volume=20&cost=2.50&highlight=regulator)
+[Overview](https://doc.log10x.com/apps/reducer){ .md-button .md-button--primary } · [Architecture](https://doc.log10x.com/apps/reducer/#architecture) · [FAQ](https://doc.log10x.com/apps/reducer/faq/) · [Live Demo :octicons-link-external-16:](https://console.log10x.com?demo=true&step=3&apps=reporter,reducer,retriever&timeframe=year&volume=20&cost=2.50&highlight=reducer)
 
 ___
 
@@ -81,7 +81,7 @@ Keep all events in S3 at ~$0.023/GB instead of paying analytics platform ingesti
 
 **MCP can recommend the Terraform + Helm pair** for your environment.
 
-[Overview](https://doc.log10x.com/apps/retriever){ .md-button .md-button--primary } · [Architecture](https://doc.log10x.com/apps/retriever/#architecture) · [FAQ](https://doc.log10x.com/apps/retriever/faq/) · [Live Demo :octicons-link-external-16:](https://console.log10x.com?demo=true&step=4&apps=reporter,regulator,retriever&timeframe=year&volume=20&cost=2.50)
+[Overview](https://doc.log10x.com/apps/retriever){ .md-button .md-button--primary } · [Architecture](https://doc.log10x.com/apps/retriever/#architecture) · [FAQ](https://doc.log10x.com/apps/retriever/faq/) · [Live Demo :octicons-link-external-16:](https://console.log10x.com?demo=true&step=4&apps=reporter,reducer,retriever&timeframe=year&volume=20&cost=2.50)
 
 ___
 

@@ -2,15 +2,15 @@
 icon: material/filter
 ---
 
-# OpenTelemetry Collector Regulator
+# OpenTelemetry Collector Reducer
 
 Read events from an OpenTelemetry Collector forwarder, apply regulation policies to filter events, and write filtered events back to OTel Collector.
 
-This module is a component of the [Regulator](https://doc.log10x.com/apps/regulator/) app.
+This module is a component of the [Reducer](https://doc.log10x.com/apps/reducer/) app.
 
 ## Overview
 
-The OpenTelemetry Collector Regulator configures:
+The OpenTelemetry Collector Reducer configures:
 
 - A TCP JSON input stream (port 4318 default) to receive events
 - Regulation policies to filter events based on rules
@@ -20,22 +20,22 @@ The OpenTelemetry Collector Regulator configures:
 
 === ":material-laptop: Nix/Win/OSX"
 
-    See the Log10x Regulator OpenTelemetry Collector [run instructions](https://doc.log10x.com/apps/regulator/run/#otel-collector)
+    See the Log10x Reducer OpenTelemetry Collector [run instructions](https://doc.log10x.com/apps/reducer/run/#otel-collector)
 
 === ":material-kubernetes: k8s"
 
     Deploy to k8s via [Helm](https://helm.sh/){target="_blank"}
 
-    See the Log10x Regulator OpenTelemetry Collector [deployment instructions](https://doc.log10x.com/apps/regulator/deploy/#otel-collector)
+    See the Log10x Reducer OpenTelemetry Collector [deployment instructions](https://doc.log10x.com/apps/reducer/deploy/#otel-collector)
 
 ## Configuration
 
-See [config.yaml](config.yaml) for the default regulator configuration.
+See [config.yaml](config.yaml) for the default reducer configuration.
 
 ## Event Flow
 
 ```
-OTel Collector → TCP JSON (4318) → Log10x Regulator → Unix Socket → OTel Collector → Exporters
+OTel Collector → TCP JSON (4318) → Log10x Reducer → Unix Socket → OTel Collector → Exporters
 ```
 
 1. OTel Collector sends events via TCP JSON to Log10x
@@ -47,5 +47,5 @@ OTel Collector → TCP JSON (4318) → Log10x Regulator → Unix Socket → OTel
 
 - [OpenTelemetry Collector Reporter](../report/index.md)
 - [OpenTelemetry Collector Optimizer](../optimize/index.md)
-- [Rate Regulator](https://doc.log10x.com/run/regulate/rate/)
+- [Rate Reducer](https://doc.log10x.com/run/regulate/rate/)
 

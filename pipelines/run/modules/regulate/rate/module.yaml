@@ -1,11 +1,11 @@
 #
-# 🔟❎ 'run' rate regulator module
+# 🔟❎ 'run' rate reducer module
 
 module:
 
-  name: rateRegulator
+  name: rateReducer
 
-  title: Rate regulator
+  title: Rate reducer
 
   description: Filter TenXObjects from output using either local per-node budget sampling or a declarative field-set keyed mute file.
 
@@ -25,7 +25,7 @@ module:
   options:
 
     - names:
-      - rateRegulatorFieldNames
+      - rateReducerFieldNames
       description: list of TenXObject fields to identify rate counter buckets
       type: list
       required: false
@@ -38,13 +38,13 @@ module:
 
         **Single-app regulation (per event type):**
         ```yaml
-        rateRegulatorFieldNames:
+        rateReducerFieldNames:
           - symbolMessage
         ```
 
         **Multi-dimensional tracking (event type + geography + HTTP status):**
         ```yaml
-        rateRegulatorFieldNames:
+        rateReducerFieldNames:
           - symbolMessage
           - country
           - httpCode
@@ -54,14 +54,14 @@ module:
 
         *Option A: Cap total spend per app (all event types combined):*
         ```yaml
-        rateRegulatorFieldNames:
+        rateReducerFieldNames:
           - container  # Aggregates all event types for each app
         ```
         Each app's total spend (across all event types and pods) gets one cap. Simple but loses event-type intelligence.
 
         *Option B: Cap spend per event type per app:*
         ```yaml
-        rateRegulatorFieldNames:
+        rateReducerFieldNames:
           - symbolMessage  # Event type
           - container      # App identifier (same across all pods)
         ```
@@ -71,13 +71,13 @@ module:
       defValue: [symbolMessage]
 
     - names:
-      - rateRegulatorResetIntervalMs
+      - rateReducerResetIntervalMs
       description: reset interval for rate counters in milliseconds
       type: number
       required: false
       doc: |
         defines the interval in milliseconds after which to reset rate counters.
-        Controls how frequently the regulator resets its tracking counters.
+        Controls how frequently the reducer resets its tracking counters.
 
         Default of 5 minutes (300000ms) provides stable cost averages and smooths out bursts while remaining responsive.
         Shorter windows (e.g., 1 minute) are more reactive but noisier; longer windows (e.g., 10 minutes) are smoother but slower to adapt.
@@ -91,7 +91,7 @@ module:
       defValue: 300000
 
     - names:
-      - rateRegulatorMinRetentionThreshold
+      - rateReducerMinRetentionThreshold
       description: minimum retention threshold for events when budget is exceeded
       type: number
       required: false
@@ -100,7 +100,7 @@ module:
         Ensures some events are always retained even for very high-spend patterns, preventing complete data loss.
 
         This value ensures a floor on retention, preventing complete data loss even when budget is exceeded.
-        The severity level boost (from `rateRegulatorLevelBoost`) is multiplied with this value to determine the actual minimum retention threshold for each severity level.
+        The severity level boost (from `rateReducerLevelBoost`) is multiplied with this value to determine the actual minimum retention threshold for each severity level.
 
         **How boost works:**
         - Boost only affects the minimum retention threshold, not the calculated threshold based on budget
@@ -123,7 +123,7 @@ module:
       defValue: 0.1
 
     - names:
-      - rateRegulatorLevelBoost
+      - rateReducerLevelBoost
       description: severity level boost mapping for retention rates
       type: list
       required: false
@@ -131,13 +131,13 @@ module:
         defines a map of [severity levels](https://doc.log10x.com/run/initialize/level/) to boost multipliers for minimum retention thresholds.
         Higher severity events can be given higher minimum retention rates through boost values.
 
-        The boost multiplier is applied only to `rateRegulatorMinRetentionThreshold`, not to the entire retention threshold.
+        The boost multiplier is applied only to `rateReducerMinRetentionThreshold`, not to the entire retention threshold.
         This ensures critical events (ERROR, FATAL) have higher minimum retention floors when budget is exceeded,
         while preventing boost values < 1.0 from reducing retention when under budget.
 
         **How it works:**
-        - The regulator calculates a retention threshold based on budget utilization
-        - The threshold is clamped to at least `rateRegulatorMinRetentionThreshold * boost`
+        - The reducer calculates a retention threshold based on budget utilization
+        - The threshold is clamped to at least `rateReducerMinRetentionThreshold * boost`
         - Boost only affects the minimum floor, not the calculated threshold
         - Higher boost values result in higher minimum retention for events of that severity when over budget
         - Lower boost values (< 1.0) reduce minimum retention for low-priority events (e.g., DEBUG, TRACE)
@@ -155,17 +155,17 @@ module:
         ```
 
     - names:
-      - rateRegulatorLookupFile
+      - rateReducerLookupFile
       description: declarative mute file keyed by field-set
       type: string
       required: false
       doc: |
         defines the path to a declarative **mute file** that caps specific log patterns by
-        the joined field-set defined in `rateRegulatorFieldNames` (e.g. `symbolMessage`,
-        `container`, `httpCode`). The key format is the same one the local regulator uses
+        the joined field-set defined in `rateReducerFieldNames` (e.g. `symbolMessage`,
+        `container`, `httpCode`). The key format is the same one the local reducer uses
         for per-node counters.
 
-        When this option is set, the regulator switches from local per-node budget sampling
+        When this option is set, the reducer switches from local per-node budget sampling
         to mute-file mode: it does nothing until an event's field-set matches an entry in
         the file, at which point that entry's `sampleRate` and `untilEpochSec` decide retention.
 
@@ -175,8 +175,8 @@ module:
         <fieldSet>=<sampleRate>:<untilEpochSec>[:<reason>]
         ```
 
-        - `fieldSet` — the joined values of the fields named in `rateRegulatorFieldNames`,
-          separated by `_`. With `rateRegulatorFieldNames: [symbolMessage]` the key is just
+        - `fieldSet` — the joined values of the fields named in `rateReducerFieldNames`,
+          separated by `_`. With `rateReducerFieldNames: [symbolMessage]` the key is just
           `symbolMessage` (e.g. `Error_syncing_pod`). With `[symbolMessage, container]` the
           key is `symbolMessage_container` (e.g. `heartbeat_debug_frontend`).
         - `sampleRate` — probability in `[0.0, 1.0]` that a matching event is retained.
@@ -185,7 +185,7 @@ module:
           entry becomes a no-op until someone edits or removes it. Self-healing by design.
         - `reason` — optional free-text string for audit. Not used at runtime.
 
-        **Example** (with `rateRegulatorFieldNames: [symbolMessage]`):
+        **Example** (with `rateReducerFieldNames: [symbolMessage]`):
 
         ```
         Error_syncing_pod=0.10:1744848000:pod error spam OPS-4821
@@ -196,7 +196,7 @@ module:
         **Why this shape:**
 
         - **Field-set keyed**, not regex keyed → mute keys are the exact identifiers the
-          Reporter attributes cost to (same `rateRegulatorFieldNames` on both sides), so a
+          Reporter attributes cost to (same `rateReducerFieldNames` on both sides), so a
           "top spender" in the Reporter maps 1:1 to a mute entry.
         - **Git-friendly**: the file is a human-readable declaration that can live in a
           config repo, reviewed via PR, `git blame`-d for who/why.
@@ -208,17 +208,17 @@ module:
           mute file is the interface.
 
         **Severity floor still applies.** Even a `0.0` mute will retain high-severity
-        events at `rateRegulatorMinRetentionThreshold * boost` (see `rateRegulatorLevelBoost`).
+        events at `rateReducerMinRetentionThreshold * boost` (see `rateReducerLevelBoost`).
         This prevents a poorly-scoped mute from silencing ERROR/FATAL traffic.
 
-        When `rateRegulatorLookupFile` is **unset**, the regulator falls back to the local
-        per-node budget strategy driven by `rateRegulatorBudgetPerHour`,
-        `rateRegulatorMaxSharePerFieldSet`, and `rateRegulatorIngestionCostPerGB`. Those
+        When `rateReducerLookupFile` is **unset**, the reducer falls back to the local
+        per-node budget strategy driven by `rateReducerBudgetPerHour`,
+        `rateReducerMaxSharePerFieldSet`, and `rateReducerIngestionCostPerGB`. Those
         options are ignored in mute-file mode.
       defValue: ""
 
     - names:
-      - rateRegulatorLookupRetain
+      - rateReducerLookupRetain
       description: Retention period for the lookup file containing global event type rates
       type: number
       required: false
@@ -232,7 +232,7 @@ module:
       defValue: 300000
 
     - names:
-      - rateRegulatorBudgetPerHour
+      - rateReducerBudgetPerHour
       description: target spending budget per hour in USD
       type: number
       required: false
@@ -249,29 +249,29 @@ module:
       defValue: 1.0
 
     - names:
-      - rateRegulatorMaxSharePerFieldSet
+      - rateReducerMaxSharePerFieldSet
       description: maximum % of total spend any single field set can consume
       type: number
       required: false
       doc: |
         defines the maximum share (0.0 to 1.0) of the total budget that any single unique field set can use.
-        A "field set" is a unique combination of the field values specified in `rateRegulatorFieldNames`.
+        A "field set" is a unique combination of the field values specified in `rateReducerFieldNames`.
 
         Enforced independently of whether the total budget is exceeded—prevents noisy field sets from dominating even when under budget.
 
         In global mode, this is enforced cluster-wide based on aggregate spend data from the lookup file.
 
-        **Example with `rateRegulatorFieldNames: [symbolMessage]`:**
+        **Example with `rateReducerFieldNames: [symbolMessage]`:**
         - 0.2 means no single event type (e.g., "heartbeat_debug") can use more than 20% of total spend
         - If "heartbeat_debug" is costing 35% of total, it gets throttled to 20% regardless of whether you're over budget
 
-        **Example with `rateRegulatorFieldNames: [container]` (Kubernetes: per-app total):**
+        **Example with `rateReducerFieldNames: [container]` (Kubernetes: per-app total):**
         - Each app (e.g., "frontend", "backend", "payment-service") is tracked separately
         - 0.2 means no single app can exceed 20% of total spend across ALL its event types
         - Aggregates across all pods and all event types for each app
         - If "frontend" app (all events, 5 pods) costs 30%, it gets throttled to 20%
 
-        **Example with `rateRegulatorFieldNames: [symbolMessage, container]` (Kubernetes: per event type per app):**
+        **Example with `rateReducerFieldNames: [symbolMessage, container]` (Kubernetes: per event type per app):**
         - Each unique combination (e.g., "error_login|frontend", "heartbeat_debug|backend") is tracked separately
         - 0.2 means no single (event type × app) can exceed 20% of total spend
         - If "frontend" app's "heartbeat_debug" events cost 30% across its 5 pods, they get throttled to 20%
@@ -279,7 +279,7 @@ module:
       defValue: 0.2
 
     - names:
-      - rateRegulatorIngestionCostPerGB
+      - rateReducerIngestionCostPerGB
       description: vendor ingestion cost per GB in USD
       type: number
       required: false
@@ -297,5 +297,5 @@ module:
         - **Sumo Logic**: ~$1.50/GB (depends on plan)
         - **AWS CloudWatch Logs**: ~$0.50/GB ingestion + $0.03/GB storage
 
-        **Example:** A 10KB error log at $1.50/GB costs ~$0.000015. Over 1 million such events per hour, that's $15/hour ($360/day). The regulator tracks this spend per field set and enforces your `rateRegulatorBudgetPerHour` by probabilistically sampling events when over budget.
+        **Example:** A 10KB error log at $1.50/GB costs ~$0.000015. Over 1 million such events per hour, that's $15/hour ($360/day). The reducer tracks this spend per field set and enforces your `rateReducerBudgetPerHour` by probabilistically sampling events when over budget.
       defValue: 1.5

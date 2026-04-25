@@ -1,17 +1,17 @@
 #
-# 🔟❎ 'run' Regulator app
+# 🔟❎ 'run' Reducer app
 
 app:
 
-  name: regulator
+  name: reducer
 
-  title: Regulator
+  title: Reducer
 
   description: regulate and optionally optimize log/trace events _before_ they ship to output
 
   # 'configFolders' specifies folders containing default configuration files for this module
   configFolders:
-    regulator: apps/regulator
+    reducer: apps/reducer
 
     initializers+message: run/initialize/message
     initializers+level: run/initialize/level
@@ -21,8 +21,8 @@ app:
     initializers+k8s: run/initialize/k8s
     initializers+geoIP: run/initialize/geoIP
 
-    regulators+rate Regulator: run/regulate/rate
-    regulators+compact Regulator: run/regulate/compact
+    reducers+rate Reducer: run/regulate/rate
+    reducers+compact Reducer: run/regulate/compact
 
     metric Outputs+log10x metrics: run/output/metric/log10x
     metric Outputs+Prometheus: run/output/metric/prometheus/scrape
@@ -49,4 +49,4 @@ app:
     transform+parallelize: run/transform/parallelize
 
   # 'doc' specifies the markdown doc content, only required when generating docs.
-  doc: +include $=TenXEnv.get("docGenerate") ? "apps/regulator/doc.md":""
+  doc: +include $=TenXEnv.get("docGenerate") ? "apps/reducer/doc.md":""

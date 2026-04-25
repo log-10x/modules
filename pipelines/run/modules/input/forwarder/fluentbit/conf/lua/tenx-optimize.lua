@@ -22,8 +22,8 @@
 	-- the following values are used to formulate the 'tenx_proc' argument
 	-- to launch the 10x process to which to write events
 
-	-- Define 10x arguments for running in 'optimize' mode (regulator with optimization enabled)
-	tenx_run_args = "@run/input/forwarder/fluentbit/regulate/config.yaml @apps/regulator regulatorOptimize true"
+	-- Define 10x arguments for running in 'optimize' mode (reducer with optimization enabled)
+	tenx_run_args = "@run/input/forwarder/fluentbit/regulate/config.yaml __SAVE_APPS_REDUCER__ reducerOptimize true"
 
 	-- get the path of this config script
 	configPath = assert(debug.getinfo(1).source:match("@?(.*[/\\])"))

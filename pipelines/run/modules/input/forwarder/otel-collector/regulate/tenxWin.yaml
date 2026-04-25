@@ -4,12 +4,12 @@
 # and receives filtered events back for forwarding.
 #
 # Prerequisites:
-# - Log10x must be running with: tenx @run/input/forwarder/otel-collector/regulate @apps/regulator
+# - Log10x must be running with: tenx @run/input/forwarder/otel-collector/regulate __SAVE_APPS_REDUCER__
 # - Log10x will listen on TCP port 4318 for incoming JSON events
 # - Log10x will write filtered events to TCP port 4319 (Windows doesn't support Unix sockets)
 #
 # Usage:
-# - Run Log10x first: tenx @run/input/forwarder/otel-collector/regulate @apps/regulator
+# - Run Log10x first: tenx @run/input/forwarder/otel-collector/regulate __SAVE_APPS_REDUCER__
 # - Then run: otelcol.exe --config=tenx-regulate-windows.yaml
 
 receivers:

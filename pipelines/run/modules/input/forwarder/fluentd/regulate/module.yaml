@@ -5,7 +5,7 @@ module:
 
   name: fluentdRegulate
 
-  title: Fluentd regulator
+  title: Fluentd reducer
 
   description: read events from Fluentd forwarders to regulate which events to ship
 

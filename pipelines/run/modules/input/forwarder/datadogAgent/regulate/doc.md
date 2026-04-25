@@ -2,7 +2,7 @@
 icon: material/pipe-valve
 ---
 
-Read events from application logs to transform into typed [TenXObjects](https://doc.log10x.com/api/js/#TenXObject) and filter using local/centralized [regulator](https://doc.log10x.com/run/output/regulate) policies, before the Datadog Agent ships them to Datadog. This module is a component of the [Regulator](https://doc.log10x.com/apps/regulator/) app.
+Read events from application logs to transform into typed [TenXObjects](https://doc.log10x.com/api/js/#TenXObject) and filter using local/centralized [reducer](https://doc.log10x.com/run/output/regulate) policies, before the Datadog Agent ships them to Datadog. This module is a component of the [Reducer](https://doc.log10x.com/apps/reducer/) app.
 
 ## Architecture
 
@@ -11,7 +11,7 @@ Read events from application logs to transform into typed [TenXObjects](https://
 ```mermaid
 graph LR
     A["<div style='font-size: 14px;'>📝 App Logs</div><div style='font-size: 10px;'>Folder A</div>"] --> B["<div style='font-size: 14px;'>🔧 Fluent Bit</div><div style='font-size: 10px;'>tail input</div>"]
-    B --> C["<div style='font-size: 14px;'>⚡ 10x Regulator</div><div style='font-size: 10px;'>filter policy</div>"]
+    B --> C["<div style='font-size: 14px;'>⚡ 10x Reducer</div><div style='font-size: 10px;'>filter policy</div>"]
     C --> D["<div style='font-size: 14px;'>📂 Processed</div><div style='font-size: 10px;'>Folder B</div>"]
     D --> E["<div style='font-size: 14px;'>📤 DD Agent</div><div style='font-size: 10px;'>monitors B</div>"]
     E --> F["<div style='font-size: 14px;'>🐶 Datadog</div><div style='font-size: 10px;'>Intake API</div>"]
@@ -37,7 +37,7 @@ graph LR
 
 - 📝 **App Logs (Folder A)** - Application writes ALL logs to original location
 - 🔧 **Fluent Bit** - Reads from Folder A, passes events to 10x sidecar
-- ⚡ **10x Regulator** - Applies rate/policy-based filtering, drops noisy events
+- ⚡ **10x Reducer** - Applies rate/policy-based filtering, drops noisy events
 - 📂 **Processed (Folder B)** - Only FILTERED events written to new location
 - 📤 **DD Agent** - Monitors Folder B, forwards reduced volume to Datadog
 - 🐶 **Datadog** - Receives filtered events (reduced volume)
@@ -59,7 +59,7 @@ This [module](https://doc.log10x.com/engine/module/) configures a file relay whe
 
 === ":material-laptop: Nix/OSX"
 
-    See the [Quickstart](#quickstart) below or the Log10x Regulator [run instructions](https://doc.log10x.com/apps/regulator/run/#datadog-agent)
+    See the [Quickstart](#quickstart) below or the Log10x Reducer [run instructions](https://doc.log10x.com/apps/reducer/run/#datadog-agent)
 
 ## Quickstart
 
@@ -83,7 +83,7 @@ This [module](https://doc.log10x.com/engine/module/) configures a file relay whe
         Path         ${FOLDER_A}/*.log
         Tag          app.logs
 
-    # Include 10x regulator
+    # Include 10x reducer
     @INCLUDE ${TENX_MODULES}/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-regulate.conf
 
     # Write filtered events to Folder B for Datadog Agent

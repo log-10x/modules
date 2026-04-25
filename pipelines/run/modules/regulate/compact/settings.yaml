@@ -1,4 +1,4 @@
-# 🔟❎ 'run' compact regulator settings
+# 🔟❎ 'run' compact reducer settings
 
 # Set the 10x pipeline to 'run'
 tenx: run
@@ -11,5 +11,5 @@ tenx: run
 #     fields:
 #       - 'output=shouldEncode() ? encode() : fullText'
 #
-# The class is loaded when `compactRegulatorLookupFile` is set (see the
+# The class is loaded when `compactReducerLookupFile` is set (see the
 # shouldLoad gate on CompactInput). No hook needed here.

@@ -119,7 +119,7 @@ Building on this process, here's how it applies to real events:
 
 💰 **Cost tracking**: Identifies high-volume event types consuming log budgets with the [Dev app](https://doc.log10x.com/apps/dev/) app
 
-📈 **Cost control**: Apply intelligent filtering using the [Regulator](https://doc.log10x.com/apps/regulator/) app to prevent over-billing
+📈 **Cost control**: Apply intelligent filtering using the [Reducer](https://doc.log10x.com/apps/reducer/) app to prevent over-billing
 
 🤖 **Multi-platform analytics**: Feed patterns into AIOps and monitoring systems via [metric outputs](https://doc.log10x.com/run/output/metric/) for Datadog, CloudWatch, SignalFx, and Prometheus
 

@@ -4,7 +4,7 @@
 module:
 
   name: splunkUFRegulate
-  title: Splunk UF regulator
+  title: Splunk UF reducer
   description: regulate events before shipping to Splunk via Universal Forwarder
 
   # 'doc' specifies the markdown doc content, only required when generating docs.

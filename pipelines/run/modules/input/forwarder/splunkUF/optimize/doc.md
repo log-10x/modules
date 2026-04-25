@@ -2,7 +2,7 @@
 icon: material/pipe-wrench
 ---
 
-[Losslessly compact](https://doc.log10x.com/run/transform/#compact) log/trace events before Splunk UF ships them to indexers. This module is a component of the [Regulator with optimization](https://doc.log10x.com/apps/regulator/) app.
+[Losslessly compact](https://doc.log10x.com/run/transform/#compact) log/trace events before Splunk UF ships them to indexers. This module is a component of the [Reducer with optimization](https://doc.log10x.com/apps/reducer/) app.
 
 ## Architecture
 
@@ -59,7 +59,7 @@ This [module](https://doc.log10x.com/engine/module/) configures a file relay whe
 
 === ":material-laptop: Nix/OSX"
 
-    See the [Quickstart](#quickstart) below or the Log10x Regulator with optimization [run instructions](https://doc.log10x.com/apps/regulator/run/#splunk-uf)
+    See the [Quickstart](#quickstart) below or the Log10x Reducer with optimization [run instructions](https://doc.log10x.com/apps/reducer/run/#splunk-uf)
 
 ## Quickstart
 
@@ -111,4 +111,4 @@ This [module](https://doc.log10x.com/engine/module/) configures a file relay whe
     Compare the byte sizes in Folder A vs Folder B to see 50-80% reduction in action.
 
 !!! note "Template Storage"
-    For Splunk to expand compact events, configure template output to store templates in Splunk. See the [10x for Splunk](https://doc.log10x.com/apps/regulator/splunk/) documentation.
+    For Splunk to expand compact events, configure template output to store templates in Splunk. See the [10x for Splunk](https://doc.log10x.com/apps/reducer/splunk/) documentation.

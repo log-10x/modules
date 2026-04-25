@@ -2,7 +2,7 @@
 icon: material/pipe-valve
 ---
 
-Read events from a Fluentd forwarder to transform them into typed [TenXObjects](https://doc.log10x.com/api/js/#TenXObject) to filter using local/centralized [regulator](https://doc.log10x.com/run/output/regulate) policy. This module is a component of the [Regulator](https://doc.log10x.com/apps/regulator/) app.
+Read events from a Fluentd forwarder to transform them into typed [TenXObjects](https://doc.log10x.com/api/js/#TenXObject) to filter using local/centralized [reducer](https://doc.log10x.com/run/output/regulate) policy. This module is a component of the [Reducer](https://doc.log10x.com/apps/reducer/) app.
 
 ## Architecture
 
@@ -11,7 +11,7 @@ Read events from a Fluentd forwarder to transform them into typed [TenXObjects](
 ```mermaid
 graph LR
     A["<div style='font-size: 14px;'>📂 Fluentd</div><div style='font-size: 10px;'>sources</div>"] --> B["<div style='font-size: 14px;'>🔧 exec_filter</div><div style='font-size: 10px;'>plugin</div>"]
-    B --> C["<div style='font-size: 14px;'>⚡ 10x Regulator</div><div style='font-size: 10px;'>filter policy</div>"]
+    B --> C["<div style='font-size: 14px;'>⚡ 10x Reducer</div><div style='font-size: 10px;'>filter policy</div>"]
     C --> B
     B --> D["<div style='font-size: 14px;'>📤 Fluentd</div><div style='font-size: 10px;'>outputs</div>"]
 
@@ -32,7 +32,7 @@ graph LR
 
 - 📂 **Fluentd Sources** - Collect logs from files, TCP, HTTP, or other sources
 - 🔧 **exec_filter Plugin** - Pipes ALL events to 10x sidecar via stdin
-- ⚡ **10x Regulator** - Applies rate/policy-based filtering, drops noisy events
+- ⚡ **10x Reducer** - Applies rate/policy-based filtering, drops noisy events
 - 🔄 **Bidirectional Pipe** - FILTERED events return via stdout to exec_filter
 - 📤 **Fluentd Outputs** - Only filtered events ship to final destinations
 
@@ -53,10 +53,10 @@ This [module](https://doc.log10x.com/engine/module/) configures a Fluentd [exec-
 
 === ":material-laptop: Nix/Win/OSX"
 
-    See the Log10x Regulator Fluentd [run instructions](https://doc.log10x.com/apps/regulator/run/#fluentd)
+    See the Log10x Reducer Fluentd [run instructions](https://doc.log10x.com/apps/reducer/run/#fluentd)
 
 === ":material-kubernetes: k8s"
 
     Deploy to k8s via [Helm](https://helm.sh/)
 
-    See the Log10x Regulator Fluentd [deployment instructions](https://doc.log10x.com/apps/regulator/deploy/#fluentd)
+    See the Log10x Reducer Fluentd [deployment instructions](https://doc.log10x.com/apps/reducer/deploy/#fluentd)

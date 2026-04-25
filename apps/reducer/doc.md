@@ -2,14 +2,14 @@
 icon: material/play-circle-outline
 ---
 
-The Regulator app is the **execution arm** of the 10x pipeline. Two modes, one app:
+The Reducer app is the **execution arm** of the 10x pipeline. Two modes, one app:
 
 - **Filter** (lossy): drop events matching a rule via [rate-based](https://doc.log10x.com/run/regulate/rate) filtering or declarative [field-set mute files](https://doc.log10x.com/run/regulate/rate/#mute-file-mode-declarative-field-set-caps). Safe defaults are deny; explicit allow required. Up to 80% volume reduction.
 - **Compact mode** (lossless): replace events with a compact wire-form that the downstream SIEM plugin expands at query time. 50–80% reduction (64% on K8s OTel logs) with no dashboard or query changes. Requires the expand plugin installed in [Splunk](splunk.md) or [Elasticsearch](elasticsearch.md). No expand plugin = no value.
 
-Both modes are commanded via GitOps. Operators (or an agent via the [log10x-mcp](https://github.com/log-10x/log10x-mcp) server) open PRs in the customer's config repo; the regulator pulls the latest on reload.
+Both modes are commanded via GitOps. Operators (or an agent via the [log10x-mcp](https://github.com/log-10x/log10x-mcp) server) open PRs in the customer's config repo; the reducer pulls the latest on reload.
 
-Regulators ensure **predictable costs** and **free budgets** to focus on analyzing meaningful events.
+Reducers ensure **predictable costs** and **free budgets** to focus on analyzing meaningful events.
 
 <h3 id="when-to-use-which">When to use which mode</h3>
 
@@ -24,7 +24,7 @@ Regulators ensure **predictable costs** and **free budgets** to focus on analyzi
 
 <h3 id="compact">Compact mode (was Optimizer)</h3>
 
-Compact mode was previously a separate app (`@apps/edge/optimizer`). It is now a feature of the regulator: both are the execution arm, both are commanded via GitOps, both operate on stable pattern identity. The former optimizer's deploy/run content is merged into the regulator's [deploy](https://doc.log10x.com/apps/regulator/deploy/) and [run](https://doc.log10x.com/apps/regulator/run/) pages. For SIEM-side plugin install, see the [Splunk](splunk.md) and [Elasticsearch](elasticsearch.md) pages.
+Compact mode was previously a separate app (`@apps/edge/optimizer`). It is now a feature of the reducer: both are the execution arm, both are commanded via GitOps, both operate on stable pattern identity. The former optimizer's deploy/run content is merged into the reducer's [deploy](https://doc.log10x.com/apps/reducer/deploy/) and [run](https://doc.log10x.com/apps/reducer/run/) pages. For SIEM-side plugin install, see the [Splunk](splunk.md) and [Elasticsearch](elasticsearch.md) pages.
 
 ## :material-clipboard-play-outline: Setup Guide
 
@@ -61,7 +61,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
     === ":simple-fluentd: Fluentd"
 
-        **Step 1**: Include the 10x regulator configuration:
+        **Step 1**: Include the 10x reducer configuration:
 
         ```toml title="my-fluentd.conf"
         # Nix/OSX
@@ -71,7 +71,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
         # @include "#{ENV['TENX_MODULES']}/pipelines/run/modules/input/forwarder/fluentd/conf/tenx-regulate-stdio.conf"
         ```
 
-        **Step 2**: Apply the `@TENX` label to route events through the regulator:
+        **Step 2**: Apply the `@TENX` label to route events through the reducer:
 
         === "Route Start"
 
@@ -124,7 +124,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
         === "Mid-Route"
 
-            Insert the regulator between specific plugins:
+            Insert the reducer between specific plugins:
 
             ```xml title="my-fluentd.conf"
             <source>
@@ -157,7 +157,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
     === ":simple-fluentbit: Fluent-bit"
 
-        **Step 1**: Include the 10x regulator configuration:
+        **Step 1**: Include the 10x reducer configuration:
 
         ```toml title="my-fluent-bit.conf"
         # Nix/OSX
@@ -192,7 +192,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
           # path: ${TENX_MODULES}/pipelines/run/modules/input/forwarder/filebeat/regulate/tenxWin.yml
         ```
 
-        **Step 2**: Add the regulator processor:
+        **Step 2**: Add the reducer processor:
 
         ```yaml title="my-filebeat.yml"
         filebeat.inputs:
@@ -306,7 +306,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
             Path         ${FOLDER_A}/*.log
             Tag          app.logs
 
-        # Include 10x regulator - sends events to 10x subprocess
+        # Include 10x reducer - sends events to 10x subprocess
         @INCLUDE ${TENX_MODULES}/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-regulate.conf
 
         # Include Unix socket - receives processed events back from 10x
@@ -355,7 +355,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
             Path         ${FOLDER_A}/*.log
             Tag          app.logs
 
-        # Include 10x regulator - sends events to 10x subprocess
+        # Include 10x reducer - sends events to 10x subprocess
         @INCLUDE ${TENX_MODULES}/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-regulate.conf
 
         # Include Unix socket - receives processed events back from 10x
@@ -383,7 +383,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
     === ":material-test-tube: Test (no forwarder)"
 
-        Test the regulator without setting up a forwarder using the [Dev CLI](https://doc.log10x.com/apps/dev/).
+        Test the reducer without setting up a forwarder using the [Dev CLI](https://doc.log10x.com/apps/dev/).
 
         The dev app uses the [file input module](https://doc.log10x.com/run/input/file/) to read sample log files and writes output to a file, allowing you to verify regulation behavior before integrating with your forwarder.
 
@@ -398,9 +398,9 @@ Follow the steps below. Steps that require customization link to the relevant [C
 <span id="pair-with-retriever"></span>
 ??? tenx-integration "Step 5: Pair with Retriever (optional)"
 
-    Archive all events to S3 before regulation for full retention alongside cost control. The regulator filters what reaches your SIEM; filtered events remain in S3, queryable via [Retriever](https://doc.log10x.com/apps/retriever/) for incident investigation, compliance, and auditing.
+    Archive all events to S3 before regulation for full retention alongside cost control. The reducer filters what reaches your SIEM; filtered events remain in S3, queryable via [Retriever](https://doc.log10x.com/apps/retriever/) for incident investigation, compliance, and auditing.
 
-    Configure your forwarder to duplicate the event stream — one copy to S3 (all events), one through the regulator (filtered events to SIEM):
+    Configure your forwarder to duplicate the event stream — one copy to S3 (all events), one through the reducer (filtered events to SIEM):
 
     === ":simple-fluentbit: Fluent-bit"
 
@@ -552,17 +552,17 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
         The Datadog Agent continues to monitor Folder B via `conf.d` — no changes to the Agent configuration.
 
-<span id="regulators2"></span>
-??? tenx-regulators "Step 6: Configure Regulators (optional)"
+<span id="reducers2"></span>
+??? tenx-reducers "Step 6: Configure Reducers (optional)"
 
-    Configure [rate regulators](https://doc.log10x.com/run/regulate/rate/) for common scenarios. Edit these settings in your regulator [config.yaml](#regulators).
+    Configure [rate reducers](https://doc.log10x.com/run/regulate/rate/) for common scenarios. Edit these settings in your reducer [config.yaml](#reducers).
 
     === ":material-percent: Per-Event-Type Budget"
 
         Cap any single event type at 20% of total spend. Use the [Level Classifier](https://doc.log10x.com/run/initialize/level/) to enrich events with severity levels, so ERROR events have a higher minimum retention floor than DEBUG and critical events survive throttling.
 
         ```yaml
-        rateRegulator:
+        rateReducer:
           budgetPerHour: 1.50
           ingestionCostPerGB: 1.5          # Splunk Cloud
           maxSharePerFieldSet: 0.2         # No event type exceeds 20%
@@ -583,7 +583,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
         Prevent any single app from exceeding 20% of the budget across all its pods. Uses [k8s container name](https://doc.log10x.com/run/initialize/k8s/) for stable aggregation across replicas.
 
         ```yaml
-        rateRegulator:
+        rateReducer:
           fieldNames:
             - symbolMessage
             - container                    # Same name across all pod replicas
@@ -594,10 +594,10 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
     === ":material-file-document-edit-outline: Mute File (GitOps)"
 
-        Apply a declarative, field-set keyed mute file pulled from a git repo. Entries are keyed by the same `rateRegulatorFieldNames` values the local regulator uses (e.g. `symbolMessage`), so mutes target the same patterns the Reporter attributes cost to. Each entry caps a specific pattern with an explicit sample rate and epoch expiry, so mutes are diff-reviewed, audited, and self-healing.
+        Apply a declarative, field-set keyed mute file pulled from a git repo. Entries are keyed by the same `rateReducerFieldNames` values the local reducer uses (e.g. `symbolMessage`), so mutes target the same patterns the Reporter attributes cost to. Each entry caps a specific pattern with an explicit sample rate and epoch expiry, so mutes are diff-reviewed, audited, and self-healing.
 
         ```yaml
-        rateRegulator:
+        rateReducer:
           fieldNames:
             - symbolMessage
           lookup:
@@ -644,11 +644,11 @@ Follow the steps below. Steps that require customization link to the relevant [C
     === ":simple-beats: Filebeat"
 
         ```console title="Nix/OSX"
-        $ filebeat -c my-filebeat.yml -e 2>&1 | /opt/tenx-edge/bin/tenx run @run/input/forwarder/filebeat/regulate/config.yaml @apps/regulator
+        $ filebeat -c my-filebeat.yml -e 2>&1 | /opt/tenx-edge/bin/tenx run @run/input/forwarder/filebeat/regulate/config.yaml __SAVE_APPS_REDUCER__
         ```
 
         ```console title="Windows"
-        $ filebeat -c my-filebeat.yml -e 2>&1 | "c:\program files\tenx-edge\tenx" run @run/input/forwarder/filebeat/regulate/config.yaml @apps/regulator
+        $ filebeat -c my-filebeat.yml -e 2>&1 | "c:\program files\tenx-edge\tenx" run @run/input/forwarder/filebeat/regulate/config.yaml __SAVE_APPS_REDUCER__
         ```
 
     === ":simple-logstash: Logstash"
@@ -659,10 +659,10 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
     === ":simple-opentelemetry: OTel Collector"
 
-        **Step 1**: Start Log10x Regulator first:
+        **Step 1**: Start Log10x Reducer first:
 
         ```console
-        $ tenx run @run/input/forwarder/otel-collector/regulate @apps/regulator
+        $ tenx run @run/input/forwarder/otel-collector/regulate __SAVE_APPS_REDUCER__
         ```
 
         **Step 2**: Start OTel Collector with the 10x configuration:
@@ -673,7 +673,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
     === ":simple-splunk: Splunk UF"
 
-        **Step 1**: Start Fluent Bit with the 10x regulator:
+        **Step 1**: Start Fluent Bit with the 10x reducer:
 
         ```console
         $ fluent-bit -c fluent-bit-splunk.conf
@@ -689,7 +689,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
     === ":simple-datadog: Datadog Agent"
 
-        **Step 1**: Start Fluent Bit with the 10x regulator:
+        **Step 1**: Start Fluent Bit with the 10x reducer:
 
         ```console
         $ fluent-bit -c fluent-bit-datadog.conf
@@ -735,7 +735,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
     **View results in the dashboard:**
 
-    Once running, view your cost analytics in the [Regulator Dashboard](https://doc.log10x.com/roi-analytics/#edge-regulator).
+    Once running, view your cost analytics in the [Reducer Dashboard](https://doc.log10x.com/roi-analytics/#edge-reducer).
 
 ??? tenx-delete "Step 11: Teardown"
 

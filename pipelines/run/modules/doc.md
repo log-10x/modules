@@ -3,6 +3,6 @@ Reusable packages of configuration, JavaScript, extensions, and documentation th
 Multiple modules combine within a 10x Engine to form [apps](https://doc.log10x.com/apps/).
 
 - **Input modules** read events from local/remote sources for transformation
-- **Regulator modules** filter and sample _before_ shipping to output
+- **Reducer modules** filter and sample _before_ shipping to output
 - **Output modules** write to log analyzers (Splunk, Elastic), forwarders (Fluentd/Bit), and time-series DBs (Prometheus, Datadog) 
   

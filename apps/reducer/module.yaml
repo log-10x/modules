@@ -1,19 +1,19 @@
 #
-# 🔟❎ 'run' Regulator module
+# 🔟❎ 'run' Reducer module
 
 module:
 
-  name: regulator
+  name: reducer
 
-  title: Regulator
+  title: Reducer
 
   description: regulate and optionally optimize log/trace events before they ship to output
 
   # 'configFolder' specifies a folder containing default configuration files for the settings defined by this module
-  configFolder: apps/regulator
+  configFolder: apps/reducer
 
   # 'doc' specifies the markdown doc content, only required when generating docs.
-  doc: '+include $=TenXEnv.get("docGenerate") ? "apps/regulator/doc.md":""'
+  doc: '+include $=TenXEnv.get("docGenerate") ? "apps/reducer/doc.md":""'
 
   # 'allowMultiple' is disabled for this module.
   allowMultiple: false
@@ -21,17 +21,17 @@ module:
   options:
 
     - names:
-      - regulatorOptimize
+      - reducerOptimize
       description: enable optimization mode to encode emitted events for volume reduction
       type: boolean
       required: false
       defValue: false
       doc: |
-        enables optimization mode on the regulator. When true, the regulator encodes
+        enables optimization mode on the reducer. When true, the reducer encodes
         emitted events using the [encode](https://doc.log10x.com/api/js/#TenXObject+encode)
         function, reducing log volume by 50-80% before shipping to the destination.
 
-        When false (default), the regulator filters events but emits them in their
+        When false (default), the reducer filters events but emits them in their
         original plain-text form via the [fullText](https://doc.log10x.com/api/js/#TenXBaseObject+fullText) field.
 
         **Effect on forwarder output:**
@@ -41,6 +41,6 @@ module:
 
         **Usage:**
         ```yaml
-        regulator:
+        reducer:
           optimize: true
         ```

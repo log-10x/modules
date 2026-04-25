@@ -1,11 +1,11 @@
 #
-# 🔟❎ 'run' compact regulator module
+# 🔟❎ 'run' compact reducer module
 
 module:
 
-  name: compactRegulator
+  name: compactReducer
 
-  title: Compact regulator
+  title: Compact reducer
 
   description: Per-event compaction decision via a declarative field-set keyed lookup file. Decides whether each event is emitted via encode() (compact templateHash+vars form, ~20-40x volume reduction) or as fullText. GitOps-controlled — the MCP writes entries via PR, engine hot-reloads the lookup without restart.
 
@@ -20,7 +20,7 @@ module:
   options:
 
     - names:
-      - compactRegulatorLookupFile
+      - compactReducerLookupFile
       description: path or URL to a compact decisions lookup file
       type: string
       required: false
@@ -31,31 +31,31 @@ module:
 
             <fieldSet>=<encode>:<untilEpochSec>[:<reason>]
 
-        `encode` is `true` (compact via `encode()`) or `false` (preserve `fullText`). `untilEpochSec` is a Unix epoch timestamp after which the entry self-heals to `compactRegulatorDefault`.
+        `encode` is `true` (compact via `encode()`) or `false` (preserve `fullText`). `untilEpochSec` is a Unix epoch timestamp after which the entry self-heals to `compactReducerDefault`.
 
-        **Example** (with `compactRegulatorFieldNames: [symbolMessage]`):
+        **Example** (with `compactReducerFieldNames: [symbolMessage]`):
 
             payment_retry_gateway_timeout=true:1745856000:OPS-5123 spike mitigation
             auth_audit_trail=false:1745856000:compliance — keep verbose
 
-        Entries express deviations from `compactRegulatorDefault`. An expired entry falls back to the default exactly like a rate-regulator mute does.
+        Entries express deviations from `compactReducerDefault`. An expired entry falls back to the default exactly like a rate-reducer mute does.
 
-        The engine polls the file on the interval set by `compactRegulatorLookupRetain` — changes take effect without a restart, so this plays cleanly with a GitOps workflow where the MCP authors entries via PR.
+        The engine polls the file on the interval set by `compactReducerLookupRetain` — changes take effect without a restart, so this plays cleanly with a GitOps workflow where the MCP authors entries via PR.
 
     - names:
-      - compactRegulatorFieldNames
+      - compactReducerFieldNames
       description: list of TenXObject fields used to key compact lookup entries
       type: list
       required: false
       doc: |
-        defines the list of TenXObject field names joined with underscores to form each event's lookup key. The key format matches the rate regulator's `rateRegulatorFieldNames`, so an entry in the compact lookup targets the same pattern identity the Reporter attributes cost to.
+        defines the list of TenXObject field names joined with underscores to form each event's lookup key. The key format matches the rate reducer's `rateReducerFieldNames`, so an entry in the compact lookup targets the same pattern identity the Reporter attributes cost to.
 
-        **Default**: `[symbolMessage]` (same as the rate regulator's default).
+        **Default**: `[symbolMessage]` (same as the rate reducer's default).
 
         **Multi-dimensional compaction** (e.g., "compact this pattern only for tenants X, Y"):
 
         ```yaml
-        compactRegulatorFieldNames:
+        compactReducerFieldNames:
           - symbolMessage
           - tenantId
         ```
@@ -64,12 +64,12 @@ module:
       defValue: [symbolMessage]
 
     - names:
-      - compactRegulatorLookupRetain
+      - compactReducerLookupRetain
       description: lookup file poll interval in milliseconds
       type: number
       required: false
       doc: |
-        defines how often the engine re-reads `compactRegulatorLookupFile` to pick up new/changed entries. Default of 5 minutes (300000ms) aligns with the rate regulator's `rateRegulatorLookupRetain`.
+        defines how often the engine re-reads `compactReducerLookupFile` to pick up new/changed entries. Default of 5 minutes (300000ms) aligns with the rate reducer's `rateReducerLookupRetain`.
 
         Shorter values make GitOps changes take effect faster at the cost of more file I/O. Longer values reduce I/O but delay effect.
 
@@ -77,7 +77,7 @@ module:
       defValue: 300000
 
     - names:
-      - compactRegulatorDefault
+      - compactReducerDefault
       description: default compaction decision when no lookup entry applies
       type: boolean
       required: false

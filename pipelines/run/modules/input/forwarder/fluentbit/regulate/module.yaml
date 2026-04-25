@@ -5,7 +5,7 @@ module:
 
   name: fluentbitRegulate
 
-  title: Fluent Bit regulator
+  title: Fluent Bit reducer
 
   description: read events from Fluent Bit forwarders to regulate which events to ship
   

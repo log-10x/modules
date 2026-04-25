@@ -4,7 +4,7 @@
 module:
 
   name: datadogAgentRegulate
-  title: Datadog Agent regulator
+  title: Datadog Agent reducer
   description: regulate events before shipping to Datadog via Datadog Agent
 
   # 'doc' specifies the markdown doc content, only required when generating docs.

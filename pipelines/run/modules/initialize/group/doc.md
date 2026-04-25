@@ -14,7 +14,7 @@ TenXObjects can be composed into logical group to:
 - **Identify** groups consuming the most storage and analytics resources 
 using [aggregators](https://doc.log10x.com/run/aggregate/). 
 This is especially valuable when storing stack traces than span 100s of lines and consume a significant amount of resources.
-- **Filter** unnecessary groups such as 'noisy' stack traces via [group filters](#groupfilters) and output [regulators](https://doc.log10x.com/run/output/regulate). 
+- **Filter** unnecessary groups such as 'noisy' stack traces via [group filters](#groupfilters) and output [reducers](https://doc.log10x.com/run/output/regulate). 
 - **Optimize** storage of multi-line events by [losslessly compacting](https://doc.log10x.com/run/transform/#compact) them as a composite instances to reduce storage footprint by >  **75%** when compared to storing individual events.
 
 ## :material-group: Group Heads

@@ -7,9 +7,9 @@
 
 # Single output entry. Mode is selected by `outputEncodeField` and
 # `outputWriteTemplates` (shared forwarder options), which the user-facing
-# config.yaml sets via a `$=yield` expression that reads regulatorOptimize and
-# compactRegulatorLookupFile. Substitution happens at config-load time, so
-# shouldEncode() only appears in the parsed field when compactRegulator is
+# config.yaml sets via a `$=yield` expression that reads reducerOptimize and
+# compactReducerLookupFile. Substitution happens at config-load time, so
+# shouldEncode() only appears in the parsed field when compactReducer is
 # actually configured.
 
 # Set the 10x pipeline to 'run'

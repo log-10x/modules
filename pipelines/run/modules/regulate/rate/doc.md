@@ -4,15 +4,15 @@ icon: material/progress-check
 
 Prevent log analytics over-billing while ensuring critical events always reach your analysis tools.
 
-The rate regulator uses automatic [message](https://doc.log10x.com/run/initialize/message/ "Enrich TenXObjects with logical message symbol sequence and origin values") enrichment combined with byte-based cost calculation to apply sampling based on actual ingestion costs per logical event type. 
+The rate reducer uses automatic [message](https://doc.log10x.com/run/initialize/message/ "Enrich TenXObjects with logical message symbol sequence and origin values") enrichment combined with byte-based cost calculation to apply sampling based on actual ingestion costs per logical event type. 
 
-By tracking costs (event byte size × vendor ingestion rate), the regulator provides business-aligned budget enforcement that accounts for variable event sizes (i.e., 10KB error log is correctly weighted against a 100-byte debug message).
+By tracking costs (event byte size × vendor ingestion rate), the reducer provides business-aligned budget enforcement that accounts for variable event sizes (i.e., 10KB error log is correctly weighted against a 100-byte debug message).
 
 This approach enables more precise control than regex-based rules which require manual configuration and lack logical event type, [severity](https://doc.log10x.com/run/initialize/level/), and cost awareness.
 
 ## :material-filter-multiple-outline: Control Strategies
 
-The rate regulator supports two independent strategies for filtering events. They answer different questions and can be run in the same pipeline as layers — mute file as the surgical human-intent layer, per-node budget as the always-on safety net.
+The rate reducer supports two independent strategies for filtering events. They answer different questions and can be run in the same pipeline as layers — mute file as the surgical human-intent layer, per-node budget as the always-on safety net.
 
 === ":material-check-network-outline: Per-Node Budget (Local)"
 
@@ -22,37 +22,37 @@ The rate regulator supports two independent strategies for filtering events. The
 
     **Example**: A single application forwarder tracks its own $0.025/min budget, throttling high-cost debug logs probabilistically based solely on its own traffic.
 
-    **Activated when** `rateRegulatorLookupFile` is **not** set.
+    **Activated when** `rateReducerLookupFile` is **not** set.
 
 === ":material-file-document-edit-outline: Mute File (Declarative)"
 
-    A declarative file keyed by the joined `rateRegulatorFieldNames` values (the same key the local regulator uses for its per-node counters) caps specific patterns with an explicit sample rate and expiry. Typically committed to a git repo alongside the pipeline config and pulled via gitops, so each mute has a diff, a reviewer, and an audit trail.
+    A declarative file keyed by the joined `rateReducerFieldNames` values (the same key the local reducer uses for its per-node counters) caps specific patterns with an explicit sample rate and expiry. Typically committed to a git repo alongside the pipeline config and pulled via gitops, so each mute has a diff, a reviewer, and an audit trail.
 
     **File format**:
     ```
     <fieldSet>=<sampleRate>:<untilEpochSec>[:<reason>]
     ```
 
-    With `rateRegulatorFieldNames: [symbolMessage]` the key is just the `symbolMessage` value (e.g. `Error_syncing_pod`); with `[symbolMessage, container]` it becomes `<symbolMessage>_<container>` (e.g. `heartbeat_debug_frontend`).
+    With `rateReducerFieldNames: [symbolMessage]` the key is just the `symbolMessage` value (e.g. `Error_syncing_pod`); with `[symbolMessage, container]` it becomes `<symbolMessage>_<container>` (e.g. `heartbeat_debug_frontend`).
 
-    **Trade-offs**: does nothing about unknown patterns or runaway nodes — this is human-declared intent, not adaptive control. Pair with per-node budget mode (in a separate regulator instance) if you need a fallback safety net.
+    **Trade-offs**: does nothing about unknown patterns or runaway nodes — this is human-declared intent, not adaptive control. Pair with per-node budget mode (in a separate reducer instance) if you need a fallback safety net.
 
     **Example**: An operator notices the Reporter attributing $12K/month to `Error_syncing_pod`. They append `Error_syncing_pod=0.10:1744848000:pod error spam OPS-4821` to the mute file, open a PR, merge it. All forwarders pulling the file apply the mute on their next reload. The mute self-expires at the epoch, so nobody has to remember to clean it up.
 
-    **Activated when** `rateRegulatorLookupFile` points at a mute file.
+    **Activated when** `rateReducerLookupFile` points at a mute file.
 
 ## :material-kubernetes: Multi-App Regulation
 
-For central forwarders handling logs from multiple applications (common in Kubernetes), the rate regulator prevents individual apps from bypassing budget caps by scaling pods. Use the [k8s container name](https://doc.log10x.com/run/initialize/k8s/) field to aggregate spend per app across all replicas. Two approaches available:
+For central forwarders handling logs from multiple applications (common in Kubernetes), the rate reducer prevents individual apps from bypassing budget caps by scaling pods. Use the [k8s container name](https://doc.log10x.com/run/initialize/k8s/) field to aggregate spend per app across all replicas. Two approaches available:
 
 ### **Option A: Cap Total App Spend (All Event Types)**
 
 Prevents any single app from dominating the budget regardless of how many event types it emits.
 
 ```yaml
-rateRegulatorFieldNames: [container]  # App only
-rateRegulatorMaxSharePerFieldSet: 0.2
-rateRegulatorBudgetPerHour: 1.50
+rateReducerFieldNames: [container]  # App only
+rateReducerMaxSharePerFieldSet: 0.2
+rateReducerBudgetPerHour: 1.50
 ```
 
 **Result:**
@@ -67,9 +67,9 @@ rateRegulatorBudgetPerHour: 1.50
 Enforces fairness within each app—prevents a single noisy event type from dominating that app's spend.
 
 ```yaml
-rateRegulatorFieldNames: [symbolMessage, container]  # Event type + app
-rateRegulatorMaxSharePerFieldSet: 0.2
-rateRegulatorBudgetPerHour: 1.50
+rateReducerFieldNames: [symbolMessage, container]  # Event type + app
+rateReducerMaxSharePerFieldSet: 0.2
+rateReducerBudgetPerHour: 1.50
 ```
 
 **Result:**
@@ -83,7 +83,7 @@ rateRegulatorBudgetPerHour: 1.50
 
 ## :material-cog-transfer-outline: Workflow
 
-The rate regulator executes the following steps:
+The rate reducer executes the following steps:
 
 <div style="text-align: center;">
 
@@ -208,7 +208,7 @@ function enlargeThresholdDiagram(button) {
 
 ### **Mute File Mode: Declarative Field-Set Caps**
 
-**Scenario:** A platform engineer sees the [Reporter](https://doc.log10x.com/apps/dev/) attributing $12K/month to the `Error_syncing_pod` event type. They want to cap it at 10% sample rate for 24 hours while the application team ships a fix. The pipeline is configured with `rateRegulatorFieldNames: [symbolMessage]`, so mute keys are `symbolMessage` values.
+**Scenario:** A platform engineer sees the [Reporter](https://doc.log10x.com/apps/dev/) attributing $12K/month to the `Error_syncing_pod` event type. They want to cap it at 10% sample rate for 24 hours while the application team ships a fix. The pipeline is configured with `rateReducerFieldNames: [symbolMessage]`, so mute keys are `symbolMessage` values.
 
 **Mute file contents** (`mutes.csv`, pulled via gitops from a config repo):
 
@@ -220,7 +220,7 @@ jwt_validated=0.25:1744502400:auth flood after deploy
 
 **Step-by-step for an incoming pod error event** (INFO level, 1.2KB, `symbolMessage = "Error_syncing_pod"`):
 
-1. **📥 Event Arrives**: Forwarder receives the event and builds the field-set key by joining `rateRegulatorFieldNames` values — here just `Error_syncing_pod`.
+1. **📥 Event Arrives**: Forwarder receives the event and builds the field-set key by joining `rateReducerFieldNames` values — here just `Error_syncing_pod`.
 
 2. **🗂️ Mute File Check**: Look up `Error_syncing_pod` in the mute file → entry found: `0.10:1744848000:...`
 

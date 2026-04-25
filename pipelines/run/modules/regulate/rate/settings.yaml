@@ -1,7 +1,7 @@
-# 🔟❎ 'run' rate regulator settings
+# 🔟❎ 'run' rate reducer settings
 
 # Set the 10x pipeline to 'run'
 tenx: run
 
-# apply the 'rateRegulator' function to all outputs if limit is set
-groupFilters: '$=yield TenXEnv.get("rateRegulatorLookupFile") ? "shouldRetainEventWithLookup()" : "shouldRetainEventWithoutLookup()"'
+# apply the 'rateReducer' function to all outputs if limit is set
+groupFilters: '$=yield TenXEnv.get("rateReducerLookupFile") ? "shouldRetainEventWithLookup()" : "shouldRetainEventWithoutLookup()"'

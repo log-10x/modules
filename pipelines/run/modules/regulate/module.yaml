@@ -1,11 +1,11 @@
 #
-# 🔟❎ 'run' regulators module
+# 🔟❎ 'run' reducers module
 
 module:
 
-  name: regulators
+  name: reducers
 
-  title: Output regulator
+  title: Output reducer
 
   description: filter and sample TenXObjects based on dynamic criteria to prevent over-billing
 
@@ -16,6 +16,6 @@ module:
   #  can specify multiple groupings of the options defined below.
   allowMultiple: true
 
-  moduleSort: [rateRegulator]
+  moduleSort: [rateReducer]
 
   join: run/units/output/regulate

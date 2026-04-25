@@ -10,7 +10,7 @@ Filters provides a JavaScript-based mechanism for controlling which TenXObjects 
 
 - Custom constructors provide a programmatic method for [dropping](https://doc.log10x.com/run/transform/script/object/#filter) instances.
 
-- The [outputFilters](https://doc.log10x.com/run/output/regulate/#outputfilters) option provides a global hook into which regulator [modules](https://doc.log10x.com/engine/module/#run) can install logic (e.g., thresholds, anomaly detection). 
+- The [outputFilters](https://doc.log10x.com/run/output/regulate/#outputfilters) option provides a global hook into which reducer [modules](https://doc.log10x.com/engine/module/#run) can install logic (e.g., thresholds, anomaly detection). 
 
 - Each output stream provides an individual [outputFilter](https://doc.log10x.com/run/output/stream/#outputfilter) setting to allow for granular control over which instances it should emit.
 

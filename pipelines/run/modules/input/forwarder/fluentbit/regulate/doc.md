@@ -2,7 +2,7 @@
 icon: material/pipe-valve
 ---
 
-Read events from a Fluent Bit forwarder to transform into typed [TenXObjects](https://doc.log10x.com/api/js/#TenXObject) and filter using local/centralized [regulator](https://doc.log10x.com/run/output/regulate) policies. This module is a component of the [Regulator](https://doc.log10x.com/apps/regulator/) app.
+Read events from a Fluent Bit forwarder to transform into typed [TenXObjects](https://doc.log10x.com/api/js/#TenXObject) and filter using local/centralized [reducer](https://doc.log10x.com/run/output/regulate) policies. This module is a component of the [Reducer](https://doc.log10x.com/apps/reducer/) app.
 
 ## Architecture
 
@@ -11,7 +11,7 @@ Read events from a Fluent Bit forwarder to transform into typed [TenXObjects](ht
 ```mermaid
 graph LR
     A["<div style='font-size: 14px;'>📂 Fluent Bit</div><div style='font-size: 10px;'>inputs</div>"] --> B["<div style='font-size: 14px;'>🔧 Lua Filter</div><div style='font-size: 10px;'>tenx.lua</div>"]
-    B --> C["<div style='font-size: 14px;'>⚡ 10x Regulator</div><div style='font-size: 10px;'>filter policy</div>"]
+    B --> C["<div style='font-size: 14px;'>⚡ 10x Reducer</div><div style='font-size: 10px;'>filter policy</div>"]
     C --> D["<div style='font-size: 14px;'>🔌 Unix/TCP</div><div style='font-size: 10px;'>input</div>"]
     D --> E["<div style='font-size: 14px;'>📤 Fluent Bit</div><div style='font-size: 10px;'>outputs</div>"]
 
@@ -34,7 +34,7 @@ graph LR
 
 - 📂 **Fluent Bit Inputs** - Collect logs from files, containers, or other sources
 - 🔧 **Lua Filter** - Intercepts ALL events and pipes them to 10x sidecar
-- ⚡ **10x Regulator** - Applies rate/policy-based filtering, drops noisy events
+- ⚡ **10x Reducer** - Applies rate/policy-based filtering, drops noisy events
 - 🔌 **Unix/TCP Input** - Receives FILTERED events back from the sidecar
 - 📤 **Fluent Bit Outputs** - Only filtered events ship to final destinations
 
@@ -55,10 +55,10 @@ This [module](https://doc.log10x.com/engine/module/) configures a Fluent Bit [Lu
 
 === ":material-laptop: Nix/Win/OSX"
 
-    See the Log10x Regulator Fluent Bit [run instructions](https://doc.log10x.com/apps/regulator/run/#fluent-bit)
+    See the Log10x Reducer Fluent Bit [run instructions](https://doc.log10x.com/apps/reducer/run/#fluent-bit)
 
 === ":material-kubernetes: k8s"
 
     Deploy to k8s via [Helm](https://helm.sh/)
 
-    See the Log10x Regulator Fluent Bit [deployment instructions](https://doc.log10x.com/apps/regulator/deploy/#fluent-bit)
+    See the Log10x Reducer Fluent Bit [deployment instructions](https://doc.log10x.com/apps/reducer/deploy/#fluent-bit)

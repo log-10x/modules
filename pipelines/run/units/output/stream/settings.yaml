@@ -9,7 +9,7 @@
 
 # 'outputFilters' define a set of 10x script expressions an TenXObject must evaluate 
 #  as truthy against to write to any of the outputs defined
-#  by 'outputStreams'. This setting allows modules to install a 'global' regulator 
+#  by 'outputStreams'. This setting allows modules to install a 'global' reducer 
 #  applied to all outputs combined with each output's 'outputFilter' property.
 outputFilters: 
   - $?outputFilters

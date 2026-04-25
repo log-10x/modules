@@ -1,11 +1,11 @@
 #
-# 🔟❎ 'run' regulators module
+# 🔟❎ 'run' reducers module
 
 module:
 
-  name: regulators
+  name: reducers
 
-  title: Output regulator
+  title: Output reducer
 
   description: filter and sample TenXObjects based on per-node budget sampling or a declarative field-set mute file
 
@@ -19,7 +19,7 @@ module:
   #  can specify a single value at max for each option defined below.
   allowMultiple: false
 
-  moduleSort: [rateRegulator]
+  moduleSort: [rateReducer]
 
   # 'options' defines a group of named/typed configuration values to pass to a pipeline unit/module at startup
   #  via command line arguments (e.g., '> tenx -myA X -myB Y') or YAML launch files (e.g., '> tenx @my.config').
@@ -38,7 +38,7 @@ module:
         The current TenXObject's [outputType](https://doc.log10x.com/api/js/#TenXObject+outputType) and  [outputPath](https://doc.log10x.com/api/js/#TenXObject+outputPath)  intrinsic fields provide information about the output
         for which the current TenXObject is a candidate.
   
-        This option is primarily used by 10x modules [regulator modules](https://doc.log10x.com/run/output/regulate)
+        This option is primarily used by 10x modules [reducer modules](https://doc.log10x.com/run/output/regulate)
         to provide control over the volume of data is written out by the 
         pipeline to target output(s).
   

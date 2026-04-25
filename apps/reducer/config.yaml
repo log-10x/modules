@@ -1,16 +1,16 @@
-# 🔟❎ 'run' Regulator settings
+# 🔟❎ 'run' Reducer settings
 
-# This configuration defines the settings for use by the Regulator app.
-# When 'regulatorOptimize' is enabled, the regulator also encodes emitted
+# This configuration defines the settings for use by the Reducer app.
+# When 'reducerOptimize' is enabled, the reducer also encodes emitted
 # events for volume reduction (formerly the separate Edge Optimizer app).
-# To learn more see https://doc.log10x.com/apps/regulator
+# To learn more see https://doc.log10x.com/apps/reducer
 
 tenx: run
 
 # ============================= App Settings ==================================
 
 runtimeAttributes:
-  - app:regulator
+  - app:reducer
   - env:edge
 
 include:

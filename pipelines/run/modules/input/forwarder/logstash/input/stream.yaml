@@ -17,7 +17,7 @@ extractor:
 
     # Define an extractor to read event source and field values filtered into the
     # stdin pipe by the host Logstash forwarder process
-  - name: logstashRegulator
+  - name: logstashReducer
     type: json
     actions:
         # capture the message field inside the incoming JSON object
@@ -44,5 +44,5 @@ input:
     path: stdin
     enabled: true
     extractors:
-      - '/$=TenXEnv.get("encodeObjects") ? "logstashOptimizer" : "logstashRegulator"'
+      - '/$=TenXEnv.get("encodeObjects") ? "logstashOptimizer" : "logstashReducer"'
     sourcePattern: \"file\":\"(.*?)\"

@@ -73,7 +73,7 @@ export TENX_MODULES=/path/to/config/modules
 export TENX_HOME=/path/to/tenx/binary
 ```
 
-**2. Include regulator in your Fluent Bit config:**
+**2. Include reducer in your Fluent Bit config:**
 
 ```toml title="fluent-bit.conf"
 [SERVICE]
@@ -86,7 +86,7 @@ export TENX_HOME=/path/to/tenx/binary
     Path         /var/log/app.log
     Tag          app.logs
 
-# Include 10x regulator (Lua filter)
+# Include 10x reducer (Lua filter)
 @INCLUDE ${TENX_MODULES}/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-regulate.conf
 
 # Include return path (Unix socket for Linux/macOS, Forward over TCP for Windows)
@@ -106,4 +106,4 @@ export TENX_HOME=/path/to/tenx/binary
 fluent-bit -c /path/to/fluent-bit.conf
 ```
 
-For Splunk integration, see the [10x for Splunk](https://doc.log10x.com/apps/regulator/splunk/) documentation.
+For Splunk integration, see the [10x for Splunk](https://doc.log10x.com/apps/reducer/splunk/) documentation.

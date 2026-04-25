@@ -2,7 +2,29 @@
 icon: material/play-circle-outline
 ---
 
-Filter noisy telemetry from shipping to analytics platforms using [rate-based](https://doc.log10x.com/run/regulate/rate) filtering, preventing over-billing and reducing storage costs.
+The Regulator app is the **execution arm** of the 10x pipeline. Two modes, one app:
+
+- **Filter** (lossy): drop events matching a rule via [rate-based](https://doc.log10x.com/run/regulate/rate) filtering or declarative [field-set mute files](https://doc.log10x.com/run/regulate/rate/#mute-file-mode-declarative-field-set-caps). Safe defaults are deny; explicit allow required. Up to 80% volume reduction.
+- **Compact mode** (lossless): replace events with a compact wire-form that the downstream SIEM plugin expands at query time. 50–80% reduction (64% on K8s OTel logs) with no dashboard or query changes. Requires the expand plugin installed in [Splunk](splunk.md) or [Elasticsearch](elasticsearch.md). No expand plugin = no value.
+
+Both modes are commanded via GitOps. Operators (or an agent via the [log10x-mcp](https://github.com/log-10x/log10x-mcp) server) open PRs in the customer's config repo; the regulator pulls the latest on reload.
+
+Regulators ensure **predictable costs** and **free budgets** to focus on analyzing meaningful events.
+
+<h3 id="when-to-use-which">When to use which mode</h3>
+
+| | Filter | Compact |
+|---|---|---|
+| **Loss** | Lossy — events matching the rule are dropped | Lossless — every event preserved in compact form |
+| **Downstream requirements** | None | Expand plugin installed in Splunk / Elasticsearch |
+| **Volume reduction** | Up to 80% | 50–80% (64% typical on K8s OTel logs) |
+| **Risk profile** | Higher — dropped events are gone; safe defaults = deny | Lower — survives full round-trip, queryable as normal |
+| **Typical trigger** | A single pattern is over-budget; cap it at a sample rate | Shipping volume is the bottleneck; shrink the wire format |
+| **Pair with** | Reporter (to identify what to filter) | [Storage Streamer](https://doc.log10x.com/apps/streamer/) (to archive to S3 in compact form) |
+
+<h3 id="compact">Compact mode (was Optimizer)</h3>
+
+Compact mode was previously a separate app (`@apps/edge/optimizer`). It is now a feature of the regulator: both are the execution arm, both are commanded via GitOps, both operate on stable pattern identity. The former optimizer's deploy/run content is merged into the regulator's [deploy](https://doc.log10x.com/apps/regulator/deploy/) and [run](https://doc.log10x.com/apps/regulator/run/) pages. For SIEM-side plugin install, see the [Splunk](splunk.md) and [Elasticsearch](elasticsearch.md) pages.
 
 ## :material-clipboard-play-outline: Setup Guide
 
@@ -369,7 +391,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
 ??? tenx-symbols "Step 4: Symbol Library (optional)"
 
-    Load custom [Symbol library](https://doc.log10x.com/apps/compiler/) files to transform events into typed TenXObjects.
+    Load custom [Symbol library](https://doc.log10x.com/compile/) files to transform events into typed TenXObjects.
 
     Place symbol files in the `symbolPaths` folders specified in the [symbol config](#symbols).
 

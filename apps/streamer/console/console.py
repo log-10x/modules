@@ -931,7 +931,7 @@ def _check_for_update():
         return _update_info.get("remoteVersion")
     _update_info = {}
     try:
-        url = "https://raw.githubusercontent.com/log-10x/modules/main/apps/cloud/streamer/console/console.py"
+        url = "https://raw.githubusercontent.com/log-10x/modules/main/apps/streamer/console/console.py"
         req = Request(url, headers={"User-Agent": "log10x-console"})
         with urlopen(req, timeout=3) as resp:
             for line in resp:
@@ -941,7 +941,7 @@ def _check_for_update():
                     if remote != VERSION:
                         _update_info["remoteVersion"] = remote
                         print(f"\n  Update available: {VERSION} → {remote}")
-                        print(f"  https://github.com/log-10x/modules/tree/main/apps/cloud/streamer/console\n")
+                        print(f"  https://github.com/log-10x/modules/tree/main/apps/streamer/console\n")
                         return remote
                     return None
     except Exception:

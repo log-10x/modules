@@ -16,198 +16,198 @@ The 10x runtime comes with a built-in symbol library that includes symbols for i
 
     | Helm Chart | Components |
     |------------|------------|
-    | [open-telemetry/opentelemetry-demo](https://github.com/open-telemetry/opentelemetry-demo){target="_blank"} | Polyglot microservices demo (14 services in Go, Java, Node.js, Python, .NET, Rust, PHP, Ruby, C++) |
-    | [ingress-nginx/ingress-nginx](https://github.com/kubernetes/ingress-nginx){target="_blank"} | NGINX binary, HTTP error codes, upstream timeouts, load balancer logs |
-    | [prometheus-community/kube-prometheus-stack](https://github.com/prometheus-community/helm-charts){target="_blank"} | Prometheus, Alertmanager, Grafana, node-exporter, kube-state-metrics |
+    | [open-telemetry/opentelemetry-demo](https://github.com/open-telemetry/opentelemetry-demo) | Polyglot microservices demo (14 services in Go, Java, Node.js, Python, .NET, Rust, PHP, Ruby, C++) |
+    | [ingress-nginx/ingress-nginx](https://github.com/kubernetes/ingress-nginx) | NGINX binary, HTTP error codes, upstream timeouts, load balancer logs |
+    | [prometheus-community/kube-prometheus-stack](https://github.com/prometheus-community/helm-charts) | Prometheus, Alertmanager, Grafana, node-exporter, kube-state-metrics |
 
 ??? tenx-symbols "Java Frameworks"
 
     | Repository | Description |
     |------------|-------------|
-    | [spring-projects/spring-boot](https://github.com/spring-projects/spring-boot){target="_blank"} | REST APIs, auto-config, extensive logging |
-    | [spring-projects/spring-framework](https://github.com/spring-projects/spring-framework){target="_blank"} | Core DI, AOP, transactions, error handling |
-    | [apache/tomcat](https://github.com/apache/tomcat){target="_blank"} | Servlet container, HTTP access logs |
-    | [qos-ch/logback](https://github.com/qos-ch/logback){target="_blank"} | Logging framework, defines log patterns |
-    | [qos-ch/slf4j](https://github.com/qos-ch/slf4j){target="_blank"} | Logging facade, common log interfaces |
-    | [apache/logging-log4j2](https://github.com/apache/logging-log4j2){target="_blank"} | Logging framework, pattern layouts |
-    | [eclipse-vertx/vert.x](https://github.com/eclipse-vertx/vert.x){target="_blank"} | Reactive toolkit, event loop logs |
-    | [quarkusio/quarkus](https://github.com/quarkusio/quarkus){target="_blank"} | Cloud-native, startup and request logs |
-    | [micronaut-projects/micronaut-core](https://github.com/micronaut-projects/micronaut-core){target="_blank"} | Microservices, DI, data access logs |
-    | [apache/kafka](https://github.com/apache/kafka){target="_blank"} | Distributed streaming, broker logs |
-    | [apache/spark](https://github.com/apache/spark){target="_blank"} | Big data, job execution logs |
-    | [apache/flink](https://github.com/apache/flink){target="_blank"} | Stream processing, job/task manager |
-    | [hibernate/hibernate-orm](https://github.com/hibernate/hibernate-orm){target="_blank"} | ORM, SQL generation, transaction logs |
-    | [apache/camel](https://github.com/apache/camel){target="_blank"} | Integration routes, message flow |
-    | [dropwizard/dropwizard](https://github.com/dropwizard/dropwizard){target="_blank"} | REST, health checks, metrics |
-    | [reactor/reactor-core](https://github.com/reactor/reactor-core){target="_blank"} | Reactive streams, error handling |
-    | [spring-cloud/spring-cloud-gateway](https://github.com/spring-cloud/spring-cloud-gateway){target="_blank"} | API gateway, modern replacement for Zuul |
-    | [grpc/grpc-java](https://github.com/grpc/grpc-java){target="_blank"} | RPC framework, client/server logs |
-    | [apache/dubbo](https://github.com/apache/dubbo){target="_blank"} | RPC framework, service invocation |
-    | [netty/netty](https://github.com/netty/netty){target="_blank"} | Async networking, channel logs |
-    | [apache/pulsar](https://github.com/apache/pulsar){target="_blank"} | Pub/sub messaging |
-    | [elastic/elasticsearch](https://github.com/elastic/elasticsearch){target="_blank"} | Search engine, indexing logs |
-    | [apache/cassandra](https://github.com/apache/cassandra){target="_blank"} | NoSQL database, query logs |
-    | [mybatis/mybatis-3](https://github.com/mybatis/mybatis-3){target="_blank"} | Persistence, SQL execution |
-    | [apache/activemq](https://github.com/apache/activemq){target="_blank"} | Message broker, queue operations |
-    | [alibaba/nacos](https://github.com/alibaba/nacos){target="_blank"} | Service discovery and configuration |
-    | [jetty/jetty.project](https://github.com/jetty/jetty.project){target="_blank"} | Web server, HTTP requests, servlet context |
-    | [hazelcast/hazelcast](https://github.com/hazelcast/hazelcast){target="_blank"} | Distributed computing, cluster membership |
-    | [apache/shiro](https://github.com/apache/shiro){target="_blank"} | Security, authentication/authorization |
+    | [spring-projects/spring-boot](https://github.com/spring-projects/spring-boot) | REST APIs, auto-config, extensive logging |
+    | [spring-projects/spring-framework](https://github.com/spring-projects/spring-framework) | Core DI, AOP, transactions, error handling |
+    | [apache/tomcat](https://github.com/apache/tomcat) | Servlet container, HTTP access logs |
+    | [qos-ch/logback](https://github.com/qos-ch/logback) | Logging framework, defines log patterns |
+    | [qos-ch/slf4j](https://github.com/qos-ch/slf4j) | Logging facade, common log interfaces |
+    | [apache/logging-log4j2](https://github.com/apache/logging-log4j2) | Logging framework, pattern layouts |
+    | [eclipse-vertx/vert.x](https://github.com/eclipse-vertx/vert.x) | Reactive toolkit, event loop logs |
+    | [quarkusio/quarkus](https://github.com/quarkusio/quarkus) | Cloud-native, startup and request logs |
+    | [micronaut-projects/micronaut-core](https://github.com/micronaut-projects/micronaut-core) | Microservices, DI, data access logs |
+    | [apache/kafka](https://github.com/apache/kafka) | Distributed streaming, broker logs |
+    | [apache/spark](https://github.com/apache/spark) | Big data, job execution logs |
+    | [apache/flink](https://github.com/apache/flink) | Stream processing, job/task manager |
+    | [hibernate/hibernate-orm](https://github.com/hibernate/hibernate-orm) | ORM, SQL generation, transaction logs |
+    | [apache/camel](https://github.com/apache/camel) | Integration routes, message flow |
+    | [dropwizard/dropwizard](https://github.com/dropwizard/dropwizard) | REST, health checks, metrics |
+    | [reactor/reactor-core](https://github.com/reactor/reactor-core) | Reactive streams, error handling |
+    | [spring-cloud/spring-cloud-gateway](https://github.com/spring-cloud/spring-cloud-gateway) | API gateway, modern replacement for Zuul |
+    | [grpc/grpc-java](https://github.com/grpc/grpc-java) | RPC framework, client/server logs |
+    | [apache/dubbo](https://github.com/apache/dubbo) | RPC framework, service invocation |
+    | [netty/netty](https://github.com/netty/netty) | Async networking, channel logs |
+    | [apache/pulsar](https://github.com/apache/pulsar) | Pub/sub messaging |
+    | [elastic/elasticsearch](https://github.com/elastic/elasticsearch) | Search engine, indexing logs |
+    | [apache/cassandra](https://github.com/apache/cassandra) | NoSQL database, query logs |
+    | [mybatis/mybatis-3](https://github.com/mybatis/mybatis-3) | Persistence, SQL execution |
+    | [apache/activemq](https://github.com/apache/activemq) | Message broker, queue operations |
+    | [alibaba/nacos](https://github.com/alibaba/nacos) | Service discovery and configuration |
+    | [jetty/jetty.project](https://github.com/jetty/jetty.project) | Web server, HTTP requests, servlet context |
+    | [hazelcast/hazelcast](https://github.com/hazelcast/hazelcast) | Distributed computing, cluster membership |
+    | [apache/shiro](https://github.com/apache/shiro) | Security, authentication/authorization |
 
 ??? tenx-symbols "Node.js / JavaScript"
 
     | Repository | Description |
     |------------|-------------|
-    | [nodejs/node](https://github.com/nodejs/node){target="_blank"} | Runtime core, errors, module loading |
-    | [expressjs/express](https://github.com/expressjs/express){target="_blank"} | Web framework, HTTP middleware |
-    | [nestjs/nest](https://github.com/nestjs/nest){target="_blank"} | Enterprise framework, exceptions |
-    | [vercel/next.js](https://github.com/vercel/next.js){target="_blank"} | React SSR, routing, build logs |
-    | [fastify/fastify](https://github.com/fastify/fastify){target="_blank"} | Web framework, request lifecycle |
-    | [koajs/koa](https://github.com/koajs/koa){target="_blank"} | Middleware framework, error handling |
-    | [hapijs/hapi](https://github.com/hapijs/hapi){target="_blank"} | Server framework, validation |
-    | [socketio/socket.io](https://github.com/socketio/socket.io){target="_blank"} | WebSocket, connection events |
-    | [winstonjs/winston](https://github.com/winstonjs/winston){target="_blank"} | Logging library, transports |
-    | [pinojs/pino](https://github.com/pinojs/pino){target="_blank"} | Logging library, fast JSON logs |
-    | [log4js-node/log4js-node](https://github.com/log4js-node/log4js-node){target="_blank"} | Logging framework, appenders |
-    | [debug-js/debug](https://github.com/debug-js/debug){target="_blank"} | Debugging utility, namespaced logs |
-    | [adonisjs/core](https://github.com/adonisjs/core){target="_blank"} | MVC framework, exception handling |
-    | [grpc/grpc-node](https://github.com/grpc/grpc-node){target="_blank"} | gRPC for Node.js |
-    | [typeorm/typeorm](https://github.com/typeorm/typeorm){target="_blank"} | ORM, query execution logs |
-    | [sequelize/sequelize](https://github.com/sequelize/sequelize){target="_blank"} | ORM, SQL query logs |
-    | [prisma/prisma](https://github.com/prisma/prisma){target="_blank"} | ORM, database queries |
-    | [axios/axios](https://github.com/axios/axios){target="_blank"} | HTTP client, request/response logs |
-    | [Automattic/mongoose](https://github.com/Automattic/mongoose){target="_blank"} | MongoDB ODM, query execution |
-    | [jaredhanson/passport](https://github.com/jaredhanson/passport){target="_blank"} | Authentication, OAuth flows |
-    | [OptimalBits/bull](https://github.com/OptimalBits/bull){target="_blank"} | Job queue, job lifecycle |
+    | [nodejs/node](https://github.com/nodejs/node) | Runtime core, errors, module loading |
+    | [expressjs/express](https://github.com/expressjs/express) | Web framework, HTTP middleware |
+    | [nestjs/nest](https://github.com/nestjs/nest) | Enterprise framework, exceptions |
+    | [vercel/next.js](https://github.com/vercel/next.js) | React SSR, routing, build logs |
+    | [fastify/fastify](https://github.com/fastify/fastify) | Web framework, request lifecycle |
+    | [koajs/koa](https://github.com/koajs/koa) | Middleware framework, error handling |
+    | [hapijs/hapi](https://github.com/hapijs/hapi) | Server framework, validation |
+    | [socketio/socket.io](https://github.com/socketio/socket.io) | WebSocket, connection events |
+    | [winstonjs/winston](https://github.com/winstonjs/winston) | Logging library, transports |
+    | [pinojs/pino](https://github.com/pinojs/pino) | Logging library, fast JSON logs |
+    | [log4js-node/log4js-node](https://github.com/log4js-node/log4js-node) | Logging framework, appenders |
+    | [debug-js/debug](https://github.com/debug-js/debug) | Debugging utility, namespaced logs |
+    | [adonisjs/core](https://github.com/adonisjs/core) | MVC framework, exception handling |
+    | [grpc/grpc-node](https://github.com/grpc/grpc-node) | gRPC for Node.js |
+    | [typeorm/typeorm](https://github.com/typeorm/typeorm) | ORM, query execution logs |
+    | [sequelize/sequelize](https://github.com/sequelize/sequelize) | ORM, SQL query logs |
+    | [prisma/prisma](https://github.com/prisma/prisma) | ORM, database queries |
+    | [axios/axios](https://github.com/axios/axios) | HTTP client, request/response logs |
+    | [Automattic/mongoose](https://github.com/Automattic/mongoose) | MongoDB ODM, query execution |
+    | [jaredhanson/passport](https://github.com/jaredhanson/passport) | Authentication, OAuth flows |
+    | [OptimalBits/bull](https://github.com/OptimalBits/bull) | Job queue, job lifecycle |
 
 ??? tenx-symbols "Python Frameworks"
 
     | Repository | Description |
     |------------|-------------|
-    | [django/django](https://github.com/django/django){target="_blank"} | Web framework, request/response |
-    | [tiangolo/fastapi](https://github.com/tiangolo/fastapi){target="_blank"} | Async web framework, validation |
-    | [pallets/flask](https://github.com/pallets/flask){target="_blank"} | Micro web framework, routing |
-    | [encode/starlette](https://github.com/encode/starlette){target="_blank"} | ASGI framework, middleware |
-    | [aio-libs/aiohttp](https://github.com/aio-libs/aiohttp){target="_blank"} | Async HTTP client/server |
-    | [tornadoweb/tornado](https://github.com/tornadoweb/tornado){target="_blank"} | Async networking, request handling |
-    | [Pylons/pyramid](https://github.com/Pylons/pyramid){target="_blank"} | Web framework, traversal logs |
-    | [falconry/falcon](https://github.com/falconry/falcon){target="_blank"} | REST API framework, hooks |
-    | [celery/celery](https://github.com/celery/celery){target="_blank"} | Distributed task queue, worker logs |
-    | [apache/airflow](https://github.com/apache/airflow){target="_blank"} | Workflow orchestration, task execution |
-    | [sqlalchemy/sqlalchemy](https://github.com/sqlalchemy/sqlalchemy){target="_blank"} | ORM, SQL execution logs |
-    | [requests/requests](https://github.com/requests/requests){target="_blank"} | HTTP library, request logs |
-    | [python/cpython](https://github.com/python/cpython){target="_blank"} | Python runtime, core exceptions |
-    | [Delgan/loguru](https://github.com/Delgan/loguru){target="_blank"} | Popular structured logging library |
-    | [hynek/structlog](https://github.com/hynek/structlog){target="_blank"} | Structured logging for production |
-    | [scrapy/scrapy](https://github.com/scrapy/scrapy){target="_blank"} | Web scraping, spider lifecycle |
-    | [benoitc/gunicorn](https://github.com/benoitc/gunicorn){target="_blank"} | WSGI server, worker lifecycle |
-    | [encode/uvicorn](https://github.com/encode/uvicorn){target="_blank"} | ASGI server, access logs |
-    | [boto/boto3](https://github.com/boto/boto3){target="_blank"} | AWS SDK, service operations |
-    | [encode/httpx](https://github.com/encode/httpx){target="_blank"} | HTTP client, HTTP/2 multiplexing |
+    | [django/django](https://github.com/django/django) | Web framework, request/response |
+    | [tiangolo/fastapi](https://github.com/tiangolo/fastapi) | Async web framework, validation |
+    | [pallets/flask](https://github.com/pallets/flask) | Micro web framework, routing |
+    | [encode/starlette](https://github.com/encode/starlette) | ASGI framework, middleware |
+    | [aio-libs/aiohttp](https://github.com/aio-libs/aiohttp) | Async HTTP client/server |
+    | [tornadoweb/tornado](https://github.com/tornadoweb/tornado) | Async networking, request handling |
+    | [Pylons/pyramid](https://github.com/Pylons/pyramid) | Web framework, traversal logs |
+    | [falconry/falcon](https://github.com/falconry/falcon) | REST API framework, hooks |
+    | [celery/celery](https://github.com/celery/celery) | Distributed task queue, worker logs |
+    | [apache/airflow](https://github.com/apache/airflow) | Workflow orchestration, task execution |
+    | [sqlalchemy/sqlalchemy](https://github.com/sqlalchemy/sqlalchemy) | ORM, SQL execution logs |
+    | [requests/requests](https://github.com/requests/requests) | HTTP library, request logs |
+    | [python/cpython](https://github.com/python/cpython) | Python runtime, core exceptions |
+    | [Delgan/loguru](https://github.com/Delgan/loguru) | Popular structured logging library |
+    | [hynek/structlog](https://github.com/hynek/structlog) | Structured logging for production |
+    | [scrapy/scrapy](https://github.com/scrapy/scrapy) | Web scraping, spider lifecycle |
+    | [benoitc/gunicorn](https://github.com/benoitc/gunicorn) | WSGI server, worker lifecycle |
+    | [encode/uvicorn](https://github.com/encode/uvicorn) | ASGI server, access logs |
+    | [boto/boto3](https://github.com/boto/boto3) | AWS SDK, service operations |
+    | [encode/httpx](https://github.com/encode/httpx) | HTTP client, HTTP/2 multiplexing |
 
 ??? tenx-symbols "Go Frameworks"
 
     | Repository | Description |
     |------------|-------------|
-    | [gin-gonic/gin](https://github.com/gin-gonic/gin){target="_blank"} | Web framework, HTTP logs |
-    | [gofiber/fiber](https://github.com/gofiber/fiber){target="_blank"} | Web framework, request handling |
-    | [labstack/echo](https://github.com/labstack/echo){target="_blank"} | Web framework, middleware |
-    | [go-gorm/gorm](https://github.com/go-gorm/gorm){target="_blank"} | ORM library, SQL logs |
-    | [beego/beego](https://github.com/beego/beego){target="_blank"} | Web framework, MVC logs |
-    | [revel/revel](https://github.com/revel/revel){target="_blank"} | Web framework, controller logs |
-    | [gorilla/mux](https://github.com/gorilla/mux){target="_blank"} | HTTP router, request logs |
-    | [go-kratos/kratos](https://github.com/go-kratos/kratos){target="_blank"} | Microservices, service logs |
-    | [valyala/fasthttp](https://github.com/valyala/fasthttp){target="_blank"} | HTTP library, connection logs |
-    | [grpc/grpc-go](https://github.com/grpc/grpc-go){target="_blank"} | gRPC for Go |
-    | [uber-go/zap](https://github.com/uber-go/zap){target="_blank"} | Structured logging library |
-    | [sirupsen/logrus](https://github.com/sirupsen/logrus){target="_blank"} | Logging library |
-    | [etcd-io/etcd](https://github.com/etcd-io/etcd){target="_blank"} | Distributed KV store, raft logs |
-    | [temporalio/temporal](https://github.com/temporalio/temporal){target="_blank"} | Workflow orchestration, activity execution |
+    | [gin-gonic/gin](https://github.com/gin-gonic/gin) | Web framework, HTTP logs |
+    | [gofiber/fiber](https://github.com/gofiber/fiber) | Web framework, request handling |
+    | [labstack/echo](https://github.com/labstack/echo) | Web framework, middleware |
+    | [go-gorm/gorm](https://github.com/go-gorm/gorm) | ORM library, SQL logs |
+    | [beego/beego](https://github.com/beego/beego) | Web framework, MVC logs |
+    | [revel/revel](https://github.com/revel/revel) | Web framework, controller logs |
+    | [gorilla/mux](https://github.com/gorilla/mux) | HTTP router, request logs |
+    | [go-kratos/kratos](https://github.com/go-kratos/kratos) | Microservices, service logs |
+    | [valyala/fasthttp](https://github.com/valyala/fasthttp) | HTTP library, connection logs |
+    | [grpc/grpc-go](https://github.com/grpc/grpc-go) | gRPC for Go |
+    | [uber-go/zap](https://github.com/uber-go/zap) | Structured logging library |
+    | [sirupsen/logrus](https://github.com/sirupsen/logrus) | Logging library |
+    | [etcd-io/etcd](https://github.com/etcd-io/etcd) | Distributed KV store, raft logs |
+    | [temporalio/temporal](https://github.com/temporalio/temporal) | Workflow orchestration, activity execution |
 
 ??? tenx-symbols "C++ / Core Libraries"
 
     | Repository | Description |
     |------------|-------------|
-    | [grpc/grpc](https://github.com/grpc/grpc){target="_blank"} | RPC framework, channel logs |
-    | [protocolbuffers/protobuf](https://github.com/protocolbuffers/protobuf){target="_blank"} | Serialization, parsing errors |
-    | [mongodb/mongo](https://github.com/mongodb/mongo){target="_blank"} | Database, query execution |
-    | [facebook/rocksdb](https://github.com/facebook/rocksdb){target="_blank"} | Key-value store, compaction logs |
-    | [ClickHouse/ClickHouse](https://github.com/ClickHouse/ClickHouse){target="_blank"} | OLAP database, query logs |
-    | [duckdb/duckdb](https://github.com/duckdb/duckdb){target="_blank"} | Emerging analytical database |
-    | [apache/thrift](https://github.com/apache/thrift){target="_blank"} | RPC framework, service calls |
-    | [gabime/spdlog](https://github.com/gabime/spdlog){target="_blank"} | High-performance logging library |
+    | [grpc/grpc](https://github.com/grpc/grpc) | RPC framework, channel logs |
+    | [protocolbuffers/protobuf](https://github.com/protocolbuffers/protobuf) | Serialization, parsing errors |
+    | [mongodb/mongo](https://github.com/mongodb/mongo) | Database, query execution |
+    | [facebook/rocksdb](https://github.com/facebook/rocksdb) | Key-value store, compaction logs |
+    | [ClickHouse/ClickHouse](https://github.com/ClickHouse/ClickHouse) | OLAP database, query logs |
+    | [duckdb/duckdb](https://github.com/duckdb/duckdb) | Emerging analytical database |
+    | [apache/thrift](https://github.com/apache/thrift) | RPC framework, service calls |
+    | [gabime/spdlog](https://github.com/gabime/spdlog) | High-performance logging library |
 
 ??? tenx-symbols "Scala Frameworks"
 
     | Repository | Description |
     |------------|-------------|
-    | [akka/akka](https://github.com/akka/akka){target="_blank"} | Actor concurrency, message logs |
-    | [playframework/playframework](https://github.com/playframework/playframework){target="_blank"} | Web framework, action logs |
-    | [zio/zio](https://github.com/zio/zio){target="_blank"} | Concurrent effects, fiber logs |
+    | [akka/akka](https://github.com/akka/akka) | Actor concurrency, message logs |
+    | [playframework/playframework](https://github.com/playframework/playframework) | Web framework, action logs |
+    | [zio/zio](https://github.com/zio/zio) | Concurrent effects, fiber logs |
 
 ??? tenx-symbols "Rust Frameworks"
 
     | Repository | Description |
     |------------|-------------|
-    | [tokio-rs/tokio](https://github.com/tokio-rs/tokio){target="_blank"} | Async runtime, task spawn/complete events |
-    | [actix/actix-web](https://github.com/actix/actix-web){target="_blank"} | Rust web framework, middleware chain logs |
-    | [tokio-rs/axum](https://github.com/tokio-rs/axum){target="_blank"} | Rust web framework, Tower service spans |
-    | [rwf2/Rocket](https://github.com/rwf2/Rocket){target="_blank"} | Rust web framework, route mounting logs |
-    | [tokio-rs/tracing](https://github.com/tokio-rs/tracing){target="_blank"} | Structured logging, span hierarchy |
+    | [tokio-rs/tokio](https://github.com/tokio-rs/tokio) | Async runtime, task spawn/complete events |
+    | [actix/actix-web](https://github.com/actix/actix-web) | Rust web framework, middleware chain logs |
+    | [tokio-rs/axum](https://github.com/tokio-rs/axum) | Rust web framework, Tower service spans |
+    | [rwf2/Rocket](https://github.com/rwf2/Rocket) | Rust web framework, route mounting logs |
+    | [tokio-rs/tracing](https://github.com/tokio-rs/tracing) | Structured logging, span hierarchy |
 
 ??? tenx-symbols "Ruby Frameworks"
 
     | Repository | Description |
     |------------|-------------|
-    | [rails/rails](https://github.com/rails/rails){target="_blank"} | Web framework, controller actions, SQL logs |
-    | [sidekiq/sidekiq](https://github.com/sidekiq/sidekiq){target="_blank"} | Ruby background jobs, worker lifecycle |
-    | [puma/puma](https://github.com/puma/puma){target="_blank"} | Web server, thread pool stats |
+    | [rails/rails](https://github.com/rails/rails) | Web framework, controller actions, SQL logs |
+    | [sidekiq/sidekiq](https://github.com/sidekiq/sidekiq) | Ruby background jobs, worker lifecycle |
+    | [puma/puma](https://github.com/puma/puma) | Web server, thread pool stats |
 
 ??? tenx-symbols ".NET / C# Frameworks"
 
     | Repository | Description |
     |------------|-------------|
-    | [dotnet/aspnetcore](https://github.com/dotnet/aspnetcore){target="_blank"} | Web framework, HTTP pipeline, auth events |
-    | [dotnet/efcore](https://github.com/dotnet/efcore){target="_blank"} | .NET Entity Framework, SQL query logging |
-    | [serilog/serilog](https://github.com/serilog/serilog){target="_blank"} | .NET structured logging, message templates |
-    | [NLog/NLog](https://github.com/NLog/NLog){target="_blank"} | Logging framework, layout renderers |
+    | [dotnet/aspnetcore](https://github.com/dotnet/aspnetcore) | Web framework, HTTP pipeline, auth events |
+    | [dotnet/efcore](https://github.com/dotnet/efcore) | .NET Entity Framework, SQL query logging |
+    | [serilog/serilog](https://github.com/serilog/serilog) | .NET structured logging, message templates |
+    | [NLog/NLog](https://github.com/NLog/NLog) | Logging framework, layout renderers |
 
 ??? tenx-symbols "Kubernetes / Cloud-Native"
 
     | Repository | Description |
     |------------|-------------|
-    | [prometheus/prometheus](https://github.com/prometheus/prometheus){target="_blank"} | Monitoring, scrape lifecycle, TSDB operations |
-    | [istio/istio](https://github.com/istio/istio){target="_blank"} | Service mesh, xDS config, mTLS events |
-    | [envoyproxy/envoy](https://github.com/envoyproxy/envoy){target="_blank"} | Proxy, access logs, circuit breakers |
-    | [argoproj/argo-cd](https://github.com/argoproj/argo-cd){target="_blank"} | GitOps, sync events, health status |
-    | [helm/helm](https://github.com/helm/helm){target="_blank"} | Package manager, chart lifecycle |
-    | [grafana/loki](https://github.com/grafana/loki){target="_blank"} | Log aggregation, ingester operations |
-    | [jaegertracing/jaeger](https://github.com/jaegertracing/jaeger){target="_blank"} | Distributed tracing, span collection |
-    | [containerd/containerd](https://github.com/containerd/containerd){target="_blank"} | Container runtime, image pulls, task execution |
+    | [prometheus/prometheus](https://github.com/prometheus/prometheus) | Monitoring, scrape lifecycle, TSDB operations |
+    | [istio/istio](https://github.com/istio/istio) | Service mesh, xDS config, mTLS events |
+    | [envoyproxy/envoy](https://github.com/envoyproxy/envoy) | Proxy, access logs, circuit breakers |
+    | [argoproj/argo-cd](https://github.com/argoproj/argo-cd) | GitOps, sync events, health status |
+    | [helm/helm](https://github.com/helm/helm) | Package manager, chart lifecycle |
+    | [grafana/loki](https://github.com/grafana/loki) | Log aggregation, ingester operations |
+    | [jaegertracing/jaeger](https://github.com/jaegertracing/jaeger) | Distributed tracing, span collection |
+    | [containerd/containerd](https://github.com/containerd/containerd) | Container runtime, image pulls, task execution |
 
 ??? tenx-symbols "Databases and Messaging"
 
     | Repository | Description |
     |------------|-------------|
-    | [redis/redis](https://github.com/redis/redis){target="_blank"} | In-memory store, command logs, persistence |
-    | [postgres/postgres](https://github.com/postgres/postgres){target="_blank"} | Relational DB, SQLSTATE codes, query logs |
-    | [cockroachdb/cockroach](https://github.com/cockroachdb/cockroach){target="_blank"} | Distributed SQL, raft consensus, range splits |
-    | [mysql/mysql-server](https://github.com/mysql/mysql-server){target="_blank"} | Relational DB, InnoDB engine, replication |
-    | [rabbitmq/rabbitmq-server](https://github.com/rabbitmq/rabbitmq-server){target="_blank"} | Message broker, AMQP frames, queue lifecycle |
-    | [nats-io/nats-server](https://github.com/nats-io/nats-server){target="_blank"} | Messaging, JetStream ops, cluster routing |
-    | [pingcap/tidb](https://github.com/pingcap/tidb){target="_blank"} | Distributed SQL, optimizer, TiKV events |
-    | [vitessio/vitess](https://github.com/vitessio/vitess){target="_blank"} | MySQL sharding, tablet state, vreplication |
+    | [redis/redis](https://github.com/redis/redis) | In-memory store, command logs, persistence |
+    | [postgres/postgres](https://github.com/postgres/postgres) | Relational DB, SQLSTATE codes, query logs |
+    | [cockroachdb/cockroach](https://github.com/cockroachdb/cockroach) | Distributed SQL, raft consensus, range splits |
+    | [mysql/mysql-server](https://github.com/mysql/mysql-server) | Relational DB, InnoDB engine, replication |
+    | [rabbitmq/rabbitmq-server](https://github.com/rabbitmq/rabbitmq-server) | Message broker, AMQP frames, queue lifecycle |
+    | [nats-io/nats-server](https://github.com/nats-io/nats-server) | Messaging, JetStream ops, cluster routing |
+    | [pingcap/tidb](https://github.com/pingcap/tidb) | Distributed SQL, optimizer, TiKV events |
+    | [vitessio/vitess](https://github.com/vitessio/vitess) | MySQL sharding, tablet state, vreplication |
 
 ??? tenx-symbols "Security and Identity"
 
     | Repository | Description |
     |------------|-------------|
-    | [hashicorp/vault](https://github.com/hashicorp/vault){target="_blank"} | Secrets management, audit logs, seal/unseal |
-    | [keycloak/keycloak](https://github.com/keycloak/keycloak){target="_blank"} | IAM, authentication events, token issuance |
+    | [hashicorp/vault](https://github.com/hashicorp/vault) | Secrets management, audit logs, seal/unseal |
+    | [keycloak/keycloak](https://github.com/keycloak/keycloak) | IAM, authentication events, token issuance |
 
 ??? tenx-symbols "ML / AI Frameworks"
 
     | Repository | Description |
     |------------|-------------|
-    | [pytorch/pytorch](https://github.com/pytorch/pytorch){target="_blank"} | Deep learning, training epochs, CUDA events |
-    | [huggingface/transformers](https://github.com/huggingface/transformers){target="_blank"} | NLP models, tokenization, inference logs |
+    | [pytorch/pytorch](https://github.com/pytorch/pytorch) | Deep learning, training epochs, CUDA events |
+    | [huggingface/transformers](https://github.com/huggingface/transformers) | NLP models, tokenization, inference logs |

@@ -60,11 +60,11 @@ Events in `logs/from-tenx` never feed back to `logs/to-tenx`.
 
     | File | Purpose |
     |------|---------|
-    | [`conf/tenx-report-linux.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/otel-collector/conf/tenx-report-linux.yaml){target="_blank"} | OTel Collector config for Reporter mode |
-    | [`conf/tenx-regulate-linux.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/otel-collector/conf/tenx-regulate-linux.yaml){target="_blank"} | OTel Collector config for Regulator mode |
-    | [`conf/tenx-optimize-linux.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/otel-collector/conf/tenx-optimize-linux.yaml){target="_blank"} | OTel Collector config for Optimizer mode |
-    | [`input/stream.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/otel-collector/input/stream.yaml){target="_blank"} | 10x Unix socket input with syslog parsing |
-    | [`output/unix/stream.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/otel-collector/output/unix/stream.yaml){target="_blank"} | 10x Forward protocol output configuration |
+    | [`conf/tenx-report-linux.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/otel-collector/conf/tenx-report-linux.yaml) | OTel Collector config for Reporter mode |
+    | [`conf/tenx-regulate-linux.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/otel-collector/conf/tenx-regulate-linux.yaml) | OTel Collector config for Regulator mode |
+    | [`conf/tenx-optimize-linux.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/otel-collector/conf/tenx-optimize-linux.yaml) | OTel Collector config for Optimizer mode |
+    | [`input/stream.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/otel-collector/input/stream.yaml) | 10x Unix socket input with syslog parsing |
+    | [`output/unix/stream.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/otel-collector/output/unix/stream.yaml) | 10x Forward protocol output configuration |
 
 ## Quickstart
 

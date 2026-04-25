@@ -57,8 +57,8 @@ This module is recommended for **VM/traditional infrastructure** where Splunk UF
 
     | File | Purpose |
     |------|---------|
-    | [`fluentbit/conf/tenx-optimize.conf`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-optimize.conf){target="_blank"} | Fluent Bit config for optimize mode |
-    | [`fluentbit/conf/tenx-regulate.conf`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-regulate.conf){target="_blank"} | Fluent Bit config for regulate mode |
-    | [`fluentbit/conf/tenx-report.conf`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-report.conf){target="_blank"} | Fluent Bit config for report mode |
+    | [`fluentbit/conf/tenx-optimize.conf`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-optimize.conf) | Fluent Bit config for optimize mode |
+    | [`fluentbit/conf/tenx-regulate.conf`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-regulate.conf) | Fluent Bit config for regulate mode |
+    | [`fluentbit/conf/tenx-report.conf`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-report.conf) | Fluent Bit config for report mode |
 
 For setup instructions, see the mode-specific documentation: [Report](report/), [Regulate](regulate/), [Optimize](optimize/).

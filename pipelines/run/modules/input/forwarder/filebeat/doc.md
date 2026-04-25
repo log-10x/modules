@@ -71,10 +71,10 @@ Unlike other forwarders, Filebeat uses `sourceFilter` with the pattern `\"tenx\"
 
     | File | Purpose |
     |------|---------|
-    | [`script/tenx-optimize.js`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/filebeat/script/tenx-optimize.js){target="_blank"} | Filebeat script processor - encodes events to stdout |
-    | [`script/tenx-regulate.js`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/filebeat/script/tenx-regulate.js){target="_blank"} | Filebeat script processor for regulate mode |
-    | [`optimize/tenxNix.yml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/filebeat/optimize/tenxNix.yml){target="_blank"} | Filebeat Unix socket input config (Linux/macOS) |
-    | [`optimize/tenxWin.yml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/filebeat/optimize/tenxWin.yml){target="_blank"} | Filebeat Unix socket input config (Windows) |
-    | [`input/stream.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/filebeat/input/stream.yaml){target="_blank"} | 10x stdin input with Filebeat config parsing |
-    | [`input/log4j2.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/filebeat/input/log4j2.yaml){target="_blank"} | Log4j config for Filebeat internal logs |
-    | [`output/stream.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/filebeat/output/stream.yaml){target="_blank"} | 10x Unix socket output configuration |
+    | [`script/tenx-optimize.js`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/filebeat/script/tenx-optimize.js) | Filebeat script processor - encodes events to stdout |
+    | [`script/tenx-regulate.js`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/filebeat/script/tenx-regulate.js) | Filebeat script processor for regulate mode |
+    | [`optimize/tenxNix.yml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/filebeat/optimize/tenxNix.yml) | Filebeat Unix socket input config (Linux/macOS) |
+    | [`optimize/tenxWin.yml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/filebeat/optimize/tenxWin.yml) | Filebeat Unix socket input config (Windows) |
+    | [`input/stream.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/filebeat/input/stream.yaml) | 10x stdin input with Filebeat config parsing |
+    | [`input/log4j2.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/filebeat/input/log4j2.yaml) | Log4j config for Filebeat internal logs |
+    | [`output/stream.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/filebeat/output/stream.yaml) | 10x Unix socket output configuration |

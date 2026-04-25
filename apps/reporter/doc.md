@@ -2,7 +2,11 @@
 icon: material/play-circle-outline
 ---
 
-Identify high-cost log events at the forwarder level _before_ they ship to analytics platforms, enabling proactive cost optimization.
+The Reporter app is the **read-only insights arm** of the 10x pipeline. It pinpoints high-cost app/infra events **before** forwarders ship them to log analyzers, enabling storage and licensing **cost optimization**.
+
+**Deployment**: a DaemonSet alongside your forwarder — *not* a sidecar injected into it, and *not* a cloud app polling your SIEM's REST API. The reporter tails the same event stream your forwarder sees (pre-SIEM), publishes cost insight metrics, and fails independently: if the reporter goes down, your logs continue flowing to the SIEM uninterrupted.
+
+Not in the critical log path. No mutation of existing fluent-bit / fluentd / otel-collector configs. Similar deployment pattern to `datadog-agent` or `splunk-otel-collector`.
 
 ## :material-clipboard-play-outline: Setup Guide
 
@@ -275,7 +279,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
 ??? tenx-symbols "Step 4: Symbol Library (optional)"
 
-    Load custom [Symbol library](https://doc.log10x.com/apps/compiler/) files to transform events into typed TenXObjects.
+    Load custom [Symbol library](https://doc.log10x.com/compile/) files to transform events into typed TenXObjects.
 
     Place symbol files in the `symbolPaths` folders specified in the [symbol config](#symbols).
 

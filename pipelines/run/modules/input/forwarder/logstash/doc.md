@@ -55,8 +55,8 @@ The `sourcePattern` regex `\"file\":\"(.*?)\"` extracts the event source from th
 
     | File | Purpose |
     |------|---------|
-    | [`optimize/tenx-pipe-in-unix.conf`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/logstash/optimize/tenx-pipe-in-unix.conf){target="_blank"} | Logstash pipe + Unix socket config |
-    | [`optimize/tenx-pipe-in-tcp.conf`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/logstash/optimize/tenx-pipe-in-tcp.conf){target="_blank"} | Logstash pipe + TCP config (Windows) |
-    | [`input/stream.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/logstash/input/stream.yaml){target="_blank"} | 10x stdin input configuration |
-    | [`output/unix/stream.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/logstash/output/unix/stream.yaml){target="_blank"} | 10x Unix socket output configuration |
-    | [`output/tcp/stream.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/logstash/output/tcp/stream.yaml){target="_blank"} | 10x TCP socket output configuration |
+    | [`optimize/tenx-pipe-in-unix.conf`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/logstash/optimize/tenx-pipe-in-unix.conf) | Logstash pipe + Unix socket config |
+    | [`optimize/tenx-pipe-in-tcp.conf`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/logstash/optimize/tenx-pipe-in-tcp.conf) | Logstash pipe + TCP config (Windows) |
+    | [`input/stream.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/logstash/input/stream.yaml) | 10x stdin input configuration |
+    | [`output/unix/stream.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/logstash/output/unix/stream.yaml) | 10x Unix socket output configuration |
+    | [`output/tcp/stream.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/logstash/output/tcp/stream.yaml) | 10x TCP socket output configuration |

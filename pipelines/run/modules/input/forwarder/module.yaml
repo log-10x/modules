@@ -46,9 +46,9 @@ module:
     - names:
       - outputWriteTemplates
       description: whether the forwarder emits new TenXTemplates alongside encoded events
-      type: boolean
+      type: string
       required: false
-      defValue: false
+      defValue: "false"
       doc: |
         True for encoding modes (compact-all, compact-lookup) so decoders can
         reconstruct events from templateHash + vars. False for regulate mode

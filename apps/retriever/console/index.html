@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Log10x Storage Streamer Console</title>
+<title>Log10x Retriever Console</title>
 <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAABmJLR0QA/wD/AP+gvaeTAAACt0lEQVRYhe2WT0gUURzHP2/+qLO77uqilIObtVaCl6ISOkSkhFBQhy4doluHOnW0U3TtJBh17P8pgjCJCIJOXoLIoINQHsrWP1u7q+ufnR3nT4dZRN2Z7I+jCH1hmGHmvd/3837v/d48AaDrekoI0e+6bi9QT7iaBZ5ZlnUtm81OC13XU8AIkAzZeK3GDMM4JMfj8bvA4U02B0gqihIXuq4XCT/tQcpLW2gOkJS20ByA/wDbA6B8LMJEpoPCrRbf7269zOyNZqZG9zGR6WBydC+5x60Yp9df38r6iIL5y5U9SviYq4LcfR3zaMRrMu+AJlPujlI+HiF5BepezAWHD/pg9ESZv5Lk+1CKcnc0MMDihYRn7kLD1UlaOj+zs/MT0QczIAsKt1uwW9XA/oEZyD9qDey0UgsXGwCI3isQeVoEQCy4xK9PUz4RxWpTKZ2tJ3Yn79s/MAPxmz+WL/WD4d9IFtjtNQBoQ6vTLCyofbMAgNEbCxxAYAZiA7nlZ1tXWDpQV9XGalVwVQGWS827akh1pAQ0YOvBS+2fytCqjF6adcB2q4PnbQCcppAA7N0VgBnbP/iiB+XW+pTPRgAIszJq2d/AiXnhhVGdnQ0BkLKWZ5TwD+M0eu+lnBUOgJytzHGjjL2jep7tNm+KlK8hASgfS8sLzThVXWqlM95WXPt6PhwAYYH23Kv/ub7mVVlYuNSI1V6DMF20l8EA6/8L1lFsIIfRE8XepZId3kPtcAknIWF2aQAk+qaQv5iB/X8vA86a+wrJ0xZN58dRxkxcTcI4GcXs0pCKDvX9OSJPir8MLXRdD66RP5SdUjGPaMjjS9S8N3w3p1AB/kbb40QUNsD4FvrPSsDgFgK8Eul0OmEYxltg/yab54QQB+VCoVBWVfWhoijNQBqoPnlsrIrAoBDiXCaT+fYTkWLagKsVUL0AAAAASUVORK5CYII=">
 <style>
 /* ---------------------------------------------------------------------------
@@ -577,7 +577,7 @@ input[type="text"]::placeholder, textarea::placeholder { color: var(--text-terti
 }
 .quick-link:hover { text-decoration: none; background: var(--bg-card); border-color: var(--border-hover); }
 .quick-link svg { flex-shrink: 0; }
-.ql-streamer:hover { color: #a78bfa; }
+.ql-retriever:hover { color: #a78bfa; }
 .ql-run:hover { color: #4ade80; }
 .ql-deploy:hover { color: #60a5fa; }
 .ql-faq:hover { color: #fbbf24; }
@@ -759,7 +759,7 @@ input[type="text"]::placeholder, textarea::placeholder { color: var(--text-terti
       </svg>
     </a>
     <div class="header-divider"></div>
-    <div class="header-title">Storage Streamer Console</div>
+    <div class="header-title">Retriever Console</div>
   </div>
   <div class="header-status">
     <span id="aws-region"></span>
@@ -811,7 +811,7 @@ input[type="text"]::placeholder, textarea::placeholder { color: var(--text-terti
         </select>
       </div>
       <div>
-        <label>Target <span class="help-tip" data-desc="The app name that indexed the data, e.g. 'app' for the default streamer app" data-href="https://doc.log10x.com/run/input/objectStorage/query/#querytarget">?</span></label>
+        <label>Target <span class="help-tip" data-desc="The app name that indexed the data, e.g. 'app' for the default retriever app" data-href="https://doc.log10x.com/run/input/objectStorage/query/#querytarget">?</span></label>
         <input type="text" id="target" value="app" placeholder="app">
       </div>
     </div>
@@ -832,9 +832,9 @@ input[type="text"]::placeholder, textarea::placeholder { color: var(--text-terti
     <div class="advanced-body" id="adv-body">
       <div class="row">
         <div>
-          <label>S3 Bucket <span class="help-tip" data-desc="S3 bucket where the Storage Streamer writes log files. Optional when the backend has a default configured" data-href="https://doc.log10x.com/run/input/objectStorage/query/#queryreadcontainer">?</span></label>
+          <label>S3 Bucket <span class="help-tip" data-desc="S3 bucket where the Retriever writes log files. Optional when the backend has a default configured" data-href="https://doc.log10x.com/run/input/objectStorage/query/#queryreadcontainer">?</span></label>
           <div class="microcopy">Optional if the backend has a default</div>
-          <input type="text" id="bucket" placeholder="my-streamer-bucket">
+          <input type="text" id="bucket" placeholder="my-retriever-bucket">
         </div>
         <div>
           <label>Index Bucket <span class="help-tip" data-desc="S3 bucket for index objects. Defaults to the log file bucket" data-href="https://doc.log10x.com/run/input/objectStorage/query/#queryindexcontainer">?</span></label>
@@ -898,15 +898,15 @@ input[type="text"]::placeholder, textarea::placeholder { color: var(--text-terti
 
     <!-- Submit method -->
     <div class="field">
-      <label>Submit via <span class="help-tip" data-desc="Send the query to an SQS queue, REST endpoint, or monitor an existing query by ID" data-href="https://doc.log10x.com/apps/streamer/#setup">?</span></label>
+      <label>Submit via <span class="help-tip" data-desc="Send the query to an SQS queue, REST endpoint, or monitor an existing query by ID" data-href="https://doc.log10x.com/apps/retriever/#setup">?</span></label>
       <div style="display:flex;gap:12px;align-items:center">
         <div class="method-toggle" id="method-toggle" style="flex-shrink:0">
           <button class="active" data-method="sqs" onclick="setSubmitMethod('sqs')">SQS Queue</button>
           <button data-method="rest" onclick="setSubmitMethod('rest')">REST Endpoint</button>
           <button data-method="monitor" onclick="setSubmitMethod('monitor')">Monitor</button>
         </div>
-        <input type="text" id="queue-url" placeholder="https://sqs.us-east-1.amazonaws.com/123456789/streamer-query-queue" style="flex:1">
-        <input type="text" id="endpoint-url" placeholder="http://localhost:8080 (posts to /streamer/query)" style="flex:1;display:none">
+        <input type="text" id="queue-url" placeholder="https://sqs.us-east-1.amazonaws.com/123456789/retriever-query-queue" style="flex:1">
+        <input type="text" id="endpoint-url" placeholder="http://localhost:8080 (posts to /retriever/query)" style="flex:1;display:none">
         <input type="text" id="monitor-query-id" placeholder="Paste query ID to monitor" style="flex:1;display:none">
       </div>
     </div>
@@ -995,19 +995,19 @@ input[type="text"]::placeholder, textarea::placeholder { color: var(--text-terti
       <svg width="16" height="16" fill="none" stroke="#71717a" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
     </div>
     <div class="resources-grid" id="res-grid">
-      <a href="https://doc.log10x.com/apps/streamer/" target="_blank" class="quick-link ql-streamer">
+      <a href="https://doc.log10x.com/apps/retriever/" target="_blank" class="quick-link ql-retriever">
         <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M21.86 12.5A4.31 4.31 0 0 0 19 11c0-1.95-.68-3.6-2.04-4.96S13.95 4 12 4c-1.58 0-3 .47-4.25 1.43s-2.08 2.19-2.5 3.72c-1.25.28-2.29.93-3.08 1.95S1 13.28 1 14.58c0 1.51.54 2.8 1.61 3.85C3.69 19.5 5 20 6.5 20h12c1.25 0 2.31-.44 3.19-1.31.87-.88 1.31-1.94 1.31-3.19q0-1.725-1.14-3m-1.59 4.77c-.48.49-1.07.73-1.77.73h-12c-.97 0-1.79-.34-2.47-1C3.34 16.29 3 15.47 3 14.5s.34-1.79 1.03-2.47C4.71 11.34 5.53 11 6.5 11H7c0-1.38.5-2.56 1.46-3.54C9.44 6.5 10.62 6 12 6s2.56.5 3.54 1.46C16.5 8.44 17 9.62 17 11v2h1.5c.7 0 1.29.24 1.77.73S21 14.8 21 15.5s-.24 1.29-.73 1.77M16 12c0-2.21-1.79-4-4-4s-4 1.79-4 4 1.79 4 4 4c.74 0 1.43-.21 2-.57L16.57 18 18 16.57 15.43 14c.36-.57.57-1.26.57-2m-4 2c-1.1 0-2-.89-2-2s.9-2 2-2 2 .9 2 2-.89 2-2 2"/></svg>
-        Storage Streamer
+        Retriever
       </a>
-      <a href="https://doc.log10x.com/apps/streamer/run/" target="_blank" class="quick-link ql-run">
+      <a href="https://doc.log10x.com/apps/retriever/run/" target="_blank" class="quick-link ql-run">
         <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M12 20c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8m0-18A10 10 0 0 0 2 12a10 10 0 0 0 10 10 10 10 0 0 0 10-10A10 10 0 0 0 12 2m-2 14.5 6-4.5-6-4.5z"/></svg>
         Configure &amp; Run
       </a>
-      <a href="https://doc.log10x.com/apps/streamer/deploy/" target="_blank" class="quick-link ql-deploy">
+      <a href="https://doc.log10x.com/apps/retriever/deploy/" target="_blank" class="quick-link ql-deploy">
         <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M12.337 0c-.475 0-.861 1.016-.861 2.269 0 .527.069 1.011.183 1.396a8.5 8.5 0 0 0-3.961 1.22 5.2 5.2 0 0 0-.595-1.093c-.606-.866-1.34-1.436-1.79-1.43a.4.4 0 0 0-.217.066c-.39.273-.123 1.326.596 2.353.267.381.559.705.84.948a8.7 8.7 0 0 0-1.528 1.716h1.734a7.18 7.18 0 0 1 5.381-2.421 7.18 7.18 0 0 1 5.382 2.42h1.733a8.7 8.7 0 0 0-1.32-1.53c.35-.249.735-.643 1.078-1.133.719-1.027.986-2.08.596-2.353a.4.4 0 0 0-.217-.065c-.45-.007-1.184.563-1.79 1.43a4.9 4.9 0 0 0-.676 1.325 8.5 8.5 0 0 0-3.899-1.42c.12-.39.193-.887.193-1.429 0-1.253-.386-2.269-.862-2.269M1.624 9.443v5.162h1.358v-1.968h1.64v1.968h1.357V9.443H4.62v1.838H2.98V9.443zm5.912 0v5.162h3.21v-1.108H8.893v-.95h1.64v-1.142h-1.64v-.84h1.853V9.443zm4.698 0v5.162h3.218v-1.362h-1.86v-3.8zm4.706 0v5.162h1.364v-2.643l1.357 1.225 1.35-1.232v2.65h1.365V9.443h-.614l-2.1 1.914-2.109-1.914zm-11.82 7.28a8.7 8.7 0 0 0 1.412 1.548 5.2 5.2 0 0 0-.841.948c-.719 1.027-.985 2.08-.596 2.353.39.273 1.289-.338 2.007-1.364a5.2 5.2 0 0 0 .595-1.092 8.5 8.5 0 0 0 3.961 1.219 5 5 0 0 0-.183 1.396c0 1.253.386 2.269.861 2.269.476 0 .862-1.016.862-2.269 0-.542-.072-1.04-.193-1.43a8.5 8.5 0 0 0 3.9-1.42c.121.4.352.865.675 1.327.719 1.026 1.617 1.637 2.007 1.364s.123-1.326-.596-2.353c-.343-.49-.727-.885-1.077-1.135a8.7 8.7 0 0 0 1.202-1.36h-1.771a7.17 7.17 0 0 1-5.227 2.252 7.17 7.17 0 0 1-5.226-2.252z"/></svg>
         Deploy
       </a>
-      <a href="https://doc.log10x.com/apps/streamer/faq/" target="_blank" class="quick-link ql-faq">
+      <a href="https://doc.log10x.com/apps/retriever/faq/" target="_blank" class="quick-link ql-faq">
         <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M11 18h2v-2h-2zm1-16A10 10 0 0 0 2 12a10 10 0 0 0 10 10 10 10 0 0 0 10-10A10 10 0 0 0 12 2m0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8m0-14a4 4 0 0 0-4 4h2a2 2 0 0 1 2-2 2 2 0 0 1 2 2c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5a4 4 0 0 0-4-4"/></svg>
         FAQ
       </a>
@@ -1478,7 +1478,7 @@ function initSamples() {
     return `<div class="example-item" onclick="applySampleQuery(${i})">
       <div class="ex-name">${escapeHtml(s.name)}</div>
       <div class="ex-code">${escapeHtml(s.search || '(all events)')}</div>
-      <div class="ex-time">${s.since}${filterCount ? ' \u00b7 ' + filterCount + ' filter' + (filterCount > 1 ? 's' : '') : ''}${s.doc ? ' \u00b7 <a href="https://doc.log10x.com/apps/streamer/query/#' + s.doc + '" class="ex-learn" target="_blank" onclick="event.stopPropagation()">Docs</a>' : ''}</div>
+      <div class="ex-time">${s.since}${filterCount ? ' \u00b7 ' + filterCount + ' filter' + (filterCount > 1 ? 's' : '') : ''}${s.doc ? ' \u00b7 <a href="https://doc.log10x.com/apps/retriever/query/#' + s.doc + '" class="ex-learn" target="_blank" onclick="event.stopPropagation()">Docs</a>' : ''}</div>
     </div>`;
   }).join('');
 }
@@ -1818,8 +1818,8 @@ function switchRequestTab(tab) {
     const fromExpr = p.sinceValue ? `'now("-${p.sinceValue}")'` : String(Math.floor(p.qr.from));
     const toExpr = p.sinceValue ? "'now()'" : String(Math.floor(p.qr.to));
     el.textContent =
-`# Add to your Helm values file (values/streamer.yaml)
-# See: https://doc.log10x.com/apps/streamer/deploy/#step-11-configure-scheduled-queries
+`# Add to your Helm values file (values/retriever.yaml)
+# See: https://doc.log10x.com/apps/retriever/deploy/#step-11-configure-scheduled-queries
 
 scheduledQueries:
   enabled: true
@@ -1838,12 +1838,12 @@ scheduledQueries:
 `
 
 # Apply with: terraform apply
-# Or upgrade Helm directly: helm upgrade tenx-streamer ...`;
+# Or upgrade Helm directly: helm upgrade tenx-retriever ...`;
   } else if (tab === 'curl') {
-    const url = (p.endpointUrl || 'http://localhost:8080').replace(/\/+$/, '') + '/streamer/query';
+    const url = (p.endpointUrl || 'http://localhost:8080').replace(/\/+$/, '') + '/retriever/query';
     el.textContent =
 `# Submit query via REST endpoint
-# Requires: kubectl port-forward svc/YOUR-STREAMER-SVC 8080:80
+# Requires: kubectl port-forward svc/YOUR-RETRIEVER-SVC 8080:80
 
 curl -X POST '${url}' \\
   -H 'Content-Type: application/json' \\
@@ -1870,7 +1870,7 @@ curl -X POST '${url}' \\
     const queueUrl = p.queueUrl ? ` \\\\\n  --queue-url '${p.queueUrl}'` : '';
     el.textContent =
 `# Submit query via console CLI
-# Docs: https://doc.log10x.com/apps/streamer/query/
+# Docs: https://doc.log10x.com/apps/retriever/query/
 
 python3 console.py \\
   ${timeArg}${search}${filters}${bucket}${target}${procTime}${resultSize}${regionArg}${queueUrl} \\
@@ -2431,7 +2431,7 @@ async function checkStatus() {
     const data = await resp.json();
 
     if (data.updateAvailable) {
-      addLogEntry('info', 'update', 'Update available: ' + data.version + ' \u2192 ' + data.updateAvailable + '  \u2014  https://github.com/log-10x/modules/tree/main/apps/streamer/console');
+      addLogEntry('info', 'update', 'Update available: ' + data.version + ' \u2192 ' + data.updateAvailable + '  \u2014  https://github.com/log-10x/modules/tree/main/apps/retriever/console');
     }
     if (data.status === 'ok') {
       dot.className = 'status-dot ok';
@@ -2591,7 +2591,7 @@ initSamples();
 initTooltips();
 initResources();
 checkStatus();
-addLogEntry('info', 'ui', 'Storage Streamer Console v2026.03.04.11 initialized');
+addLogEntry('info', 'ui', 'Retriever Console v2026.03.04.11 initialized');
 </script>
 </body>
 </html>

@@ -38,3 +38,5 @@ my.*.bat
 
 # visual studio code
 .vscode
+.terraform/
+.terraform.lock.hcl

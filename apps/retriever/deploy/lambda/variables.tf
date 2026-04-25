@@ -4,7 +4,7 @@ variable "name_prefix" {
 }
 
 variable "image_uri" {
-  description = "Full ECR image URI for the streamer Lambda container (e.g. 123.dkr.ecr.us-east-1.amazonaws.com/tenx-streamer-lambda:1.0.0)."
+  description = "Full ECR image URI for the retriever Lambda container (e.g. 123.dkr.ecr.us-east-1.amazonaws.com/tenx-retriever-lambda:1.0.0)."
   type        = string
 }
 
@@ -38,7 +38,7 @@ variable "tenx_api_key" {
 }
 
 variable "memory_size" {
-  description = "Lambda memory (MB). 6144 measured optimal for streamer workloads — see deploy-lambda.md for the perf curve."
+  description = "Lambda memory (MB). 6144 measured optimal for retriever workloads — see deploy-lambda.md for the perf curve."
   type        = number
   default     = 6144
 }

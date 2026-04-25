@@ -1,8 +1,8 @@
-# terraform-aws-tenx-streamer-lambda
+# terraform-aws-tenx-retriever-lambda
 
-Terraform module that deploys the Storage Streamer to AWS Lambda as a
+Terraform module that deploys the Retriever to AWS Lambda as a
 4-function fan-out topology. Sibling to the EKS-based
-[`terraform-aws-tenx-streamer`](https://registry.terraform.io/modules/log-10x/tenx-streamer/aws)
+[`terraform-aws-tenx-retriever`](https://registry.terraform.io/modules/log-10x/tenx-retriever/aws)
 module; pick one based on the deployment model you want.
 
 ## What it creates
@@ -35,11 +35,11 @@ module; pick one based on the deployment model you want.
 ## Usage
 
 ```hcl
-module "streamer" {
-  source = "./modules/apps/streamer/deploy/lambda"
+module "retriever" {
+  source = "./modules/apps/retriever/deploy/lambda"
 
-  name_prefix        = "my-streamer"
-  image_uri          = "123456789012.dkr.ecr.us-east-1.amazonaws.com/tenx-streamer-lambda:1.0.0"
+  name_prefix        = "my-retriever"
+  image_uri          = "123456789012.dkr.ecr.us-east-1.amazonaws.com/tenx-retriever-lambda:1.0.0"
   source_bucket_name = "my-raw-log-bucket"
   index_bucket_name  = "my-raw-log-bucket"  # same as source — EKS-style layout
   tenx_api_key       = var.tenx_api_key
@@ -99,7 +99,7 @@ is enough for mid-market query volumes.
 | `memory_size` | 6144 | CPU scales linearly with memory. 6144 MB measured optimal; 10240 plateaus. Lower memory is dramatically slower. |
 | `pipeline_shutdown_grace_ms` | 250 | Engine's sequencer-drain wait on pipeline close. Engine default (5000) adds a flat 5 s to warm Lambda invocations because sequencer queues are already empty by close time. 250 ms safely bounds the wait; override upward only if observing dropped events on a high-throughput long-running workload. |
 | `indexer_batch_size` | 1 | SQS batch size for the indexer. 1 is safest (ordered, no redelivery). Increase to trade latency for throughput under backlog. |
-| `enable_query_url` | true | Lambda Function URL exposing `POST /streamer/query`. Cheaper and simpler than API Gateway. Set to false if fronting with API GW for custom auth/routing. |
+| `enable_query_url` | true | Lambda Function URL exposing `POST /retriever/query`. Cheaper and simpler than API Gateway. Set to false if fronting with API GW for custom auth/routing. |
 
 ## File layout
 

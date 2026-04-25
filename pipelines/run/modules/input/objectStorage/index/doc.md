@@ -7,7 +7,7 @@ matching a specified app/service name, search term(s) and timestamp range predic
 
 ### :material-hammer-wrench: Workflow
 
-The index [module](https://doc.log10x.com/engine/module/) executes when S3 event notifications are sent directly to [SQS queues](https://doc.log10x.com/apps/streamer/#sqs-based-architecture), triggering index workers to process uploaded files.
+The index [module](https://doc.log10x.com/engine/module/) executes when S3 event notifications are sent directly to [SQS queues](https://doc.log10x.com/apps/retriever/#sqs-based-architecture), triggering index workers to process uploaded files.
 
 The module comprises an _input_ and _output_ stream:
 
@@ -80,7 +80,7 @@ graph LR
 
 Indexing is CPU and memory intensive during file parsing. Default k8s pod resources:
 
-- **1 CPU** and **2GB memory** per pod (see [deployment guide](https://doc.log10x.com/apps/streamer/deploy/#step-4-configure-application))
+- **1 CPU** and **2GB memory** per pod (see [deployment guide](https://doc.log10x.com/apps/retriever/deploy/#step-4-configure-application))
 - **Autoscaling:** 2–10 replicas depending on queue depth (default 2 min, scales to 10 if backlog grows)
 - **Throughput:** One pod handles ~10–50 GB/day depending on event size and CPU availability
 
@@ -105,5 +105,5 @@ Unindexed files remain queryable via full scan (slower than indexed queries but 
 - **All-in-one:** Single pod cluster handles index, query, and stream roles (suitable for <100 GB/day)
 - **Separate clusters:** Dedicated index/query/stream pods allow independent scaling (recommended for >500 GB/day)
 
-See the [deployment guide](https://doc.log10x.com/apps/streamer/deploy/#step-4-configure-application) for sizing guidance.
+See the [deployment guide](https://doc.log10x.com/apps/retriever/deploy/#step-4-configure-application) for sizing guidance.
 

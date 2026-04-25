@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Log10x Storage Streamer Query Console
+Log10x Retriever Query Console
 
-Submit queries to the Storage Streamer via SQS and track progress via CloudWatch Logs.
+Submit queries to the Retriever via SQS and track progress via CloudWatch Logs.
 Supports both CLI and a built-in web GUI with Monaco editor for expression authoring.
 
 Usage:
@@ -222,8 +222,8 @@ def submit_query_rest(endpoint_url, query_request):
     import urllib.error
     try:
         url = endpoint_url.rstrip('/')
-        if not url.endswith('/streamer/query'):
-            url += '/streamer/query'
+        if not url.endswith('/retriever/query'):
+            url += '/retriever/query'
         data = json.dumps(query_request).encode('utf-8')
         req = urllib.request.Request(url, data=data, headers={'Content-Type': 'application/json'})
         with urllib.request.urlopen(req, timeout=30) as resp:
@@ -256,7 +256,7 @@ def _parse_event_message(raw):
 def _analyze_lifecycle(events):
     """Analyze query lifecycle from structured log events.
 
-    The streamer has a two-tier architecture:
+    The retriever has a two-tier architecture:
       1. Main coordinator logs "query started", dispatches sub-queries via SQS
          ("scan dispatched: N remote scan tasks"), then "query complete" (fast, ~3ms).
       2. Each sub-query is an independent worker that logs "query started",
@@ -646,7 +646,7 @@ class QueryHandler(BaseHTTPRequestHandler):
 def build_parser():
     p = argparse.ArgumentParser(
         prog='console.py',
-        description='Log10x Storage Streamer Query Console',
+        description='Log10x Retriever Query Console',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=f"""
 query options reference:
@@ -664,7 +664,7 @@ examples:
     --bucket my-bucket --dry-run
 
   # follow an existing query by ID (no submission)
-  python3 console.py --query-id QUERY_UUID --log-group /tenx/streamer/query
+  python3 console.py --query-id QUERY_UUID --log-group /tenx/retriever/query
 
   # start web GUI
   python3 console.py --serve
@@ -931,7 +931,7 @@ def _check_for_update():
         return _update_info.get("remoteVersion")
     _update_info = {}
     try:
-        url = "https://raw.githubusercontent.com/log-10x/modules/main/apps/streamer/console/console.py"
+        url = "https://raw.githubusercontent.com/log-10x/modules/main/apps/retriever/console/console.py"
         req = Request(url, headers={"User-Agent": "log10x-console"})
         with urlopen(req, timeout=3) as resp:
             for line in resp:
@@ -941,7 +941,7 @@ def _check_for_update():
                     if remote != VERSION:
                         _update_info["remoteVersion"] = remote
                         print(f"\n  Update available: {VERSION} → {remote}")
-                        print(f"  https://github.com/log-10x/modules/tree/main/apps/streamer/console\n")
+                        print(f"  https://github.com/log-10x/modules/tree/main/apps/retriever/console\n")
                         return remote
                     return None
     except Exception:

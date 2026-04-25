@@ -1,19 +1,19 @@
 #
-# 🔟❎ 'run' Storage streamer app
+# 🔟❎ 'run' Storage retriever app
 
 app:
 
-  name: streamer
+  name: retriever
 
-  title: Streamer
+  title: Retriever
 
   description: Stream events from object storage to log analyzers and metrics on-demand
 
   # 'configFolders' specifies folders containing default configuration files for this module
   configFolders:
-    index Config: apps/streamer/index
-    query Config: apps/streamer/query
-    stream Config: apps/streamer/stream
+    index Config: apps/retriever/index
+    query Config: apps/retriever/query
+    stream Config: apps/retriever/stream
 
     object Storage Query: run/input/objectStorage/query
 
@@ -58,4 +58,4 @@ app:
     object Storage Query: [criteria, s3, actions]
 
   # 'doc' specifies the markdown doc content, only required when generating docs.
-  doc: +include $=TenXEnv.get("docGenerate") ? "apps/streamer/doc.md":""
+  doc: +include $=TenXEnv.get("docGenerate") ? "apps/retriever/doc.md":""

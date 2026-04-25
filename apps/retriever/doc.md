@@ -2,7 +2,7 @@
 icon: material/play-circle-outline
 ---
 
-Test the Storage Streamer locally using [minikube](https://minikube.sigs.k8s.io/) with either [LocalStack](https://localstack.cloud/) (local AWS emulation) or real AWS services. Each step below provides tabs for both backends. For production deployment via Helm, see the [deployment guide](https://doc.log10x.com/apps/streamer/deploy/).
+Test the Retriever locally using [minikube](https://minikube.sigs.k8s.io/) with either [LocalStack](https://localstack.cloud/) (local AWS emulation) or real AWS services. Each step below provides tabs for both backends. For production deployment via Helm, see the [deployment guide](https://doc.log10x.com/apps/retriever/deploy/).
 
 ## :material-clipboard-play-outline: Setup
 
@@ -38,7 +38,7 @@ Test the Storage Streamer locally using [minikube](https://minikube.sigs.k8s.io/
 
         Use real AWS S3 and SQS services. Terraform creates the infrastructure using your AWS credentials, and the pods in minikube access AWS via access keys passed as environment variables.
 
-        **Export your AWS credentials as environment variables.** These are required — Terraform passes them to the streamer pods in minikube so they can reach S3 and SQS.
+        **Export your AWS credentials as environment variables.** These are required — Terraform passes them to the retriever pods in minikube so they can reach S3 and SQS.
 
         If you already have credentials configured via `aws configure` (stored in `~/.aws/credentials`), export them:
 
@@ -65,9 +65,9 @@ Test the Storage Streamer locally using [minikube](https://minikube.sigs.k8s.io/
 
         !!! warning "Environment variables are required"
 
-            Running `aws sts get-caller-identity` alone is not enough — the AWS CLI can authenticate via `~/.aws/credentials` even when the environment variables are empty. The environment variables must be set because they are passed to the streamer pods in Step 7.
+            Running `aws sts get-caller-identity` alone is not enough — the AWS CLI can authenticate via `~/.aws/credentials` even when the environment variables are empty. The environment variables must be set because they are passed to the retriever pods in Step 7.
 
-        The same credentials are passed to the streamer pods in minikube (via `extraEnv` in the Helm chart) so they can reach S3 and SQS. This is appropriate for local testing — for production, use [IAM Roles for Service Accounts (IRSA)](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html).
+        The same credentials are passed to the retriever pods in minikube (via `extraEnv` in the Helm chart) so they can reach S3 and SQS. This is appropriate for local testing — for production, use [IAM Roles for Service Accounts (IRSA)](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html).
 
     === ":material-server: LocalStack"
 
@@ -141,11 +141,11 @@ Test the Storage Streamer locally using [minikube](https://minikube.sigs.k8s.io/
     If you made changes to your local config folder and have already deployed via Step 7, restart the pods to pick them up:
 
     ```bash
-    kubectl rollout restart deployment -n log10x-streamer -l app=streamer-10x
+    kubectl rollout restart deployment -n log10x-retriever -l app=retriever-10x
     ```
 ??? tenx-eventoutputs "Step 5: Configure Event Outputs (Optional)"
 
-    Matched events are shipped to your log analyzer via a built-in [Fluent Bit](https://doc.log10x.com/run/output/event/fluentbit/) sidecar that runs alongside each streamer pod. By default, it outputs to `stdout` for debugging. To send events to a real destination, modify the `fluentBit.output` section in your Terraform `main.tf`:
+    Matched events are shipped to your log analyzer via a built-in [Fluent Bit](https://doc.log10x.com/run/output/event/fluentbit/) sidecar that runs alongside each retriever pod. By default, it outputs to `stdout` for debugging. To send events to a real destination, modify the `fluentBit.output` section in your Terraform `main.tf`:
 
     === ":material-console: stdout"
 
@@ -157,7 +157,7 @@ Test the Storage Streamer locally using [minikube](https://minikube.sigs.k8s.io/
         }
         ```
 
-        View output: `kubectl logs -n log10x-streamer -l app=streamer-10x -c fluent-bit`
+        View output: `kubectl logs -n log10x-retriever -l app=retriever-10x -c fluent-bit`
 
     === ":simple-elasticsearch: Elasticsearch"
 
@@ -222,7 +222,7 @@ Test the Storage Streamer locally using [minikube](https://minikube.sigs.k8s.io/
             config = {
               cloudwatch = {
                 region        = "us-east-1"
-                logGroupName  = "/aws/streamer/events"
+                logGroupName  = "/aws/retriever/events"
                 logStreamPrefix = "stream-"
                 # autoCreateGroup = true  # Create log group if missing
               }
@@ -274,7 +274,7 @@ Test the Storage Streamer locally using [minikube](https://minikube.sigs.k8s.io/
 
     **Example: Enable Prometheus Remote Write** in your local pipeline config:
 
-    ```yaml title="apps/streamer/stream/config.yaml"
+    ```yaml title="apps/retriever/stream/config.yaml"
     # Comment in the line enabling a custom remote write
     - run/output/metric/prometheus/remote-write  # https://doc.log10x.com/run/output/metric/prometheus/remote-write
     ```
@@ -290,7 +290,7 @@ Test the Storage Streamer locally using [minikube](https://minikube.sigs.k8s.io/
       password: my-password # (REQUIRED)
     ```
 
-    See the [Storage Streamer run guide](https://doc.log10x.com/apps/streamer/run/#config-files) for the full list of configurable modules.
+    See the [Retriever run guide](https://doc.log10x.com/apps/retriever/run/#config-files) for the full list of configurable modules.
 
 ??? tenx-terraform "Step 7: Deploy with Terraform"
 
@@ -298,11 +298,11 @@ Test the Storage Streamer locally using [minikube](https://minikube.sigs.k8s.io/
 
     === ":fontawesome-brands-aws: AWS"
 
-        Download the [Terraform configuration](https://github.com/log-10x/terraform-aws-tenx-streamer/blob/main/examples/local-aws/main.tf) and deploy:
+        Download the [Terraform configuration](https://github.com/log-10x/terraform-aws-tenx-retriever/blob/main/examples/local-aws/main.tf) and deploy:
 
         ```bash
-        mkdir -p streamer-local && cd streamer-local
-        curl -sLO https://raw.githubusercontent.com/log-10x/terraform-aws-tenx-streamer/main/examples/local-aws/main.tf
+        mkdir -p retriever-local && cd retriever-local
+        curl -sLO https://raw.githubusercontent.com/log-10x/terraform-aws-tenx-retriever/main/examples/local-aws/main.tf
         terraform init
         terraform apply \
           -var="tenx_api_key=YOUR_API_KEY" \
@@ -319,11 +319,11 @@ Test the Storage Streamer locally using [minikube](https://minikube.sigs.k8s.io/
 
     === ":material-server: LocalStack"
 
-        Download the [Terraform configuration](https://github.com/log-10x/terraform-aws-tenx-streamer/blob/main/examples/local-localstack/main.tf) and deploy:
+        Download the [Terraform configuration](https://github.com/log-10x/terraform-aws-tenx-retriever/blob/main/examples/local-localstack/main.tf) and deploy:
 
         ```bash
-        mkdir -p streamer-local && cd streamer-local
-        curl -sLO https://raw.githubusercontent.com/log-10x/terraform-aws-tenx-streamer/main/examples/local-localstack/main.tf
+        mkdir -p retriever-local && cd retriever-local
+        curl -sLO https://raw.githubusercontent.com/log-10x/terraform-aws-tenx-retriever/main/examples/local-localstack/main.tf
         terraform init
         terraform apply \
           -var="tenx_api_key=YOUR_API_KEY" \
@@ -338,10 +338,10 @@ Test the Storage Streamer locally using [minikube](https://minikube.sigs.k8s.io/
 
     ```bash
     # Check pods are running (should show 2/2 READY for Fluent Bit sidecar)
-    kubectl get pods -n log10x-streamer
+    kubectl get pods -n log10x-retriever
 
-    # View streamer logs
-    kubectl logs -n log10x-streamer -l app=streamer-10x -c streamer-10x-all-in-one --tail=50
+    # View retriever logs
+    kubectl logs -n log10x-retriever -l app=retriever-10x -c retriever-10x-all-in-one --tail=50
     ```
 
     **Expected startup log output:**
@@ -363,16 +363,16 @@ Test the Storage Streamer locally using [minikube](https://minikube.sigs.k8s.io/
     To change the file name filter, modify the Terraform variables in your `main.tf`:
 
     ```hcl
-    # In the streamer_infra module block
-    tenx_streamer_index_trigger_prefix = "app/"    # Only index files under the app/ prefix
-    tenx_streamer_index_trigger_suffix = ".json"   # Only index .json files
+    # In the retriever_infra module block
+    tenx_retriever_index_trigger_prefix = "app/"    # Only index files under the app/ prefix
+    tenx_retriever_index_trigger_suffix = ".json"   # Only index .json files
     ```
 
     Leave `prefix` empty (`""`) to match all paths. The suffix is required — S3 event notifications need at least one filter criterion.
 
 ??? tenx-objectstorageindex "Step 9: Test Indexing"
 
-    Upload a test log file to trigger auto-indexing. Only files with `.log` extension trigger indexing (configured via `tenx_streamer_index_trigger_suffix` in Terraform).
+    Upload a test log file to trigger auto-indexing. Only files with `.log` extension trigger indexing (configured via `tenx_retriever_index_trigger_suffix` in Terraform).
 
     === ":fontawesome-brands-aws: AWS"
 
@@ -381,10 +381,10 @@ Test the Storage Streamer locally using [minikube](https://minikube.sigs.k8s.io/
         echo "{\"timestamp\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",\"level\":\"ERROR\",\"message\":\"Test error\"}" > test.log
 
         # Upload to S3 (triggers auto-indexing via S3 notification)
-        aws s3 cp test.log s3://streamer-logs/app/test.log
+        aws s3 cp test.log s3://retriever-logs/app/test.log
 
         # Check index was created (within 5-15 seconds)
-        aws s3 ls s3://streamer-index/indexed/ --recursive
+        aws s3 ls s3://retriever-index/indexed/ --recursive
         ```
 
     === ":material-server: LocalStack"
@@ -399,16 +399,16 @@ Test the Storage Streamer locally using [minikube](https://minikube.sigs.k8s.io/
         echo "{\"timestamp\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",\"level\":\"ERROR\",\"message\":\"Test error\"}" > test.log
 
         # Upload to S3 (triggers auto-indexing via S3 notification)
-        aws --endpoint-url=http://localhost:4566 s3 cp test.log s3://streamer-logs/app/test.log
+        aws --endpoint-url=http://localhost:4566 s3 cp test.log s3://retriever-logs/app/test.log
 
         # Check index was created (within 5-15 seconds)
-        aws --endpoint-url=http://localhost:4566 s3 ls s3://streamer-index/indexed/ --recursive
+        aws --endpoint-url=http://localhost:4566 s3 ls s3://retriever-index/indexed/ --recursive
         ```
 
-    **Verify indexing completed** — check the streamer logs for `IndexTemplates` and `IndexFilterStats` entries:
+    **Verify indexing completed** — check the retriever logs for `IndexTemplates` and `IndexFilterStats` entries:
 
     ```bash
-    kubectl logs -n log10x-streamer -l app=streamer-10x -c streamer-10x-all-in-one --tail=50
+    kubectl logs -n log10x-retriever -l app=retriever-10x -c retriever-10x-all-in-one --tail=50
     ```
 
     **Expected indexing log output:**
@@ -423,36 +423,36 @@ Test the Storage Streamer locally using [minikube](https://minikube.sigs.k8s.io/
 
 ??? tenx-objectstoragequery "Step 10: Test Querying"
 
-    **Start port-forward to streamer service** (in a separate terminal):
+    **Start port-forward to retriever service** (in a separate terminal):
 
     ```bash
-    kubectl port-forward -n log10x-streamer svc/streamer-streamer-10x-all-in-one 8080:80
+    kubectl port-forward -n log10x-retriever svc/retriever-retriever-10x-all-in-one 8080:80
     ```
 
     === ":fontawesome-brands-aws: AWS"
 
-        **Send a query** using the [Query Console](https://doc.log10x.com/apps/streamer/query/) web GUI or CLI. The query page documents all methods, includes sample queries, and shows real-time query progress via CloudWatch Logs.
+        **Send a query** using the [Query Console](https://doc.log10x.com/apps/retriever/query/) web GUI or CLI. The query page documents all methods, includes sample queries, and shows real-time query progress via CloudWatch Logs.
 
         Monitor streamed events via Fluent Bit:
 
         ```bash
-        kubectl logs -n log10x-streamer -l app=streamer-10x -c fluent-bit --tail=50
+        kubectl logs -n log10x-retriever -l app=retriever-10x -c fluent-bit --tail=50
         ```
 
-        Expected output (look for `tenx-cloud-streamer` tag with your matched events):
+        Expected output (look for `tenx-cloud-retriever` tag with your matched events):
 
         ```
-        [0] tenx-cloud-streamer: [[<epoch>, {}], {"stream"=>"stderr", "log"=>"<your matched log entry>", ...}]
+        [0] tenx-cloud-retriever: [[<epoch>, {}], {"stream"=>"stderr", "log"=>"<your matched log entry>", ...}]
         ```
 
-        `tenx-template` entries are internal template hashes from the scan phase, not final results. Only `tenx-cloud-streamer` entries are your actual matched events.
+        `tenx-template` entries are internal template hashes from the scan phase, not final results. Only `tenx-cloud-retriever` entries are your actual matched events.
 
     === ":material-server: LocalStack"
 
         Quick test via curl:
 
         ```bash
-        curl -X POST http://localhost:8080/streamer/query \
+        curl -X POST http://localhost:8080/retriever/query \
           -H "Content-Type: application/json" \
           -d '{
             "from": "now(\"-5m\")",
@@ -466,16 +466,16 @@ Test the Storage Streamer locally using [minikube](https://minikube.sigs.k8s.io/
         Check the Fluent Bit container logs for streamed events:
 
         ```bash
-        kubectl logs -n log10x-streamer -l app=streamer-10x -c fluent-bit --tail=50
+        kubectl logs -n log10x-retriever -l app=retriever-10x -c fluent-bit --tail=50
         ```
 
-        Expected output (look for `tenx-cloud-streamer` tag with your matched events):
+        Expected output (look for `tenx-cloud-retriever` tag with your matched events):
 
         ```
-        [0] tenx-cloud-streamer: [[<epoch>, {}], {"stream"=>"stderr", "log"=>"<your matched log entry>", ...}]
+        [0] tenx-cloud-retriever: [[<epoch>, {}], {"stream"=>"stderr", "log"=>"<your matched log entry>", ...}]
         ```
 
-        `tenx-template` entries are internal template hashes from the scan phase, not final results. Only `tenx-cloud-streamer` entries are your actual matched events.
+        `tenx-template` entries are internal template hashes from the scan phase, not final results. Only `tenx-cloud-retriever` entries are your actual matched events.
 
 ??? tenx-delete "Step 11: Teardown"
 
@@ -485,11 +485,11 @@ Test the Storage Streamer locally using [minikube](https://minikube.sigs.k8s.io/
 
         ```bash
         # Empty S3 buckets first (required before destroy)
-        aws s3 rm s3://streamer-logs/ --recursive
-        aws s3 rm s3://streamer-index/ --recursive
+        aws s3 rm s3://retriever-logs/ --recursive
+        aws s3 rm s3://retriever-index/ --recursive
 
         # Destroy Terraform resources
-        cd streamer-local
+        cd retriever-local
         terraform destroy \
           -var="tenx_api_key=YOUR_API_KEY" \
           -var="aws_access_key_id=$AWS_ACCESS_KEY_ID" \
@@ -505,7 +505,7 @@ Test the Storage Streamer locally using [minikube](https://minikube.sigs.k8s.io/
 
         ```bash
         # Destroy Terraform resources (S3, SQS, Helm release)
-        cd streamer-local
+        cd retriever-local
         terraform destroy -var="tenx_api_key=YOUR_API_KEY"
 
         # Remove LocalStack
@@ -522,9 +522,9 @@ Test the Storage Streamer locally using [minikube](https://minikube.sigs.k8s.io/
 
     1. **Wait 30-60 seconds** — in this single-node setup, all worker roles (index, query, stream) share resources. Query processing completes once stream workers pick up results from the Stream SQS queue.
     2. **Check the time range** — ensure your query's `from`/`to` range covers the timestamp of your uploaded log file. Using `now("-5m")` queries events from the last 5 minutes.
-    3. **Verify query was accepted** — check streamer logs for `QueryWorker` entries:
+    3. **Verify query was accepted** — check retriever logs for `QueryWorker` entries:
        ```bash
-       kubectl logs -n log10x-streamer -l app=streamer-10x -c streamer-10x-all-in-one --tail=100 | grep -i query
+       kubectl logs -n log10x-retriever -l app=retriever-10x -c retriever-10x-all-in-one --tail=100 | grep -i query
        ```
     4. **Extend processing timeout** — add `"processingTime": "parseDuration(\"5m\")"` to your query request. See [query API reference](https://doc.log10x.com/api/launch/#quarkus) for details.
 
@@ -538,7 +538,7 @@ Test the Storage Streamer locally using [minikube](https://minikube.sigs.k8s.io/
 
     If you must use literal epochs, ensure they're in **milliseconds** (not seconds). A common mistake is passing epoch seconds (e.g., `1769076000`) instead of milliseconds (`1769076000000`). Multiply seconds by 1000.
 
-    Additionally, minikube's clock can drift from the host machine after sleep/hibernate. If the streamer's log timestamps don't match your wall clock, resync minikube's clock:
+    Additionally, minikube's clock can drift from the host machine after sleep/hibernate. If the retriever's log timestamps don't match your wall clock, resync minikube's clock:
 
     ```bash
     minikube ssh -- sudo chronyc makestep
@@ -579,7 +579,7 @@ Test the Storage Streamer locally using [minikube](https://minikube.sigs.k8s.io/
 
     ```hcl
     variable "resource_prefix" {
-      default = "streamer-myname-12345"  # Add your name/ID to ensure uniqueness
+      default = "retriever-myname-12345"  # Add your name/ID to ensure uniqueness
     }
     ```
 

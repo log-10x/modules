@@ -1,7 +1,7 @@
 # 🔟❎ 'run' Query Stream application settings
 
-# This configuration defines the settings for use by the Query Stream operation of the Streamer app.
-# To learn more see https://doc.log10x.com/apps/streamer/#query
+# This configuration defines the settings for use by the Query Stream operation of the Retriever app.
+# To learn more see https://doc.log10x.com/apps/retriever/#query
 
 # ============================ Bootstrap Runtime ==============================
 
@@ -10,7 +10,7 @@ tenx: run    # https://doc.log10x.com/run/bootstrap
 # ======================== Application Dependencies ===========================
 
 runtimeAttributes:
-  - app:streamer
+  - app:retriever
   - sub_app:stream
   - env:cloud
 
@@ -37,4 +37,4 @@ override:
 
   # Adding a default tag for forwarded events
   - key: outputForwardTagValue
-    value: tenx-cloud-streamer
+    value: tenx-cloud-retriever

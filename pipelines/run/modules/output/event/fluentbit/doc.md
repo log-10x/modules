@@ -9,5 +9,5 @@ This output integrates a lightweight, customizable [Fluent Bit](https://fluentbi
 **Use cases:**
 
 - **[Lambda launcher](https://doc.log10x.com/engine/launcher/lambda/)**: Ships optimized CloudWatch Logs events to analytics platforms. The Python handler pipes expanded events to the 10x Engine via stdin; Fluent Bit handles output shipping to the configured destination.
-- **[Storage Streamer](https://doc.log10x.com/apps/streamer/#query)**: Ships query results from cloud storage (e.g., S3) to log analyzers and time-series databases.
+- **[Retriever](https://doc.log10x.com/apps/retriever/#query)**: Ships query results from cloud storage (e.g., S3) to log analyzers and time-series databases.
 

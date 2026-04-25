@@ -114,7 +114,7 @@ def run_test(console_url, rest_url, headless=True):
     # Set endpoint URL
     endpoint_input = driver.find_element(By.ID, "endpoint-url")
     driver.execute_script("arguments[0].value = arguments[1]; arguments[0].dispatchEvent(new Event('input'));",
-                          endpoint_input, rest_url + "/streamer/query")
+                          endpoint_input, rest_url + "/retriever/query")
 
     # Set query name
     name_input = driver.find_element(By.ID, "query-name")

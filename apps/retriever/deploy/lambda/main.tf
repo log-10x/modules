@@ -1,7 +1,7 @@
 ############################################################
-# Storage Streamer — AWS Lambda deployment
+# Retriever — AWS Lambda deployment
 ############################################################
-# Creates the full Lambda-based streamer stack:
+# Creates the full Lambda-based retriever stack:
 #   - 4 Lambda functions (indexer, query, subquery, stream) from one image
 #   - 3 SQS queues + DLQs (index, subquery, stream)
 #   - IAM role + inline policy
@@ -17,7 +17,7 @@ locals {
   name_prefix = var.name_prefix
   common_tags = merge(
     {
-      "tenx-streamer-deploy" = "lambda"
+      "tenx-retriever-deploy" = "lambda"
     },
     var.tags,
   )
@@ -138,18 +138,18 @@ locals {
   # Shared env for all Lambdas. Role-specific overrides merged in per-function.
   common_env = merge(
     {
-      TENX_HOME                           = "/var/task/tenx-home"
-      TENX_LOG_APPENDER                   = "tenxConsoleAppender"
-      TENX_LOG_PATH                       = "/tmp/"
-      JAVA_TOOL_OPTIONS                   = "-Djdk.httpclient.allowRestrictedHeaders=host"
-      TENX_STREAMER_INPUT_BUCKET          = var.source_bucket_name
-      TENX_STREAMER_INDEX_BUCKET          = var.index_bucket_name
-      TENX_INVOKE_PIPELINE_SCAN_ENDPOINT  = aws_sqs_queue.main["subquery"].url
+      TENX_HOME                            = "/var/task/tenx-home"
+      TENX_LOG_APPENDER                    = "tenxConsoleAppender"
+      TENX_LOG_PATH                        = "/tmp/"
+      JAVA_TOOL_OPTIONS                    = "-Djdk.httpclient.allowRestrictedHeaders=host"
+      TENX_STREAMER_INPUT_BUCKET           = var.source_bucket_name
+      TENX_STREAMER_INDEX_BUCKET           = var.index_bucket_name
+      TENX_INVOKE_PIPELINE_SCAN_ENDPOINT   = aws_sqs_queue.main["subquery"].url
       TENX_INVOKE_PIPELINE_STREAM_ENDPOINT = aws_sqs_queue.main["stream"].url
-      TENX_QUARKUS_SUBQUERY_QUEUE_URL     = aws_sqs_queue.main["subquery"].url
-      TENX_QUARKUS_QUERY_QUEUE_URL        = aws_sqs_queue.main["subquery"].url
-      TENX_STREAM_PARALLEL_OBJECTS        = "20"
-      TENX_PIPELINE_SHUTDOWN_GRACE_MS     = tostring(var.pipeline_shutdown_grace_ms)
+      TENX_QUARKUS_SUBQUERY_QUEUE_URL      = aws_sqs_queue.main["subquery"].url
+      TENX_QUARKUS_QUERY_QUEUE_URL         = aws_sqs_queue.main["subquery"].url
+      TENX_STREAM_PARALLEL_OBJECTS         = "20"
+      TENX_PIPELINE_SHUTDOWN_GRACE_MS      = tostring(var.pipeline_shutdown_grace_ms)
     },
     var.tenx_api_key == "" ? {} : { TENX_API_KEY = var.tenx_api_key },
     var.extra_env,
@@ -157,11 +157,11 @@ locals {
 
   roles = {
     indexer = {
-      description = "Streamer indexer — S3 event → byte-range + bloom + reverse index"
+      description = "Retriever indexer — S3 event → byte-range + bloom + reverse index"
       extra_env   = { ROLE = "indexer", INDEX_WRITE_BUCKET = var.source_bucket_name }
     }
     query = {
-      description = "Streamer query-submit — HTTP → pipeline launch → SQS fan-out"
+      description = "Retriever query-submit — HTTP → pipeline launch → SQS fan-out"
       extra_env = {
         ROLE                     = "query"
         QUERY_READ_BUCKET        = var.source_bucket_name
@@ -171,11 +171,11 @@ locals {
       }
     }
     subquery = {
-      description = "Streamer sub-query scan — one time-slice → stream requests"
+      description = "Retriever sub-query scan — one time-slice → stream requests"
       extra_env   = { ROLE = "subquery" }
     }
     stream = {
-      description = "Streamer stream worker — fetch + decode + match + byte-count marker"
+      description = "Retriever stream worker — fetch + decode + match + byte-count marker"
       extra_env   = { ROLE = "stream" }
     }
   }
@@ -197,7 +197,7 @@ resource "aws_lambda_function" "role" {
     variables = merge(local.common_env, each.value.extra_env)
   }
 
-  tags = merge(local.common_tags, { "tenx-streamer-role" = each.key })
+  tags = merge(local.common_tags, { "tenx-retriever-role" = each.key })
 }
 
 ############################################################
@@ -210,7 +210,7 @@ resource "aws_s3_bucket_notification" "source_to_index" {
   bucket = var.source_bucket_name
 
   queue {
-    id            = "tenx-streamer-index-on-put"
+    id            = "tenx-retriever-index-on-put"
     queue_arn     = aws_sqs_queue.main["index"].arn
     events        = ["s3:ObjectCreated:*"]
     filter_prefix = var.source_prefix

@@ -10,7 +10,7 @@ export class ConfigLoadUnit extends TenXUnit {
     }
 
     constructor() { 
-        TenXConsole.log("🚀 Launching 10x Engine: Storage Streamer app (stream results via fluentbit)");
+        TenXConsole.log("🚀 Launching 10x Engine: Retriever app (stream results via fluentbit)");
     }
 }
 

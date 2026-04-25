@@ -1,7 +1,7 @@
-# 🔟❎ 'run' Sub-Query application general settings
+# 🔟❎ 'run' Query application general settings
 
-# This configuration defines general settings for use by the Sub-Query operation of the Streamer app.
-# To learn more see https://doc.log10x.com/apps/streamer/#query
+# This configuration defines general settings for use by the Query operation of the Retriever app.
+# To learn more see https://doc.log10x.com/apps/retriever/#query
 
 # ============================ Bootstrap Runtime ==============================
 
@@ -10,8 +10,8 @@ tenx: run    # https://doc.log10x.com/run/bootstrap
 # ======================== Application Dependencies ===========================
 
 runtimeAttributes:
-  - app:streamer
-  - sub_app:sub-query
+  - app:retriever
+  - sub_app:query
   - env:cloud
 
 include:

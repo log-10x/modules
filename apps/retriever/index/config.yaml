@@ -1,7 +1,7 @@
 # 🔟❎ 'run' Indexer application settings
 
-# This configuration defines general for use by the Index operation of the Streamer app.
-# To learn more see https://doc.log10x.com/apps/streamer/#index
+# This configuration defines general for use by the Index operation of the Retriever app.
+# To learn more see https://doc.log10x.com/apps/retriever/#index
 
 # ============================ Bootstrap Runtime ==============================
 
@@ -10,7 +10,7 @@ tenx: run    # https://doc.log10x.com/run/bootstrap
 # ======================== Application Dependencies ===========================
 
 runtimeAttributes:
-  - app:streamer
+  - app:retriever
   - sub_app:index
   - env:cloud
 

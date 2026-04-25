@@ -1,5 +1,5 @@
 output "lambda_function_names" {
-  description = "Map of role name → Lambda function name for the four streamer roles."
+  description = "Map of role name → Lambda function name for the four retriever roles."
   value       = { for k, f in aws_lambda_function.role : k => f.function_name }
 }
 

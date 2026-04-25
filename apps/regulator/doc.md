@@ -20,7 +20,7 @@ Regulators ensure **predictable costs** and **free budgets** to focus on analyzi
 | **Volume reduction** | Up to 80% | 50–80% (64% typical on K8s OTel logs) |
 | **Risk profile** | Higher — dropped events are gone; safe defaults = deny | Lower — survives full round-trip, queryable as normal |
 | **Typical trigger** | A single pattern is over-budget; cap it at a sample rate | Shipping volume is the bottleneck; shrink the wire format |
-| **Pair with** | Reporter (to identify what to filter) | [Storage Streamer](https://doc.log10x.com/apps/streamer/) (to archive to S3 in compact form) |
+| **Pair with** | Reporter (to identify what to filter) | [Retriever](https://doc.log10x.com/apps/retriever/) (to archive to S3 in compact form) |
 
 <h3 id="compact">Compact mode (was Optimizer)</h3>
 
@@ -395,10 +395,10 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
     Place symbol files in the `symbolPaths` folders specified in the [symbol config](#symbols).
 
-<span id="pair-with-streamer"></span>
-??? tenx-integration "Step 5: Pair with Storage Streamer (optional)"
+<span id="pair-with-retriever"></span>
+??? tenx-integration "Step 5: Pair with Retriever (optional)"
 
-    Archive all events to S3 before regulation for full retention alongside cost control. The regulator filters what reaches your SIEM; filtered events remain in S3, queryable via [Storage Streamer](https://doc.log10x.com/apps/streamer/) for incident investigation, compliance, and auditing.
+    Archive all events to S3 before regulation for full retention alongside cost control. The regulator filters what reaches your SIEM; filtered events remain in S3, queryable via [Retriever](https://doc.log10x.com/apps/retriever/) for incident investigation, compliance, and auditing.
 
     Configure your forwarder to duplicate the event stream — one copy to S3 (all events), one through the regulator (filtered events to SIEM):
 

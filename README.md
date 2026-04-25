@@ -19,7 +19,7 @@ Core module definitions for the Log10x engine — the brain that powers log cost
 │  │  │  ├─ Reporter (DaemonSet)│  │  ├─ Dev (local CLI)             │   │  │
 │  │  │  ├─ Regulator (sidecar) │  │  ├─ Compiler (symbol generation)│   │  │
 │  │  │  │  Filter + Compact    │  │  └─ MCP scaffold (validation)   │   │  │
-│  │  │  └─ Streamer (S3 query) │  │                                 │   │  │
+│  │  │  └─ Retriever (S3 query) │  │                                 │   │  │
 │  │  └─────────────────────────┘  └─────────────────────────────────┘   │  │
 │  └─────────────────────────────────────────────────────────────────────┘  │
 │                                                                           │
@@ -49,7 +49,7 @@ modules/
 │   ├── mcp/                        # stdin/stdout scaffold used by the MCP server
 │   ├── reporter/                   # DaemonSet pre-SIEM cost insight
 │   ├── regulator/                  # Sidecar: Filter + Compact modes
-│   └── streamer/                   # S3 data lake indexing + on-demand query
+│   └── retriever/                   # S3 data lake indexing + on-demand query
 │
 ├── pipelines/                      # Core pipeline definitions
 │   ├── compile/                    # Symbol compilation pipeline
@@ -93,8 +93,8 @@ Deployed alongside log forwarders (Fluentd, Fluent Bit, Filebeat, Logstash).
 
 | App | Purpose | Documentation | Run Guide |
 |-----|---------|---------------|-----------|
-| **Storage Streamer** | S3 data lake indexing & queries | [Overview](https://doc.log10x.com/apps/streamer/) | [Run](https://doc.log10x.com/apps/streamer/run/) |
-| **MCP** | Agent control plane — reads Reporter metrics, commands Regulator/Streamer via GitOps | [Overview](https://doc.log10x.com/manage/mcp-server/) | [Run](https://doc.log10x.com/manage/mcp-server/tools/) |
+| **Retriever** | S3 data lake indexing & queries | [Overview](https://doc.log10x.com/apps/retriever/) | [Run](https://doc.log10x.com/apps/retriever/run/) |
+| **MCP** | Agent control plane — reads Reporter metrics, commands Regulator/Retriever via GitOps | [Overview](https://doc.log10x.com/manage/mcp-server/) | [Run](https://doc.log10x.com/manage/mcp-server/tools/) |
 
 For agentless SIEM-side cost analysis (the evolution of the old Cloud Reporter app), use the [log10x-mcp](https://github.com/log-10x/log10x-mcp) server's `log10x_poc_from_siem_submit` tool.
 

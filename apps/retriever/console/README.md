@@ -1,6 +1,6 @@
-# Storage Streamer Query Console
+# Retriever Query Console
 
-A local query console for the Log10x Storage Streamer. Submits queries via SQS or REST, tracks progress via CloudWatch Logs, and exports queries as curl, CLI, SQS, or CronJob commands.
+A local query console for the Log10x Retriever. Submits queries via SQS or REST, tracks progress via CloudWatch Logs, and exports queries as curl, CLI, SQS, or CronJob commands.
 
 Two modes: a **web GUI** with Monaco editor and live query log, and a **CLI** for scripting and terminal workflows.
 
@@ -38,4 +38,4 @@ python3 console.py \
 
 ## Documentation
 
-Full CLI options, REST API reference, and sample queries: [Defining Queries](https://doc.log10x.com/apps/streamer/query/)
+Full CLI options, REST API reference, and sample queries: [Defining Queries](https://doc.log10x.com/apps/retriever/query/)

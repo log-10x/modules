@@ -13,7 +13,7 @@ graph LR
     Forwarders["Log Forwarders"] -->|IPC| Edge["10x Regulator"]
     Edge --> Analyzers["Analyzers & Storage"]
     Forwarders -.->|IPC| Reporter["10x Reporter (DaemonSet)"]
-    Analyzers --> Cloud["10x Streamer"]
+    Analyzers --> Cloud["10x Retriever"]
     Reporter -.->|Metrics| Console["TSDB & Dashboards"]
     Edge -.->|Metrics| Console
     Cloud -.->|Metrics| Console
@@ -42,7 +42,7 @@ Suggested adoption path (guided by the [MCP Server](https://doc.log10x.com/manag
 
 :material-pipe-valve: **Regulator** — filter noisy events and losslessly compact survivors (MCP proposes filter configs)
 
-:material-cloud-arrow-right-outline: **Streamer** — store events in S3, stream on-demand (MCP recommends the setup)
+:material-cloud-arrow-right-outline: **Retriever** — store events in S3, stream on-demand (MCP recommends the setup)
 
 ## :material-laptop: Dev
 
@@ -58,7 +58,7 @@ See which event types drive 80% of your analytics platform cost, observed **pre-
 
 **MCP can generate tailored Helm values** — ask "set me up with the Reporter" after installing the MCP Server.
 
-[Overview](https://doc.log10x.com/apps/reporter){ .md-button .md-button--primary } · [Architecture](https://doc.log10x.com/apps/reporter/#architecture) · [FAQ](https://doc.log10x.com/apps/reporter/faq/) · [Live Demo :octicons-link-external-16:](https://console.log10x.com?demo=true&step=3&apps=reporter,regulator,streamer&timeframe=year&volume=20&cost=2.50&highlight=reporter)
+[Overview](https://doc.log10x.com/apps/reporter){ .md-button .md-button--primary } · [Architecture](https://doc.log10x.com/apps/reporter/#architecture) · [FAQ](https://doc.log10x.com/apps/reporter/faq/) · [Live Demo :octicons-link-external-16:](https://console.log10x.com?demo=true&step=3&apps=reporter,regulator,retriever&timeframe=year&volume=20&cost=2.50&highlight=reporter)
 
 ___
 
@@ -71,17 +71,17 @@ Execution arm. **Two modes**, one app:
 
 **MCP can propose filter configs per pattern** based on the Reporter's cost attribution.
 
-[Overview](https://doc.log10x.com/apps/regulator){ .md-button .md-button--primary } · [Architecture](https://doc.log10x.com/apps/regulator/#architecture) · [FAQ](https://doc.log10x.com/apps/regulator/faq/) · [Live Demo :octicons-link-external-16:](https://console.log10x.com?demo=true&step=3&apps=reporter,regulator,streamer&timeframe=year&volume=20&cost=2.50&highlight=regulator)
+[Overview](https://doc.log10x.com/apps/regulator){ .md-button .md-button--primary } · [Architecture](https://doc.log10x.com/apps/regulator/#architecture) · [FAQ](https://doc.log10x.com/apps/regulator/faq/) · [Live Demo :octicons-link-external-16:](https://console.log10x.com?demo=true&step=3&apps=reporter,regulator,retriever&timeframe=year&volume=20&cost=2.50&highlight=regulator)
 
 ___
 
-## :material-cloud-arrow-right-outline: Storage Streamer
+## :material-cloud-arrow-right-outline: Retriever
 
 Keep all events in S3 at ~$0.023/GB instead of paying analytics platform ingestion rates. Stream only what you need to your analytics platform on-demand — 70-80% lower analytics cost.
 
 **MCP can recommend the Terraform + Helm pair** for your environment.
 
-[Overview](https://doc.log10x.com/apps/streamer){ .md-button .md-button--primary } · [Architecture](https://doc.log10x.com/apps/streamer/#architecture) · [FAQ](https://doc.log10x.com/apps/streamer/faq/) · [Live Demo :octicons-link-external-16:](https://console.log10x.com?demo=true&step=4&apps=reporter,regulator,streamer&timeframe=year&volume=20&cost=2.50)
+[Overview](https://doc.log10x.com/apps/retriever){ .md-button .md-button--primary } · [Architecture](https://doc.log10x.com/apps/retriever/#architecture) · [FAQ](https://doc.log10x.com/apps/retriever/faq/) · [Live Demo :octicons-link-external-16:](https://console.log10x.com?demo=true&step=4&apps=reporter,regulator,retriever&timeframe=year&volume=20&cost=2.50)
 
 ___
 

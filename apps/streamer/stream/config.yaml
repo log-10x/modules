@@ -1,7 +1,7 @@
 # 🔟❎ 'run' Query Stream application settings
 
 # This configuration defines the settings for use by the Query Stream operation of the Streamer app.
-# To learn more see https://doc.log10x.com/apps/cloud/analyzer/#query
+# To learn more see https://doc.log10x.com/apps/streamer/#query
 
 # ============================ Bootstrap Runtime ==============================
 

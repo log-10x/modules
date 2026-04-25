@@ -10,7 +10,7 @@ Test the Storage Streamer locally using [minikube](https://minikube.sigs.k8s.io/
 
     | Requirement | Description |
     |-------------|-------------|
-    | Log10x License | Get your API key at [console.log10x.com](https://console.log10x.com){target="\_blank"} to enable analytics dashboards and full functionality. |
+    | Log10x License | Get your API key at [console.log10x.com](https://console.log10x.com) to enable analytics dashboards and full functionality. |
     | minikube | Local Kubernetes cluster ([install guide](https://minikube.sigs.k8s.io/docs/start/)) |
     | kubectl | Kubernetes CLI ([install guide](https://kubernetes.io/docs/tasks/tools/)) |
     | Helm | Kubernetes package manager ([install guide](https://helm.sh/docs/intro/install/)) |
@@ -67,7 +67,7 @@ Test the Storage Streamer locally using [minikube](https://minikube.sigs.k8s.io/
 
             Running `aws sts get-caller-identity` alone is not enough — the AWS CLI can authenticate via `~/.aws/credentials` even when the environment variables are empty. The environment variables must be set because they are passed to the streamer pods in Step 7.
 
-        The same credentials are passed to the streamer pods in minikube (via `extraEnv` in the Helm chart) so they can reach S3 and SQS. This is appropriate for local testing — for production, use [IAM Roles for Service Accounts (IRSA)](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html){target="\_blank"}.
+        The same credentials are passed to the streamer pods in minikube (via `extraEnv` in the Helm chart) so they can reach S3 and SQS. This is appropriate for local testing — for production, use [IAM Roles for Service Accounts (IRSA)](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html).
 
     === ":material-server: LocalStack"
 
@@ -231,7 +231,7 @@ Test the Storage Streamer locally using [minikube](https://minikube.sigs.k8s.io/
         }
         ```
 
-        Pods need AWS credentials to write to CloudWatch. For local testing, add `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` to `extraEnv`. For production EKS, use [IRSA](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html){target="\_blank"} instead.
+        Pods need AWS credentials to write to CloudWatch. For local testing, add `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` to `extraEnv`. For production EKS, use [IRSA](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html) instead.
 
     === ":material-aws: S3"
 
@@ -251,7 +251,7 @@ Test the Storage Streamer locally using [minikube](https://minikube.sigs.k8s.io/
         }
         ```
 
-        Pods need AWS credentials to write to S3. For local testing, add `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` to `extraEnv`. For production EKS, use [IRSA](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html){target="\_blank"} instead.
+        Pods need AWS credentials to write to S3. For local testing, add `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` to `extraEnv`. For production EKS, use [IRSA](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html) instead.
 
     These settings take effect when you deploy in Step 7, or run `terraform apply` to update an existing deployment.
 
@@ -298,7 +298,7 @@ Test the Storage Streamer locally using [minikube](https://minikube.sigs.k8s.io/
 
     === ":fontawesome-brands-aws: AWS"
 
-        Download the [Terraform configuration](https://github.com/log-10x/terraform-aws-tenx-streamer/blob/main/examples/local-aws/main.tf){target="\_blank"} and deploy:
+        Download the [Terraform configuration](https://github.com/log-10x/terraform-aws-tenx-streamer/blob/main/examples/local-aws/main.tf) and deploy:
 
         ```bash
         mkdir -p streamer-local && cd streamer-local
@@ -319,7 +319,7 @@ Test the Storage Streamer locally using [minikube](https://minikube.sigs.k8s.io/
 
     === ":material-server: LocalStack"
 
-        Download the [Terraform configuration](https://github.com/log-10x/terraform-aws-tenx-streamer/blob/main/examples/local-localstack/main.tf){target="\_blank"} and deploy:
+        Download the [Terraform configuration](https://github.com/log-10x/terraform-aws-tenx-streamer/blob/main/examples/local-localstack/main.tf) and deploy:
 
         ```bash
         mkdir -p streamer-local && cd streamer-local

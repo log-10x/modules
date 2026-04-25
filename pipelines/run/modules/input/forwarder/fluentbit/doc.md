@@ -56,13 +56,13 @@ The `sourcePattern` regex `\"tag\":\"(.*?)\"` extracts the event source from the
 
     | File | Purpose |
     |------|---------|
-    | [`conf/lua/tenx-regulate.lua`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentbit/conf/lua/tenx-regulate.lua){target="_blank"} | Lua filter script for regulate mode |
-    | [`conf/tenx-regulate.conf`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-regulate.conf){target="_blank"} | Fluent Bit config for regulate mode |
-    | [`conf/tenx-unix.conf`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-unix.conf){target="_blank"} | Forward return path via Unix socket (Linux/macOS) |
-    | [`conf/tenx-forward.conf`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-forward.conf){target="_blank"} | Forward return path via TCP (Windows) |
-    | [`input/stream.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentbit/input/stream.yaml){target="_blank"} | 10x stdin input configuration |
-    | [`output/unix/stream.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentbit/output/unix/stream.yaml){target="_blank"} | 10x Forward protocol output (Unix socket) |
-    | [`output/forward/stream.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentbit/output/forward/stream.yaml){target="_blank"} | 10x Forward protocol output (Windows TCP) |
+    | [`conf/lua/tenx-regulate.lua`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentbit/conf/lua/tenx-regulate.lua) | Lua filter script for regulate mode |
+    | [`conf/tenx-regulate.conf`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-regulate.conf) | Fluent Bit config for regulate mode |
+    | [`conf/tenx-unix.conf`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-unix.conf) | Forward return path via Unix socket (Linux/macOS) |
+    | [`conf/tenx-forward.conf`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-forward.conf) | Forward return path via TCP (Windows) |
+    | [`input/stream.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentbit/input/stream.yaml) | 10x stdin input configuration |
+    | [`output/unix/stream.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentbit/output/unix/stream.yaml) | 10x Forward protocol output (Unix socket) |
+    | [`output/forward/stream.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentbit/output/forward/stream.yaml) | 10x Forward protocol output (Windows TCP) |
 
 ## Quickstart
 

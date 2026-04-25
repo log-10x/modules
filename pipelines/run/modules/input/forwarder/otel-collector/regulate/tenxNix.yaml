@@ -11,12 +11,12 @@
 #   OTel Collector --[syslog/unix]--> Log10x Reducer --[forward/unix]--> OTel Collector --> Final destinations
 #
 # Prerequisites:
-# - Log10x must be running with: tenx @run/input/forwarder/otel-collector/regulate __SAVE_APPS_REDUCER__
+# - Log10x must be running with: tenx @run/input/forwarder/otel-collector/regulate @apps/reducer
 # - Log10x will listen on Unix socket: /tmp/tenx-otel-in.sock
 # - Log10x will write filtered events to: /tmp/tenx-otel-out.sock
 #
 # Usage:
-# - Run Log10x first: tenx @run/input/forwarder/otel-collector/regulate __SAVE_APPS_REDUCER__
+# - Run Log10x first: tenx @run/input/forwarder/otel-collector/regulate @apps/reducer
 # - Then run: otelcol-contrib --config=tenxNix.yaml
 
 receivers:

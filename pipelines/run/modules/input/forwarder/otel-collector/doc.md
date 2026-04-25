@@ -83,10 +83,10 @@ export TENX_API_KEY=your-api-key
 tenx run @run/input/forwarder/otel-collector/report @apps/reporter
 
 # Reducer (filter noisy logs)
-tenx run @run/input/forwarder/otel-collector/regulate __SAVE_APPS_REDUCER__
+tenx run @run/input/forwarder/otel-collector/regulate @apps/reducer
 
 # Optimizer (Lossless Compact)
-tenx run @run/input/forwarder/otel-collector/optimize __SAVE_APPS_REDUCER__ reducerOptimize true
+tenx run @run/input/forwarder/otel-collector/optimize @apps/reducer reducerOptimize true
 ```
 
 **3. Copy and customize OTel Collector config:**

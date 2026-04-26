@@ -100,11 +100,42 @@ module:
 
         Out-of-band consumers like the Log10x MCP server set this to `true`
         so they can retrieve full event payloads from S3 under
-        `{indexObjectPath(queryResults)}/{queryId}/*.jsonl`. Deployments that
-        only rely on the coordinator's numeric-key poll leave this off.
+        `{indexObjectPath(queryResults)}/{queryId}/{sliceFrom}_{sliceTo}/*.jsonl`.
+        Deployments that only rely on the coordinator's numeric-key poll
+        leave this off.
 
         ``` yaml
         queryWriteResults: true
+        ```
+
+    - names:
+        - queryWriteSummaries
+      description: sets whether per-slice TenXSummary aggregates are buffered to JSONL and uploaded
+      type: boolean
+      required: false
+      defValue: false
+      category: general
+      doc: |
+        Controls whether the stream pipeline launches a TenXSummary-mode
+        results writer in addition to the events writer (gated by
+        `queryWriteResults`) and the byte-count marker backstop.
+
+        Defaults to `false`. The query coordinator forwards this flag to each
+        stream worker it dispatches via a `queryObjectWriteSummaries=<value>`
+        bootstrap arg on the stream pipeline launch.
+
+        When set to `true`, per-slice aggregated summaries (count, bytesum,
+        grouping fields produced by `run/aggregate/stream`) are written to
+        `{indexObjectPath(querySummaries)}/{queryId}/{sliceFrom}_{sliceTo}/*.jsonl`.
+        Consumers (e.g. log10x_pattern_trend, log10x_top_patterns) can poll
+        these per-slice summaries to render time-spread results for high-cardinality
+        patterns without paying the bandwidth cost of full event JSONL.
+
+        Independent of `queryWriteResults`; either can be on in isolation
+        or both together.
+
+        ``` yaml
+        queryWriteSummaries: true
         ```
 
   # -------------------------------- Filter Options ---------------------------

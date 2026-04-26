@@ -142,15 +142,22 @@ output:
     # aggregator). TenXObject instances flow to the events writer above.
     filter: isSummary
 
-    # TenXSummary fields: count + bytesum + grouping fields. These are the
-    # canonical summary attributes; pattern names + enrichment fields show
-    # up under summaryValues so the consumer can group/sort client-side.
+    # Emit each enrichment field as a NAMED top-level key — same expansion
+    # pattern the events writer above uses. Self-describing per record:
+    # group_by lookups in consumers (MCP, log10x_pattern_trend, etc.) hit
+    # `record.severity_level` / `record.k8s_pod` directly instead of a
+    # position-based index into an opaque values array — which would
+    # silently misattribute when a deployment customizes
+    # `enrichmentFields` (adds, removes, or reorders).
+    #
+    # `summaryVolume` and `summaryBytes` are intrinsic TenXSummary
+    # attributes (event count + utf8 byte sum for this group). The slice
+    # bounds come from the S3 key path the writer composes — independent
+    # of any per-record timestamp.
     fields:
-      - timestamp
       - summaryVolume
       - summaryBytes
-      - summaryValues
-      - summaryTotals
+      - $=yield TenXEnv.get("enrichmentFields")
       - summaryValuesHash
 
     encodeType: json

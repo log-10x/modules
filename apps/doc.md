@@ -48,8 +48,6 @@ Suggested adoption path (guided by the [MCP Server](https://doc.log10x.com/manag
 
 Preview savings on your actual log files before deploying. Installs locally or via Docker — or ask MCP to fetch and invoke it for you.
 
-[Overview](https://doc.log10x.com/apps/dev){ .md-button .md-button--primary } · [FAQ](https://doc.log10x.com/apps/dev/faq/) · [Live Demo :octicons-link-external-16:](https://console.log10x.com?demo=true)
-
 ___
 
 ## :material-chart-bar: Reporter
@@ -57,8 +55,6 @@ ___
 See which event types drive 80% of your analytics platform cost, observed **pre-SIEM** from the forwarder stream. Deploys as a **DaemonSet** alongside your forwarder — not as a sidecar inside it. Not in the critical log path.
 
 **MCP can generate tailored Helm values** — ask "set me up with the Reporter" after installing the MCP Server.
-
-[Overview](https://doc.log10x.com/apps/reporter){ .md-button .md-button--primary } · [Architecture](https://doc.log10x.com/apps/reporter/#architecture) · [FAQ](https://doc.log10x.com/apps/reporter/faq/) · [Live Demo :octicons-link-external-16:](https://console.log10x.com?demo=true&step=3&apps=reporter,reducer,retriever&timeframe=year&volume=20&cost=2.50&highlight=reporter)
 
 ___
 
@@ -71,8 +67,6 @@ Execution arm. **Two modes**, one app:
 
 **MCP can propose filter configs per pattern** based on the Reporter's cost attribution.
 
-[Overview](https://doc.log10x.com/apps/reducer){ .md-button .md-button--primary } · [Architecture](https://doc.log10x.com/apps/reducer/#architecture) · [FAQ](https://doc.log10x.com/apps/reducer/faq/) · [Live Demo :octicons-link-external-16:](https://console.log10x.com?demo=true&step=3&apps=reporter,reducer,retriever&timeframe=year&volume=20&cost=2.50&highlight=reducer)
-
 ___
 
 ## :material-cloud-arrow-right-outline: Retriever
@@ -80,8 +74,6 @@ ___
 Keep all events in S3 at ~$0.023/GB instead of paying analytics platform ingestion rates. Stream only what you need to your analytics platform on-demand — 70-80% lower analytics cost.
 
 **MCP can recommend the Terraform + Helm pair** for your environment.
-
-[Overview](https://doc.log10x.com/apps/retriever){ .md-button .md-button--primary } · [Architecture](https://doc.log10x.com/apps/retriever/#architecture) · [FAQ](https://doc.log10x.com/apps/retriever/faq/) · [Live Demo :octicons-link-external-16:](https://console.log10x.com?demo=true&step=4&apps=reporter,reducer,retriever&timeframe=year&volume=20&cost=2.50)
 
 ___
 

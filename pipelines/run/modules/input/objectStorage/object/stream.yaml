@@ -122,27 +122,19 @@ output:
 
     # --------------------------- Summaries Output ----------------------------
 
-    # A third output (same Java writer class as queryObjectResults above)
-    # configured for TenXSummary records produced by the optional
-    # run/aggregate/stream aggregator. Routes summary JSONL to a separate
-    # querySummaries S3 prefix so consumers can fetch a low-volume per-slice
-    # rollup (count, bytesum, grouping fields) for high-cardinality patterns
-    # instead of pulling raw events.
-    #
-    # Both outputs key their S3 path by the coordinator's TimeSlice:
+    # A third output configured for TenXSummary records produced by the
+    # optional run/aggregate/stream aggregator. The IndexObjectQuerySummariesWriter
+    # subclass extends IndexObjectQueryResultsWriter and overrides only the
+    # S3 prefix (querySummaries / qrs/ instead of queryResults / qr/). Same
+    # per-worker JSONL buffering, same slice-keyed S3 path:
     #   {indexObjectPath(querySummaries)}/{queryId}/{sliceFrom}_{sliceTo}/*.jsonl
-    # so an MCP consumer can stream partial progress per slice without
-    # waiting for the whole query to complete.
+    # so a consumer can stream partial progress per slice without waiting
+    # for whole-query completion.
   - type: stream
 
-    path: com.log10x.ext.cloud.index.query.object.IndexObjectQueryResultsWriter
+    path: com.log10x.ext.cloud.index.query.object.IndexObjectQuerySummariesWriter
 
     name: queryObjectSummaries
-
-    # Tells the writer to upload under the querySummaries (qrs/) prefix
-    # rather than the default queryResults (qr/) prefix.
-    args:
-      indexObjectType: querySummaries
 
     enabled: $?queryObjectWriteSummaries=false
 

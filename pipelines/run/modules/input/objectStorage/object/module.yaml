@@ -57,9 +57,10 @@ module:
 
         Defaults to `false` so the extra JSONL upload only runs when a caller
         explicitly opts in. When set to `true`, query results are written
-        under the `queryResults` index prefix so out-of-band consumers
-        (e.g. the Log10x MCP server) can retrieve them by polling S3 for
-        `{indexObjectPath(queryResults)}/{queryId}/*.jsonl`. The fields
+        under a slice-keyed prefix
+        `{indexObjectPath(queryResults)}/{queryId}/{sliceFrom}_{sliceTo}/*.jsonl`
+        so out-of-band consumers (e.g. the Log10x MCP server) can retrieve
+        partial progress by polling per-slice subdirectories. The fields
         serialized per event default to `timestamp` + `text` plus every name
         registered in the global `enrichmentFields` option.
 
@@ -69,6 +70,51 @@ module:
         launch. Deployments that rely solely on the byte-count marker
         backstop used by the query coordinator leave this off and pay no
         results-writer overhead.
+
+    - names:
+        - queryObjectWriteSummaries
+      description: sets whether per-slice TenXSummary aggregates are buffered to JSONL and uploaded
+      type: boolean
+      required: false
+      defValue: false
+      category: general
+      doc: |
+        Controls whether a second results-style output buffers TenXSummary
+        records (produced by the optional `run/aggregate/stream` aggregator)
+        to a local temp file as JSONL and uploads them to object storage on
+        close.
+
+        Defaults to `false`. When set to `true`, summaries are written under
+        `{indexObjectPath(querySummaries)}/{queryId}/{sliceFrom}_{sliceTo}/*.jsonl`
+        so consumers can fetch a low-volume per-slice rollup (count,
+        bytesum, grouping fields) for noisy patterns instead of pulling raw
+        events. Independent of `queryObjectWriteResults`; either can be on
+        in isolation or both together.
+
+    - names:
+        - queryObjectSliceFrom
+      description: slice from-bound (epoch ms) for this dispatch
+      type: number
+      required: false
+      defValue: 0
+      category: general
+      doc: |
+        Set by the query coordinator to the lower bound of the timeslice
+        being processed by this stream worker. Always populated regardless
+        of `queryObjectFrom`/`queryObjectTo` (which may be zero when the
+        byte range fully contains the slice and per-event timestamp filtering
+        is unnecessary). Used by writers to key slice-grouped S3 outputs.
+
+    - names:
+        - queryObjectSliceTo
+      description: slice to-bound (epoch ms) for this dispatch
+      type: number
+      required: false
+      defValue: 0
+      category: general
+      doc: |
+        Set by the query coordinator to the upper bound of the timeslice
+        being processed by this stream worker. See `queryObjectSliceFrom`.
 
   # ----------------------------- Container Options ---------------------------
 

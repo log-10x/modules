@@ -5,7 +5,7 @@ icon: material/play-circle-outline
 The Reducer app is the **execution arm** of the 10x pipeline. Two modes, one app:
 
 - **Filter** (lossy): drop events matching a rule via [rate-based](https://doc.log10x.com/run/regulate/rate) filtering or declarative [field-set mute files](https://doc.log10x.com/run/regulate/rate/#mute-file-mode-declarative-field-set-caps). Safe defaults are deny; explicit allow required. Up to 80% volume reduction.
-- **Compact mode** (lossless): replace events with a compact wire-form that the downstream SIEM plugin expands at query time. 50–80% reduction (64% on K8s OTel logs) with no dashboard or query changes. Requires the expand plugin installed in [Splunk](splunk.md) or [Elasticsearch](elasticsearch.md). No expand plugin = no value.
+- **Compact mode** (lossless): replace events with a compact wire-form that the downstream SIEM plugin expands at query time. 50–80% reduction (64% on K8s OTel logs) with no dashboard or query changes. Requires the expand plugin installed in [Splunk](compact/splunk.md) or [Elasticsearch](compact/elasticsearch.md). No expand plugin = no value.
 
 Both modes are commanded via GitOps. Operators (or an agent via the [log10x-mcp](https://github.com/log-10x/log10x-mcp) server) open PRs in the customer's config repo; the reducer pulls the latest on reload.
 
@@ -24,7 +24,7 @@ Reducers ensure **predictable costs** and **free budgets** to focus on analyzing
 
 <h3 id="compact">Compact mode (was Optimizer)</h3>
 
-Compact mode was previously a separate app (`@apps/edge/optimizer`). It is now a feature of the reducer: both are the execution arm, both are commanded via GitOps, both operate on stable pattern identity. The former optimizer's deploy/run content is merged into the reducer's [deploy](https://doc.log10x.com/apps/reducer/deploy/) and [run](https://doc.log10x.com/apps/reducer/run/) pages. For SIEM-side plugin install, see the [Splunk](splunk.md) and [Elasticsearch](elasticsearch.md) pages.
+Compact mode was previously a separate app (`@apps/edge/optimizer`). It is now a feature of the reducer: both are the execution arm, both are commanded via GitOps, both operate on stable pattern identity. The former optimizer's deploy/run content is merged into the reducer's [deploy](https://doc.log10x.com/apps/reducer/deploy/) and [run](https://doc.log10x.com/apps/reducer/run/) pages. For SIEM-side plugin install, see the [Splunk](compact/splunk.md) and [Elasticsearch](compact/elasticsearch.md) pages.
 
 ## :material-clipboard-play-outline: Setup Guide
 

@@ -1,5 +1,6 @@
 ## 1️⃣0️⃣❎ Compact reducer module
 
-Gate per-event `encode()` vs `fullText` emission via a declarative field-set keyed lookup file. Entries are GitOps-controlled (MCP writes them via PR); new entries take effect on forwarder pod restart.
+Per-event compaction decision via a declarative field-set keyed lookup file. Decides whether each event is emitted via encode() (compact templateHash+vars form, ~20-40x volume reduction) or as fullText. GitOps-controlled — the MCP writes entries via PR, engine hot-reloads the lookup without restart.
 
-To learn more see the Compact reducer [module documentation](https://doc.log10x.com/run/regulate/compact "Gate per-event encode() vs fullText via a declarative field-set keyed lookup file.").
+To learn more see the Compact reducer [module documentation](https://doc.log10x.com/run/regulate/compact "Per-event compaction decision via a declarative field-set keyed lookup file. Decides whether each event is emitted via encode() (compact templateHash+vars form, ~20-40x volume reduction) or as fullText. GitOps-controlled — the MCP writes entries via PR, engine hot-reloads the lookup without restart.").
+

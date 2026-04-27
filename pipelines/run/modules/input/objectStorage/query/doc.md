@@ -32,6 +32,12 @@ Multiple scan workers perform this workload in parallel, submitting matching byt
 Stream workers read object storage blob byte ranges identified by the scan workers and transform them into TenXObjects
 on which they perform the [actions](#queryactions) specified by the query.
 
+### :material-counter: Summaries
+
+Stream workers optionally write per-pattern rollups to a parallel S3 prefix `qrs/{queryId}/{sliceFrom}_{sliceTo}/{worker}.jsonl`, alongside or instead of raw events at `qr/{queryId}/{sliceFrom}_{sliceTo}/{worker}.jsonl`. Each summary record carries `summaryVolume` (event count), `summaryBytes` (UTF-8 byte total), and the named enrichment fields the pipeline initialized.
+
+Toggle via [`queryWriteSummaries`](#querywritesummaries) on the query module, or by setting `writeSummaries: true` on the `POST /streamer/query` REST request. Raw events (`qr/`) carry forensic payloads; summaries (`qrs/`) keep counts exact across all matched events instead of capped per worker.
+
 ## :material-sitemap-outline: Architecture Flow
 
 The following diagram illustrates the complete distributed, parallel architecture for query execution:

@@ -1,0 +1,42 @@
+# 🔟❎ 'run' Vector Unix socket input stream configuration
+#
+# This configuration defines a Unix domain socket input that receives
+# newline-delimited records from Vector's `socket` sink (`mode: unix`,
+# `encoding.codec: text` or `json`). Each line is treated as one event.
+#
+# Vector's socket sink does not frame events in RFC5424 syslog (and does
+# not need to — the syslog wrapper used by the OTel Collector integration
+# only exists because OTel's syslog exporter is the cleanest path to a
+# Unix socket on that side). Here we read plain bytes between newlines.
+
+# Set the 10x pipeline to 'run'
+tenx: run
+
+# Adding a runtime attribute for metrics reporting
+runtimeAttributes:
+  - fwd_input:vector
+
+# Events are read from Vector via a Unix socket. Each newline-delimited
+# record becomes one event.
+input:
+
+  - type: stream
+
+    name: vector
+
+    # Use the Unix socket input stream without syslog parsing
+    path: com.log10x.ext.edge.input.unix.UnixSocketInputStream
+
+    # Configuration options passed to the InputStream constructor (flat list format)
+    args:
+      # Unix socket path where Vector's socket sink writes data
+      - path
+      - $=TenXEnv.get("vectorInputPath", "/tmp/tenx-vector-in.sock")
+      # Vector does not wrap events in RFC5424 — read raw newline-delimited records
+      - syslog
+      - false
+
+    # Sets the recommended backpressure limit for the 10x pipeline
+    backpressure:
+      intervalBytesLimit: $=parseBytes("2MB")
+      intervalBytesDuration: $=parseDuration("1s")

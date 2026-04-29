@@ -1,3 +1,7 @@
+---
+icon: simple/vector
+---
+
 Integrate Log10x with [Vector](https://vector.dev) to report, regulate, and optimize log events _before_ shipping to outputs (Elasticsearch, Splunk, S3).
 
 ## Architecture

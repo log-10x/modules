@@ -55,9 +55,14 @@ export TENX_API_KEY=your-api-key
 
 **2. Start Log10x first:**
 
+All three modes share a single launch — the regulate wrapper plus the reducer
+app. Mode is selected by flags. The dedicated `apps/reporter` app is reserved
+for the bundled fluent-bit DaemonSet; for any forwarder including Vector, use
+the reducer with `reducerReadOnly` for non-intervening read-only analytics.
+
 ```bash
-# Reporter (read-only analytics)
-tenx run @run/input/forwarder/vector/report @apps/reporter
+# Read-only (no return loop to Vector — metrics only)
+tenx run @run/input/forwarder/vector/regulate @apps/reducer reducerReadOnly true
 
 # Reducer (filter noisy logs)
 tenx run @run/input/forwarder/vector/regulate @apps/reducer

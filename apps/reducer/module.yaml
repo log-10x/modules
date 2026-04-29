@@ -44,3 +44,42 @@ module:
         reducer:
           optimize: true
         ```
+
+    - names:
+      - reducerReadOnly
+      description: suppress the return-loop output to the forwarder; reducer reads, aggregates and reports metrics only
+      type: boolean
+      required: false
+      defValue: false
+      doc: |
+        enables read-only mode on the reducer. When true, the reducer reads
+        events from the coupled forwarder, runs aggregators, and publishes
+        `emitted_events` / `all_events` TenXSummary metrics — but does **not**
+        write events back to the forwarder.
+
+        This makes the reducer the single coupled-with-forwarder app for the
+        full read-only / regulate / optimize spectrum. Use the dedicated
+        [Reporter](https://doc.log10x.com/apps/reporter/) app only for the
+        non-intervening DaemonSet pattern (paired with the bundled fluent-bit).
+
+        **Effect:**
+        The generic event-output stream modules
+        ([forward](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/output/event/forward/stream.yaml),
+        [unix](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/output/event/unix/stream.yaml),
+        [socket](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/output/event/socket/stream.yaml),
+        [stdout](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/output/event/stdout/stream.yaml))
+        AND their `enabled` gate with `!TenXEnv.get("reducerReadOnly", false)`,
+        so when the flag is true the output stream is not constructed and the
+        log4j Fluency appender (where applicable) never tries to connect to the
+        forwarder's return socket. The custom-writeObjects path in
+        [fluentd/output/stdio](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentd/output/stdio/stream.yaml)
+        applies the same gate per entry.
+
+        Mutually compatible with `reducerOptimize` (encoding wouldn't reach the
+        forwarder anyway, so it is functionally a no-op when read-only is on).
+
+        **Usage:**
+        ```yaml
+        reducer:
+          readOnly: true
+        ```

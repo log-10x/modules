@@ -27,7 +27,8 @@ output:
 
     # 'enabled' sets whether to open the output. If true, any 'filter' value
     #  set below is evaluated for each TenXObject to determine whether to write its instance/template field values to output. 
-    enabled: $=yield TenXEnv.get("stdoutWriteObjects", true) && !TenXEnv.get("stdoutLog4j2", false) 
+    # `reducerReadOnly=true` short-circuits the gate so the reducer can run as a non-intervening reporter.
+    enabled: $=yield !TenXEnv.get("reducerReadOnly", false) && TenXEnv.get("stdoutWriteObjects", true) && !TenXEnv.get("stdoutLog4j2", false)
     
     # 'filter' is set to skip templates when encoding object field values.
     #  A separate output stream is defined below to encode templates   
@@ -74,7 +75,8 @@ output:
       - $stdoutTarget
 
     # 'enabled' is false by default. 'outputStdoutWriteTemplates' must be true to encode TenXTemplates 
-    enabled: $=yield TenXEnv.get("stdoutWriteTemplates", false) &&  !TenXEnv.get("stdoutLog4j2", false) 
+    # `reducerReadOnly=true` short-circuits so no templates are emitted in read-only mode.
+    enabled: $=yield !TenXEnv.get("reducerReadOnly", false) && TenXEnv.get("stdoutWriteTemplates", false) &&  !TenXEnv.get("stdoutLog4j2", false)
 
     # 'filter' uses the 'isNewTemplate' 10x JavaScript function to skip templates 
     #  loaded via the https://doc.log10x.com/run/template/#templatefiles argument or previously written to this output

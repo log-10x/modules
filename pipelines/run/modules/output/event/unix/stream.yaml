@@ -25,7 +25,8 @@ output:
 
     # 'enabled' sets whether to open the output. If true, any 'filter' value
     #  set below is evaluated for each TenXObject to determine whether to write its instance/template field values to output.
-    enabled: $?outputUnixSocketWriteObjects=true
+    # `reducerReadOnly=true` short-circuits the gate so the reducer can run as a non-intervening reporter.
+    enabled: $=yield !TenXEnv.get("reducerReadOnly", false) && TenXEnv.get("outputUnixSocketWriteObjects", true)
 
     # 'filter' is set to skip templates when encoding object field values.
     #  A separate unix output stream is defined below to encode templates
@@ -80,8 +81,9 @@ output:
       - $outputUnixSocketAddress
 
     # 'enabled' is false by default. 'outputUnixSocketWriteTemplates' must be set to
-    # true for templates to be encoded
-    enabled: $?outputUnixSocketWriteTemplates=false
+    # true for templates to be encoded.
+    # `reducerReadOnly=true` short-circuits so no templates are emitted in read-only mode.
+    enabled: $=yield !TenXEnv.get("reducerReadOnly", false) && TenXEnv.get("outputUnixSocketWriteTemplates", false)
 
     # 'filter' uses the 'isNewTemplate' 10x JavaScript function to skip templates
     #  loaded via the https://doc.log10x.com/run/template/#templatefiles argument or previously written to this output

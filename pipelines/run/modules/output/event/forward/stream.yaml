@@ -25,7 +25,8 @@ output:
 
     # 'enabled' sets whether to open the output. If true, any 'filter' value
     #  set below is evaluated for each TenXObject to determine whether to write its instance/template field values to output.
-    enabled: $?outputForwardWriteObjects=true
+    # `reducerReadOnly=true` short-circuits the gate so the reducer can run as a non-intervening reporter.
+    enabled: $=yield !TenXEnv.get("reducerReadOnly", false) && TenXEnv.get("outputForwardWriteObjects", true)
 
     # 'filter' is configured only to encode TenXObject instance field values.
     #  A separate output stream is defined below to encode TenXTemplates
@@ -80,7 +81,8 @@ output:
       - $?outputForwardHostPort=24224
 
     # 'enabled' must be set to true to encode TenXTemplates to this output.
-    enabled: $?outputForwardWriteTemplates=true
+    # `reducerReadOnly=true` short-circuits so no templates are emitted in read-only mode.
+    enabled: $=yield !TenXEnv.get("reducerReadOnly", false) && TenXEnv.get("outputForwardWriteTemplates", true)
 
     # 'filter' uses the 'isNewTemplate' 10x JavaScript function to skip templates
     #  loaded via the https://doc.log10x.com/run/template/#templatefiles argument or previously written to this output

@@ -281,6 +281,47 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
         Two separate pipelines prevent infinite loops - events in `logs/from-tenx` never feed back to `logs/to-tenx`.
 
+    === ":simple-vector: Vector"
+
+        !!! note "Requires Vector v0.34+"
+            For the `fluent` source and `socket` sink with `mode: unix`. Vector communicates with the 10x sidecar over Unix domain sockets — newline-delimited text outbound, Fluent Forward inbound.
+
+        **Step 1**: Copy the Vector configuration:
+
+        ```bash
+        cp $TENX_MODULES/pipelines/run/modules/input/forwarder/vector/regulate/tenxNix.yaml /etc/vector/
+        ```
+
+        **Step 2**: Update sources and final sinks to match your environment:
+
+        ```yaml title="tenxNix.yaml"
+        sources:
+          # Replace with your real Vector sources
+          app_logs:
+            type: file
+            include:
+              - /var/log/**/*.log
+            read_from: end
+
+        sinks:
+          # Replace `console` with your real destination(s) — elasticsearch, splunk_hec, kafka, s3, etc.
+          final:
+            type: console
+            inputs:
+              - tenx_out
+            encoding:
+              codec: json
+        ```
+
+        **Step 3**: Start Log10x first, then Vector:
+
+        ```bash
+        tenx run @run/input/forwarder/vector/regulate @apps/reducer
+        vector --config /etc/vector/tenxNix.yaml
+        ```
+
+        Two disconnected component chains in Vector's graph prevent loops: `app_logs → tenx_in` (events out to 10x) and `tenx_out → final` (regulated events in from 10x) never wire together.
+
     === ":simple-splunk: Splunk UF"
 
         !!! note "File Relay Pattern"

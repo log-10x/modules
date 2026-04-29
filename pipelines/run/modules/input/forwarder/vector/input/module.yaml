@@ -1,0 +1,28 @@
+#
+# 🔟❎ 'run' Vector Unix socket input module
+
+module:
+
+  name: vectorInput
+
+  title: Vector Unix socket input
+
+  description: Configure Unix socket input for receiving logs from Vector via the socket sink
+
+  doc: '+include $=TenXEnv.get("docGenerate") ? "run/modules/input/forwarder/vector/input/doc.md":""'
+
+  allowMultiple: false
+
+  options:
+
+    - names:
+      - vectorInputPath
+      description: Unix socket path for input
+      type: String
+      required: false
+      defValue: /tmp/tenx-vector-in.sock
+      doc: |
+        Unix domain socket path where Log10x listens for incoming events
+        from Vector's `socket` sink (`mode: unix`).
+
+        Example: `/tmp/tenx-vector-in.sock`

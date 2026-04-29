@@ -1,0 +1,28 @@
+#
+# 🔟❎ 'run' Vector output module
+
+module:
+
+  name: vectorOutput
+
+  title: Vector Forward output
+
+  description: Configure Forward protocol output for returning processed events to Vector
+
+  doc: +include $=TenXEnv.get("docGenerate") ? "run/modules/input/forwarder/vector/output/doc.md":""
+
+  allowMultiple: false
+
+  options:
+
+    - names:
+      - vectorOutputForwardAddress
+      description: Forward output Unix socket address
+      type: String
+      required: false
+      defValue: /tmp/tenx-vector-out.sock
+      doc: |
+        Unix domain socket address for the Forward protocol output.
+        Vector's `fluent` source should listen on this socket.
+
+        Example: `/tmp/tenx-vector-out.sock`

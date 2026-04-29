@@ -1,0 +1,34 @@
+# 🔟❎ 'run' Vector forward output stream configuration
+
+# Writes events to a Vector forwarder host process via the native Fluent
+# Forward protocol over a Unix domain socket. Vector consumes this via its
+# `fluent` source (`mode: unix`).
+#
+# Mode is selected by `outputEncodeField` and `outputWriteTemplates` — see
+# run/modules/input/forwarder/module.yaml for the shared-option model.
+
+# Set the 10x pipeline to 'run'
+tenx: run
+
+# =============================== Dependencies ================================
+
+include:
+
+  # load the forward protocol over the Unix domain socket module
+  - run/modules/output/event/forward
+
+# ============================= Output Options ================================
+
+outputForward:
+
+  - address: $=TenXEnv.get("vectorOutputForwardAddress", "/tmp/tenx-vector-out.sock")
+
+    fields:
+      - $?outputEncodeField=fullText
+      - $?vectorOutputFields
+
+    # Use JSON encoding to properly handle 10x-encoded strings that contain special characters.
+    # (The regulate-mode fullText path also goes through json fine.)
+    encodeType: json
+
+    writeTemplates: $?outputWriteTemplates=false

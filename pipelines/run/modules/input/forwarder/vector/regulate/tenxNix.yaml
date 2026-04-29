@@ -1,0 +1,52 @@
+# Vector 10x 'regulate' configuration for Linux/macOS
+#
+# This Vector configuration sends events to Log10x for regulation via a Unix
+# domain socket using the `socket` sink (newline-delimited text). Filtered
+# events are returned via the `fluent` source (Fluent Forward protocol over
+# a Unix domain socket).
+#
+# Architecture:
+#   Vector --[socket/unix/text]--> Log10x Reducer --[fluent/unix]--> Vector --> Final destinations
+#
+# Prerequisites:
+# - Log10x must be running with: tenx @run/input/forwarder/vector/regulate @apps/reducer
+# - Log10x will listen on Unix socket: /tmp/tenx-vector-in.sock
+# - Log10x will write filtered events to: /tmp/tenx-vector-out.sock
+#
+# Usage:
+# - Run Log10x first: tenx @run/input/forwarder/vector/regulate @apps/reducer
+# - Then run: vector --config tenxNix.yaml
+
+sources:
+  # Example primary source — replace with your actual Vector sources
+  app_logs:
+    type: file
+    include:
+      - /var/log/**/*.log
+    read_from: end
+
+  # Receive filtered logs back from Log10x via Fluent Forward (Unix socket)
+  tenx_out:
+    type: fluent
+    mode: unix
+    path: /tmp/tenx-vector-out.sock
+
+sinks:
+  # Send all logs to Log10x via Unix socket (newline-delimited text)
+  tenx_in:
+    type: socket
+    inputs:
+      - app_logs
+    mode: unix
+    path: /tmp/tenx-vector-in.sock
+    encoding:
+      codec: text
+
+  # Final destinations for filtered (kept) logs — replace with your actual sinks
+  # e.g. elasticsearch, splunk_hec, kafka, s3, etc.
+  final:
+    type: console
+    inputs:
+      - tenx_out
+    encoding:
+      codec: json

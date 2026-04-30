@@ -100,25 +100,25 @@ extraVolumeMounts:
 # 10x sidecar container.
 extraContainers:
   - name: tenx
-    image: log10x/edge-10x:1.0.7
+    image: log10x/edge-10x:latest
     args:
       - "run"
       - "@run/input/forwarder/vector/regulate"
       - "@apps/reducer"
+      - "vectorInputPath"
+      - "/tmp/tenx-sockets/tenx-vector-in.sock"
+      - "vectorOutputForwardAddress"
+      - "/tmp/tenx-sockets/tenx-vector-out.sock"
+      # Read-only mode (no return loop, metrics-only). Omit for full
+      # regulate/optimize round-trip back to Vector.
+      # - "reducerReadOnly"
+      # - "true"
+      # Optimize mode (lossless compaction). Mutually exclusive with read-only.
+      # - "reducerOptimize"
+      # - "true"
     env:
       - name: TENX_API_KEY
         value: "YOUR-LOG10X-API-KEY"
-      - name: vectorInputPath
-        value: "/tmp/tenx-sockets/tenx-vector-in.sock"
-      - name: vectorOutputForwardAddress
-        value: "/tmp/tenx-sockets/tenx-vector-out.sock"
-      # Read-only mode (no return loop, metrics-only). Omit for full
-      # regulate/optimize round-trip back to Vector.
-      # - name: reducerReadOnly
-      #   value: "true"
-      # Optimize mode (lossless compaction). Mutually exclusive with read-only.
-      # - name: reducerOptimize
-      #   value: "true"
     volumeMounts:
       - name: tenx-sockets
         mountPath: /tmp/tenx-sockets
@@ -176,13 +176,13 @@ helm upgrade --install vector vector/vector \
 
 ### Mode selection (read-only / regulate / optimize)
 
-All three modes share the same launch — only one env var changes:
+All three modes share the same launch — only the `args:` list changes:
 
-| Mode | Env var | Behavior |
+| Mode | Extra args | Behavior |
 |---|---|---|
 | **regulate** (default) | none | Filter events; surviving events return to Vector |
-| **read-only** | `reducerReadOnly: "true"` | Read + aggregate + publish metrics; do **not** write events back |
-| **optimize** | `reducerOptimize: "true"` | Filter + losslessly compact surviving events for 50–80% volume reduction |
+| **read-only** | `reducerReadOnly true` | Read + aggregate + publish metrics; do **not** write events back |
+| **optimize** | `reducerOptimize true` | Filter + losslessly compact surviving events for 50–80% volume reduction |
 
 In read-only mode the 10x sidecar binds the input socket but never connects the output socket — Vector's `fluent` source receives nothing, so Vector's existing direct-to-destination sinks are unaffected; 10x is a passive observer publishing metrics to the Log10x backend.
 

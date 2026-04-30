@@ -31,19 +31,11 @@ graph LR
 | 📥 `sources.tenx_out` (`fluent`) | Forward / Unix | Receives processed logs back from Log10x |
 | 🔀 Disconnected component graph | N/A | The to-tenx and from-tenx legs are not wired together, so loops are impossible |
 
-### Why no syslog framing
-
-Vector's `socket` sink does not natively emit RFC5424 syslog (the OTel Collector integration uses syslog only because it is the cleanest way to get bytes out an OTel exporter to a Unix socket). Vector writes the encoded log directly to the socket, so the 10x input reads plain newline-delimited records — no envelope to strip.
-
-### Why no Fluent Forward sink
-
-Vector does not ship a Fluent Forward sink (only a `fluent` source). This integration relies on that asymmetry: 10x emits Fluent Forward on the return leg (it already does, see `run/modules/output/event/forward`) and Vector consumes it via the `fluent` source. The inbound leg goes plain text/JSON over a Unix socket instead.
-
 ### Key Files
 
 | File | Purpose |
 |---|---|
-| `conf/tenxNix.yaml` | Vector config for Reducer mode (Linux/macOS, Unix sockets) |
+| `regulate/tenxNix.yaml` | Vector config for Reducer mode (Linux/macOS, Unix sockets) |
 | `input/stream.yaml` | 10x Unix socket input, plain newline-delimited records |
 | `output/unix/stream.yaml` | 10x Forward protocol output configuration |
 
@@ -59,11 +51,6 @@ export TENX_API_KEY=your-api-key
 
 **2. Start Log10x first:**
 
-All three modes share a single launch — the regulate wrapper plus the reducer
-app. Mode is selected by flags. The dedicated `apps/reporter` app is reserved
-for the bundled fluent-bit DaemonSet; for any forwarder including Vector, use
-the reducer with `reducerReadOnly` for non-intervening read-only analytics.
-
 ```bash
 # Read-only (no return loop to Vector — metrics only)
 tenx run @run/input/forwarder/vector/regulate @apps/reducer reducerReadOnly true
@@ -78,7 +65,7 @@ tenx run @run/input/forwarder/vector/regulate @apps/reducer reducerOptimize true
 **3. Copy and customize Vector config:**
 
 ```bash
-cp $TENX_MODULES/pipelines/run/modules/input/forwarder/vector/conf/tenxNix.yaml /etc/vector/
+cp $TENX_MODULES/pipelines/run/modules/input/forwarder/vector/regulate/tenxNix.yaml /etc/vector/
 ```
 
 **4. Start Vector:**
@@ -92,31 +79,15 @@ vector --config /etc/vector/tenxNix.yaml
 
 ## :material-kubernetes: Kubernetes sidecar
 
-There is no Log10x fork of the Vector Helm chart — the integration uses the official [vector/vector](https://helm.vector.dev) chart with a values overlay that adds the 10x sidecar container, a shared `emptyDir` for the Unix sockets, and the matching Vector socket sink + fluent source.
+The Kubernetes integration uses the official [vector/vector](https://helm.vector.dev) chart with a values overlay that adds the 10x sidecar container, a shared `emptyDir` for the Unix sockets, and the matching Vector socket sink + fluent source.
 
 If Vector is already installed in your cluster, this is the only change needed to wire it into Log10x.
 
-### Image pull secret
-
-The 10x sidecar image lives in private GHCR. Create a docker-registry secret in the namespace where Vector runs:
-
-```bash
-kubectl create secret docker-registry ghcr-log10x \
-  --namespace=YOUR-VECTOR-NAMESPACE \
-  --docker-server=ghcr.io \
-  --docker-username=YOUR-GHCR-USER \
-  --docker-password=YOUR-GHCR-TOKEN
-```
-
 ### Helm values overlay
 
-Add the four blocks below to your existing Vector `values.yaml` (or create a `tenx-overlay.yaml` and pass it as `helm upgrade -f values.yaml -f tenx-overlay.yaml`):
+Add the blocks below to your existing Vector `values.yaml` (or create a `tenx-overlay.yaml` and pass it as `helm upgrade -f values.yaml -f tenx-overlay.yaml`):
 
 ```yaml title="tenx-overlay.yaml"
-image:
-  pullSecrets:
-    - name: ghcr-log10x
-
 # Shared emptyDir for the Unix sockets between Vector and the 10x sidecar.
 extraVolumes:
   - name: tenx-sockets
@@ -129,7 +100,7 @@ extraVolumeMounts:
 # 10x sidecar container.
 extraContainers:
   - name: tenx
-    image: ghcr.io/log-10x/pipeline-10x-dev:vector
+    image: log10x/edge-10x:1.0.7
     args:
       - "run"
       - "@run/input/forwarder/vector/regulate"
@@ -137,8 +108,6 @@ extraContainers:
     env:
       - name: TENX_API_KEY
         value: "YOUR-LOG10X-API-KEY"
-      # Pass socket paths as env vars (TenXEnv reads them); CLI option-name
-      # overrides require options to be declared in the bundled config.
       - name: vectorInputPath
         value: "/tmp/tenx-sockets/tenx-vector-in.sock"
       - name: vectorOutputForwardAddress
@@ -154,17 +123,16 @@ extraContainers:
       - name: tenx-sockets
         mountPath: /tmp/tenx-sockets
 
-# Unix-socket files in the shared emptyDir need to be readable by both
-# Vector (distroless, runs as a non-root UID) and the 10x sidecar
-# (`tenxuser`, UID 1000). The simplest portable choice is to align both
-# containers to a UID with permission to the emptyDir; for a quick test
-# `runAsUser: 0` works.
+# Both containers must be able to read/write the shared Unix sockets.
+# `runAsUser: 0` is the simplest portable choice for a quick test;
+# in production align both containers to a UID with permission to
+# the emptyDir.
 podSecurityContext:
   runAsUser: 0
   runAsGroup: 0
   fsGroup: 0
 
-# The Vector side of the contract: write events to the 10x input socket,
+# Vector side of the contract: write events to the 10x input socket,
 # receive regulated events back from the 10x output socket, ship from there.
 customConfig:
   data_dir: /vector-data-dir
@@ -216,7 +184,7 @@ All three modes share the same launch — only one env var changes:
 | **read-only** | `reducerReadOnly: "true"` | Read + aggregate + publish metrics; do **not** write events back |
 | **optimize** | `reducerOptimize: "true"` | Filter + losslessly compact surviving events for 50–80% volume reduction |
 
-In read-only mode the 10x sidecar binds the input socket but never connects the output socket — Vector's `fluent` source receives nothing, so `app_logs → tenx_in` is the only path that fires. That makes Vector's existing direct-to-destination sinks effectively unaffected; 10x is a passive observer publishing metrics to the Log10x backend.
+In read-only mode the 10x sidecar binds the input socket but never connects the output socket — Vector's `fluent` source receives nothing, so Vector's existing direct-to-destination sinks are unaffected; 10x is a passive observer publishing metrics to the Log10x backend.
 
 ### Startup race
 

@@ -1,9 +1,9 @@
 #
-# 🔟❎ 'run' reducers module
+# 🔟❎ 'run' receivers module
 
 module:
 
-  name: reducers
+  name: receivers
 
   title: Output reducer
 
@@ -16,6 +16,6 @@ module:
   #  can specify multiple groupings of the options defined below.
   allowMultiple: true
 
-  moduleSort: [rateReducer]
+  moduleSort: [rateReceiver]
 
   join: run/units/output/regulate

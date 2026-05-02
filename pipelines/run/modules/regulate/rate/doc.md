@@ -22,24 +22,24 @@ The rate reducer supports two independent strategies for filtering events. They 
 
     **Example**: A single application forwarder tracks its own $0.025/min budget, throttling high-cost debug logs probabilistically based solely on its own traffic.
 
-    **Activated when** `rateReducerLookupFile` is **not** set.
+    **Activated when** `rateReceiverLookupFile` is **not** set.
 
 === ":material-file-document-edit-outline: Mute File (Declarative)"
 
-    A declarative file keyed by the joined `rateReducerFieldNames` values (the same key the local reducer uses for its per-node counters) caps specific patterns with an explicit sample rate and expiry. Typically committed to a git repo alongside the pipeline config and pulled via gitops, so each mute has a diff, a reviewer, and an audit trail.
+    A declarative file keyed by the joined `rateReceiverFieldNames` values (the same key the local reducer uses for its per-node counters) caps specific patterns with an explicit sample rate and expiry. Typically committed to a git repo alongside the pipeline config and pulled via gitops, so each mute has a diff, a reviewer, and an audit trail.
 
     **File format**:
     ```
     <fieldSet>=<sampleRate>:<untilEpochSec>[:<reason>]
     ```
 
-    With `rateReducerFieldNames: [symbolMessage]` the key is just the `symbolMessage` value (e.g. `Error_syncing_pod`); with `[symbolMessage, container]` it becomes `<symbolMessage>_<container>` (e.g. `heartbeat_debug_frontend`).
+    With `rateReceiverFieldNames: [symbolMessage]` the key is just the `symbolMessage` value (e.g. `Error_syncing_pod`); with `[symbolMessage, container]` it becomes `<symbolMessage>_<container>` (e.g. `heartbeat_debug_frontend`).
 
     **Trade-offs**: does nothing about unknown patterns or runaway nodes — this is human-declared intent, not adaptive control. Pair with per-node budget mode (in a separate reducer instance) if you need a fallback safety net.
 
     **Example**: An operator notices the Reporter attributing $12K/month to `Error_syncing_pod`. They append `Error_syncing_pod=0.10:1744848000:pod error spam OPS-4821` to the mute file, open a PR, merge it. All forwarders pulling the file apply the mute on their next reload. The mute self-expires at the epoch, so nobody has to remember to clean it up.
 
-    **Activated when** `rateReducerLookupFile` points at a mute file.
+    **Activated when** `rateReceiverLookupFile` points at a mute file.
 
 ## :material-kubernetes: Multi-App Regulation
 
@@ -50,9 +50,9 @@ For central forwarders handling logs from multiple applications (common in Kuber
 Prevents any single app from dominating the budget regardless of how many event types it emits.
 
 ```yaml
-rateReducerFieldNames: [container]  # App only
-rateReducerMaxSharePerFieldSet: 0.2
-rateReducerBudgetPerHour: 1.50
+rateReceiverFieldNames: [container]  # App only
+rateReceiverMaxSharePerFieldSet: 0.2
+rateReceiverBudgetPerHour: 1.50
 ```
 
 **Result:**
@@ -67,9 +67,9 @@ rateReducerBudgetPerHour: 1.50
 Enforces fairness within each app—prevents a single noisy event type from dominating that app's spend.
 
 ```yaml
-rateReducerFieldNames: [symbolMessage, container]  # Event type + app
-rateReducerMaxSharePerFieldSet: 0.2
-rateReducerBudgetPerHour: 1.50
+rateReceiverFieldNames: [symbolMessage, container]  # Event type + app
+rateReceiverMaxSharePerFieldSet: 0.2
+rateReceiverBudgetPerHour: 1.50
 ```
 
 **Result:**
@@ -208,7 +208,7 @@ function enlargeThresholdDiagram(button) {
 
 ### **Mute File Mode: Declarative Field-Set Caps**
 
-**Scenario:** A platform engineer sees the [Reporter](https://doc.log10x.com/apps/dev/) attributing $12K/month to the `Error_syncing_pod` event type. They want to cap it at 10% sample rate for 24 hours while the application team ships a fix. The pipeline is configured with `rateReducerFieldNames: [symbolMessage]`, so mute keys are `symbolMessage` values.
+**Scenario:** A platform engineer sees the [Reporter](https://doc.log10x.com/apps/dev/) attributing $12K/month to the `Error_syncing_pod` event type. They want to cap it at 10% sample rate for 24 hours while the application team ships a fix. The pipeline is configured with `rateReceiverFieldNames: [symbolMessage]`, so mute keys are `symbolMessage` values.
 
 **Mute file contents** (`mutes.csv`, pulled via gitops from a config repo):
 
@@ -220,7 +220,7 @@ jwt_validated=0.25:1744502400:auth flood after deploy
 
 **Step-by-step for an incoming pod error event** (INFO level, 1.2KB, `symbolMessage = "Error_syncing_pod"`):
 
-1. **📥 Event Arrives**: Forwarder receives the event and builds the field-set key by joining `rateReducerFieldNames` values — here just `Error_syncing_pod`.
+1. **📥 Event Arrives**: Forwarder receives the event and builds the field-set key by joining `rateReceiverFieldNames` values — here just `Error_syncing_pod`.
 
 2. **🗂️ Mute File Check**: Look up `Error_syncing_pod` in the mute file → entry found: `0.10:1744848000:...`
 

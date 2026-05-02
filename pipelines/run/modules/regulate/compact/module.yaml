@@ -3,7 +3,7 @@
 
 module:
 
-  name: compactReducer
+  name: compactReceiver
 
   title: compact reducer
 
@@ -20,7 +20,7 @@ module:
   options:
 
     - names:
-      - compactReducerLookupFile
+      - compactReceiverLookupFile
       description: path or URL to a compact decisions lookup file
       type: string
       required: false
@@ -31,31 +31,31 @@ module:
 
             <fieldSet>=<encode>:<untilEpochSec>[:<reason>]
 
-        `encode` is `true` (compact via `encode()`) or `false` (preserve `fullText`). `untilEpochSec` is a Unix epoch timestamp after which the entry self-heals to `compactReducerDefault`.
+        `encode` is `true` (compact via `encode()`) or `false` (preserve `fullText`). `untilEpochSec` is a Unix epoch timestamp after which the entry self-heals to `compactReceiverDefault`.
 
-        **Example** (with `compactReducerFieldNames: [symbolMessage]`):
+        **Example** (with `compactReceiverFieldNames: [symbolMessage]`):
 
             payment_retry_gateway_timeout=true:1745856000:OPS-5123 spike mitigation
             auth_audit_trail=false:1745856000:compliance — keep verbose
 
-        Entries express deviations from `compactReducerDefault`. An expired entry falls back to the default exactly like a rate-reducer mute does.
+        Entries express deviations from `compactReceiverDefault`. An expired entry falls back to the default exactly like a rate-reducer mute does.
 
-        The engine polls the file on the interval set by `compactReducerLookupRetain` — changes take effect without a restart, so this plays cleanly with a GitOps workflow where the MCP authors entries via PR.
+        The engine polls the file on the interval set by `compactReceiverLookupRetain` — changes take effect without a restart, so this plays cleanly with a GitOps workflow where the MCP authors entries via PR.
 
     - names:
-      - compactReducerFieldNames
+      - compactReceiverFieldNames
       description: list of TenXObject fields used to key compact lookup entries
       type: list
       required: false
       doc: |
-        defines the list of TenXObject field names joined with underscores to form each event's lookup key. The key format matches the rate reducer's `rateReducerFieldNames`, so an entry in the compact lookup targets the same pattern identity the Reporter attributes cost to.
+        defines the list of TenXObject field names joined with underscores to form each event's lookup key. The key format matches the rate reducer's `rateReceiverFieldNames`, so an entry in the compact lookup targets the same pattern identity the Reporter attributes cost to.
 
         **Default**: `[symbolMessage]` (same as the rate reducer's default).
 
         **Multi-dimensional compaction** (e.g., "compact this pattern only for tenants X, Y"):
 
         ```yaml
-        compactReducerFieldNames:
+        compactReceiverFieldNames:
           - symbolMessage
           - tenantId
         ```
@@ -64,12 +64,12 @@ module:
       defValue: [symbolMessage]
 
     - names:
-      - compactReducerLookupRetain
+      - compactReceiverLookupRetain
       description: lookup file poll interval in milliseconds
       type: number
       required: false
       doc: |
-        defines how often the engine re-reads `compactReducerLookupFile` to pick up new/changed entries. Default of 5 minutes (300000ms) aligns with the rate reducer's `rateReducerLookupRetain`.
+        defines how often the engine re-reads `compactReceiverLookupFile` to pick up new/changed entries. Default of 5 minutes (300000ms) aligns with the rate reducer's `rateReceiverLookupRetain`.
 
         Shorter values make GitOps changes take effect faster at the cost of more file I/O. Longer values reduce I/O but delay effect.
 
@@ -77,7 +77,7 @@ module:
       defValue: 300000
 
     - names:
-      - compactReducerDefault
+      - compactReceiverDefault
       description: default compaction decision when no lookup entry applies
       type: boolean
       required: false

@@ -10,7 +10,7 @@ Start with the [**MCP Server**](https://doc.log10x.com/manage/mcp-server/) — i
 
 ```mermaid
 graph LR
-    Forwarders["Log Forwarders"] -->|IPC| Edge["10x Reducer"]
+    Forwarders["Log Forwarders"] -->|IPC| Edge["10x Receiver"]
     Edge --> Analyzers["Analyzers & Storage"]
     Forwarders -.->|IPC| Reporter["10x Reporter (DaemonSet)"]
     Analyzers --> Cloud["10x Retriever"]
@@ -40,7 +40,7 @@ Suggested adoption path (guided by the [MCP Server](https://doc.log10x.com/manag
 
 :material-chart-bar: **Reporter** — pinpoint the event types driving 80% of cost (MCP generates the Helm values)
 
-:material-pipe-valve: **Reducer** — filter noisy events and losslessly compact survivors (MCP proposes filter configs)
+:material-pipe-valve: **Receiver** — filter noisy events and losslessly compact survivors (MCP proposes filter configs)
 
 :material-cloud-arrow-right-outline: **Retriever** — store events in S3, stream on-demand (MCP recommends the setup)
 
@@ -58,12 +58,12 @@ See which event types drive 80% of your analytics platform cost, observed **pre-
 
 ___
 
-## :material-pipe-valve: Reducer
+## :material-pipe-valve: Receiver
 
 Execution arm. **Two modes**, one app:
 
 - **Filter** (lossy): drop events matching a rule — up to 80% volume reduction. Safe defaults are deny; explicit allow required.
-- **Compact** (lossless): replace events with a compact wire-form that the downstream SIEM plugin expands at query time. 50–80% reduction (64% on K8s OTel logs), no dashboard/query changes. Requires the expand plugin installed in [Splunk](https://doc.log10x.com/apps/reducer/splunk/) or [Elasticsearch](https://doc.log10x.com/apps/reducer/elasticsearch/).
+- **Compact** (lossless): replace events with a compact wire-form that the downstream SIEM plugin expands at query time. 50–80% reduction (64% on K8s OTel logs), no dashboard/query changes. Requires the expand plugin installed in [Splunk](https://doc.log10x.com/apps/receiver/splunk/) or [Elasticsearch](https://doc.log10x.com/apps/receiver/elasticsearch/).
 
 **MCP can propose filter configs per pattern** based on the Reporter's cost attribution.
 

@@ -2,7 +2,7 @@
 
 === "Linux/macOS"
 
-    See the Log10x Reducer Vector [run instructions](https://doc.log10x.com/apps/reducer/run/#vector)
+    See the Log10x Receiver Vector [run instructions](https://doc.log10x.com/apps/receiver/run/#vector)
 
 === "k8s"
 

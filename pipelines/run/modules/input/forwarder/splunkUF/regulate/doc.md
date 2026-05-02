@@ -2,7 +2,7 @@
 icon: material/pipe-valve
 ---
 
-Read events from application logs to transform into typed [TenXObjects](https://doc.log10x.com/api/js/#TenXObject) and filter using local/centralized [reducer](https://doc.log10x.com/run/output/regulate) policies, before Splunk UF ships them to indexers. This module is a component of the [Reducer](https://doc.log10x.com/apps/reducer/) app.
+Read events from application logs to transform into typed [TenXObjects](https://doc.log10x.com/api/js/#TenXObject) and filter using local/centralized [reducer](https://doc.log10x.com/run/output/regulate) policies, before Splunk UF ships them to indexers. This module is a component of the [Receiver](https://doc.log10x.com/apps/receiver/) app.
 
 ## Architecture
 
@@ -11,7 +11,7 @@ Read events from application logs to transform into typed [TenXObjects](https://
 ```mermaid
 graph LR
     A["<div style='font-size: 14px;'>📝 App Logs</div><div style='font-size: 10px;'>Folder A</div>"] --> B["<div style='font-size: 14px;'>🔧 Fluent Bit</div><div style='font-size: 10px;'>tail input</div>"]
-    B --> C["<div style='font-size: 14px;'>⚡ 10x Reducer</div><div style='font-size: 10px;'>filter policy</div>"]
+    B --> C["<div style='font-size: 14px;'>⚡ 10x Receiver</div><div style='font-size: 10px;'>filter policy</div>"]
     C --> D["<div style='font-size: 14px;'>📂 Processed</div><div style='font-size: 10px;'>Folder B</div>"]
     D --> E["<div style='font-size: 14px;'>📤 Splunk UF</div><div style='font-size: 10px;'>monitors B</div>"]
     E --> F["<div style='font-size: 14px;'>🔍 Splunk</div><div style='font-size: 10px;'>Indexers</div>"]
@@ -37,7 +37,7 @@ graph LR
 
 - 📝 **App Logs (Folder A)** - Application writes ALL logs to original location
 - 🔧 **Fluent Bit** - Reads from Folder A, passes events to 10x sidecar
-- ⚡ **10x Reducer** - Applies rate/policy-based filtering, drops noisy events
+- ⚡ **10x Receiver** - Applies rate/policy-based filtering, drops noisy events
 - 📂 **Processed (Folder B)** - Only FILTERED events written to new location
 - 📤 **Splunk UF** - Monitors Folder B, forwards reduced volume to Splunk
 - 🔍 **Splunk Indexers** - Receives filtered events (reduced volume)
@@ -59,7 +59,7 @@ This [module](https://doc.log10x.com/engine/module/) configures a file relay whe
 
 === ":material-laptop: Nix/OSX"
 
-    See the [Quickstart](#quickstart) below or the Log10x Reducer [run instructions](https://doc.log10x.com/apps/reducer/run/#splunk-uf)
+    See the [Quickstart](#quickstart) below or the Log10x Receiver [run instructions](https://doc.log10x.com/apps/receiver/run/#splunk-uf)
 
 ## Quickstart
 

@@ -4,10 +4,10 @@ icon: material/pipe-valve
 
 Filters TenXObjects based on dynamic policies to reduce noisy telemetry and prevent over-billing.
 
-Reducer [modules](https://doc.log10x.com/engine/module/) commonly execute in conjunction with [forwarder inputs](https://doc.log10x.com/run/input/forwarder)
+Receiver [modules](https://doc.log10x.com/engine/module/) commonly execute in conjunction with [forwarder inputs](https://doc.log10x.com/run/input/forwarder)
 to filter 'noisy' telemetry from shipping to output (e.g., Splunk, Elastic) to prevent over-billing.
 
-Reducer modules package stream configuration, JavaScript and documentation files to 
+Receiver modules package stream configuration, JavaScript and documentation files to 
 filter TenXObjects based on both [local](https://doc.log10x.com/run/output/regulate) and
 [centralized](https://doc.log10x.com/run/output/regulate) rate thresholds.
 

@@ -5,7 +5,7 @@ module:
 
   name: compactReducer
 
-  title: Compact reducer
+  title: compact reducer
 
   description: Per-event compaction decision via a declarative field-set keyed lookup file. Decides whether each event is emitted via encode() (compact templateHash+vars form, ~20-40x volume reduction) or as fullText. GitOps-controlled — the MCP writes entries via PR, engine hot-reloads the lookup without restart.
 

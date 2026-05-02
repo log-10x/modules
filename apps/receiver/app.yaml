@@ -1,17 +1,17 @@
 #
-# 🔟❎ 'run' Reducer app
+# 🔟❎ 'run' Receiver app
 
 app:
 
-  name: reducer
+  name: receiver
 
-  title: Reducer
+  title: Receiver
 
-  description: regulate and optionally optimize log/trace events _before_ they ship to output
+  description: receive log/trace events from a coupled forwarder; in read-only mode emit metrics only, in read-write mode also regulate and optionally compact events before they ship to output
 
   # 'configFolders' specifies folders containing default configuration files for this module
   configFolders:
-    reducer: apps/reducer
+    receiver: apps/receiver
 
     initializers+message: run/initialize/message
     initializers+level: run/initialize/level
@@ -49,4 +49,4 @@ app:
     transform+parallelize: run/transform/parallelize
 
   # 'doc' specifies the markdown doc content, only required when generating docs.
-  doc: +include $=TenXEnv.get("docGenerate") ? "apps/reducer/doc.md":""
+  doc: +include $=TenXEnv.get("docGenerate") ? "apps/receiver/doc.md":""

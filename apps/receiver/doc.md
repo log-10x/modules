@@ -299,7 +299,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
         **Step 1**: Copy the Vector configuration:
 
         ```bash
-        cp $TENX_MODULES/pipelines/run/modules/input/forwarder/vector/regulate/tenxNix.yaml /etc/vector/
+        cp $TENX_MODULES/pipelines/run/modules/input/forwarder/vector/receive/tenxNix.yaml /etc/vector/
         ```
 
         **Step 2**: Update sources and final sinks to match your environment:
@@ -326,7 +326,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
         **Step 3**: Start Log10x first, then Vector:
 
         ```bash
-        tenx run @run/input/forwarder/vector/regulate @apps/receiver
+        tenx run @run/input/forwarder/vector/receive @apps/receiver
         vector --config /etc/vector/tenxNix.yaml
         ```
 

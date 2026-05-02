@@ -53,19 +53,19 @@ export TENX_API_KEY=your-api-key
 
 ```bash
 # Read-only (no return loop to Vector — metrics only)
-tenx run @run/input/forwarder/vector/regulate @apps/receiver reducerReadOnly true
+tenx run @run/input/forwarder/vector/receive @apps/receiver reducerReadOnly true
 
 # Receiver (filter noisy logs)
-tenx run @run/input/forwarder/vector/regulate @apps/receiver
+tenx run @run/input/forwarder/vector/receive @apps/receiver
 
 # Optimizer (Lossless Compact)
-tenx run @run/input/forwarder/vector/regulate @apps/receiver reducerOptimize true
+tenx run @run/input/forwarder/vector/receive @apps/receiver reducerOptimize true
 ```
 
 **3. Copy and customize Vector config:**
 
 ```bash
-cp $TENX_MODULES/pipelines/run/modules/input/forwarder/vector/regulate/tenxNix.yaml /etc/vector/
+cp $TENX_MODULES/pipelines/run/modules/input/forwarder/vector/receive/tenxNix.yaml /etc/vector/
 ```
 
 **4. Start Vector:**
@@ -103,7 +103,7 @@ extraContainers:
     image: log10x/edge-10x:latest
     args:
       - "run"
-      - "@run/input/forwarder/vector/regulate"
+      - "@run/input/forwarder/vector/receive"
       - "@apps/receiver"
       - "vectorInputPath"
       - "/tmp/tenx-sockets/tenx-vector-in.sock"

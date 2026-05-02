@@ -1,0 +1,11 @@
+#
+#  🔟❎ Datadog Agent Receive module
+
+module:
+
+  name: datadogAgentReceive
+  title: Datadog Agent Receiver
+  description: receive events from the Datadog Agent
+
+  # 'doc' specifies the markdown doc content, only required when generating docs.
+  doc: '+include $=TenXEnv.get("docGenerate") ? "run/modules/input/forwarder/datadogAgent/receive/doc.md":""'

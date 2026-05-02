@@ -1,19 +1,19 @@
 #
-#  🔟❎ Vector Regulate module
+#  🔟❎ Vector Receive module
 
 module:
 
-  name: vectorRegulate
+  name: vectorReceive
 
-  title: Vector reducer
+  title: Vector Receiver
 
-  description: read events from Vector forwarders to regulate which events to ship
+  description: receive events from a coupled Vector forwarder
 
   # 'configFolder' specifies a folder containing default configuration files for the settings defined by this unit/module
-  configFolder: run/input/forwarder/vector/regulate
+  configFolder: run/input/forwarder/vector/receive
 
   # 'doc' specifies the markdown doc content, only required when generating docs.
-  doc: '+include $=TenXEnv.get("docGenerate") ? "run/modules/input/forwarder/vector/regulate/doc.md":""'
+  doc: '+include $=TenXEnv.get("docGenerate") ? "run/modules/input/forwarder/vector/receive/doc.md":""'
 
   allowMultiple: false
 

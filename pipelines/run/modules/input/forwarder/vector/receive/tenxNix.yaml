@@ -1,4 +1,4 @@
-# Vector 10x 'regulate' configuration for Linux/macOS
+# Vector 10x 'receive' configuration for Linux/macOS
 #
 # This Vector configuration sends events to Log10x for regulation via a Unix
 # domain socket using the `socket` sink (newline-delimited text). Filtered
@@ -9,12 +9,12 @@
 #   Vector --[socket/unix/text]--> Log10x Receiver --[fluent/unix]--> Vector --> Final destinations
 #
 # Prerequisites:
-# - Log10x must be running with: tenx @run/input/forwarder/vector/regulate @apps/receiver
+# - Log10x must be running with: tenx @run/input/forwarder/vector/receive @apps/receiver
 # - Log10x will listen on Unix socket: /tmp/tenx-vector-in.sock
 # - Log10x will write filtered events to: /tmp/tenx-vector-out.sock
 #
 # Usage:
-# - Run Log10x first: tenx @run/input/forwarder/vector/regulate @apps/receiver
+# - Run Log10x first: tenx @run/input/forwarder/vector/receive @apps/receiver
 # - Then run: vector --config tenxNix.yaml
 
 sources:

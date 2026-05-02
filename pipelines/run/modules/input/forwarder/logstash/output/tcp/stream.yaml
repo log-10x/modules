@@ -16,7 +16,7 @@ include:
 
       # Capture outputSocketPort from 'tenx-pipe-in-tcp.conf' as 10x env variable.
       # Optimize/regulate selects the Logstash-side config, key it off outputWriteTemplates.
-      path: '$="run/input/forwarder/logstash/" + (TenXEnv.get("outputWriteTemplates") ? "optimize" : "regulate") + "/tenx-pipe-in-tcp.conf"'
+      path: '$="run/input/forwarder/logstash/" + (TenXEnv.get("outputWriteTemplates") ? "optimize" : "receive") + "/tenx-pipe-in-tcp.conf"'
       regex: "port\\s=>\\s*\"\\$\\{tenx_marker_pipeline_tcp_port:\\s*(?<rawOutputSocketPort>\\d+)\\s*\\}\""
 
     # Load the TCP socket module

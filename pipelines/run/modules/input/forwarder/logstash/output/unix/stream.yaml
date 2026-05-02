@@ -17,7 +17,7 @@ include:
       # Capture outputUnixSocketAddress from 'tenx-pipe-in-unix.conf' as 10x env variable.
       # The optimize/regulate selection here is for the Logstash-side config, not an
       # engine writeObjects gate — so key it off outputWriteTemplates.
-      path: '$="run/input/forwarder/logstash/" + (TenXEnv.get("outputWriteTemplates") ? "optimize" : "regulate") + "/tenx-pipe-in-unix.conf"'
+      path: '$="run/input/forwarder/logstash/" + (TenXEnv.get("outputWriteTemplates") ? "optimize" : "receive") + "/tenx-pipe-in-unix.conf"'
       regex: "path\\s=>\\s*\"\\$\\{tenx_marker_pipeline_unix_address:\\s*(?<rawOutputUnixSocketAddress>.*?)\\s*\\}\""
 
   # load the unix domain socket module

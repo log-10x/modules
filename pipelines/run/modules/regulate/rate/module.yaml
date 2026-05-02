@@ -5,7 +5,7 @@ module:
 
   name: rateReducer
 
-  title: Rate reducer
+  title: rate reducer
 
   description: Filter TenXObjects from output using either local per-node budget sampling or a declarative field-set keyed mute file.
 

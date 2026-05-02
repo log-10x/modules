@@ -61,7 +61,7 @@ Events in `logs/from-tenx` never feed back to `logs/to-tenx`.
     | File | Purpose |
     |------|---------|
     | [`conf/tenx-report-linux.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/otel-collector/conf/tenx-report-linux.yaml) | OTel Collector config for Reporter mode |
-    | [`conf/tenx-regulate-linux.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/otel-collector/conf/tenx-regulate-linux.yaml) | OTel Collector config for Reducer mode |
+    | [`conf/tenx-regulate-linux.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/otel-collector/conf/tenx-regulate-linux.yaml) | OTel Collector config for Receiver mode |
     | [`conf/tenx-optimize-linux.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/otel-collector/conf/tenx-optimize-linux.yaml) | OTel Collector config for Optimizer mode |
     | [`input/stream.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/otel-collector/input/stream.yaml) | 10x Unix socket input with syslog parsing |
     | [`output/unix/stream.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/otel-collector/output/unix/stream.yaml) | 10x Forward protocol output configuration |
@@ -82,11 +82,11 @@ export TENX_API_KEY=your-api-key
 # Reporter (read-only analytics)
 tenx run @run/input/forwarder/otel-collector/report @apps/reporter
 
-# Reducer (filter noisy logs)
-tenx run @run/input/forwarder/otel-collector/regulate @apps/reducer
+# Receiver (filter noisy logs)
+tenx run @run/input/forwarder/otel-collector/regulate @apps/receiver
 
 # Optimizer (Lossless Compact)
-tenx run @run/input/forwarder/otel-collector/optimize @apps/reducer reducerOptimize true
+tenx run @run/input/forwarder/otel-collector/optimize @apps/receiver reducerOptimize true
 ```
 
 **3. Copy and customize OTel Collector config:**

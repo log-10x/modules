@@ -17,7 +17,7 @@ Core module definitions for the Log10x engine — the brain that powers log cost
 │  │  │     Runtime Apps        │  │        Setup / Tools            │   │  │
 │  │  │                         │  │                                 │   │  │
 │  │  │  ├─ Reporter (DaemonSet)│  │  ├─ Dev (local CLI)             │   │  │
-│  │  │  ├─ Reducer (sidecar) │  │  ├─ Compiler (symbol generation)│   │  │
+│  │  │  ├─ Receiver (sidecar) │  │  ├─ Compiler (symbol generation)│   │  │
 │  │  │  │  Filter + Compact    │  │  └─ MCP scaffold (validation)   │   │  │
 │  │  │  └─ Retriever (S3 query) │  │                                 │   │  │
 │  │  └─────────────────────────┘  └─────────────────────────────────┘   │  │
@@ -72,7 +72,7 @@ Deployed alongside log forwarders (Fluentd, Fluent Bit, Filebeat, Logstash).
 | App | Purpose | Documentation | Run Guide |
 |-----|---------|---------------|-----------|
 | **Reporter** | Cost attribution metrics (DaemonSet, pre-SIEM, not in log path) | [Overview](https://doc.log10x.com/apps/reporter/) | [Run](https://doc.log10x.com/apps/reporter/run/) |
-| **Reducer** | Two modes: Filter (lossy — budget sampling, mute files) and Compact (lossless — 50-80% volume reduction via SIEM-side expand plugin) | [Overview](https://doc.log10x.com/apps/reducer/) | [Run](https://doc.log10x.com/apps/reducer/run/) |
+| **Receiver** | Two modes: Filter (lossy — budget sampling, mute files) and Compact (lossless — 50-80% volume reduction via SIEM-side expand plugin) | [Overview](https://doc.log10x.com/apps/receiver/) | [Run](https://doc.log10x.com/apps/receiver/run/) |
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -80,7 +80,7 @@ Deployed alongside log forwarders (Fluentd, Fluent Bit, Filebeat, Logstash).
 │                                                                  │
 │   Reporter (DaemonSet) ─── tails pre-SIEM ────► Metrics          │
 │                                                                  │
-│   Application ──► Log Forwarder ──► Reducer ──► Analyzer       │
+│   Application ──► Log Forwarder ──► Receiver ──► Analyzer       │
 │   (logs)          (Fluentd,         (sidecar,     (Splunk,       │
 │                    Filebeat)         Filter or     Elastic)      │
 │                                      Compact)                    │
@@ -94,7 +94,7 @@ Deployed alongside log forwarders (Fluentd, Fluent Bit, Filebeat, Logstash).
 | App | Purpose | Documentation | Run Guide |
 |-----|---------|---------------|-----------|
 | **Retriever** | S3 data lake indexing & queries | [Overview](https://doc.log10x.com/apps/retriever/) | [Run](https://doc.log10x.com/apps/retriever/run/) |
-| **MCP** | Agent control plane — reads Reporter metrics, commands Reducer/Retriever via GitOps | [Overview](https://doc.log10x.com/manage/mcp-server/) | [Run](https://doc.log10x.com/manage/mcp-server/tools/) |
+| **MCP** | Agent control plane — reads Reporter metrics, commands Receiver/Retriever via GitOps | [Overview](https://doc.log10x.com/manage/mcp-server/) | [Run](https://doc.log10x.com/manage/mcp-server/tools/) |
 
 For agentless SIEM-side cost analysis (the evolution of the old Cloud Reporter app), use the [log10x-mcp](https://github.com/log-10x/log10x-mcp) server's `log10x_poc_from_siem_submit` tool.
 

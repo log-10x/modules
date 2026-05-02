@@ -65,12 +65,12 @@ tenx @run/input/forward @apps/reporter
 
 **Regulate:**
 ```bash
-tenx @run/input/forwarder/otel-collector/regulate @apps/reducer
+tenx @run/input/forwarder/otel-collector/regulate @apps/receiver
 ```
 
 **Regulate with optimization:**
 ```bash
-tenx @run/input/forwarder/otel-collector/regulate @apps/reducer reducerOptimize true
+tenx @run/input/forwarder/otel-collector/regulate @apps/receiver reducerOptimize true
 ```
 
 ### Step 2: Start OpenTelemetry Collector

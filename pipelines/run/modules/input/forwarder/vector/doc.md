@@ -35,7 +35,7 @@ graph LR
 
 | File | Purpose |
 |---|---|
-| `regulate/tenxNix.yaml` | Vector config for Reducer mode (Linux/macOS, Unix sockets) |
+| `regulate/tenxNix.yaml` | Vector config for Receiver mode (Linux/macOS, Unix sockets) |
 | `input/stream.yaml` | 10x Unix socket input, plain newline-delimited records |
 | `output/unix/stream.yaml` | 10x Forward protocol output configuration |
 
@@ -53,13 +53,13 @@ export TENX_API_KEY=your-api-key
 
 ```bash
 # Read-only (no return loop to Vector — metrics only)
-tenx run @run/input/forwarder/vector/regulate @apps/reducer reducerReadOnly true
+tenx run @run/input/forwarder/vector/regulate @apps/receiver reducerReadOnly true
 
-# Reducer (filter noisy logs)
-tenx run @run/input/forwarder/vector/regulate @apps/reducer
+# Receiver (filter noisy logs)
+tenx run @run/input/forwarder/vector/regulate @apps/receiver
 
 # Optimizer (Lossless Compact)
-tenx run @run/input/forwarder/vector/regulate @apps/reducer reducerOptimize true
+tenx run @run/input/forwarder/vector/regulate @apps/receiver reducerOptimize true
 ```
 
 **3. Copy and customize Vector config:**
@@ -104,7 +104,7 @@ extraContainers:
     args:
       - "run"
       - "@run/input/forwarder/vector/regulate"
-      - "@apps/reducer"
+      - "@apps/receiver"
       - "vectorInputPath"
       - "/tmp/tenx-sockets/tenx-vector-in.sock"
       - "vectorOutputForwardAddress"

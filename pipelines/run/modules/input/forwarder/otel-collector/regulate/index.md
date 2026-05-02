@@ -30,7 +30,7 @@ The OpenTelemetry Collector Receiver configures:
 
 ## Configuration
 
-See [config.yaml](config.yaml) for the default reducer configuration.
+See [config.yaml](config.yaml) for the default Receiver configuration.
 
 ## Event Flow
 

@@ -73,7 +73,7 @@ export TENX_MODULES=/path/to/config/modules
 export TENX_HOME=/path/to/tenx/binary
 ```
 
-**2. Include reducer in your Fluent Bit config:**
+**2. Include Receiver in your Fluent Bit config:**
 
 ```toml title="fluent-bit.conf"
 [SERVICE]

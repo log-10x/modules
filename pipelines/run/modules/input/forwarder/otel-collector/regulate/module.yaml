@@ -5,7 +5,7 @@ module:
 
   name: otelCollectorRegulate
 
-  title: OpenTelemetry Collector reducer
+  title: OpenTelemetry Collector Receiver
 
   description: read events from OpenTelemetry Collector forwarders to regulate which events to ship
 

@@ -5,7 +5,7 @@ module:
 
   name: vectorRegulate
 
-  title: Vector reducer
+  title: Vector Receiver
 
   description: read events from Vector forwarders to regulate which events to ship
 

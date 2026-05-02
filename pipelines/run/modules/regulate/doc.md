@@ -11,4 +11,4 @@ Receiver modules package stream configuration, JavaScript and documentation file
 filter TenXObjects based on both [local](https://doc.log10x.com/run/output/regulate) and
 [centralized](https://doc.log10x.com/run/output/regulate) rate thresholds.
 
-Threshold values can be updated from GitHub at runtime to allow reducers to dynamically adjust their criteria based on environment-wide conditions.
+Threshold values can be updated from GitHub at runtime to allow receivers to dynamically adjust their criteria based on environment-wide conditions.

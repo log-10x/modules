@@ -86,7 +86,7 @@ tenx run @run/input/forwarder/otel-collector/report @apps/reporter
 tenx run @run/input/forwarder/otel-collector/regulate @apps/receiver
 
 # Optimizer (Lossless Compact)
-tenx run @run/input/forwarder/otel-collector/optimize @apps/receiver reducerOptimize true
+tenx run @run/input/forwarder/otel-collector/optimize @apps/receiver receiverOptimize true
 ```
 
 **3. Copy and customize OTel Collector config:**

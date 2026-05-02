@@ -18,10 +18,10 @@ key,value
 <fieldSet>,false
 ```
 
-- `<fieldSet>` — the joined values of `compactReducerFieldNames` on the event. With the default `[symbolMessage]` it's just the symbolMessage value (e.g. `payment_retry_gateway_timeout`); with `[symbolMessage, container]` it becomes `<symbolMessage>_<container>`.
-- `value` — `true` to compact via `encode()`, `false` to preserve `fullText`. Entries are *deviations* from `compactReducerDefault`.
+- `<fieldSet>` — the joined values of `compactReceiverFieldNames` on the event. With the default `[symbolMessage]` it's just the symbolMessage value (e.g. `payment_retry_gateway_timeout`); with `[symbolMessage, container]` it becomes `<symbolMessage>_<container>`.
+- `value` — `true` to compact via `encode()`, `false` to preserve `fullText`. Entries are *deviations* from `compactReceiverDefault`.
 
-**Example** (with `compactReducerFieldNames: [symbolMessage]` and `compactReducerDefault: false`):
+**Example** (with `compactReceiverFieldNames: [symbolMessage]` and `compactReceiverDefault: false`):
 
 ```csv
 key,value
@@ -29,11 +29,11 @@ payment_retry_gateway_timeout,true
 auth_audit_trail,false
 ```
 
-For time-bounded overrides, remove the entry via PR once no longer needed — the reducer falls back to `compactReducerDefault` for any unlisted field-set.
+For time-bounded overrides, remove the entry via PR once no longer needed — the reducer falls back to `compactReceiverDefault` for any unlisted field-set.
 
 ## :material-swap-horizontal: Default policy
 
-`compactReducerDefault` sets the fallback decision when no entry matches:
+`compactReceiverDefault` sets the fallback decision when no entry matches:
 
 - **`false`** (default) — preserve `fullText`. Entries opt specific patterns *into* compaction. Right when most traffic is already high-signal.
 - **`true`** — compact via `encode()`. Entries opt specific patterns *out* of compaction (e.g. audit/compliance patterns that must stay verbose). Right when most traffic is low-signal machinery and only a few patterns need full-text fidelity.
@@ -44,10 +44,10 @@ Flipping the default is a policy decision that affects every event and requires 
 
 The lookup file is read once at pod startup. Pushing a new entry requires a rolling restart of the forwarder daemonset for it to take effect.
 
-`compactReducerLookupRetain` controls the staleness warning logged at startup when the file's mtime is older than the interval (default `5m`). It does not currently trigger a mid-run reload — reload-on-file-change is a planned enhancement.
+`compactReceiverLookupRetain` controls the staleness warning logged at startup when the file's mtime is older than the interval (default `5m`). It does not currently trigger a mid-run reload — reload-on-file-change is a planned enhancement.
 
 ## :material-cog-box: Wiring
 
-- Set `compactReducerLookupFile` to the CSV path — that's the single gate that loads the module (both `CompactInput` and `CompactObject` check it in `shouldLoad`).
+- Set `compactReceiverLookupFile` to the CSV path — that's the single gate that loads the module (both `CompactInput` and `CompactObject` check it in `shouldLoad`).
 - The forwarder output streams then branch on a single ternary field expression: `encoded=shouldEncode() ? encode() : fullText`. No field mutation — the decision lives in the stream expression, not on the event.
-- When `compactReducerLookupFile` is *not* set, the pre-compact path is preserved unchanged (regulate-only emits `fullText`; `reducerOptimize=true` emits `encoded=encode()` for every event).
+- When `compactReceiverLookupFile` is *not* set, the pre-compact path is preserved unchanged (regulate-only emits `fullText`; `receiverOptimize=true` emits `encoded=encode()` for every event).

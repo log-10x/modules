@@ -21,8 +21,8 @@ app:
     initializers+k8s: run/initialize/k8s
     initializers+geoIP: run/initialize/geoIP
 
-    reducers+rate Reducer: run/regulate/rate
-    reducers+compact Reducer: run/regulate/compact
+    receivers+rate Reducer: run/regulate/rate
+    receivers+compact Reducer: run/regulate/compact
 
     metric Outputs+log10x metrics: run/output/metric/log10x
     metric Outputs+Prometheus: run/output/metric/prometheus/scrape

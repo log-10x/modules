@@ -53,13 +53,13 @@ export TENX_API_KEY=your-api-key
 
 ```bash
 # Read-only (no return loop to Vector — metrics only)
-tenx run @run/input/forwarder/vector/regulate @apps/receiver reducerReadOnly true
+tenx run @run/input/forwarder/vector/regulate @apps/receiver receiverReadOnly true
 
 # Receiver (filter noisy logs)
 tenx run @run/input/forwarder/vector/regulate @apps/receiver
 
 # Optimizer (Lossless Compact)
-tenx run @run/input/forwarder/vector/regulate @apps/receiver reducerOptimize true
+tenx run @run/input/forwarder/vector/regulate @apps/receiver receiverOptimize true
 ```
 
 **3. Copy and customize Vector config:**
@@ -111,10 +111,10 @@ extraContainers:
       - "/tmp/tenx-sockets/tenx-vector-out.sock"
       # Read-only mode (no return loop, metrics-only). Omit for full
       # regulate/optimize round-trip back to Vector.
-      # - "reducerReadOnly"
+      # - "receiverReadOnly"
       # - "true"
       # Optimize mode (lossless compaction). Mutually exclusive with read-only.
-      # - "reducerOptimize"
+      # - "receiverOptimize"
       # - "true"
     env:
       - name: TENX_API_KEY
@@ -181,8 +181,8 @@ All three modes share the same launch — only the `args:` list changes:
 | Mode | Extra args | Behavior |
 |---|---|---|
 | **regulate** (default) | none | Filter events; surviving events return to Vector |
-| **read-only** | `reducerReadOnly true` | Read + aggregate + publish metrics; do **not** write events back |
-| **optimize** | `reducerOptimize true` | Filter + losslessly compact surviving events for 50–80% volume reduction |
+| **read-only** | `receiverReadOnly true` | Read + aggregate + publish metrics; do **not** write events back |
+| **optimize** | `receiverOptimize true` | Filter + losslessly compact surviving events for 50–80% volume reduction |
 
 In read-only mode the 10x sidecar binds the input socket but never connects the output socket — Vector's `fluent` source receives nothing, so Vector's existing direct-to-destination sinks are unaffected; 10x is a passive observer publishing metrics to the Log10x backend.
 

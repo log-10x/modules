@@ -606,14 +606,14 @@ Follow the steps below. Steps that require customization link to the relevant [C
 <span id="reducers2"></span>
 ??? tenx-reducers "Step 6: Configure Reducers (optional)"
 
-    Configure [rate reducers](https://doc.log10x.com/run/regulate/rate/) for common scenarios. Edit these settings in your receiver [config.yaml](#reducers).
+    Configure [rate receivers](https://doc.log10x.com/run/regulate/rate/) for common scenarios. Edit these settings in your receiver [config.yaml](#receivers).
 
     === ":material-percent: Per-Event-Type Budget"
 
         Cap any single event type at 20% of total spend. Use the [Level Classifier](https://doc.log10x.com/run/initialize/level/) to enrich events with severity levels, so ERROR events have a higher minimum retention floor than DEBUG and critical events survive throttling.
 
         ```yaml
-        rateReducer:
+        rateReceiver:
           budgetPerHour: 1.50
           ingestionCostPerGB: 1.5          # Splunk Cloud
           maxSharePerFieldSet: 0.2         # No event type exceeds 20%
@@ -634,7 +634,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
         Prevent any single app from exceeding 20% of the budget across all its pods. Uses [k8s container name](https://doc.log10x.com/run/initialize/k8s/) for stable aggregation across replicas.
 
         ```yaml
-        rateReducer:
+        rateReceiver:
           fieldNames:
             - symbolMessage
             - container                    # Same name across all pod replicas
@@ -645,10 +645,10 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
     === ":material-file-document-edit-outline: Mute File (GitOps)"
 
-        Apply a declarative, field-set keyed mute file pulled from a git repo. Entries are keyed by the same `rateReducerFieldNames` values the local receiver uses (e.g. `symbolMessage`), so mutes target the same patterns the Reporter attributes cost to. Each entry caps a specific pattern with an explicit sample rate and epoch expiry, so mutes are diff-reviewed, audited, and self-healing.
+        Apply a declarative, field-set keyed mute file pulled from a git repo. Entries are keyed by the same `rateReceiverFieldNames` values the local receiver uses (e.g. `symbolMessage`), so mutes target the same patterns the Reporter attributes cost to. Each entry caps a specific pattern with an explicit sample rate and epoch expiry, so mutes are diff-reviewed, audited, and self-healing.
 
         ```yaml
-        rateReducer:
+        rateReceiver:
           fieldNames:
             - symbolMessage
           lookup:

@@ -20,13 +20,12 @@ module:
 
   options:
 
-    # The two underlying engine options stay as `reducerOptimize` and `reducerReadOnly`
-    # so existing engine plumbing (output-stream `enabled` gates, aggregator config,
-    # encode dispatch) keeps working unchanged. Helm charts expose user-friendly
-    # `mode` and `optimize` values that translate to these options at install time.
+    # The two underlying engine options are `receiverOptimize` and `receiverReadOnly`.
+    # Helm charts expose user-friendly `mode` and `optimize` values that translate
+    # to these options at install time.
 
     - names:
-      - reducerOptimize
+      - receiverOptimize
       description: enable optimization (compact mode) to encode emitted events for volume reduction
       type: boolean
       required: false
@@ -40,7 +39,7 @@ module:
         but emits them in their original plain-text form via the
         [fullText](https://doc.log10x.com/api/js/#TenXBaseObject+fullText) field.
 
-        Has no effect when `reducerReadOnly=true` (no events are written back
+        Has no effect when `receiverReadOnly=true` (no events are written back
         to the forwarder in read-only mode).
 
         **Effect on forwarder output:**
@@ -55,7 +54,7 @@ module:
         ```
 
     - names:
-      - reducerReadOnly
+      - receiverReadOnly
       description: read-only mode — receive events, emit metrics, do not write back to the forwarder
       type: boolean
       required: false
@@ -81,12 +80,12 @@ module:
         [unix](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/output/event/unix/stream.yaml),
         [socket](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/output/event/socket/stream.yaml),
         [stdout](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/output/event/stdout/stream.yaml))
-        AND their `enabled` gate with `!TenXEnv.get("reducerReadOnly", false)`,
+        AND their `enabled` gate with `!TenXEnv.get("receiverReadOnly", false)`,
         so when the flag is true the output stream is not constructed and the
         log4j Fluency appender (where applicable) never tries to connect to the
         forwarder's return socket.
 
-        Mutually compatible with `reducerOptimize` (encoding wouldn't reach the
+        Mutually compatible with `receiverOptimize` (encoding wouldn't reach the
         forwarder anyway, so it is functionally a no-op when read-only is on).
 
         **Usage (helm chart value, mode=readonly translates to this):**

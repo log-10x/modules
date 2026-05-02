@@ -1,9 +1,9 @@
 #
-# 🔟❎ 'run' reducers module
+# 🔟❎ 'run' receivers module
 
 module:
 
-  name: reducers
+  name: receivers
 
   title: Output reducer
 
@@ -19,7 +19,7 @@ module:
   #  can specify a single value at max for each option defined below.
   allowMultiple: false
 
-  moduleSort: [rateReducer]
+  moduleSort: [rateReceiver]
 
   # 'options' defines a group of named/typed configuration values to pass to a pipeline unit/module at startup
   #  via command line arguments (e.g., '> tenx -myA X -myB Y') or YAML launch files (e.g., '> tenx @my.config').

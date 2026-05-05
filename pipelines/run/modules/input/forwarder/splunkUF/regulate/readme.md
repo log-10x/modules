@@ -1,6 +1,0 @@
-## 1️⃣0️⃣❎ Splunk UF Receiver module
-
-Regulate events before shipping to Splunk via Universal Forwarder.
-
-To learn more see the Splunk UF Receiver [module documentation](https://doc.log10x.com/run/input/forwarder/splunkUF/regulate "Regulate events before shipping to Splunk via Universal Forwarder").
-

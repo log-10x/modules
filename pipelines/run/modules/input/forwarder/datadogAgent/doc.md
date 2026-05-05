@@ -2,7 +2,7 @@
 icon: simple/datadog
 ---
 
-Datadog Agent inputs use a **file relay pattern** with [Fluent Bit + 10x](../fluentbit/) to report, regulate, and optimize events _before_ the Datadog Agent ships them to Datadog. This approach keeps the Datadog Agent as the forwarder (handling buffering, retries, metadata enrichment) while 10x processes events inline.
+Datadog Agent inputs use a **file relay pattern** with [Fluent Bit + 10x](../fluentbit/) to report, receive, and optimize events _before_ the Datadog Agent ships them to Datadog. This approach keeps the Datadog Agent as the forwarder (handling buffering, retries, metadata enrichment) while 10x processes events inline.
 
 ## Architecture
 
@@ -33,7 +33,7 @@ graph LR
 ### Data Flow
 
 - 📝 **App Logs (Folder A)** - Application writes logs to original location
-- 🔧 **Fluent Bit + 10x** - Reads from Folder A, processes events (report/regulate/optimize)
+- 🔧 **Fluent Bit + 10x** - Reads from Folder A, processes events (report/receive/optimize)
 - 📂 **Processed Logs (Folder B)** - 10x writes processed output to new location
 - 📤 **Datadog Agent** - Monitors Folder B with standard `logs_config`, handles forwarding
 - 🐶 **Datadog** - Receives processed events via standard Intake API
@@ -58,7 +58,7 @@ This module is recommended for **VM/traditional infrastructure** where the Datad
     | File | Purpose |
     |------|---------|
     | [`fluentbit/conf/tenx-optimize.conf`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-optimize.conf) | Fluent Bit config for optimize mode |
-    | [`fluentbit/conf/tenx-regulate.conf`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-regulate.conf) | Fluent Bit config for regulate mode |
+    | [`fluentbit/conf/tenx-receive.conf`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-receive.conf) | Fluent Bit config for receive mode |
     | [`fluentbit/conf/tenx-report.conf`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-report.conf) | Fluent Bit config for report mode |
 
-For setup instructions, see the mode-specific documentation: [Report](report/), [Regulate](regulate/), [Optimize](optimize/).
+For setup instructions, see the mode-specific documentation: [Report](report/), [Receive](receive/), [Optimize](optimize/).

@@ -89,7 +89,7 @@ unit:
         Specifies a logical name used as a [tag value](https://www.baeldung.com/micrometer#4-meters) for pipeline metrics.
         This value identifies instances of the 10x run/compile pipelines
         when reporting to the 10x service. For example, for a 10x [Receiver](https://doc.log10x.com/apps/receiver/) with optimization enabled for Fluent Bit forwarders collecting events from a `broker` user-app,
-        this value can be set to: `regulate_fluentbit_broker`
+        this value can be set to: `receive_fluentbit_broker`
 
     - names:
       - runtimeAttributes

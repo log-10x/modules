@@ -7,7 +7,7 @@ module:
 
   title: Receiver
 
-  description: receive events from a coupled forwarder; in read-only mode emit metrics only, in read-write mode also regulate and optionally compact events before they ship to output
+  description: receive events from a coupled forwarder; in read-only mode emit metrics only, in read-write mode also receive and optionally compact events before they ship to output
 
   # 'configFolder' specifies a folder containing default configuration files for the settings defined by this module
   configFolder: apps/receiver
@@ -35,7 +35,7 @@ module:
         receiver encodes emitted events using the [encode](https://doc.log10x.com/api/js/#TenXObject+encode)
         function, reducing log volume by 50-80% before shipping to the destination.
 
-        When false (default), the receiver in read-write mode regulates events
+        When false (default), the receiver in read-write mode receives events
         but emits them in their original plain-text form via the
         [fullText](https://doc.log10x.com/api/js/#TenXBaseObject+fullText) field.
 
@@ -67,7 +67,7 @@ module:
 
         Read-only mode is for observation deployments where the receiver acts
         as a passive metrics emitter. Read-write mode (default) is for
-        regulation and compact-mode deployments where the receiver shapes the
+        receiving and compact-mode deployments where the receiver shapes the
         event stream the forwarder ships to its destination.
 
         For the parallel-DaemonSet observation pattern (separate pod, not in

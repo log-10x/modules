@@ -7,7 +7,7 @@ module:
 
   title: Fluent Bit Unix domain socket output
 
-  description: write regulated/optimized TenXObjects into Fluent Bit via a Unix domain socket
+  description: write received/optimized TenXObjects into Fluent Bit via a Unix domain socket
         
   # 'doc' specifies the markdown doc content, only required when generating docs.
   doc: '+include $=TenXEnv.get("docGenerate") ? "run/modules/input/forwarder/fluentbit/output/unix/doc.md":""'

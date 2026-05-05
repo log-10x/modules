@@ -2,7 +2,7 @@
 icon: simple/fluentd
 ---
 
-Runs 10x Engine as a [sidecar](https://doc.log10x.com/engine/launcher/sidecar) to Fluentd for reporting, regulating, and optimizing events _before_ shipping to output (Elasticsearch, Splunk, S3).
+Runs 10x Engine as a [sidecar](https://doc.log10x.com/engine/launcher/sidecar) to Fluentd for reporting, receiving, and optimizing events _before_ shipping to output (Elasticsearch, Splunk, S3).
 
 ## Architecture
 
@@ -11,7 +11,7 @@ Runs 10x Engine as a [sidecar](https://doc.log10x.com/engine/launcher/sidecar) t
 ```mermaid
 graph LR
     A["<div style='font-size: 14px;'>📂 Input</div><div style='font-size: 10px;'>tail, k8s</div>"] --> B["<div style='font-size: 14px;'>🔧 exec_filter</div><div style='font-size: 10px;'>plugin</div>"]
-    B --> E["<div style='font-size: 14px;'>⚡ 10x Engine</div><div style='font-size: 10px;'>Optimize/Regulate/Report</div>"]
+    B --> E["<div style='font-size: 14px;'>⚡ 10x Engine</div><div style='font-size: 10px;'>Optimize/Receive/Report</div>"]
     E --> C["<div style='font-size: 14px;'>🔌 Unix Socket</div><div style='font-size: 10px;'>return path</div>"]
     C --> D["<div style='font-size: 14px;'>📤 Output</div><div style='font-size: 10px;'>ES, S3</div>"]
 
@@ -37,7 +37,7 @@ graph LR
 | 🔧 exec_filter | Native plugin | Launches 10x with `child_respawn -1` (auto-restart) |
 | 🔧 `<format>` | JSON/stdin | Fluentd's native `@type json` formatter |
 | 🔧 `<inject>` | tag_key | Adds `tenx_tag` field for tag preservation |
-| ⚡ 10x Engine | Internal | Processes event (report/regulate/optimize) |
+| ⚡ 10x Engine | Internal | Processes event (report/receive/optimize) |
 | 🔌 Forward output | Unix socket | Returns via native Fluentd forward protocol |
 
 ### Expected Event Format
@@ -49,7 +49,7 @@ The 10x Engine expects JSON events from Fluentd containing:
 | `tenx_tag` | Event tag injected by Fluentd's `<inject>` directive | Source identification via `sourcePattern` |
 | `log` | The actual log message (configurable via `fluentdMessageField`) | Message extraction |
 
-The `sourcePattern` regex `\"tenx_tag\":\"(.*?)\"` extracts the event source from the `tenx_tag` field for rate regulation grouping.
+The `sourcePattern` regex `\"tenx_tag\":\"(.*?)\"` extracts the event source from the `tenx_tag` field for rate-based grouping.
 
 ??? tenx-keyfiles "Key Files"
 

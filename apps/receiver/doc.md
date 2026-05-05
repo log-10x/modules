@@ -5,8 +5,8 @@ icon: material/play-circle-outline
 The Receiver runs alongside your log forwarder and acts on events as they flow through. It has two install modes:
 
 - **Read-only** (observation): receive events from the forwarder, run aggregators, and publish pattern-identity metrics. Events keep flowing to your destination unchanged. Use when you want visibility into per-pattern volume and cost without touching the event stream.
-- **Read-write** (regulation): receive events, then write back a shaped stream to the forwarder. Two sub-options inside read-write:
-    - **Filter** (lossy): drop events matching a rule via [rate-based](https://doc.log10x.com/run/regulate/rate) filtering or declarative [field-set mute files](https://doc.log10x.com/run/regulate/rate/#mute-file-mode-declarative-field-set-caps). Safe defaults are deny; explicit allow required. Up to 80% volume reduction.
+- **Read-write** (receiving): receive events, then write back a shaped stream to the forwarder. Two sub-options inside read-write:
+    - **Filter** (lossy): drop events matching a rule via [rate-based](https://doc.log10x.com/run/receive/rate) filtering or declarative [field-set mute files](https://doc.log10x.com/run/receive/rate/#mute-file-mode-declarative-field-set-caps). Safe defaults are deny; explicit allow required. Up to 80% volume reduction.
     - **Compact** (lossless): replace events with a compact wire-form that the downstream SIEM plugin expands at query time. 50–80% reduction (64% on K8s OTel logs) with no dashboard or query changes. Requires the expand plugin installed in [Splunk](compact/splunk.md) or [Elasticsearch](compact/elasticsearch.md).
 
 All modes are commanded via GitOps. Operators (or an agent via the [log10x-mcp](https://github.com/log-10x/log10x-mcp) server) open PRs in the customer's config repo; the receiver pulls the latest on reload.
@@ -75,10 +75,10 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
         ```toml title="my-fluentd.conf"
         # Nix/OSX
-        @include "#{ENV['TENX_MODULES']}/pipelines/run/modules/input/forwarder/fluentd/conf/tenx-regulate-unix.conf"
+        @include "#{ENV['TENX_MODULES']}/pipelines/run/modules/input/forwarder/fluentd/conf/tenx-receive-unix.conf"
 
         # Windows
-        # @include "#{ENV['TENX_MODULES']}/pipelines/run/modules/input/forwarder/fluentd/conf/tenx-regulate-stdio.conf"
+        # @include "#{ENV['TENX_MODULES']}/pipelines/run/modules/input/forwarder/fluentd/conf/tenx-receive-stdio.conf"
         ```
 
         **Step 2**: Apply the `@TENX` label to route events through the receiver:
@@ -96,7 +96,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
             </source>
             ```
 
-            Regulated events are marked with `@TENX-PROCESSED`. To re-apply `@ROOT`:
+            Received events are marked with `@TENX-PROCESSED`. To re-apply `@ROOT`:
 
             ```toml
             @include "#{ENV['TENX_MODULES']}/pipelines/run/modules/forwarder/fluentd/conf/auxiliary/root.conf"
@@ -171,17 +171,17 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
         ```toml title="my-fluent-bit.conf"
         # Nix/OSX
-        @INCLUDE /etc/tenx/config/pipelines/run/modules/forwarder/fluentbit/conf/tenx-regulate.conf
+        @INCLUDE /etc/tenx/config/pipelines/run/modules/forwarder/fluentbit/conf/tenx-receive.conf
         @INCLUDE /etc/tenx/config/pipelines/run/modules/forwarder/fluentbit/conf/tenx-unix.conf
 
         # Windows
-        # @INCLUDE c:/program files/tenx-edge/config/pipelines/run/modules/forwarder/fluentbit/conf/tenx-regulate.conf
+        # @INCLUDE c:/program files/tenx-edge/config/pipelines/run/modules/forwarder/fluentbit/conf/tenx-receive.conf
         # @INCLUDE c:/program files/tenx-edge/config/pipelines/run/modules/forwarder/fluentbit/conf/tenx-forward.conf
         ```
 
-        **Step 2**: The Lua filter catches all events by default. To regulate a subset, update the `Match` field:
+        **Step 2**: The Lua filter catches all events by default. To receive a subset, update the `Match` field:
 
-        ```toml title="tenx-regulate.conf"
+        ```toml title="tenx-receive.conf"
         [FILTER]
             Name Lua
             Match *
@@ -191,15 +191,15 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
     === ":simple-beats: Filebeat"
 
-        **Step 1**: Add the 10x input for receiving regulated events:
+        **Step 1**: Add the 10x input for receiving filtered events:
 
         ```yaml title="my-filebeat.yml"
         filebeat.config.inputs:
           enabled: true
           # Nix/OSX
-          path: ${TENX_MODULES}/pipelines/run/modules/input/forwarder/filebeat/regulate/tenxNix.yml
+          path: ${TENX_MODULES}/pipelines/run/modules/input/forwarder/filebeat/receive/tenxNix.yml
           # Windows
-          # path: ${TENX_MODULES}/pipelines/run/modules/input/forwarder/filebeat/regulate/tenxWin.yml
+          # path: ${TENX_MODULES}/pipelines/run/modules/input/forwarder/filebeat/receive/tenxWin.yml
         ```
 
         **Step 2**: Add the receiver processor:
@@ -214,7 +214,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
             processors:
               - script:
                   lang: javascript
-                  file: ${TENX_MODULES}/pipelines/run/modules/input/forwarder/filebeat/script/tenx-regulate.js
+                  file: ${TENX_MODULES}/pipelines/run/modules/input/forwarder/filebeat/script/tenx-receive.js
         ```
 
     === ":simple-logstash: Logstash"
@@ -225,9 +225,9 @@ Follow the steps below. Steps that require customization link to the relevant [C
         - pipeline.id: raw_input
           path.config: "/path/to/conf/upstream.conf"
         - pipeline.id: tenx_pipeline
-          path.config: "${TENX_CONFIG}/pipelines/run/input/forwarder/logstash/regulate/tenx-pipe-out.conf"
+          path.config: "${TENX_CONFIG}/pipelines/run/input/forwarder/logstash/receive/tenx-pipe-out.conf"
         - pipeline.id: tenx_unix_pipeline
-          path.config: "${TENX_CONFIG}/pipelines/run/input/forwarder/logstash/regulate/tenx-pipe-in-unix.conf"
+          path.config: "${TENX_CONFIG}/pipelines/run/input/forwarder/logstash/receive/tenx-pipe-in-unix.conf"
         - pipeline.id: processed
           path.config: "/path/to/conf/downstream.conf"
         ```
@@ -258,12 +258,12 @@ Follow the steps below. Steps that require customization link to the relevant [C
         **Step 1**: Copy the OTel Collector configuration:
 
         ```bash
-        cp $TENX_MODULES/pipelines/run/modules/input/forwarder/otel-collector/regulate/tenxNix.yaml /etc/otelcol-contrib/
+        cp $TENX_MODULES/pipelines/run/modules/input/forwarder/otel-collector/receive/tenxNix.yaml /etc/otelcol-contrib/
         ```
 
         **Step 2**: Update the configuration to match your log sources:
 
-        ```yaml title="regulate/tenxNix.yaml"
+        ```yaml title="receive/tenxNix.yaml"
         receivers:
           filelog:
             include:
@@ -273,16 +273,16 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
         **Step 3**: Configure your final exporters in the `logs/from-tenx` pipeline:
 
-        ```yaml title="regulate/tenxNix.yaml"
+        ```yaml title="receive/tenxNix.yaml"
         service:
           pipelines:
-            # Logs go TO Log10x for regulation
+            # Logs go TO Log10x for receiving
             logs/to-tenx:
               receivers: [filelog, otlp]
               processors: [memory_limiter, batch]
               exporters: [syslog/tenx]
 
-            # Regulated logs come FROM Log10x to final destinations
+            # Received logs come FROM Log10x to final destinations
             logs/from-tenx:
               receivers: [fluentforward/tenx]
               processors: [batch]
@@ -299,7 +299,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
         **Step 1**: Copy the Vector configuration:
 
         ```bash
-        cp $TENX_MODULES/pipelines/run/modules/input/forwarder/vector/regulate/tenxNix.yaml /etc/vector/
+        cp $TENX_MODULES/pipelines/run/modules/input/forwarder/vector/receive/tenxNix.yaml /etc/vector/
         ```
 
         **Step 2**: Update sources and final sinks to match your environment:
@@ -326,16 +326,16 @@ Follow the steps below. Steps that require customization link to the relevant [C
         **Step 3**: Start Log10x first, then Vector:
 
         ```bash
-        tenx run @run/input/forwarder/vector/regulate @apps/receiver
+        tenx run @run/input/forwarder/vector/receive @apps/receiver
         vector --config /etc/vector/tenxNix.yaml
         ```
 
-        Two disconnected component chains in Vector's graph prevent loops: `app_logs → tenx_in` (events out to 10x) and `tenx_out → final` (regulated events in from 10x) never wire together.
+        Two disconnected component chains in Vector's graph prevent loops: `app_logs → tenx_in` (events out to 10x) and `tenx_out → final` (received events in from 10x) never wire together.
 
     === ":simple-splunk: Splunk UF"
 
         !!! note "File Relay Pattern"
-            This integration uses a **file relay pattern**: Fluent Bit + 10x reads from Folder A, regulates events, and writes to Folder B. Splunk UF monitors Folder B and handles forwarding to Splunk indexers.
+            This integration uses a **file relay pattern**: Fluent Bit + 10x reads from Folder A, receives events, and writes to Folder B. Splunk UF monitors Folder B and handles forwarding to Splunk indexers.
 
         **Step 1**: Set up folder paths:
 
@@ -345,7 +345,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
         mkdir -p ${FOLDER_B}
         ```
 
-        **Step 2**: Configure Fluent Bit to read from Folder A, regulate, and write to Folder B:
+        **Step 2**: Configure Fluent Bit to read from Folder A, receive, and write to Folder B:
 
         ```toml title="fluent-bit-splunk.conf"
         [SERVICE]
@@ -358,7 +358,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
             Tag          app.logs
 
         # Include 10x receiver - sends events to 10x subprocess
-        @INCLUDE ${TENX_MODULES}/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-regulate.conf
+        @INCLUDE ${TENX_MODULES}/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-receive.conf
 
         # Include Unix socket - receives processed events back from 10x
         @INCLUDE ${TENX_MODULES}/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-unix.conf
@@ -379,12 +379,12 @@ Follow the steps below. Steps that require customization link to the relevant [C
         sourcetype = app_logs
         ```
 
-        This keeps Splunk UF as the forwarder (handling buffering, retries, timeouts) while 10x regulates events inline. See the [Splunk UF module](https://doc.log10x.com/run/input/forwarder/splunkUF/) for details.
+        This keeps Splunk UF as the forwarder (handling buffering, retries, timeouts) while 10x receives events inline. See the [Splunk UF module](https://doc.log10x.com/run/input/forwarder/splunkUF/) for details.
 
     === ":simple-datadog: Datadog Agent"
 
         !!! note "File Relay Pattern"
-            This integration uses a **file relay pattern**: Fluent Bit + 10x reads from Folder A, regulates events, and writes to Folder B. Datadog Agent monitors Folder B and handles forwarding to Datadog.
+            This integration uses a **file relay pattern**: Fluent Bit + 10x reads from Folder A, receives events, and writes to Folder B. Datadog Agent monitors Folder B and handles forwarding to Datadog.
 
         **Step 1**: Set up folder paths:
 
@@ -394,7 +394,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
         mkdir -p ${FOLDER_B}
         ```
 
-        **Step 2**: Configure Fluent Bit to read from Folder A, regulate, and write to Folder B:
+        **Step 2**: Configure Fluent Bit to read from Folder A, receive, and write to Folder B:
 
         ```toml title="fluent-bit-datadog.conf"
         [SERVICE]
@@ -407,7 +407,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
             Tag          app.logs
 
         # Include 10x receiver - sends events to 10x subprocess
-        @INCLUDE ${TENX_MODULES}/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-regulate.conf
+        @INCLUDE ${TENX_MODULES}/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-receive.conf
 
         # Include Unix socket - receives processed events back from 10x
         @INCLUDE ${TENX_MODULES}/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-unix.conf
@@ -430,13 +430,13 @@ Follow the steps below. Steps that require customization link to the relevant [C
             source: myapp
         ```
 
-        This keeps Datadog Agent as the forwarder (handling buffering, retries, metadata enrichment) while 10x regulates events inline. See the [Datadog Agent module](https://doc.log10x.com/run/input/forwarder/datadogAgent/) for details.
+        This keeps Datadog Agent as the forwarder (handling buffering, retries, metadata enrichment) while 10x receives events inline. See the [Datadog Agent module](https://doc.log10x.com/run/input/forwarder/datadogAgent/) for details.
 
     === ":material-test-tube: Test (no forwarder)"
 
         Test the receiver without setting up a forwarder using the [Dev CLI](https://doc.log10x.com/apps/dev/).
 
-        The dev app uses the [file input module](https://doc.log10x.com/run/input/file/) to read sample log files and writes output to a file, allowing you to verify regulation behavior before integrating with your forwarder.
+        The dev app uses the [file input module](https://doc.log10x.com/run/input/file/) to read sample log files and writes output to a file, allowing you to verify receiving behavior before integrating with your forwarder.
 
         **No forwarder configuration required** - provide sample log files to the file input module and skip to [Step 9](#__tabbed_6_5) to run the test.
 
@@ -449,7 +449,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
 <span id="pair-with-retriever"></span>
 ??? tenx-integration "Step 5: Pair with Retriever (optional)"
 
-    Archive all events to S3 before regulation for full retention alongside cost control. The receiver filters what reaches your SIEM; filtered events remain in S3, queryable via [Retriever](https://doc.log10x.com/apps/retriever/) for incident investigation, compliance, and auditing.
+    Archive all events to S3 before receiving for full retention alongside cost control. The receiver filters what reaches your SIEM; filtered events remain in S3, queryable via [Retriever](https://doc.log10x.com/apps/retriever/) for incident investigation, compliance, and auditing.
 
     Configure your forwarder to duplicate the event stream — one copy to S3 (all events), one through the receiver (filtered events to SIEM):
 
@@ -474,10 +474,10 @@ Follow the steps below. Steps that require customization link to the relevant [C
         [OUTPUT]
             Name         forward
             Match        app.*
-            # → 10x sidecar processes and regulates these events
+            # → 10x sidecar processes and receives these events
         ```
 
-        Events tagged `s3.*` go to S3; events tagged `app.*` continue through regulation.
+        Events tagged `s3.*` go to S3; events tagged `app.*` continue through receiving.
 
     === ":simple-fluentd: Fluentd"
 
@@ -515,7 +515,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
               s3_bucket: your-archive-bucket
           otlp/siem:
             endpoint: siem-endpoint:4317
-            # → 10x sidecar processes and regulates these events
+            # → 10x sidecar processes and receives these events
 
         service:
           pipelines:
@@ -538,7 +538,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
           }
           pipe {
             command => "/opt/tenx-edge/bin/tenx run ..."
-            # → 10x sidecar processes and regulates these events
+            # → 10x sidecar processes and receives these events
           }
         }
         ```
@@ -563,7 +563,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
             total_file_size 50M
             upload_timeout 60s
 
-        # Regulated events written to Folder B for Splunk UF
+        # Received events written to Folder B for Splunk UF
         [OUTPUT]
             Name         file
             Match        *
@@ -593,7 +593,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
             total_file_size 50M
             upload_timeout 60s
 
-        # Regulated events written to Folder B for Datadog Agent
+        # Received events written to Folder B for Datadog Agent
         [OUTPUT]
             Name         file
             Match        *
@@ -603,10 +603,10 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
         The Datadog Agent continues to monitor Folder B via `conf.d` — no changes to the Agent configuration.
 
-<span id="reducers2"></span>
-??? tenx-reducers "Step 6: Configure Reducers (optional)"
+<span id="receivers2"></span>
+??? tenx-receivers "Step 6: Configure Receivers (optional)"
 
-    Configure [rate receivers](https://doc.log10x.com/run/regulate/rate/) for common scenarios. Edit these settings in your receiver [config.yaml](#receivers).
+    Configure [rate receivers](https://doc.log10x.com/run/receive/rate/) for common scenarios. Edit these settings in your receiver [config.yaml](#receivers).
 
     === ":material-percent: Per-Event-Type Budget"
 
@@ -656,7 +656,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
             retain: 300000                 # 5 minutes — log a drift warning if stale
         ```
 
-        Entries in `mutes.csv` look like `Error_syncing_pod=0.10:1744848000:pod error spam OPS-4821`. See [mute file mode](https://doc.log10x.com/run/regulate/rate/#mute-file-mode-declarative-field-set-caps) for the full format and workflow.
+        Entries in `mutes.csv` look like `Error_syncing_pod=0.10:1744848000:pod error spam OPS-4821`. See [mute file mode](https://doc.log10x.com/run/receive/rate/#mute-file-mode-declarative-field-set-caps) for the full format and workflow.
 
 ??? tenx-initializers "Step 7: Enrichments (optional)"
 
@@ -695,11 +695,11 @@ Follow the steps below. Steps that require customization link to the relevant [C
     === ":simple-beats: Filebeat"
 
         ```console title="Nix/OSX"
-        $ filebeat -c my-filebeat.yml -e 2>&1 | /opt/tenx-edge/bin/tenx run @run/input/forwarder/filebeat/regulate/config.yaml @apps/receiver
+        $ filebeat -c my-filebeat.yml -e 2>&1 | /opt/tenx-edge/bin/tenx run @run/input/forwarder/filebeat/receive/config.yaml @apps/receiver
         ```
 
         ```console title="Windows"
-        $ filebeat -c my-filebeat.yml -e 2>&1 | "c:\program files\tenx-edge\tenx" run @run/input/forwarder/filebeat/regulate/config.yaml @apps/receiver
+        $ filebeat -c my-filebeat.yml -e 2>&1 | "c:\program files\tenx-edge\tenx" run @run/input/forwarder/filebeat/receive/config.yaml @apps/receiver
         ```
 
     === ":simple-logstash: Logstash"
@@ -713,13 +713,13 @@ Follow the steps below. Steps that require customization link to the relevant [C
         **Step 1**: Start Log10x Receiver first:
 
         ```console
-        $ tenx run @run/input/forwarder/otel-collector/regulate @apps/receiver
+        $ tenx run @run/input/forwarder/otel-collector/receive @apps/receiver
         ```
 
         **Step 2**: Start OTel Collector with the 10x configuration:
 
         ```console
-        $ otelcol-contrib --config=/etc/otelcol-contrib/regulate/tenxNix.yaml
+        $ otelcol-contrib --config=/etc/otelcol-contrib/receive/tenxNix.yaml
         ```
 
     === ":simple-splunk: Splunk UF"
@@ -736,7 +736,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
         $ splunk restart
         ```
 
-        Fluent Bit + 10x will read from Folder A, regulate events, and write filtered events to Folder B. Splunk UF monitors Folder B and forwards to indexers.
+        Fluent Bit + 10x will read from Folder A, receive events, and write filtered events to Folder B. Splunk UF monitors Folder B and forwards to indexers.
 
     === ":simple-datadog: Datadog Agent"
 
@@ -752,7 +752,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
         $ sudo systemctl restart datadog-agent
         ```
 
-        Fluent Bit + 10x will read from Folder A, regulate events, and write filtered events to Folder B. Datadog Agent monitors Folder B and forwards to Datadog.
+        Fluent Bit + 10x will read from Folder A, receive events, and write filtered events to Folder B. Datadog Agent monitors Folder B and forwards to Datadog.
 
     === ":material-test-tube: Test (no forwarder)"
 
@@ -770,7 +770,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
         $ tenx run @apps/dev
         ```
 
-        The dev app reads events from `data/sample/input/*.log` via the file input module, processes them through the regulation pipeline, and writes results to the configured [file output](https://doc.log10x.com/run/output/event/file/).
+        The dev app reads events from `data/sample/input/*.log` via the file input module, processes them through the receiving pipeline, and writes results to the configured [file output](https://doc.log10x.com/run/output/event/file/).
 
         **Verify output:**
 

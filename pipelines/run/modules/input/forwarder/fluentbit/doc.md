@@ -2,7 +2,7 @@
 icon: simple/fluentbit
 ---
 
-Fluent Bit inputs execute a 10x Engine as [sidecar process](https://doc.log10x.com/engine/launcher/sidecar) to report, regulate, and optimize events _before_ they ship to output (e.g., ElasticSearch, Splunk, AWS S3).
+Fluent Bit inputs execute a 10x Engine as [sidecar process](https://doc.log10x.com/engine/launcher/sidecar) to report, receive, and optimize events _before_ they ship to output (e.g., ElasticSearch, Splunk, AWS S3).
 
 ## Architecture
 
@@ -11,7 +11,7 @@ Fluent Bit inputs execute a 10x Engine as [sidecar process](https://doc.log10x.c
 ```mermaid
 graph LR
     A["<div style='font-size: 14px;'>📂 Input</div><div style='font-size: 10px;'>tail, k8s</div>"] --> B["<div style='font-size: 14px;'>🔧 Lua Filter</div><div style='font-size: 10px;'>tenx.lua</div>"]
-    B --> E["<div style='font-size: 14px;'>⚡ 10x Engine</div><div style='font-size: 10px;'>Optimize/Regulate/Report</div>"]
+    B --> E["<div style='font-size: 14px;'>⚡ 10x Engine</div><div style='font-size: 10px;'>Optimize/Receive/Report</div>"]
     E --> C["<div style='font-size: 14px;'>🔌 Forward</div><div style='font-size: 10px;'>Unix socket / TCP</div>"]
     C --> D["<div style='font-size: 14px;'>📤 Output</div><div style='font-size: 10px;'>ES, S3</div>"]
 
@@ -37,7 +37,7 @@ graph LR
 |-----------|----------|-------------|
 | 🔧 Lua filter | `io.popen()` | Launches 10x subprocess on first event |
 | 🔧 tenx.lua | JSON/stdin | Encodes event as `{"tag":..., "tenx_fields":...}` |
-| ⚡ 10x Engine | Internal | Processes event (report/regulate/optimize) |
+| ⚡ 10x Engine | Internal | Processes event (report/receive/optimize) |
 | 🔄 Forward output | Unix socket or TCP | Returns processed event to Fluent Bit pipeline via Forward protocol |
 | 🔧 Lua filter | Return code | Marks event as processed via `tenx` field |
 
@@ -50,14 +50,14 @@ The 10x Engine expects JSON events from Fluent Bit containing:
 | `tag` | Event tag set by tenx.lua script | Source identification via `sourcePattern` |
 | `log` | The actual log message (configurable via `fluentbitMessageField`) | Message extraction |
 
-The `sourcePattern` regex `\"tag\":\"(.*?)\"` extracts the event source from the `tag` field for rate regulation grouping.
+The `sourcePattern` regex `\"tag\":\"(.*?)\"` extracts the event source from the `tag` field for rate-based grouping.
 
 ??? tenx-keyfiles "Key Files"
 
     | File | Purpose |
     |------|---------|
-    | [`conf/lua/tenx-regulate.lua`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentbit/conf/lua/tenx-regulate.lua) | Lua filter script for regulate mode |
-    | [`conf/tenx-regulate.conf`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-regulate.conf) | Fluent Bit config for regulate mode |
+    | [`conf/lua/tenx-receive.lua`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentbit/conf/lua/tenx-receive.lua) | Lua filter script for receive mode |
+    | [`conf/tenx-receive.conf`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-receive.conf) | Fluent Bit config for receive mode |
     | [`conf/tenx-unix.conf`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-unix.conf) | Forward return path via Unix socket (Linux/macOS) |
     | [`conf/tenx-forward.conf`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-forward.conf) | Forward return path via TCP (Windows) |
     | [`input/stream.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentbit/input/stream.yaml) | 10x stdin input configuration |
@@ -86,8 +86,8 @@ export TENX_HOME=/path/to/tenx/binary
     Path         /var/log/app.log
     Tag          app.logs
 
-# Include 10x reducer (Lua filter)
-@INCLUDE ${TENX_MODULES}/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-regulate.conf
+# Include 10x receiver (Lua filter)
+@INCLUDE ${TENX_MODULES}/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-receive.conf
 
 # Include return path (Unix socket for Linux/macOS, Forward over TCP for Windows)
 @INCLUDE ${TENX_MODULES}/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-unix.conf

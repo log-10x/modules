@@ -15,9 +15,9 @@ include:
 
   # Load the Unix domain socket path 'rawOutputUnixSocketAddress' variable from the 'path' value in 'tenx.yml'.
   # This socket writes JSON-encoded TenXObject values into the Filebeat pipeline.
-  # The optimize/regulate split stays for the filebeat-side yml selection —
+  # The optimize/receive split stays for the filebeat-side yml selection —
   # it's a Filebeat runtime-config artifact, not an engine writeObjects gate.
-  - source: '$="run/modules/input/forwarder/filebeat/" + (TenXEnv.get("outputWriteTemplates") ? "optimize" : "regulate") + (TenXString.includes(TenXEnv.get("os.name"), "Windows") ? "/tenxWin.yml" : "/tenxNix.yml")'
+  - source: '$="run/modules/input/forwarder/filebeat/" + (TenXEnv.get("outputWriteTemplates") ? "optimize" : "receive") + (TenXString.includes(TenXEnv.get("os.name"), "Windows") ? "/tenxWin.yml" : "/tenxNix.yml")'
     options:
       path: rawOutputUnixSocketAddress
 

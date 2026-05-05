@@ -219,7 +219,7 @@ The 10x Engine automatically extracts these values and makes them accessible via
 
 ### :material-function-variant: Enrichment
 
-TenXObjects can be enriched with [calculated fields](https://doc.log10x.com/run/transform/script/object/#enrich) that provide additional context for aggregation and [filtering](https://doc.log10x.com/run/output/regulate/).
+TenXObjects can be enriched with [calculated fields](https://doc.log10x.com/run/transform/script/object/#enrich) that provide additional context for aggregation and [filtering](https://doc.log10x.com/run/output/receive/).
 
 The 10x Engine includes built-in enrichment [modules](com/concepts/module/) that add calculated fields such as severity level, k8s context, multi-line grouping, and more.
 

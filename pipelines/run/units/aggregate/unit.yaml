@@ -13,7 +13,7 @@ unit:
   configFolders:
     dev: run/aggregate/dev
     report: run/aggregate/report
-    regulate: run/aggregate/regulate
+    receive: run/aggregate/receive
     index: run/aggregate/index
     stream: run/aggregate/stream
 

@@ -1,0 +1,301 @@
+#
+# 🔟❎ 'run' rate receiver module
+
+module:
+
+  name: rateReceiver
+
+  title: rate receiver
+
+  description: Filter TenXObjects from output using either local per-node budget sampling or a declarative field-set keyed mute file.
+
+  # 'configFolder' specifies a folder containing default configuration files for the settings defined by this unit/module
+  configFolder: run/receive/rate
+
+  # 'doc' specifies the markdown doc content, only required when generating docs.
+  doc: +include $=TenXEnv.get("docGenerate") ? "run/modules/receive/rate/doc.md":""
+
+  # 'allowMultiple' is disabled for this module. Pipeline command line arguments and configuration files
+  #  can specify a single value at max for each option defined below.
+  allowMultiple: false
+
+  # 'optionsGroup' defines a group of named/typed configuration values to pass to a pipeline at startup
+  #  via command line arguments (e.g., '> tenx -myA X -myB Y') or YAML launch files (e.g., '> tenx @my.config').
+  #  Instances of this group passed are accessible at runtime via TenXEnv.get: https://doc.log10x.com/api/js/#TenXEnv.get
+  options:
+
+    - names:
+      - rateReceiverFieldNames
+      description: list of TenXObject fields to identify rate counter buckets
+      type: list
+      required: false
+      doc: |
+        defines the list of TenXObject field names extracted to identify which rate counter bucket an event belongs to.
+        The list usually contains the `symbolMessage` field from the [message enrichment](https://doc.log10x.com/run/initialize/message/) module
+        but can include additional fields like [GeoIP](https://doc.log10x.com/run/initialize/geoIP/), [HTTP code](https://doc.log10x.com/run/initialize/httpCode/), [k8s container name](https://doc.log10x.com/run/initialize/k8s/), or custom enrichments for multi-dimensional rate tracking.
+
+        **Common Use Cases:**
+
+        **Single-app receiving (per event type):**
+        ```yaml
+        rateReceiverFieldNames:
+          - symbolMessage
+        ```
+
+        **Multi-dimensional tracking (event type + geography + HTTP status):**
+        ```yaml
+        rateReceiverFieldNames:
+          - symbolMessage
+          - country
+          - httpCode
+        ```
+
+        **Multi-app receiving in Kubernetes:**
+
+        *Option A: Cap total spend per app (all event types combined):*
+        ```yaml
+        rateReceiverFieldNames:
+          - container  # Aggregates all event types for each app
+        ```
+        Each app's total spend (across all event types and pods) gets one cap. Simple but loses event-type intelligence.
+
+        *Option B: Cap spend per event type per app:*
+        ```yaml
+        rateReceiverFieldNames:
+          - symbolMessage  # Event type
+          - container      # App identifier (same across all pods)
+        ```
+        Each (event type × app) combo gets its own cap. Provides fairness within apps but allows apps with many event types to potentially exceed one total cap.
+
+        Use `container` (not `pod`) for aggregation—`container` name is stable across replicas while `pod` names are unique per instance.
+      defValue: [symbolMessage]
+
+    - names:
+      - rateReceiverResetIntervalMs
+      description: reset interval for rate counters in milliseconds
+      type: number
+      required: false
+      doc: |
+        defines the interval in milliseconds after which to reset rate counters.
+        Controls how frequently the receiver resets its tracking counters.
+
+        Default of 5 minutes (300000ms) provides stable cost averages and smooths out bursts while remaining responsive.
+        Shorter windows (e.g., 1 minute) are more reactive but noisier; longer windows (e.g., 10 minutes) are smoother but slower to adapt.
+
+        **Trade-offs:**
+        - **1 minute**: Very responsive for bursts, but unstable averages and over-reactive throttling
+        - **5 minutes**: Balanced—stable averages, catches sustained patterns, aligns with hourly budgets (1/12 hour)
+        - **10+ minutes**: Very stable for long-term trends, but slower to adapt and less suitable for short-lived nodes
+
+        **Validation:** Must be at least 60000 milliseconds (1 minute).
+      defValue: 300000
+
+    - names:
+      - rateReceiverMinRetentionThreshold
+      description: minimum retention threshold for events when budget is exceeded
+      type: number
+      required: false
+      doc: |
+        defines the minimum retention rate (0.0 to 1.0) applied to events even when budget is exceeded.
+        Ensures some events are always retained even for very high-spend patterns, preventing complete data loss.
+
+        This value ensures a floor on retention, preventing complete data loss even when budget is exceeded.
+        The severity level boost (from `rateReceiverLevelBoost`) is multiplied with this value to determine the actual minimum retention threshold for each severity level.
+
+        **How boost works:**
+        - Boost only affects the minimum retention threshold, not the calculated threshold based on budget
+        - When under budget: retention threshold is based on budget utilization (boost has no effect)
+        - When over budget: retention threshold is clamped to `minRetentionThreshold * boost`
+
+        **Examples:**
+        - `minRetentionThreshold: 0.1` with `boost: 1.0` (INFO) → minimum 10% retention when over budget
+        - `minRetentionThreshold: 0.1` with `boost: 2.0` (ERROR) → minimum 20% retention when over budget
+        - `minRetentionThreshold: 0.1` with `boost: 0.25` (DEBUG) → minimum 2.5% retention when over budget
+
+        **Important:** Boost values < 1.0 reduce minimum retention for low-priority events. This prevents them from consuming budget when over limit, while still ensuring some events are retained.
+
+        **Trade-offs:**
+        - **0.01 (1%)**: Very aggressive throttling, minimal retention when over budget. Use only if budget is critical.
+        - **0.1 (10%)**: Balanced default. Ensures observability even during budget overruns while still enforcing cost control.
+        - **0.25 (25%)**: Conservative. Prioritizes data retention over strict budget enforcement.
+
+        **Validation:** Must be greater than 0.01.
+      defValue: 0.1
+
+    - names:
+      - rateReceiverLevelBoost
+      description: severity level boost mapping for retention rates
+      type: list
+      required: false
+      doc: |
+        defines a map of [severity levels](https://doc.log10x.com/run/initialize/level/) to boost multipliers for minimum retention thresholds.
+        Higher severity events can be given higher minimum retention rates through boost values.
+
+        The boost multiplier is applied only to `rateReceiverMinRetentionThreshold`, not to the entire retention threshold.
+        This ensures critical events (ERROR, FATAL) have higher minimum retention floors when budget is exceeded,
+        while preventing boost values < 1.0 from reducing retention when under budget.
+
+        **How it works:**
+        - The receiver calculates a retention threshold based on budget utilization
+        - The threshold is clamped to at least `rateReceiverMinRetentionThreshold * boost`
+        - Boost only affects the minimum floor, not the calculated threshold
+        - Higher boost values result in higher minimum retention for events of that severity when over budget
+        - Lower boost values (< 1.0) reduce minimum retention for low-priority events (e.g., DEBUG, TRACE)
+
+        For example:
+
+        ``` yaml
+        levelBoost:
+          - TRACE=0.25
+          - DEBUG=0.5
+          - INFO=1
+          - WARN=1.5
+          - ERROR=2
+          - FATAL=3
+        ```
+
+    - names:
+      - rateReceiverLookupFile
+      description: declarative mute file keyed by field-set
+      type: string
+      required: false
+      doc: |
+        defines the path to a declarative **mute file** that caps specific log patterns by
+        the joined field-set defined in `rateReceiverFieldNames` (e.g. `symbolMessage`,
+        `container`, `httpCode`). The key format is the same one the local receiver uses
+        for per-node counters.
+
+        When this option is set, the receiver switches from local per-node budget sampling
+        to mute-file mode: it does nothing until an event's field-set matches an entry in
+        the file, at which point that entry's `sampleRate` and `untilEpochSec` decide retention.
+
+        **File format** — one entry per line, keyed by the joined field-set value:
+
+        ```
+        <fieldSet>=<sampleRate>:<untilEpochSec>[:<reason>]
+        ```
+
+        - `fieldSet` — the joined values of the fields named in `rateReceiverFieldNames`,
+          separated by `_`. With `rateReceiverFieldNames: [symbolMessage]` the key is just
+          `symbolMessage` (e.g. `Error_syncing_pod`). With `[symbolMessage, container]` the
+          key is `symbolMessage_container` (e.g. `heartbeat_debug_frontend`).
+        - `sampleRate` — probability in `[0.0, 1.0]` that a matching event is retained.
+          `0.0` = full mute; `0.1` = keep 10%; `1.0` = no-op.
+        - `untilEpochSec` — mute expires at this Unix epoch (seconds). Past that, the
+          entry becomes a no-op until someone edits or removes it. Self-healing by design.
+        - `reason` — optional free-text string for audit. Not used at runtime.
+
+        **Example** (with `rateReceiverFieldNames: [symbolMessage]`):
+
+        ```
+        Error_syncing_pod=0.10:1744848000:pod error spam OPS-4821
+        heartbeat_debug=0.00:1744416000:k8s liveness 200s
+        jwt_validated=0.25:1744502400:auth flood after deploy
+        ```
+
+        **Why this shape:**
+
+        - **Field-set keyed**, not regex keyed → mute keys are the exact identifiers the
+          Reporter attributes cost to (same `rateReceiverFieldNames` on both sides), so a
+          "top spender" in the Reporter maps 1:1 to a mute entry.
+        - **Git-friendly**: the file is a human-readable declaration that can live in a
+          config repo, reviewed via PR, `git blame`-d for who/why.
+        - **Self-healing**: every mute has an explicit expiry, so forgotten entries
+          eventually stop filtering instead of silently dropping production data forever.
+        - **AI-editable**: an operator can ask an assistant (e.g., Claude Code via the
+          Log10x MCP) to "mute `Error_syncing_pod` for 24 hours at 10%" — the assistant
+          reads the Reporter's cost attribution, appends the entry, and opens a PR. The
+          mute file is the interface.
+
+        **Severity floor still applies.** Even a `0.0` mute will retain high-severity
+        events at `rateReceiverMinRetentionThreshold * boost` (see `rateReceiverLevelBoost`).
+        This prevents a poorly-scoped mute from silencing ERROR/FATAL traffic.
+
+        When `rateReceiverLookupFile` is **unset**, the receiver falls back to the local
+        per-node budget strategy driven by `rateReceiverBudgetPerHour`,
+        `rateReceiverMaxSharePerFieldSet`, and `rateReceiverIngestionCostPerGB`. Those
+        options are ignored in mute-file mode.
+      defValue: ""
+
+    - names:
+      - rateReceiverLookupRetain
+      description: Retention period for the lookup file containing global event type rates
+      type: number
+      required: false
+      doc: |
+        Defines the retention period for the lookup file containing global event type frequency data.
+
+        If the file's last modified time is older than this period, the lookup is considered stale, and local counter rates are used.
+        Used to make sampling decisions based on cluster-wide event patterns.
+
+        **Validation:** Must be greater than 60000 milliseconds.
+      defValue: 300000
+
+    - names:
+      - rateReceiverBudgetPerHour
+      description: target spending budget per hour in USD
+      type: number
+      required: false
+      doc: |
+        defines the soft target budget per hour for total cost across all event types on this node.
+        Actual spend may exceed this by 10-20% due to soft enforcement.
+
+        Hourly budgets align naturally with cloud infrastructure costs and work for both short-lived and long-lived nodes.
+
+        **Examples:**
+        - $1.50/hour → reasonable for a production log forwarder (~$36/day, ~$1080/month if running 24/7)
+        - $0.10/hour → conservative for dev/test environments
+        - $0.02/hour → minimal for low-volume services
+      defValue: 1.0
+
+    - names:
+      - rateReceiverMaxSharePerFieldSet
+      description: maximum % of total spend any single field set can consume
+      type: number
+      required: false
+      doc: |
+        defines the maximum share (0.0 to 1.0) of the total budget that any single unique field set can use.
+        A "field set" is a unique combination of the field values specified in `rateReceiverFieldNames`.
+
+        Enforced independently of whether the total budget is exceeded—prevents noisy field sets from dominating even when under budget.
+
+        In global mode, this is enforced cluster-wide based on aggregate spend data from the lookup file.
+
+        **Example with `rateReceiverFieldNames: [symbolMessage]`:**
+        - 0.2 means no single event type (e.g., "heartbeat_debug") can use more than 20% of total spend
+        - If "heartbeat_debug" is costing 35% of total, it gets throttled to 20% regardless of whether you're over budget
+
+        **Example with `rateReceiverFieldNames: [container]` (Kubernetes: per-app total):**
+        - Each app (e.g., "frontend", "backend", "payment-service") is tracked separately
+        - 0.2 means no single app can exceed 20% of total spend across ALL its event types
+        - Aggregates across all pods and all event types for each app
+        - If "frontend" app (all events, 5 pods) costs 30%, it gets throttled to 20%
+
+        **Example with `rateReceiverFieldNames: [symbolMessage, container]` (Kubernetes: per event type per app):**
+        - Each unique combination (e.g., "error_login|frontend", "heartbeat_debug|backend") is tracked separately
+        - 0.2 means no single (event type × app) can exceed 20% of total spend
+        - If "frontend" app's "heartbeat_debug" events cost 30% across its 5 pods, they get throttled to 20%
+        - Note: "frontend" could have multiple event types, each with their own 20% cap
+      defValue: 0.2
+
+    - names:
+      - rateReceiverIngestionCostPerGB
+      description: vendor ingestion cost per GB in USD
+      type: number
+      required: false
+      doc: |
+        defines the cost per GB charged by your observability vendor for log ingestion.
+        Used to calculate per-event costs (event byte size × cost per GB) for budget enforcement.
+
+        **Note:** `ingestionCostPerGB` only affects per-node budget mode. In mute-file mode, sampling is declarative and does not use cost calculations.
+
+        **Common vendor pricing (2025):**
+        - **Splunk Cloud**: ~$1.50/GB (varies by contract, SKU)
+        - **Datadog Logs**: ~$0.10-$0.25/GB (depends on tier: standard, flex, online archives)
+        - **Elastic Cloud**: ~$0.109/GB (standard logging tier)
+        - **New Relic**: ~$0.30/GB (Data Plus)
+        - **Sumo Logic**: ~$1.50/GB (depends on plan)
+        - **AWS CloudWatch Logs**: ~$0.50/GB ingestion + $0.03/GB storage
+
+        **Example:** A 10KB error log at $1.50/GB costs ~$0.000015. Over 1 million such events per hour, that's $15/hour ($360/day). The receiver tracks this spend per field set and enforces your `rateReceiverBudgetPerHour` by probabilistically sampling events when over budget.
+      defValue: 1.5

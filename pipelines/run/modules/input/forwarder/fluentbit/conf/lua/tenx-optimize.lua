@@ -22,7 +22,7 @@
 	-- the following values are used to formulate the 'tenx_proc' argument
 	-- to launch the 10x process to which to write events
 
-	-- Define 10x arguments for running in 'optimize' mode (reducer with optimization enabled)
+	-- Define 10x arguments for running in 'optimize' mode (receiver with optimization enabled)
 	tenx_run_args = "@run/input/forwarder/fluentbit/receive/config.yaml @apps/receiver receiverOptimize true"
 
 	-- get the path of this config script

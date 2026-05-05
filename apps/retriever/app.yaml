@@ -25,7 +25,7 @@ app:
     initializers+k8s: run/initialize/k8s
     initializers+geoIP: run/initialize/geoIP
 
-    receivers+rate: run/regulate/rate
+    receivers+rate: run/receive/rate
 
     event Forward Output: run/output/event/forward
 

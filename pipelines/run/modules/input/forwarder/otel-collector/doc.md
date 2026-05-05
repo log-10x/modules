@@ -2,7 +2,7 @@
 icon: simple/opentelemetry
 ---
 
-Integrate Log10x with OpenTelemetry Collector to report, regulate, and optimize log events _before_ shipping to outputs (Elasticsearch, Splunk, S3).
+Integrate Log10x with OpenTelemetry Collector to report, receive, and optimize log events _before_ shipping to outputs (Elasticsearch, Splunk, S3).
 
 ## Architecture
 
@@ -11,7 +11,7 @@ Integrate Log10x with OpenTelemetry Collector to report, regulate, and optimize 
 ```mermaid
 graph LR
     A["<div style='font-size: 14px;'>📂 OTel Collector</div><div style='font-size: 10px;'>receivers</div>"] --> B["<div style='font-size: 14px;'>📤 syslog exporter</div><div style='font-size: 10px;'>Unix socket</div>"]
-    B --> C["<div style='font-size: 14px;'>⚡ 10x Engine</div><div style='font-size: 10px;'>Report/Regulate/Optimize</div>"]
+    B --> C["<div style='font-size: 14px;'>⚡ 10x Engine</div><div style='font-size: 10px;'>Report/Receive/Optimize</div>"]
     C --> D["<div style='font-size: 14px;'>📥 fluentforward</div><div style='font-size: 10px;'>receiver</div>"]
     D --> E["<div style='font-size: 14px;'>📤 OTel Collector</div><div style='font-size: 10px;'>exporters</div>"]
 
@@ -33,7 +33,7 @@ graph LR
 
 - 📂 **Receivers** - OTel Collector receives logs via `filelog`, `otlp`, or other receivers
 - 📤 **Syslog Exporter** - Sends events as RFC5424 syslog to Log10x via Unix socket
-- ⚡ **10x Engine** - Processes events (report metrics / regulate / optimize encoding)
+- ⚡ **10x Engine** - Processes events (report metrics / receive / optimize encoding)
 - 🔌 **Forward Output** - Returns processed events via Forward protocol (Unix socket)
 - 📥 **FluentForward Receiver** - OTel Collector receives processed events
 - 📤 **Final Exporters** - Ships to Elasticsearch, Splunk, S3, etc.
@@ -43,7 +43,7 @@ graph LR
 | Component | Protocol | Description |
 |-----------|----------|-------------|
 | 📤 `syslog/tenx` | RFC5424 / Unix | Sends logs to Log10x for processing |
-| ⚡ 10x Engine | Internal | Report metrics, filter (regulate), or encode (optimize) |
+| ⚡ 10x Engine | Internal | Report metrics, filter (receive), or encode (optimize) |
 | 📥 `fluentforward/tenx` | Forward / Unix | Receives processed logs back from Log10x |
 | 🔀 Separate Pipelines | N/A | `logs/to-tenx` and `logs/from-tenx` prevent loops |
 
@@ -61,7 +61,7 @@ Events in `logs/from-tenx` never feed back to `logs/to-tenx`.
     | File | Purpose |
     |------|---------|
     | [`conf/tenx-report-linux.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/otel-collector/conf/tenx-report-linux.yaml) | OTel Collector config for Reporter mode |
-    | [`conf/tenx-regulate-linux.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/otel-collector/conf/tenx-regulate-linux.yaml) | OTel Collector config for Receiver mode |
+    | [`conf/tenx-receive-linux.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/otel-collector/conf/tenx-receive-linux.yaml) | OTel Collector config for Receiver mode |
     | [`conf/tenx-optimize-linux.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/otel-collector/conf/tenx-optimize-linux.yaml) | OTel Collector config for Optimizer mode |
     | [`input/stream.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/otel-collector/input/stream.yaml) | 10x Unix socket input with syslog parsing |
     | [`output/unix/stream.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/otel-collector/output/unix/stream.yaml) | 10x Forward protocol output configuration |
@@ -83,7 +83,7 @@ export TENX_API_KEY=your-api-key
 tenx run @run/input/forwarder/otel-collector/report @apps/reporter
 
 # Receiver (filter noisy logs)
-tenx run @run/input/forwarder/otel-collector/regulate @apps/receiver
+tenx run @run/input/forwarder/otel-collector/receive @apps/receiver
 
 # Optimizer (Lossless Compact)
 tenx run @run/input/forwarder/otel-collector/optimize @apps/receiver receiverOptimize true
@@ -92,13 +92,13 @@ tenx run @run/input/forwarder/otel-collector/optimize @apps/receiver receiverOpt
 **3. Copy and customize OTel Collector config:**
 
 ```bash
-cp $TENX_MODULES/pipelines/run/modules/input/forwarder/otel-collector/conf/tenx-regulate-linux.yaml /etc/otelcol-contrib/
+cp $TENX_MODULES/pipelines/run/modules/input/forwarder/otel-collector/conf/tenx-receive-linux.yaml /etc/otelcol-contrib/
 ```
 
 **4. Start OTel Collector:**
 
 ```bash
-otelcol-contrib --config=/etc/otelcol-contrib/tenx-regulate-linux.yaml
+otelcol-contrib --config=/etc/otelcol-contrib/tenx-receive-linux.yaml
 ```
 
 !!! note "Requirements"

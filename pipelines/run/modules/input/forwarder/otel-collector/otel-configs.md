@@ -1,6 +1,6 @@
 # OpenTelemetry Collector Configuration Files for Log10x Integration
 
-This directory contains OpenTelemetry Collector configuration files that enable integration with Log10x for reporting, regulation, and optimization of log and trace events.
+This directory contains OpenTelemetry Collector configuration files that enable integration with Log10x for reporting, filtering, and optimization of log and trace events.
 
 ## Overview
 
@@ -38,12 +38,12 @@ Configuration files are located in each mode's directory, following the naming c
 
 In report mode, events are sent to Log10x for metric aggregation only. No events are returned.
 
-### Regulate Mode (Filtering)
+### Receive Mode (Filtering)
 
-- **`regulate/tenxNix.yaml`** - Linux configuration for event filtering
-- **`regulate/tenxWin.yaml`** - Windows configuration for event filtering
+- **`receive/tenxNix.yaml`** - Linux configuration for event filtering
+- **`receive/tenxWin.yaml`** - Windows configuration for event filtering
 
-In regulate mode, events are sent to Log10x, filtered based on policies, and returned for forwarding to destinations.
+In receive mode, events are sent to Log10x, filtered based on policies, and returned for forwarding to destinations.
 
 ### Optimize Mode (Transformation)
 
@@ -63,14 +63,14 @@ First, start the Log10x pipeline in the desired mode:
 tenx @run/input/forward @apps/reporter
 ```
 
-**Regulate:**
+**Receive:**
 ```bash
-tenx @run/input/forwarder/otel-collector/regulate @apps/receiver
+tenx @run/input/forwarder/otel-collector/receive @apps/receiver
 ```
 
-**Regulate with optimization:**
+**Receive with optimization:**
 ```bash
-tenx @run/input/forwarder/otel-collector/regulate @apps/receiver receiverOptimize true
+tenx @run/input/forwarder/otel-collector/receive @apps/receiver receiverOptimize true
 ```
 
 ### Step 2: Start OpenTelemetry Collector
@@ -79,7 +79,7 @@ tenx @run/input/forwarder/otel-collector/regulate @apps/receiver receiverOptimiz
 ```bash
 otelcol --config=report/tenxNix.yaml
 # or
-otelcol --config=regulate/tenxNix.yaml
+otelcol --config=receive/tenxNix.yaml
 # or
 otelcol --config=optimize/tenxNix.yaml
 ```
@@ -88,7 +88,7 @@ otelcol --config=optimize/tenxNix.yaml
 ```powershell
 otelcol.exe --config=report/tenxWin.yaml
 # or
-otelcol.exe --config=regulate/tenxWin.yaml
+otelcol.exe --config=receive/tenxWin.yaml
 # or
 otelcol.exe --config=optimize/tenxWin.yaml
 ```
@@ -111,13 +111,13 @@ The following environment variables can be used to customize the configuration:
 
 - **4317** - OTLP gRPC receiver (incoming events)
 - **4318** - OTLP HTTP receiver (incoming events) / Log10x TCP input
-- **4319** - TCP receiver for events returned from Log10x (regulate/optimize modes)
+- **4319** - TCP receiver for events returned from Log10x (receive/optimize modes)
 
 ## Important Notes
 
 ### Unix Socket Limitation
 
-OpenTelemetry Collector does not natively support Unix domain socket receivers. For regulate and optimize modes, the configurations use TCP port 4319 as an alternative for receiving events back from Log10x.
+OpenTelemetry Collector does not natively support Unix domain socket receivers. For receive and optimize modes, the configurations use TCP port 4319 as an alternative for receiving events back from Log10x.
 
 **For Linux:** You may need to update the Log10x output configuration to use TCP instead of Unix socket:
 ```yaml

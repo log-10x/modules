@@ -12,7 +12,7 @@ pipeline:
 
   # 'description' sets a user-friendly description for the pipeline.
   #  This text will appear when invoking the 10x Engine to list available commands (e.g.,'> tenx -help')
-  description: report, regulate and optimize log/trace events in edge and cloud environments
+  description: report, receive and optimize log/trace events in edge and cloud environments
     
   # 'doc' specifies the markdown doc content, only required when generating docs.
   doc: '+include $=TenXEnv.get("docGenerate") ? "run/doc.md":""'

@@ -7,9 +7,9 @@ module:
 
   title: Vector input
 
-  description: regulate and optimize events collected by Vector forwarders
+  description: receive and optimize events collected by Vector forwarders
 
-  moduleSort: [vectorRegulate]
+  moduleSort: [vectorReceive]
 
   # 'doc' specifies the markdown doc content, only required when generating docs.
   doc: +include $=TenXEnv.get("docGenerate") ? "run/modules/input/forwarder/vector/doc.md":""

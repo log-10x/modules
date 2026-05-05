@@ -48,7 +48,7 @@ modules/
 │   ├── dev/                        # Local preview CLI
 │   ├── mcp/                        # stdin/stdout scaffold used by the MCP server
 │   ├── reporter/                   # DaemonSet pre-SIEM cost insight
-│   ├── reducer/                  # Sidecar: Filter + Compact modes
+│   ├── receiver/                  # Sidecar: Filter + Compact modes
 │   └── retriever/                   # S3 data lake indexing + on-demand query
 │
 ├── pipelines/                      # Core pipeline definitions

@@ -5,7 +5,7 @@ module:
 
   name: filebeatRegulate
 
-  title: Filebeat reducer
+  title: Filebeat Receiver
 
   description: read events from Filebeat forwarders to regulate which events to ship
 

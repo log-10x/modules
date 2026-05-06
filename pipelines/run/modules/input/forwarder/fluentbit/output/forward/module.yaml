@@ -7,7 +7,7 @@ module:
 
   title: Fluent Bit Forward protocol output (Windows)
 
-  description: write regulated/optimized TenXObjects into Fluent Bit via the Forward protocol over TCP
+  description: write received/optimized TenXObjects into Fluent Bit via the Forward protocol over TCP
 
   # 'doc' specifies the markdown doc content, only required when generating docs.
   doc: '+include $=TenXEnv.get("docGenerate") ? "run/modules/input/forwarder/fluentbit/output/forward/doc.md":""'

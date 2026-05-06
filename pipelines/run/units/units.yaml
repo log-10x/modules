@@ -78,7 +78,7 @@
 # -------------------------------- Output Options -----------------------------
 
 # Filter TenXObjects encoded to outputs
-- +include units/output/regulate/unit.yaml
+- +include units/output/receive/unit.yaml
    
 # Define forwarder (e.g., Fluentd, Filebeat), event (e.g., Elastic, Splunk), KV index (e.g., AWS S3)
 # and time series (e.g., Prometheus) output destinations

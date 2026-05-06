@@ -2,7 +2,7 @@
 icon: simple/logstash
 ---
 
-Runs a 10x Engine as a [sidecar process](https://doc.log10x.com/engine/launcher/sidecar) to report, regulate, and optimize events _before_ they ship to output (e.g., ElasticSearch, Splunk, AWS S3).
+Runs a 10x Engine as a [sidecar process](https://doc.log10x.com/engine/launcher/sidecar) to report, receive, and optimize events _before_ they ship to output (e.g., ElasticSearch, Splunk, AWS S3).
 
 ## Architecture
 
@@ -11,7 +11,7 @@ Runs a 10x Engine as a [sidecar process](https://doc.log10x.com/engine/launcher/
 ```mermaid
 graph LR
     A["<div style='font-size: 14px;'>📂 Input</div><div style='font-size: 10px;'>beats, file</div>"] --> B["<div style='font-size: 14px;'>🔧 pipe output</div><div style='font-size: 10px;'>plugin</div>"]
-    B --> E["<div style='font-size: 14px;'>⚡ 10x Engine</div><div style='font-size: 10px;'>Optimize/Regulate/Report</div>"]
+    B --> E["<div style='font-size: 14px;'>⚡ 10x Engine</div><div style='font-size: 10px;'>Optimize/Receive/Report</div>"]
     E --> C["<div style='font-size: 14px;'>🔌 Unix/TCP</div><div style='font-size: 10px;'>return path</div>"]
     C --> D["<div style='font-size: 14px;'>📤 Output</div><div style='font-size: 10px;'>ES, S3</div>"]
 
@@ -36,7 +36,7 @@ graph LR
 |-----------|----------|-------------|
 | 🔧 pipe output | Logstash plugin | Launches 10x subprocess via pipe |
 | 🔧 json codec | JSON/stdin | Logstash's native JSON codec |
-| ⚡ 10x Engine | Internal | Processes event (report/regulate/optimize) |
+| ⚡ 10x Engine | Internal | Processes event (report/receive/optimize) |
 | 🔌 Unix/TCP output | Socket | Returns processed event to Logstash pipeline |
 | 🔌 unix/tcp input | json_lines | Logstash receives processed events |
 
@@ -49,7 +49,7 @@ The 10x Engine expects JSON events from Logstash containing:
 | `file` | Source file path from Logstash's file input | Source identification via `sourcePattern` |
 | `message` | The actual log message (configurable via `logstashMessageField`) | Message extraction |
 
-The `sourcePattern` regex `\"file\":\"(.*?)\"` extracts the event source from the `file` field for rate regulation grouping.
+The `sourcePattern` regex `\"file\":\"(.*?)\"` extracts the event source from the `file` field for rate-based grouping.
 
 ??? tenx-keyfiles "Key Files"
 

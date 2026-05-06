@@ -7,9 +7,9 @@ module:
 
   title: Fluent Bit input
 
-  description: regulate and optimize events collected by Fluent Bit forwarders
+  description: receive and optimize events collected by Fluent Bit forwarders
 
-  moduleSort: [fluentbitRegulate]
+  moduleSort: [fluentbitReceive]
 
   # 'doc' specifies the markdown doc content, only required when generating docs.
   doc: +include $=TenXEnv.get("docGenerate") ? "run/modules/input/forwarder/fluentbit/doc.md":""

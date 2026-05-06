@@ -7,7 +7,7 @@ app:
 
   title: Receiver
 
-  description: receive log/trace events from a coupled forwarder; in read-only mode emit metrics only, in read-write mode also regulate and optionally compact events before they ship to output
+  description: receive log/trace events from a coupled forwarder; in read-only mode emit metrics only, in read-write mode also receive and optionally compact events before they ship to output
 
   # 'configFolders' specifies folders containing default configuration files for this module
   configFolders:
@@ -21,8 +21,8 @@ app:
     initializers+k8s: run/initialize/k8s
     initializers+geoIP: run/initialize/geoIP
 
-    receivers+rate Reducer: run/regulate/rate
-    receivers+compact Reducer: run/regulate/compact
+    receivers+rate Receiver: run/receive/rate
+    receivers+compact Receiver: run/receive/compact
 
     metric Outputs+log10x metrics: run/output/metric/log10x
     metric Outputs+Prometheus: run/output/metric/prometheus/scrape
@@ -39,7 +39,7 @@ app:
     bootstrap: run/bootstrap
     github Sync: gitops
     symbols: run/symbol
-    aggregators: run/aggregate/regulate
+    aggregators: run/aggregate/receive
     template: run/template
 
     transform+timestamp: run/transform/timestamp

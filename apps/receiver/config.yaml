@@ -5,20 +5,15 @@
 # metrics, does not write back to the forwarder). When 'receiverOptimize' is
 # true the receiver runs in compact mode (encodes events for volume reduction).
 # To learn more see https://doc.log10x.com/apps/receiver
-#
-# Note: the runtimeAttribute below stays as `app:reducer` so the Prometheus
-# label `tenx_app="reducer"` is unchanged across the rename. The product name
-# is "Receiver" everywhere except this one internal label, which preserves
-# all existing metrics queries.
 
 tenx: run
 
 # ============================= App Settings ==================================
 
 runtimeAttributes:
-  - app:reducer
+  - app:receiver
   - env:edge
 
 include:
   - apps/shared
-  - run/aggregate/regulate # https://doc.log10x.com/run/aggregate/#regulate
+  - run/aggregate/receive # https://doc.log10x.com/run/aggregate/#receive

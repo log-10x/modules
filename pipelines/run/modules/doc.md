@@ -1,4 +1,4 @@
-Reusable packages of configuration, JavaScript, extensions, and documentation that read, regulate, and output [TenXObjects](https://doc.log10x.com/api/js/#TenXObject).
+Reusable packages of configuration, JavaScript, extensions, and documentation that read, receive, and output [TenXObjects](https://doc.log10x.com/api/js/#TenXObject).
 
 Multiple modules combine within a 10x Engine to form [apps](https://doc.log10x.com/apps/).
 

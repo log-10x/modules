@@ -2,7 +2,7 @@
 icon: material/greater-than
 ---
 
-Splunk Universal Forwarder inputs use a **file relay pattern** with [Fluent Bit + 10x](../fluentbit/) to report, regulate, and optimize events _before_ Splunk UF ships them to Splunk indexers. This approach keeps UF as the forwarder (handling buffering, retries, timeouts) while 10x processes events inline.
+Splunk Universal Forwarder inputs use a **file relay pattern** with [Fluent Bit + 10x](../fluentbit/) to report, receive, and optimize events _before_ Splunk UF ships them to Splunk indexers. This approach keeps UF as the forwarder (handling buffering, retries, timeouts) while 10x processes events inline.
 
 ## Architecture
 
@@ -33,7 +33,7 @@ graph LR
 ### Data Flow
 
 - 📝 **App Logs (Folder A)** - Application writes logs to original location
-- 🔧 **Fluent Bit + 10x** - Reads from Folder A, processes events (report/regulate/optimize)
+- 🔧 **Fluent Bit + 10x** - Reads from Folder A, processes events (report/receive/optimize)
 - 📂 **Processed Logs (Folder B)** - 10x writes processed output to new location
 - 📤 **Splunk UF** - Monitors Folder B with standard `inputs.conf`, handles forwarding
 - 🔍 **Splunk Indexers** - Receives processed events via standard S2S protocol
@@ -58,7 +58,7 @@ This module is recommended for **VM/traditional infrastructure** where Splunk UF
     | File | Purpose |
     |------|---------|
     | [`fluentbit/conf/tenx-optimize.conf`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-optimize.conf) | Fluent Bit config for optimize mode |
-    | [`fluentbit/conf/tenx-regulate.conf`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-regulate.conf) | Fluent Bit config for regulate mode |
+    | [`fluentbit/conf/tenx-receive.conf`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-receive.conf) | Fluent Bit config for receive mode |
     | [`fluentbit/conf/tenx-report.conf`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-report.conf) | Fluent Bit config for report mode |
 
-For setup instructions, see the mode-specific documentation: [Report](report/), [Regulate](regulate/), [Optimize](optimize/).
+For setup instructions, see the mode-specific documentation: [Report](report/), [Receive](receive/), [Optimize](optimize/).

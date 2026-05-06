@@ -7,7 +7,7 @@ module:
 
   title: Log Forwarder inputs
 
-  description: report, regulate and optimize events collected by log forwarders
+  description: report, receive and optimize events collected by log forwarders
 
   # 'doc' specifies the markdown doc content, only required when generating docs.
   doc: +include $=TenXEnv.get("docGenerate") ? "run/modules/input/forwarder/doc.md":""
@@ -18,7 +18,7 @@ module:
   moduleSort: [fluentbit,fluentd,otelCollector,vector,filebeat,logstash,splunkUF,datadogAgent]
 
   # Shared options applicable across all forwarder flavors. Mode selection
-  # (regulate / compact-all / compact-lookup) is driven by outputEncodeField,
+  # (receive / compact-all / compact-lookup) is driven by outputEncodeField,
   # which each forwarder's user-facing config.yaml derives from `receiverOptimize`
   # and `compactReceiverLookupFile` via a `$=yield` expression. Substitution
   # into the transport stream.yaml happens at config-load before DSL parse, so
@@ -36,7 +36,7 @@ module:
       doc: |
         Selected per forwarder mode by the user-facing config.yaml:
 
-        - **regulate** (default): `fullText` — plain passthrough, no encoding
+        - **receive** (default): `fullText` — plain passthrough, no encoding
         - **compact-all**: `encoded=encode()` — every event compacted
         - **compact-lookup**: `encoded=shouldEncode() ? encode() : fullText` — per-pattern
           decision via the compactReceiver module (requires `compactReceiverLookupFile`)
@@ -51,7 +51,7 @@ module:
       defValue: "false"
       doc: |
         True for encoding modes (compact-all, compact-lookup) so decoders can
-        reconstruct events from templateHash + vars. False for regulate mode
+        reconstruct events from templateHash + vars. False for receive mode
         (no encoding → no templates needed).
 
     - names:

@@ -25,7 +25,7 @@ output:
 
     # 'enabled' sets whether to open the output. If true, any 'filter' value
     #  set below is evaluated for each TenXObject to determine whether to write its instance/template field values to output.
-    # `receiverReadOnly=true` short-circuits the gate so the reducer can run as a non-intervening reporter.
+    # `receiverReadOnly=true` short-circuits the gate so the receiver can run as a non-intervening reporter.
     enabled: $=yield !TenXEnv.get("receiverReadOnly", false) && TenXEnv.get("outputUnixSocketWriteObjects", true)
 
     # 'filter' is set to skip templates when encoding object field values.

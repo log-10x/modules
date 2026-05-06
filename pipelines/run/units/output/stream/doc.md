@@ -14,7 +14,7 @@ See [output extensions](https://doc.log10x.com/api/output/).
 
 Output [Modules](https://doc.log10x.com/engine/module/) package stream configuration, JavaScript and documentation files for writing TenXObjects to edge and cloud data destinations which include:  
 
-- [:simple-fluentd: Forwarders](https://doc.log10x.com/run/input/forwarder/) (Fluentd/Bit) - regulate and optimize before shipping
+- [:simple-fluentd: Forwarders](https://doc.log10x.com/run/input/forwarder/) (Fluentd/Bit) - receive and optimize before shipping
 - [:simple-prometheus: Time-series](https://doc.log10x.com/run/output/metric/) (Prometheus, Datadog) - publish [TenXSummary](https://doc.log10x.com/api/js/#TenXSummary) metrics
 - [:material-bucket-outline: Object Storage](https://doc.log10x.com/run/input/objectStorage/index) (S3, Azure Blobs) - index for in-place querying
   

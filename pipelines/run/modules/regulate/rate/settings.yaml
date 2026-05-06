@@ -1,7 +1,0 @@
-# 🔟❎ 'run' rate reducer settings
-
-# Set the 10x pipeline to 'run'
-tenx: run
-
-# apply the 'rateReceiver' function to all outputs if limit is set
-groupFilters: '$=yield TenXEnv.get("rateReceiverLookupFile") ? "shouldRetainEventWithLookup()" : "shouldRetainEventWithoutLookup()"'

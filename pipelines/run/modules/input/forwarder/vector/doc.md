@@ -2,14 +2,14 @@
 icon: simple/vector
 ---
 
-Integrate Log10x with [Vector](https://vector.dev) to report, regulate, and optimize log events _before_ shipping to outputs (Elasticsearch, Splunk, S3).
+Integrate Log10x with [Vector](https://vector.dev) to report, receive, and optimize log events _before_ shipping to outputs (Elasticsearch, Splunk, S3).
 
 ## Architecture
 
 ```mermaid
 graph LR
     A["📂 Vector<br/>sources"] --> B["📤 socket sink<br/>Unix / text"]
-    B --> C["⚡ 10x Engine<br/>Report/Regulate/Optimize"]
+    B --> C["⚡ 10x Engine<br/>Report/Receive/Optimize"]
     C --> D["📥 fluent source<br/>Unix"]
     D --> E["📤 Vector<br/>sinks"]
 ```
@@ -18,7 +18,7 @@ graph LR
 
 - 📂 **Sources** — Vector reads logs from `file`, `kubernetes_logs`, `journald`, `vector` (gRPC), etc.
 - 📤 **Socket Sink** — Vector writes events as newline-delimited text/JSON to a Unix socket.
-- ⚡ **10x Engine** — Processes events (report metrics / regulate filtering / optimize encoding).
+- ⚡ **10x Engine** — Processes events (report metrics / receive filtering / optimize encoding).
 - 📥 **Fluent Source** — Vector receives processed events back via the Fluent Forward protocol over a Unix socket.
 - 📤 **Final Sinks** — Vector ships processed events to Elasticsearch, Splunk, S3, etc.
 
@@ -27,7 +27,7 @@ graph LR
 | Component | Protocol | Description |
 |---|---|---|
 | 📤 `sinks.tenx_in` (`socket`, `mode: unix`) | newline-delimited text | Sends logs to Log10x for processing |
-| ⚡ 10x Engine | Internal | Report metrics, filter (regulate), or encode (optimize) |
+| ⚡ 10x Engine | Internal | Report metrics, filter (receive), or encode (optimize) |
 | 📥 `sources.tenx_out` (`fluent`) | Forward / Unix | Receives processed logs back from Log10x |
 | 🔀 Disconnected component graph | N/A | The to-tenx and from-tenx legs are not wired together, so loops are impossible |
 
@@ -35,7 +35,7 @@ graph LR
 
 | File | Purpose |
 |---|---|
-| `regulate/tenxNix.yaml` | Vector config for Receiver mode (Linux/macOS, Unix sockets) |
+| `receive/tenxNix.yaml` | Vector config for Receiver mode (Linux/macOS, Unix sockets) |
 | `input/stream.yaml` | 10x Unix socket input, plain newline-delimited records |
 | `output/unix/stream.yaml` | 10x Forward protocol output configuration |
 
@@ -53,19 +53,19 @@ export TENX_API_KEY=your-api-key
 
 ```bash
 # Read-only (no return loop to Vector — metrics only)
-tenx run @run/input/forwarder/vector/regulate @apps/receiver receiverReadOnly true
+tenx run @run/input/forwarder/vector/receive @apps/receiver receiverReadOnly true
 
 # Receiver (filter noisy logs)
-tenx run @run/input/forwarder/vector/regulate @apps/receiver
+tenx run @run/input/forwarder/vector/receive @apps/receiver
 
 # Optimizer (Lossless Compact)
-tenx run @run/input/forwarder/vector/regulate @apps/receiver receiverOptimize true
+tenx run @run/input/forwarder/vector/receive @apps/receiver receiverOptimize true
 ```
 
 **3. Copy and customize Vector config:**
 
 ```bash
-cp $TENX_MODULES/pipelines/run/modules/input/forwarder/vector/regulate/tenxNix.yaml /etc/vector/
+cp $TENX_MODULES/pipelines/run/modules/input/forwarder/vector/receive/tenxNix.yaml /etc/vector/
 ```
 
 **4. Start Vector:**
@@ -103,14 +103,14 @@ extraContainers:
     image: log10x/edge-10x:latest
     args:
       - "run"
-      - "@run/input/forwarder/vector/regulate"
+      - "@run/input/forwarder/vector/receive"
       - "@apps/receiver"
       - "vectorInputPath"
       - "/tmp/tenx-sockets/tenx-vector-in.sock"
       - "vectorOutputForwardAddress"
       - "/tmp/tenx-sockets/tenx-vector-out.sock"
       # Read-only mode (no return loop, metrics-only). Omit for full
-      # regulate/optimize round-trip back to Vector.
+      # receive/optimize round-trip back to Vector.
       # - "receiverReadOnly"
       # - "true"
       # Optimize mode (lossless compaction). Mutually exclusive with read-only.
@@ -133,7 +133,7 @@ podSecurityContext:
   fsGroup: 0
 
 # Vector side of the contract: write events to the 10x input socket,
-# receive regulated events back from the 10x output socket, ship from there.
+# receive received events back from the 10x output socket, ship from there.
 customConfig:
   data_dir: /vector-data-dir
 
@@ -174,13 +174,13 @@ helm upgrade --install vector vector/vector \
   --values tenx-overlay.yaml
 ```
 
-### Mode selection (read-only / regulate / optimize)
+### Mode selection (read-only / receive / optimize)
 
 All three modes share the same launch — only the `args:` list changes:
 
 | Mode | Extra args | Behavior |
 |---|---|---|
-| **regulate** (default) | none | Filter events; surviving events return to Vector |
+| **receive** (default) | none | Filter events; surviving events return to Vector |
 | **read-only** | `receiverReadOnly true` | Read + aggregate + publish metrics; do **not** write events back |
 | **optimize** | `receiverOptimize true` | Filter + losslessly compact surviving events for 50–80% volume reduction |
 
@@ -194,7 +194,7 @@ When both containers start at the same time, Vector's `socket` sink may briefly 
 
 Look for these signals in `kubectl logs <pod> -c tenx`:
 
-- `🚦 Applying local rate reducer to: vector` — the Vector input wrapper loaded
+- `🚦 Applying local rate receiver to: vector` — the Vector input wrapper loaded
 - `📈 Publishing TenXSummary metrics to the log10x backend` — metrics are flowing to the Log10x backend
 - `📝 Writing TenXObject fields: 'fullText' → Fluentd: /tmp/tenx-sockets/tenx-vector-out.sock` — return-loop is wired (absent in read-only mode, by design)
 

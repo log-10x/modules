@@ -2,7 +2,7 @@
 icon: simple/beats
 ---
 
-Filebeat modules execute as a [sidecar process](https://doc.log10x.com/engine/launcher/sidecar) to report, regulate, and optimize events _before_ they ship to output (e.g., ElasticSearch).
+Filebeat modules execute as a [sidecar process](https://doc.log10x.com/engine/launcher/sidecar) to report, receive, and optimize events _before_ they ship to output (e.g., ElasticSearch).
 
 ## Architecture
 
@@ -11,7 +11,7 @@ Filebeat modules execute as a [sidecar process](https://doc.log10x.com/engine/la
 ```mermaid
 graph LR
     A["<div style='font-size: 14px;'>📂 Input</div><div style='font-size: 10px;'>tail, k8s</div>"] --> B["<div style='font-size: 14px;'>🔧 script</div><div style='font-size: 10px;'>tenx-*.js</div>"]
-    B --> C["<div style='font-size: 14px;'>⚡ 10x Pipeline</div><div style='font-size: 10px;'>Parse/Optimize/Regulate</div>"]
+    B --> C["<div style='font-size: 14px;'>⚡ 10x Pipeline</div><div style='font-size: 10px;'>Parse/Optimize/Receive</div>"]
     C --> D["<div style='font-size: 14px;'>🔌 Unix Input</div><div style='font-size: 10px;'>back to Filebeat</div>"]
     D --> E["<div style='font-size: 14px;'>📤 Output</div><div style='font-size: 10px;'>Elasticsearch</div>"]
 
@@ -38,7 +38,7 @@ graph LR
 | ⚡ 10x | Config parsing | Reads Filebeat's config paths from stdout |
 | 🔧 script processor | JSON/stdout | `tenx-optimize.js` writes events to stdout |
 | ⚡ 10x stdin | JSON | Reads and parses events from Filebeat's stdout |
-| ⚡ 10x Pipeline | Internal | Processes event (report/regulate/optimize) |
+| ⚡ 10x Pipeline | Internal | Processes event (report/receive/optimize) |
 | 🔌 Unix socket | JSON | Writes processed events to Unix socket |
 | 🔌 Filebeat unix input | JSON decode | Reads from socket, decodes JSON fields |
 | 📤 Filebeat Output | Output | Sends to Elasticsearch with correct document IDs |
@@ -72,7 +72,7 @@ Unlike other forwarders, Filebeat uses `sourceFilter` with the pattern `\"tenx\"
     | File | Purpose |
     |------|---------|
     | [`script/tenx-optimize.js`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/filebeat/script/tenx-optimize.js) | Filebeat script processor - encodes events to stdout |
-    | [`script/tenx-regulate.js`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/filebeat/script/tenx-regulate.js) | Filebeat script processor for regulate mode |
+    | [`script/tenx-receive.js`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/filebeat/script/tenx-receive.js) | Filebeat script processor for receive mode |
     | [`optimize/tenxNix.yml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/filebeat/optimize/tenxNix.yml) | Filebeat Unix socket input config (Linux/macOS) |
     | [`optimize/tenxWin.yml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/filebeat/optimize/tenxWin.yml) | Filebeat Unix socket input config (Windows) |
     | [`input/stream.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/filebeat/input/stream.yaml) | 10x stdin input with Filebeat config parsing |

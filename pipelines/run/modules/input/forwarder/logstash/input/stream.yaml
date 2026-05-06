@@ -2,7 +2,7 @@
 
 # This configuration defines a stdin input device from which to read
 # JSON objects from a host Logstash forwarder for processing and (optional) output
-# for returning regulated/optimized events.
+# for returning received/optimized events.
 
 # Set the 10x pipeline to 'run'
 tenx: run

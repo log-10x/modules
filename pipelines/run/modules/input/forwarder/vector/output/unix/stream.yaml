@@ -28,7 +28,7 @@ outputForward:
       - $?vectorOutputFields
 
     # Use JSON encoding to properly handle 10x-encoded strings that contain special characters.
-    # (The regulate-mode fullText path also goes through json fine.)
+    # (The receive-mode fullText path also goes through json fine.)
     encodeType: json
 
     writeTemplates: $?outputWriteTemplates=false

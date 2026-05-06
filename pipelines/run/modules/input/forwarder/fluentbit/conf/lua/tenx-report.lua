@@ -24,8 +24,8 @@
 	-- the following values are used to formulate the 'tenx_proc' argument
 	-- to launch the 10x process to which to write events
 
-	-- Define 10x arguments for running in 'report' mode (reducer with read-only enabled).
-	-- The reducer wrapper is the same as regulate — only `receiverReadOnly true` flips
+	-- Define 10x arguments for running in 'report' mode (receiver with read-only enabled).
+	-- The receiver wrapper is the same as receive — only `receiverReadOnly true` flips
 	-- the gating in the generic forward output module so the return socket is never
 	-- bound or connected. Aggregators still publish TenXSummary metrics.
 	tenx_run_args = "@run/input/forwarder/fluentbit/receive/config.yaml @apps/receiver receiverReadOnly true"

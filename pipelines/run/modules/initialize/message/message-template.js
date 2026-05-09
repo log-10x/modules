@@ -1,6 +1,6 @@
 // @loader: tenx
 
-import {TenXTemplate, TenXEnv, TenXConsole, TenXUnit} from '@tenx/tenx'
+import {TenXTemplate, TenXEnv, TenXConsole, TenXUnit, TenXString} from '@tenx/tenx'
 import {GroupTemplate} from '../group/group-template'
 
 export class MessageUnit extends TenXUnit {
@@ -26,13 +26,18 @@ export class MessageTemplate extends TenXTemplate {
 
         if (GroupTemplate.isStandalone) {
 
-            TenXTemplate.setStatic(
-                TenXEnv.get("symbolMessageField"),
-                this.symbolSequence(
+            var symbolSequence = this.symbolSequence(
                     TenXEnv.get("symbolContexts", "log,exec"),
                     TenXEnv.get("inputField"),
-                    TenXEnv.get("symbolMaxLen", 0))
-            );
+                    TenXEnv.get("symbolMaxLen", 0));
+
+            TenXTemplate.setStatic(
+                TenXEnv.get("symbolMessageField"), symbolSequence);
+
+            if (TenXEnv.get("symbolMessageHashField")) {
+                TenXTemplate.setStatic(
+                    TenXEnv.get("symbolMessageHashField"), TenXString.hash(symbolSequence));
+            }
         }
     }
 }

@@ -53,10 +53,26 @@ module:
       required: false
       doc: |
          specifies the name of the field to assign the return value of [symbolSequence](https://doc.log10x.com/api/js/#TenXObject+symbolSequence) function
-         when invoking it with the a symbolContext argument value of [symbolContexts](https://doc.log10x.com/run/initialize/message/#symbolcontexts). 
+         when invoking it with the a symbolContext argument value of [symbolContexts](https://doc.log10x.com/run/initialize/message/#symbolcontexts).
 
          For an example, see [symbolInputField](https://doc.log10x.com/run/initialize/message/#symbolinputfield).
       defValue: symbolMessage
+
+    - names:
+      - symbolMessageHashField
+      description: field name to assign with the hash of the symbol sequence value
+      type: string
+      required: false
+      doc: |
+         specifies the name of the field to assign a compact, alphanumeric hash of the
+         [symbolMessageField](https://doc.log10x.com/run/initialize/message/#symbolmessagefield) value,
+         computed via [TenXString.hash](https://doc.log10x.com/api/js/#TenXString.hash).
+
+         The hash is a stable, JSON-safe identifier suitable for use as a deduplication key,
+         metric dimension, or compact reference to the underlying message pattern.
+
+         Set to an empty value to disable.
+      defValue: symbolMessageHash
 
     - names:
       - symbolOriginField

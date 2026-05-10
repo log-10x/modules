@@ -260,8 +260,19 @@ function tenx_process(tag, timestamp, record)
     local isTenX = record["tenx"]
 
     if (isTenX) then
-    	if (record["tenx_fields"]) then
-    		return 2, timestamp, record["tenx_fields"]
+    	local fields = record["tenx_fields"]
+    	if (fields) then
+    		-- Merge any sibling top-level keys (anything other than the wrapper
+    		-- keys we added on the way in: tag/tenx/tenx_fields) into the returned
+    		-- event. This lets engine-side fullText(...)/encode(...) emit extras
+    		-- as wire-level siblings of tenx_fields and have them land alongside
+    		-- the original event keys downstream.
+    		for k, v in pairs(record) do
+    			if (k ~= "tag") and (k ~= "tenx") and (k ~= "tenx_fields") then
+    				fields[k] = v
+    			end
+    		end
+    		return 2, timestamp, fields
     	end
 
         record["tenx"] = nil

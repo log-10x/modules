@@ -72,7 +72,7 @@ module:
          metric dimension, or compact reference to the underlying message pattern.
 
          Set to an empty value to disable.
-      defValue: symbolMessageHash
+      defValue: ""
 
     - names:
       - symbolOriginField
@@ -81,4 +81,4 @@ module:
       required: false
       doc: |
          specifies the name of the field to assign the return value of [symbolOrigin](https://doc.log10x.com/api/js/#TenXObject+symbolOrigin) function. 
-      defValue: symbolOrigin
+      defValue: ""

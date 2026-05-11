@@ -1,6 +1,6 @@
-## 1️⃣0️⃣❎ Fluentd input module
+## 1️⃣0️⃣❎ Fluentd module
 
-Receive and optimize events collected by Fluentd forwarders.
+Receive and optimize events collected by Fluentd via the Fluent Forward protocol.
 
-To learn more see the Fluentd input [module documentation](https://doc.log10x.com/run/input/forwarder/fluentd "Receive and optimize events collected by Fluentd forwarders").
+To learn more see the Fluentd [module documentation](https://doc.log10x.com/run/input/forwarder/fluentd "Receive and optimize events collected by Fluentd via the Fluent Forward protocol").
 

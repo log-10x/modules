@@ -1,29 +1,25 @@
 #
-# 🔟❎ 'run' Fluentd input modules
+# 🔟❎ 'run' Fluentd input module
+#
+# Sidecar-only integration. Log10x runs as a peer process to Fluentd; the
+# two exchange events over the native Fluent Forward protocol on both
+# directions. No `exec_filter` / stdin subprocess pattern is supported.
 
 module:
 
   name: fluentd
 
-  title: Fluentd input
+  title: Fluentd
 
-  description: receive and optimize events collected by Fluentd forwarders
+  description: receive and optimize events collected by Fluentd via the Fluent Forward protocol
 
-  # 'moduleSort' orders submodules in generated documentation. Each mode has
-  # its own module (defined under sidecar/ and embedded/).
-  moduleSort: [fluentdSidecar, fluentdEmbedded]
+  moduleSort: [fluentdInput, fluentdOutput]
 
-  # 'doc' specifies the markdown doc content, only required when generating docs.
   doc: +include $=TenXEnv.get("docGenerate") ? "run/modules/input/forwarder/fluentd/doc.md":""
 
-  # 'allowMultiple' is disabled — pipeline command line arguments and YAML configs
-  # can specify a single value at most for each option defined below.
   allowMultiple: false
 
-  # Shared output-formatting options used by both deployment modes (sidecar and
-  # embedded). The two transports (forward / unix / stdio) reference these via
-  # `$?fluentdOutputFields` and `$?fluentdOutputEncodeType` in their stream.yaml
-  # so users set them once, regardless of which mode they pick.
+  # Shared output-formatting options used by the Fluentd Forward output.
   options:
 
     - names:
@@ -34,8 +30,8 @@ module:
       defValue: []
       doc: |
         specifies TenXObject field names to emit alongside the main event text
-        when writing back to the Fluentd forwarder. When empty (default), only
-        the main event field is written. Example fields: level, group, symbolMessage.
+        when writing back to Fluentd. When empty (default), only the main event
+        field is written. Example fields: level, group, symbolMessage.
 
     - names:
       - fluentdOutputEncodeType
@@ -45,7 +41,7 @@ module:
       defValue: delimited
       doc: |
         specifies how the combined output (main event field plus outputFields)
-        is encoded when writing back to the Fluentd forwarder. Possible values:
+        is encoded when writing back to Fluentd. Possible values:
         - **json**: formats all fields as a JSON object
         - **delimited**: formats field values separated by the output delimiter
         Only takes effect when fluentdOutputFields is set.

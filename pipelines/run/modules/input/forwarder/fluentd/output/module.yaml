@@ -1,17 +1,14 @@
 #
-# 🔟❎ 'run' Fluentd output module
+# 🔟❎ 'run' Fluentd Forward output module
 
 module:
 
   name: fluentdOutput
 
-  title: Fluentd output
+  title: Fluentd Forward output
 
-  description: encode TenXObjects to Fluentd
-     
-  # 'doc' specifies the markdown doc content, only required when generating docs.
-  doc: +include $=TenXEnv.get("docGenerate") ? "run/modules/input/forwarder/fluentd/output/doc.md":""
+  description: send processed events back to Fluentd over the Fluent Forward protocol
 
-  # 'allowMultiple' is disabled for this module. Pipeline command line arguments and configuration files
-  #  can specify a single value at max for each option defined below.
+  doc: '+include $=TenXEnv.get("docGenerate") ? "run/modules/input/forwarder/fluentd/output/doc.md":""'
+
   allowMultiple: false

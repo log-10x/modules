@@ -1,7 +1,7 @@
 # 🔟❎ 'run' Fluentd Forward input stream
 #
 # Listens for events from Fluentd's `out_forward` plugin on TCP `:24224` by
-# default (set `forwardInputPath` to use a Unix domain socket on Linux/macOS
+# default (set `fluentdInputPath` to use a Unix domain socket on Linux/macOS
 # instead). Each event arrives as a JSON record and is mapped to a TenXObject
 # by the `fluentd` extractor below:
 #
@@ -56,10 +56,10 @@ input:
     args:
       # Listen on this TCP port
       - port
-      - $=yield TenXEnv.get("forwardInputPort", "24224")
-      # …unless `forwardInputPath` is set, in which case use that Unix socket
-      - '$=yield TenXEnv.get("forwardInputPath", "") ? "path" : ""'
-      - $=yield TenXEnv.get("forwardInputPath", "")
+      - $=yield TenXEnv.get("fluentdInputPort", "24224")
+      # Pass path if it exists, which will set it instead of the port
+      - '$=yield TenXEnv.get("fluentdInputPath", "") ? "path" : ""'
+      - $=yield TenXEnv.get("fluentdInputPath", "")
 
     # Backpressure ceiling — Log10x stops draining the Forward socket once
     # this many bytes have arrived in `intervalBytesDuration`, signalling

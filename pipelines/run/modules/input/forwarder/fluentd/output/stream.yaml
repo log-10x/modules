@@ -5,14 +5,14 @@
 # route on `$TAG` behave the same as without Log10x in the path.
 #
 # Defaults to TCP `127.0.0.1:24225` so it pairs with the Fluentd input
-# listening on `:24224`. Override the address/port with:
+# listening on `:24224`. Override with:
 #
-#   outputForwardHostAddress: 0.0.0.0
-#   outputForwardHostPort:    9999
+#   fluentdOutputHost: 0.0.0.0
+#   fluentdOutputPort: 9999
 #
 # Or use a Unix domain socket on Linux/macOS:
 #
-#   outputForwardAddress:     /tmp/tenx-fluentd-out.sock
+#   fluentdOutputPath: /tmp/tenx-fluentd-out.sock
 #
 # The output mode is driven by `outputEncodeField` and `outputWriteTemplates`
 # (see run/modules/input/forwarder/module.yaml):
@@ -28,8 +28,9 @@ include:
 
 outputForward:
 
-  - hostAddress: 127.0.0.1
-    hostPort: 24225
+  - hostAddress: $=yield TenXEnv.get("fluentdOutputHost", "127.0.0.1")
+    hostPort: $=yield TenXEnv.get("fluentdOutputPort", "24225")
+    address: $=yield TenXEnv.get("fluentdOutputPath")
 
     fields:
       # Carries the whole Fluentd record in receive mode and an encoded

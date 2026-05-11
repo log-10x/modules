@@ -16,7 +16,7 @@ module:
   options:
 
     - names:
-        - forwardInputPort
+        - fluentdInputPort
       description: TCP port to listen on for events from Fluentd's out_forward plugin
       type: String
       required: false
@@ -26,7 +26,7 @@ module:
         plugin. Match this against the `port` in your Fluentd `<server>` block.
 
     - names:
-        - forwardInputPath
+        - fluentdInputPath
       description: Unix domain socket path to listen on (Linux/macOS)
       type: String
       required: false

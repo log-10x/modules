@@ -48,7 +48,7 @@ module:
     - names:
         - outputForwardHostPort
       description: host port of target fluent instance
-      type: number
+      type: string
       category: host
       required: false
       doc: |

@@ -1,0 +1,26 @@
+#
+# 🔟❎ 'run' Fluentd Forward (TCP/Unix) output module
+#
+# Forward-protocol output module specialized for writing processed events
+# back to a Fluentd `in_forward` source. Wraps the generic
+# run/modules/output/event/forward module with Fluentd-conventional
+# defaults (127.0.0.1:24225, fullText + fluentdOutputFields encoding) so
+# the user-facing sidecar launch config does not need an inline
+# `outputForward:` block.
+#
+# To override the address/port, set the generic `outputForwardHostAddress`,
+# `outputForwardHostPort`, or `outputForwardAddress` (Unix socket) options
+# in the launch config or on the CLI.
+
+module:
+
+  name: fluentdForward
+
+  title: Fluentd Forward protocol output
+
+  description: write received/optimized TenXObjects into Fluentd via the Forward protocol
+
+  doc: '+include $=TenXEnv.get("docGenerate") ? "run/modules/input/forwarder/fluentd/output/forward/doc.md":""'
+
+  # 'allowMultiple' is disabled — single instance per pipeline.
+  allowMultiple: false

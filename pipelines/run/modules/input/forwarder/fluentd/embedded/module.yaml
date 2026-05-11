@@ -1,0 +1,31 @@
+#
+# 🔟❎ Fluentd Embedded module
+#
+# "Embedded" mode runs Log10x as a child process of Fluentd via the
+# `exec_filter` plugin: events are piped on stdin and processed events are
+# read back over stdout (or a Unix domain socket via the Fluent Forward
+# protocol on Linux). Fluentd manages the Log10x process lifecycle.
+#
+# Compare with the "sidecar" mode (see ../sidecar/module.yaml), where Log10x
+# runs as a peer process and the two exchange events purely over the Fluent
+# Forward protocol — recommended for k8s and any deployment that wants to
+# keep the Fluentd binary stock.
+
+module:
+
+  name: fluentdEmbedded
+
+  title: Fluentd Embedded receiver
+
+  description: receive events from Fluentd via the exec_filter plugin (subprocess topology)
+
+  # 'configFolder' specifies a folder containing default configuration files for the settings defined by this unit/module
+  configFolder: run/input/forwarder/fluentd/embedded
+
+  # 'doc' specifies the markdown doc content, only required when generating docs.
+  doc: '+include $=TenXEnv.get("docGenerate") ? "run/modules/input/forwarder/fluentd/embedded/doc.md":""'
+
+  allowMultiple: false
+
+  # Shared output-formatting options (fluentdOutputFields, fluentdOutputEncodeType)
+  # live in the parent fluentd/module.yaml and are inherited by both modes.

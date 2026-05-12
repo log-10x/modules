@@ -167,27 +167,69 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
     === ":simple-fluentbit: Fluent-bit"
 
-        **Step 1**: Include the 10x receiver configuration:
+        !!! note "Sidecar topology"
+            Fluent Bit and Log10x run as **peer processes** that exchange events over the Fluent Forward protocol in both directions. No Lua filter, no `io.popen()` subprocess. The bypass (preventing the ingest filters from re-firing and the ingest `[OUTPUT] forward` from looping events) is **tag-prefix namespacing** — Fluent Bit has no labels like Fluentd, so the egress `[INPUT] forward` uses `Tag_Prefix tenx.` to put returning events on a tag namespace that the ingest pipeline doesn't match.
 
-        ```toml title="my-fluent-bit.conf"
-        # Nix/OSX
-        @INCLUDE /etc/tenx/config/pipelines/run/modules/forwarder/fluentbit/conf/tenx-receive.conf
-        @INCLUDE /etc/tenx/config/pipelines/run/modules/forwarder/fluentbit/conf/tenx-unix.conf
+        **Step 1**: Copy the Fluent Bit sidecar recipe:
 
-        # Windows
-        # @INCLUDE c:/program files/tenx-edge/config/pipelines/run/modules/forwarder/fluentbit/conf/tenx-receive.conf
-        # @INCLUDE c:/program files/tenx-edge/config/pipelines/run/modules/forwarder/fluentbit/conf/tenx-forward.conf
+        ```bash
+        cp $TENX_MODULES/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-sidecar.conf /etc/fluent-bit/
         ```
 
-        **Step 2**: The Lua filter catches all events by default. To receive a subset, update the `Match` field:
+        **Step 2**: Update sources, filters and destination outputs to match your environment. The recipe wires the ingest `[OUTPUT] forward` to log10x:24224 (matching your source tags) and the egress `[INPUT] forward` listening on :24225 with `Tag_Prefix tenx.` — your destinations match `tenx.*`:
 
-        ```toml title="tenx-receive.conf"
+        ```toml title="tenx-sidecar.conf"
+        [SERVICE]
+            Flush        1
+            Log_Level    info
+
+        # Replace with your real sources — tag with anything NOT starting
+        # with `tenx.` so the bypass works.
+        [INPUT]
+            Name         tail
+            Path         /var/log/app.log
+            Tag          app.logs
+            Parser       json
+
+        # Enrichment filters Match the user-tag scheme only (NOT `*`).
         [FILTER]
-            Name Lua
-            Match *
-            script ${TENX_MODULES}/${tenx_lua}
-            call tenx_process
+            Name         modify
+            Match        app.*
+            Add          cluster ${CLUSTER_NAME}
+
+        # Ingest: hand off to the Log10x sidecar.
+        [OUTPUT]
+            Name         forward
+            Match        app.*
+            Host         127.0.0.1
+            Port         24224
+            Retry_Limit  False
+
+        # Egress: receive processed events back from Log10x. `Tag_Prefix
+        # tenx.` is the bypass — `app.logs` returns as `tenx.app.logs`,
+        # which filters and the ingest forward output don't match.
+        [INPUT]
+            Name         forward
+            Listen       0.0.0.0
+            Port         24225
+            Tag_Prefix   tenx.
+
+        # Destinations Match `tenx.*` — replace stdout with your real
+        # destination (es, splunk, kafka, s3, …).
+        [OUTPUT]
+            Name         stdout
+            Match        tenx.*
+            Format       json_lines
         ```
+
+        **Step 3**: Start Log10x first so the Forward port is listening, then Fluent Bit:
+
+        ```bash
+        tenx run @run/input/forwarder/fluentbit @apps/receiver
+        fluent-bit -c /etc/fluent-bit/tenx-sidecar.conf
+        ```
+
+        Two structurally separate stages prevent loops and double-enrichment: ingest filters/output match `app.*` only, destination outputs match `tenx.*` only. The original tag survives the round trip as the suffix of the prefixed tag (`tenx.app.logs`), so destinations that route on the suffix behave the same as without Log10x in the path.
 
     === ":simple-beats: Filebeat"
 
@@ -350,7 +392,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
         mkdir -p ${FOLDER_B}
         ```
 
-        **Step 2**: Configure Fluent Bit to read from Folder A, receive, and write to Folder B:
+        **Step 2**: Configure Fluent Bit to read from Folder A, hand off to log10x, and write the regulated events back out to Folder B. The egress `[INPUT] forward Tag_Prefix tenx.` is the bypass — only events that have round-tripped through log10x (and thus carry the `tenx.` prefix) hit the `file` output.
 
         ```toml title="fluent-bit-splunk.conf"
         [SERVICE]
@@ -362,19 +404,31 @@ Follow the steps below. Steps that require customization link to the relevant [C
             Path         ${FOLDER_A}/*.log
             Tag          app.logs
 
-        # Include 10x receiver - sends events to 10x subprocess
-        @INCLUDE ${TENX_MODULES}/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-receive.conf
+        # Ingest: hand off to the Log10x sidecar.
+        [OUTPUT]
+            Name         forward
+            Match        app.*
+            Host         127.0.0.1
+            Port         24224
+            Retry_Limit  False
 
-        # Include Unix socket - receives processed events back from 10x
-        @INCLUDE ${TENX_MODULES}/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-unix.conf
+        # Egress: receive processed events back from Log10x with Tag_Prefix
+        # bypass. `app.logs` returns as `tenx.app.logs`.
+        [INPUT]
+            Name         forward
+            Listen       0.0.0.0
+            Port         24225
+            Tag_Prefix   tenx.
 
-        # Write filtered events to Folder B
+        # Write regulated events (those with the tenx. prefix only) to Folder B.
         [OUTPUT]
             Name         file
-            Match        *
+            Match        tenx.*
             Path         ${FOLDER_B}
             Format       plain
         ```
+
+        Start log10x first, then fluent-bit: `tenx run @run/input/forwarder/fluentbit @apps/receiver && fluent-bit -c fluent-bit-splunk.conf`.
 
         **Step 3**: Configure Splunk UF to monitor Folder B:
 
@@ -399,7 +453,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
         mkdir -p ${FOLDER_B}
         ```
 
-        **Step 2**: Configure Fluent Bit to read from Folder A, receive, and write to Folder B:
+        **Step 2**: Configure Fluent Bit to read from Folder A, hand off to log10x, and write the regulated events back out to Folder B. The egress `[INPUT] forward Tag_Prefix tenx.` is the bypass — only events that have round-tripped through log10x (and thus carry the `tenx.` prefix) hit the `file` output.
 
         ```toml title="fluent-bit-datadog.conf"
         [SERVICE]
@@ -411,19 +465,31 @@ Follow the steps below. Steps that require customization link to the relevant [C
             Path         ${FOLDER_A}/*.log
             Tag          app.logs
 
-        # Include 10x receiver - sends events to 10x subprocess
-        @INCLUDE ${TENX_MODULES}/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-receive.conf
+        # Ingest: hand off to the Log10x sidecar.
+        [OUTPUT]
+            Name         forward
+            Match        app.*
+            Host         127.0.0.1
+            Port         24224
+            Retry_Limit  False
 
-        # Include Unix socket - receives processed events back from 10x
-        @INCLUDE ${TENX_MODULES}/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-unix.conf
+        # Egress: receive processed events back from Log10x with Tag_Prefix
+        # bypass. `app.logs` returns as `tenx.app.logs`.
+        [INPUT]
+            Name         forward
+            Listen       0.0.0.0
+            Port         24225
+            Tag_Prefix   tenx.
 
-        # Write filtered events to Folder B
+        # Write regulated events (those with the tenx. prefix only) to Folder B.
         [OUTPUT]
             Name         file
-            Match        *
+            Match        tenx.*
             Path         ${FOLDER_B}
             Format       plain
         ```
+
+        Start log10x first, then fluent-bit: `tenx run @run/input/forwarder/fluentbit @apps/receiver && fluent-bit -c fluent-bit-datadog.conf`.
 
         **Step 3**: Configure Datadog Agent to monitor Folder B:
 
@@ -460,7 +526,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
     === ":simple-fluentbit: Fluent-bit"
 
-        Use the `rewrite_tag` filter to copy events before the 10x Lua filter:
+        Use the `rewrite_tag` filter to duplicate events onto an `s3.*` tag before they hit the ingest `[OUTPUT] forward` to the 10x sidecar:
 
         ```ini
         [FILTER]
@@ -468,6 +534,8 @@ Follow the steps below. Steps that require customization link to the relevant [C
             Match        app.*
             Rule         $log .+ s3.$TAG true
 
+        # S3 archive: gets every event (`app.*` originals AND their `s3.app.*` copies
+        # — adjust the rule above if you want only the copies).
         [OUTPUT]
             Name         s3
             Match        s3.*
@@ -476,13 +544,16 @@ Follow the steps below. Steps that require customization link to the relevant [C
             total_file_size 50M
             upload_timeout 60s
 
+        # Ingest: hand off to the Log10x sidecar (regulated path).
         [OUTPUT]
             Name         forward
             Match        app.*
-            # → 10x sidecar processes and receives these events
+            Host         127.0.0.1
+            Port         24224
+            Retry_Limit  False
         ```
 
-        Events tagged `s3.*` go to S3; events tagged `app.*` continue through receiving.
+        Events tagged `s3.*` go to S3 (every event for full retention); events tagged `app.*` continue through the sidecar (regulated). The egress `[INPUT] forward Tag_Prefix tenx.` and destinations matching `tenx.*` are unchanged from the main recipe.
 
     === ":simple-fluentd: Fluentd"
 
@@ -700,8 +771,11 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
     === ":simple-fluentbit: Fluent-bit"
 
+        Start Log10x first so its Forward port is listening when Fluent Bit starts, then start Fluent Bit:
+
         ```console
-        $ fluent-bit -c my-fluent-bit.conf
+        $ tenx run @run/input/forwarder/fluentbit @apps/receiver
+        $ fluent-bit -c /etc/fluent-bit/tenx-sidecar.conf
         ```
 
     === ":simple-beats: Filebeat"
@@ -731,9 +805,10 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
     === ":simple-splunk: Splunk UF"
 
-        **Step 1**: Start Fluent Bit with the 10x receiver:
+        **Step 1**: Start Log10x first, then Fluent Bit:
 
         ```console
+        $ tenx run @run/input/forwarder/fluentbit @apps/receiver
         $ fluent-bit -c fluent-bit-splunk.conf
         ```
 
@@ -743,13 +818,14 @@ Follow the steps below. Steps that require customization link to the relevant [C
         $ splunk restart
         ```
 
-        Fluent Bit + 10x will read from Folder A, receive events, and write filtered events to Folder B. Splunk UF monitors Folder B and forwards to indexers.
+        Fluent Bit reads from Folder A, hands off to the Log10x sidecar, and writes regulated events back out to Folder B. Splunk UF monitors Folder B and forwards to indexers.
 
     === ":simple-datadog: Datadog Agent"
 
-        **Step 1**: Start Fluent Bit with the 10x receiver:
+        **Step 1**: Start Log10x first, then Fluent Bit:
 
         ```console
+        $ tenx run @run/input/forwarder/fluentbit @apps/receiver
         $ fluent-bit -c fluent-bit-datadog.conf
         ```
 
@@ -759,7 +835,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
         $ sudo systemctl restart datadog-agent
         ```
 
-        Fluent Bit + 10x will read from Folder A, receive events, and write filtered events to Folder B. Datadog Agent monitors Folder B and forwards to Datadog.
+        Fluent Bit reads from Folder A, hands off to the Log10x sidecar, and writes regulated events back out to Folder B. Datadog Agent monitors Folder B and forwards to Datadog.
 
     === ":material-test-tube: Test (no forwarder)"
 

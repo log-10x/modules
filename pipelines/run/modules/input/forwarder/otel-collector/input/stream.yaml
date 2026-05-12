@@ -1,37 +1,45 @@
-# 🔟❎ 'run' OpenTelemetry Collector Unix socket input stream configuration
+# 🔟❎ 'run' OpenTelemetry Collector syslog input stream
 #
-# This configuration defines a Unix domain socket input that receives
-# RFC5424 syslog messages from OpenTelemetry Collector's syslog exporter.
-# The syslog MSG field is extracted and passed to the Log10x pipeline.
+# Listens for events from the OpenTelemetry Collector's `syslog` exporter on
+# TCP `:24226` by default (set `otelCollectorInputPath` to use a Unix domain
+# socket on Linux/macOS instead). Each event arrives as an RFC5424 syslog
+# message; the input strips the envelope and surfaces only the MSG field —
+# the actual log line — as the event's `text`.
+#
+# Unlike Fluentd/Vector, the syslog wire format carries no tag and no
+# record-level field structure beyond the single MSG, so the input has no
+# JSON extractor and no `sourcePattern`: events flow through Log10x with
+# an empty source and only `text` / `fullText` populated.
 
-# Set the 10x pipeline to 'run'
 tenx: run
 
-# Adding a runtime attribute for metrics reporting
 runtimeAttributes:
   - fwd_input:otel-collector
 
-# Events are read from the OpenTelemetry Collector via a Unix socket
-# with syslog RFC5424 parsing enabled to extract the MSG field.
+# ============================== Input ========================================
+
 input:
 
   - type: stream
+    name: syslog
 
-    name: otelCollector
-
-    # Use the Unix socket input stream with syslog parsing
+    # Newline-delimited reader supporting TCP (port) or Unix socket (path),
+    # with optional RFC5424 envelope stripping.
     path: com.log10x.ext.edge.input.unix.UnixSocketInputStream
 
-    # Configuration options passed to the InputStream constructor (flat list format)
     args:
-      # Unix socket path where OTel Collector's syslog exporter sends data
+      # Unix socket path takes precedence over TCP port when both are set
       - path
-      - $=TenXEnv.get("otelCollectorInputPath", "/tmp/tenx-otel-in.sock")
-      # Parse RFC5424 syslog format and extract MSG field only
+      - $=yield TenXEnv.get("otelCollectorInputPath", "")
+      - port
+      - $=yield TenXEnv.get("otelCollectorInputPort", "24226")
+      # Strip the RFC5424 envelope and keep only the MSG field
       - syslog
-      - $=TenXEnv.get("otelCollectorInputSyslog", true)
+      - $=yield TenXEnv.get("otelCollectorInputSyslog", "true")
 
-    # Sets the recommended backpressure limit for the 10x pipeline
+    # Backpressure ceiling — Log10x stops draining the socket once this many
+    # bytes have arrived in `intervalBytesDuration`, signalling the Collector
+    # to buffer instead of overwhelming the pipeline.
     backpressure:
       intervalBytesLimit: $=parseBytes("2MB")
       intervalBytesDuration: $=parseDuration("1s")

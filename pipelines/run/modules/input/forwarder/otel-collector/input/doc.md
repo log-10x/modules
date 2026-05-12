@@ -1,41 +1,23 @@
 ---
 icon: simple/opentelemetry
+hidden: true
 ---
 
-Configure the Unix socket input stream for receiving syslog events from OpenTelemetry Collector.
+Reads events from the OpenTelemetry Collector over the [`syslog` exporter](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/exporter/syslogexporter) — RFC5424 over TCP on every OS, or a Unix domain socket on Linux/macOS.
 
-## Overview
+Each event from the Collector arrives as an RFC5424 syslog message. The input strips the envelope and surfaces only the **MSG** field — the log line that the Collector's syslog exporter wrote — as the event's `text`, which is the input to every message-content enrichment downstream. The same MSG text is also kept on the event's `fullText` for verbatim downstream use.
 
-This module configures a Unix domain socket server that receives RFC5424 syslog messages from OpenTelemetry Collector's `syslog` exporter. The syslog MSG field is extracted and passed to the Log10x processing pipeline.
+Unlike the Fluentd/Vector inputs, the syslog wire format carries no per-event tag and no structured fields beyond the MSG, so no JSON extraction or `sourcePattern` is applied. Events flow through Log10x with an empty source; rate-based grouping uses Log10x's defaults instead of a per-tag bucket.
 
-## Requirements
+The matching Collector exporter config:
 
-| Requirement | Details |
-|-------------|---------|
-| OTel Collector | **Contrib v0.143.0+** (for syslog exporter Unix socket support) |
-| Protocol | RFC5424 syslog over Unix domain socket |
-| Default Socket | `/tmp/tenx-otel-in.sock` |
-
-## Architecture
-
-```mermaid
-graph LR
-    A["OTel Collector"] -->|syslog/unix| B["Unix Socket"]
-    B -->|RFC5424| C["Log10x Input"]
-    C -->|MSG field| D["Processing Pipeline"]
-
-    classDef otel fill:#f97316,stroke:#ea580c,color:#ffffff,stroke-width:2px
-    classDef socket fill:#0891b2,stroke:#0e7490,color:#ffffff,stroke-width:2px
-    classDef engine fill:#7c3aed,stroke:#6d28d9,color:#ffffff,stroke-width:2px
-
-    class A otel
-    class B socket
-    class C,D engine
+```yaml
+exporters:
+  syslog/tenx:
+    endpoint: 127.0.0.1            # or remove endpoint/port and set
+    port: 24226                    # `network: unix` + `endpoint: <path>`
+    network: tcp
+    protocol: rfc5424
+    tls:
+      insecure: true
 ```
-
-## Message Handling
-
-!!! important "Syslog MSG Field"
-    The syslog exporter uses the `message` **attribute** for the MSG field, NOT the log body.
-    Ensure your logs have a `message` attribute set before the syslog exporter.
-

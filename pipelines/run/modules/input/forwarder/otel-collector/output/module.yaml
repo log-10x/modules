@@ -1,28 +1,51 @@
 #
-# 🔟❎ 'run' OpenTelemetry Collector output module
+# 🔟❎ 'run' OpenTelemetry Collector Forward output module
 
 module:
 
   name: otelCollectorOutput
 
-  title: OpenTelemetry Collector Forward output
+  title: OpenTelemetry Collector Fluent Forward output
 
-  description: Configure Forward protocol output for returning processed events to OpenTelemetry Collector
+  description: send processed events back to the OpenTelemetry Collector over the Fluent Forward protocol
 
-  doc: +include $=TenXEnv.get("docGenerate") ? "run/modules/input/forwarder/otel-collector/output/doc.md":""
+  doc: '+include $=TenXEnv.get("docGenerate") ? "run/modules/input/forwarder/otel-collector/output/doc.md":""'
 
   allowMultiple: false
 
   options:
 
     - names:
-      - otelCollectorOutputForwardAddress
-      description: Forward output Unix socket address
+        - otelCollectorOutputHost
+      description: TCP host of the OpenTelemetry Collector's fluent_forward receiver
       type: String
       required: false
-      defValue: /tmp/tenx-otel-out.sock
+      defValue: 127.0.0.1
       doc: |
-        Unix domain socket address for the Forward protocol output.
-        OTel Collector's fluentforward receiver should listen on this socket.
+        Hostname or IP where the OpenTelemetry Collector's `fluent_forward`
+        receiver is listening for processed events from Log10x. Pairs with
+        `otelCollectorOutputPort`.
 
-        Example: `/tmp/tenx-otel-out.sock`
+    - names:
+        - otelCollectorOutputPort
+      description: TCP port of the OpenTelemetry Collector's fluent_forward receiver
+      type: String
+      required: false
+      defValue: 24227
+      doc: |
+        TCP port where the OpenTelemetry Collector's `fluent_forward` receiver
+        is listening for processed events from Log10x. MUST differ from the
+        port Log10x's own syslog input listens on (default `24226`) or the two
+        would collide on the same listener.
+
+    - names:
+        - otelCollectorOutputPath
+      description: Unix domain socket path of the OpenTelemetry Collector's fluent_forward receiver (Linux/macOS)
+      type: String
+      required: false
+      defValue:
+      doc: |
+        Optional Unix domain socket path for the OpenTelemetry Collector's
+        `fluent_forward` receiver. When set, takes precedence over
+        `otelCollectorOutputHost` / `otelCollectorOutputPort`. Linux/macOS
+        only — ignored on Windows.

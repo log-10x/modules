@@ -1,11 +1,22 @@
-// 🔟❎ OpenTelemetry Collector input initialization script
+// @loader: tenx
 
-// This script runs when the OTel Collector input stream is initialized.
-// It can be used to set up any necessary configurations or logging.
+import {TenXInput, TenXEnv, TenXConsole} from '@tenx/tenx'
 
-const logger = TenXLogger.getLogger("otelCollector.input");
+export class OtelCollectorSyslogInput extends TenXInput {
 
-if (logger.isInfoEnabled()) {
-    logger.info("Initializing OpenTelemetry Collector TCP JSON input stream");
+    // @https://doc.log10x.com/api/js/#TenXEngine.shouldLoad
+    static shouldLoad(config) {
+       return !TenXEnv.get("quiet");
+    }
+
+    constructor() {
+
+        if (this.inputName == "syslog") {
+            if (TenXEnv.get("otelCollectorInputPath")) {
+                TenXConsole.log("📥 Reading events from OpenTelemetry Collector via syslog exporter on unix://" + TenXEnv.get("otelCollectorInputPath"));
+            } else {
+                TenXConsole.log("📥 Reading events from OpenTelemetry Collector via syslog exporter on tcp://0.0.0.0:" + TenXEnv.get("otelCollectorInputPort"));
+            }
+        }
+    }
 }
-

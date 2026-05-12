@@ -1,0 +1,60 @@
+# 🔟❎ 'run' OpenTelemetry Collector Fluent Forward output stream
+#
+# Sends processed events back to the OpenTelemetry Collector over the Fluent
+# Forward protocol — the Collector's `fluent_forward` receiver consumes
+# Forward natively. Each top-level field of the rendered event becomes a
+# Fluent field, which the receiver maps onto an attribute on the OTel log
+# record.
+#
+# Defaults to TCP `127.0.0.1:24227` so it pairs with the syslog input
+# listening on `:24226`. Override with:
+#
+#   otelCollectorOutputHost: 0.0.0.0
+#   otelCollectorOutputPort: 9999
+#
+# Or use a Unix domain socket on Linux/macOS:
+#
+#   otelCollectorOutputPath: /tmp/tenx-otel-out.sock
+#
+# The output mode is driven by `outputEncodeField` and `outputWriteTemplates`
+# (see run/modules/input/forwarder/module.yaml):
+#
+#   receive  (default)               → emit the verbatim MSG text (`fullText`)
+#   compact  (receiverOptimize=true) → emit losslessly compacted events +
+#                                       the TenXTemplates needed to decode them
+
+tenx: run
+
+include:
+  - run/modules/output/event/forward
+
+outputForward:
+
+  - hostAddress: $=yield TenXEnv.get("otelCollectorOutputHost", "127.0.0.1")
+    hostPort: $=yield TenXEnv.get("otelCollectorOutputPort", "24227")
+    address: $=yield TenXEnv.get("otelCollectorOutputPath")
+
+    fields:
+      # Carries the MSG text in receive mode and an encoded form in compact
+      # mode. Picked automatically based on the Receiver app's mode
+      # (`receiverOptimize`, `compactReceiverLookupFile`).
+      - $?outputEncodeField=fullText
+      # When `symbolMessageHashField` is set, emit the hash as its own
+      # Fluent field so the Collector's `fluent_forward` receiver surfaces
+      # it as a distinct attribute. The Fluentd/Vector wrappers don't need
+      # this — their fullText is a JSON record into which `fullText("<hash>")`
+      # splices the hash before `delimited` re-expands it. The syslog wire
+      # for OTel carries only the plain MSG text, so there's no JSON to
+      # splice into; the explicit reference below is the equivalent
+      # mechanism for plain-text inputs.
+      - $=yield TenXEnv.get("symbolMessageHashField", "")
+
+    # OTel's syslog wire format carries only the MSG field, so the rendered
+    # event body is a plain string (or a compact-encoded string), not a JSON
+    # object. `delimited` would try to re-parse it as JSON and fail; `json`
+    # wraps the whole rendered payload as one Fluent record body, which the
+    # Collector's `fluent_forward` receiver maps onto a single attribute on
+    # the returning OTel log record.
+    encodeType: $?otelCollectorOutputEncodeType=json
+
+    writeTemplates: $?outputWriteTemplates=false

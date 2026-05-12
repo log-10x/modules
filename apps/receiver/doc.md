@@ -252,44 +252,49 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
     === ":simple-opentelemetry: OTel Collector"
 
-        !!! note "Requires otel-collector-contrib"
-            The OpenTelemetry Collector integration requires the **contrib** distribution for `syslogexporter` and `fluentforwardreceiver` support.
+        !!! note "Requires otelcol-contrib"
+            The `syslog` exporter and `fluent_forward` receiver ship in the **`otelcol-contrib`** distribution only — the core `otelcol` distribution does not include them. Tested against `otelcol-contrib` v0.151.0+. Log10x communicates with the Collector over RFC5424 syslog (Collector → Log10x) and Fluent Forward (Log10x → Collector); TCP on every OS, or Unix domain sockets on Linux/macOS.
 
-        **Step 1**: Copy the OTel Collector configuration:
+        **Step 1**: Copy the Collector sidecar recipe:
 
         ```bash
-        cp $TENX_MODULES/pipelines/run/modules/input/forwarder/otel-collector/receive/tenxNix.yaml /etc/otelcol-contrib/
+        cp $TENX_MODULES/pipelines/run/modules/input/forwarder/otel-collector/conf/tenx-sidecar.yaml /etc/otelcol-contrib/
         ```
 
-        **Step 2**: Update the configuration to match your log sources:
+        **Step 2**: Update receivers and destination exporters to match your environment. The `logs/to-tenx` pipeline carries your receivers and enrichment processors through the `syslog/tenx` exporter; the `logs/from-tenx` pipeline carries returning events directly to your destination exporters:
 
-        ```yaml title="receive/tenxNix.yaml"
+        ```yaml title="tenx-sidecar.yaml"
         receivers:
+          # Replace with your real Collector receivers
           filelog:
             include:
-              - /var/log/**/*.log  # Customize paths
+              - /var/log/**/*.log
             start_at: end
-        ```
 
-        **Step 3**: Configure your final exporters in the `logs/from-tenx` pipeline:
+        exporters:
+          # Replace `debug` with your real destinations — elasticsearch, splunk_hec, kafka, awss3, etc.
+          debug:
+            verbosity: detailed
 
-        ```yaml title="receive/tenxNix.yaml"
         service:
           pipelines:
-            # Logs go TO Log10x for receiving
             logs/to-tenx:
-              receivers: [filelog, otlp]
-              processors: [memory_limiter, batch]
+              receivers: [filelog]
+              processors: [transform/tenx_message, batch]
               exporters: [syslog/tenx]
-
-            # Received logs come FROM Log10x to final destinations
             logs/from-tenx:
-              receivers: [fluentforward/tenx]
-              processors: [batch]
-              exporters: [elasticsearch]  # Add your exporters
+              receivers: [fluent_forward/tenx]
+              exporters: [debug]
         ```
 
-        Two separate pipelines prevent infinite loops - events in `logs/from-tenx` never feed back to `logs/to-tenx`.
+        **Step 3**: Start Log10x first, then the Collector:
+
+        ```bash
+        tenx run @run/input/forwarder/otel-collector @apps/receiver
+        otelcol-contrib --config=/etc/otelcol-contrib/tenx-sidecar.yaml
+        ```
+
+        Two disconnected pipelines in the Collector's graph prevent loops: `logs/to-tenx` (events out to 10x) and `logs/from-tenx` (events in from 10x) never share a stage — the egress pipeline has no processors, so enrichment never re-fires on the return path.
 
     === ":simple-vector: Vector"
 
@@ -505,7 +510,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
     === ":simple-opentelemetry: OTel Collector"
 
-        Add multiple exporters to the same pipeline — OTel natively fans out to all exporters:
+        Fan out to the Retriever destination from the **ingest** pipeline (before 10x receives), so the archive sees full-volume events. The destinations that consume the **egress** pipeline (`logs/from-tenx`) get the receiver-processed stream:
 
         ```yaml
         exporters:
@@ -513,15 +518,25 @@ Follow the steps below. Steps that require customization link to the relevant [C
             s3uploader:
               region: us-east-1
               s3_bucket: your-archive-bucket
-          otlp/siem:
-            endpoint: siem-endpoint:4317
-            # → 10x sidecar processes and receives these events
+          # → 10x sidecar processes and receives, results land on logs/from-tenx
+          syslog/tenx:
+            endpoint: 127.0.0.1
+            port: 24226
+            network: tcp
+            protocol: rfc5424
+            tls:
+              insecure: true
 
         service:
           pipelines:
-            logs:
+            logs/to-tenx:
               receivers: [filelog]
-              exporters: [awss3, otlp/siem]
+              processors: [transform/tenx_message, batch]
+              # Full-volume fanout: archive + 10x sidecar
+              exporters: [awss3, syslog/tenx]
+            logs/from-tenx:
+              receivers: [fluent_forward/tenx]
+              exporters: [otlp/siem]   # receiver-processed stream
         ```
 
     === ":simple-logstash: Logstash"
@@ -710,16 +725,16 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
     === ":simple-opentelemetry: OTel Collector"
 
-        **Step 1**: Start Log10x Receiver first:
+        **Step 1**: Start Log10x first so its syslog input port is bound when the Collector starts (a first flush from the Collector hits a connection-refused otherwise):
 
         ```console
-        $ tenx run @run/input/forwarder/otel-collector/receive @apps/receiver
+        $ tenx run @run/input/forwarder/otel-collector @apps/receiver
         ```
 
-        **Step 2**: Start OTel Collector with the 10x configuration:
+        **Step 2**: Start the Collector with the 10x sidecar recipe:
 
         ```console
-        $ otelcol-contrib --config=/etc/otelcol-contrib/receive/tenxNix.yaml
+        $ otelcol-contrib --config=/etc/otelcol-contrib/tenx-sidecar.yaml
         ```
 
     === ":simple-splunk: Splunk UF"

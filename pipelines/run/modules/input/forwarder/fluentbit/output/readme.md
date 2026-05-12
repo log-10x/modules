@@ -1,6 +1,6 @@
-## 1️⃣0️⃣❎ Fluent Bit output module
+## 1️⃣0️⃣❎ Fluent Bit Forward output module
 
-Write TenXObjects to a Fluent Bit forwarder.
+Send processed events back to Fluent Bit over the Fluent Forward protocol.
 
-To learn more see the Fluent Bit output [module documentation](https://doc.log10x.com/run/input/forwarder/fluentbit/output "Write TenXObjects to a Fluent Bit forwarder.").
+To learn more see the Fluent Bit Forward output [module documentation](https://doc.log10x.com/run/input/forwarder/fluentbit/output "Send processed events back to Fluent Bit over the Fluent Forward protocol").
 

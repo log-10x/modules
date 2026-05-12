@@ -1,15 +1,49 @@
-# 🔟❎ 'run' Fluent Bit output module
+#
+# 🔟❎ 'run' Fluent Bit Forward output module
 
 module:
 
   name: fluentbitOutput
 
-  title: Fluent Bit output
+  title: Fluent Bit Forward output
 
-  description: write TenXObjects to a Fluent Bit forwarder.
-    
-  # 'doc' specifies the markdown doc content, only required when generating docs.
+  description: send processed events back to Fluent Bit over the Fluent Forward protocol
+
   doc: '+include $=TenXEnv.get("docGenerate") ? "run/modules/input/forwarder/fluentbit/output/doc.md":""'
 
-  # 'allowMultiple' is disabled for this module.
   allowMultiple: false
+
+  options:
+
+    - names:
+        - fluentbitOutputHost
+      description: TCP host of the Fluent Bit forward input receiving processed events
+      type: String
+      required: false
+      defValue: 127.0.0.1
+      doc: |
+        Hostname or IP where Fluent Bit's `forward` input is listening for
+        processed events from Log10x. Pairs with `fluentbitOutputPort`.
+
+    - names:
+        - fluentbitOutputPort
+      description: TCP port of the Fluent Bit forward input receiving processed events
+      type: String
+      required: false
+      defValue: 24225
+      doc: |
+        TCP port where Fluent Bit's `forward` input is listening for processed
+        events from Log10x. MUST differ from the port Log10x's own Forward
+        input listens on (default `24224`) or the two would collide on the
+        same socket.
+
+    - names:
+        - fluentbitOutputPath
+      description: Unix domain socket path of the Fluent Bit forward input (Linux/macOS)
+      type: String
+      required: false
+      defValue:
+      doc: |
+        Optional Unix domain socket path for Fluent Bit's `forward` input.
+        When set, takes precedence over `fluentbitOutputHost` /
+        `fluentbitOutputPort`. Linux/macOS only — ignored on Windows.

@@ -1,6 +1,6 @@
-## 1️⃣0️⃣❎ Fluentbit internal log output module
+## 1️⃣0️⃣❎ Fluent Bit Forward input module
 
-Configure Fluentbit logging via 10x.
+Read events from Fluent Bit over the Fluent Forward protocol (TCP or Unix socket).
 
-To learn more see the Fluentbit internal log output [module documentation](https://doc.log10x.com/run/input/forwarder/fluentbit/input "Configure Fluentbit logging via 10x").
+To learn more see the Fluent Bit Forward input [module documentation](https://doc.log10x.com/run/input/forwarder/fluentbit/input "Read events from Fluent Bit over the Fluent Forward protocol (TCP or Unix socket)").
 

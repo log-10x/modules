@@ -11,7 +11,7 @@ export class VectorSocketInput extends TenXInput {
 
     constructor() {
 
-        if (this.inputName == "socket") {
+        if (this.inputName == "vector") {
             if (TenXEnv.get("vectorInputPath")) {
                 TenXConsole.log("📥 Reading events from Vector via socket sink on unix://" + TenXEnv.get("vectorInputPath"));
             } else {

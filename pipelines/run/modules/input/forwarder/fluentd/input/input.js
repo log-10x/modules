@@ -11,7 +11,7 @@ export class FluentdForwardInput extends TenXInput {
 
     constructor() {
 
-        if (this.inputName == "forward") {
+        if (this.inputName == "fluentd") {
             if (TenXEnv.get("fluentdInputPath")) {
                 TenXConsole.log("📥 Reading events from Fluentd via Forward protocol on unix://" + TenXEnv.get("fluentdInputPath"));
             } else {

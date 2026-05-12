@@ -45,7 +45,7 @@ extractor:
 input:
 
   - type: stream
-    name: socket
+    name: vector
 
     # Newline-delimited reader supporting TCP (port) or Unix socket (path)
     path: com.log10x.ext.edge.input.unix.UnixSocketInputStream

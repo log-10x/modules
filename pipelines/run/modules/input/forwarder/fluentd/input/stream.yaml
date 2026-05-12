@@ -39,7 +39,7 @@ extractor:
 input:
 
   - type: stream
-    name: forward
+    name: fluentd
 
     # Fluent Forward protocol decoder (msgpack over TCP or Unix socket)
     path: com.log10x.ext.edge.input.forward.ForwardProtocolInputStream

@@ -1,42 +1,70 @@
-# 🔟❎ 'run' Fluent Bit stdin input stream configuration
+# 🔟❎ 'run' Fluent Bit Forward input stream
+#
+# Listens for events from Fluent Bit's `forward` output on TCP `:24224` by
+# default (set `fluentbitInputPath` to use a Unix domain socket on Linux/macOS
+# instead). Each event arrives as a JSON record and is mapped to a TenXObject
+# by the `fluentbit` extractor below:
+#
+#   • The message text comes from the `log` field (or whatever
+#     `fluentbitMessageField` is set to) and becomes the event's `text` — the
+#     input to all downstream message-content enrichments.
+#
+#   • The Fluent Bit tag carried by the Forward protocol becomes the event's
+#     `source`, used for rate-based grouping and as the outgoing tag when
+#     events are sent back to Fluent Bit (the egress `forward` input on the
+#     Fluent Bit side prepends `tenx.` to it, providing the bypass).
+#
+#   • The full record is preserved as `fullText` for verbatim downstream use.
 
-# This configuration defines a stdin input device from which to
-# read JSON objects into the 10x pipeline for processing and (optional)
-# output back to the host Fluent Bit forwarder process.
-
-# Events are written into the stdin pipe by the Fluent Bit 'lua' processor
-# script defined in: https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentbit/conf/lua/tenx.lua
-
-# Set the 10x pipeline to 'run'
 tenx: run
 
-# Adding a runtime attribute for metrics reporting
 runtimeAttributes:
   - fwd_input:fluentbit
 
-# Define an extractor to read event source and fields values encoded into the
-# stdin pipe by the host Fluent Bit forwarder process
+# ============================== Extractor ====================================
+
 extractor:
-  - name: lua
+  - name: fluentbit
     type: json
     actions:
-      # The actual message field inside the incoming JSON object
+      # Capture the configurable message field as the event's text
       - $=yield "captureFirst:" + TenXEnv.get("fluentbitMessageField", "log")
+      # The Forward decoder surfaces the wire tag as a `tag` field for the
+      # `sourcePattern` to capture below; remove it from the record body so
+      # the event going back out to Fluent Bit has the same shape as the one
+      # that arrived.
+      - drop:tag
 
-# Events to transform into TenXObjects are read from the Fluent Bit process via a stdin input
+# ============================== Input ========================================
+
 input:
 
-  - type: file
+  - type: stream
+    name: fluentbit
 
-    name: lua
+    # Fluent Forward protocol decoder (msgpack over TCP or Unix socket)
+    path: com.log10x.ext.edge.input.forward.ForwardProtocolInputStream
 
-    # read from the stdin device
-    path: stdin
-
-    # apply the 'lua' extractor defined above to the input, as well as k8s extractor
+    # Apply the Fluent Bit extractor above; add the k8s extractor automatically
+    # when the Receiver app sets `k8sExtractorName: fluentK8s`.
     extractors:
-      - lua
+      - fluentbit
       - "$=yield TenXEnv.get(\"k8sExtractorName\") ? \"fluentK8s\" : \"\""
 
-    # set the 'source' value of events read from 'tag'
+    # Use the wire-level Fluent Bit tag as the event's source.
     sourcePattern: \"tag\":\"(.*?)\"
+
+    args:
+      # Listen on this TCP port
+      - port
+      - $=yield TenXEnv.get("fluentbitInputPort", "24224")
+      # Pass path if it exists, which will set it instead of the port
+      - '$=yield TenXEnv.get("fluentbitInputPath", "") ? "path" : ""'
+      - $=yield TenXEnv.get("fluentbitInputPath", "")
+
+    # Backpressure ceiling — Log10x stops draining the Forward socket once
+    # this many bytes have arrived in `intervalBytesDuration`, signalling
+    # Fluent Bit to buffer instead of overwhelming the pipeline.
+    backpressure:
+      intervalBytesLimit: $=parseBytes("2MB")
+      intervalBytesDuration: $=parseDuration("1s")

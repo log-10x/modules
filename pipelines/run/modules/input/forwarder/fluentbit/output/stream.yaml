@@ -1,0 +1,49 @@
+# 🔟❎ 'run' Fluent Bit Forward output stream
+#
+# Sends processed events back to Fluent Bit over the Fluent Forward protocol.
+# The original Fluent Bit tag is restored on the wire; the Fluent Bit-side
+# egress `forward` input prepends `Tag_Prefix tenx.` to the returning tag,
+# providing the bypass that keeps enrichment filters from re-firing and the
+# ingest `out_forward` from looping events back.
+#
+# Defaults to TCP `127.0.0.1:24225` so it pairs with the Fluent Bit input
+# listening on `:24224`. Override with:
+#
+#   fluentbitOutputHost: 0.0.0.0
+#   fluentbitOutputPort: 9999
+#
+# Or use a Unix domain socket on Linux/macOS:
+#
+#   fluentbitOutputPath: /tmp/tenx-fluentbit-out.sock
+#
+# The output mode is driven by `outputEncodeField` and `outputWriteTemplates`
+# (see run/modules/input/forwarder/module.yaml):
+#
+#   receive  (default)               → emit the verbatim event (`fullText`)
+#   compact  (receiverOptimize=true) → emit losslessly compacted events +
+#                                       the TenXTemplates needed to decode them
+
+tenx: run
+
+include:
+  - run/modules/output/event/forward
+
+outputForward:
+
+  - hostAddress: $=yield TenXEnv.get("fluentbitOutputHost", "127.0.0.1")
+    hostPort: $=yield TenXEnv.get("fluentbitOutputPort", "24225")
+    address: $=yield TenXEnv.get("fluentbitOutputPath")
+
+    fields:
+      # Carries the whole Fluent Bit record in receive mode and an encoded
+      # form in compact mode. Picked automatically based on the Receiver
+      # app's mode (`receiverOptimize`, `compactReceiverLookupFile`,
+      # `symbolMessageHashField`).
+      - $?outputEncodeField=fullText
+
+    # Emit each top-level field of the rendered record as its own field on
+    # the outgoing Forward event — so the record structure of the original
+    # Fluent Bit event survives the round trip.
+    encodeType: $?fluentbitOutputEncodeType=delimited
+
+    writeTemplates: $?outputWriteTemplates=false

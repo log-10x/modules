@@ -1,13 +1,13 @@
 #
-# 🔟❎ 'run' Vector Unix socket input module
+# 🔟❎ 'run' Vector socket input module
 
 module:
 
   name: vectorInput
 
-  title: Vector Unix socket input
+  title: Vector socket input
 
-  description: Configure Unix socket input for receiving logs from Vector via the socket sink
+  description: read events from Vector over a newline-delimited JSON socket (TCP or Unix)
 
   doc: '+include $=TenXEnv.get("docGenerate") ? "run/modules/input/forwarder/vector/input/doc.md":""'
 
@@ -16,13 +16,35 @@ module:
   options:
 
     - names:
-      - vectorInputPath
-      description: Unix socket path for input
+        - vectorInputPort
+      description: TCP port to listen on for events from Vector's socket sink
       type: String
       required: false
-      defValue: /tmp/tenx-vector-in.sock
+      defValue: 9000
       doc: |
-        Unix domain socket path where Log10x listens for incoming events
-        from Vector's `socket` sink (`mode: unix`).
+        TCP port where Log10x listens for events sent by Vector's `socket`
+        sink (`mode: tcp`, `encoding.codec: json`, `framing.method: newline_delimited`).
+        Match this against the `address` in your Vector sink.
 
-        Example: `/tmp/tenx-vector-in.sock`
+    - names:
+        - vectorInputPath
+      description: Unix domain socket path to listen on (Linux/macOS)
+      type: String
+      required: false
+      defValue:
+      doc: |
+        When set, Log10x listens on a Unix domain socket instead of TCP — useful
+        on Linux/macOS to avoid TCP overhead. Configure Vector's `socket` sink
+        with `mode: unix` and a matching `path`. Ignored on Windows.
+
+    - names:
+        - vectorMessageField
+      description: name of the JSON field carrying the original log line
+      type: String
+      required: false
+      defValue: message
+      doc: |
+        Name of the field in each Vector record that contains the actual log
+        message text. The default (`message`) matches Vector's convention for
+        the `file`, `kubernetes_logs`, `journald`, and `socket` sources. Set
+        to e.g. `log` if your sources emit the log line under a different key.

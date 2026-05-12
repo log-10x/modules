@@ -1,6 +1,6 @@
-## 1️⃣0️⃣❎ Vector input module
+## 1️⃣0️⃣❎ Vector module
 
-Receive and optimize events collected by Vector forwarders.
+Receive and optimize events collected by Vector via the socket sink and fluent source.
 
-To learn more see the Vector input [module documentation](https://doc.log10x.com/run/input/forwarder/vector "Receive and optimize events collected by Vector forwarders").
+To learn more see the Vector [module documentation](https://doc.log10x.com/run/input/forwarder/vector "Receive and optimize events collected by Vector via the socket sink and fluent source").
 

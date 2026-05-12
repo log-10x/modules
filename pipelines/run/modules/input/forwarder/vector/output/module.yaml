@@ -1,28 +1,49 @@
 #
-# 🔟❎ 'run' Vector output module
+# 🔟❎ 'run' Vector Forward output module
 
 module:
 
   name: vectorOutput
 
-  title: Vector Forward output
+  title: Vector Fluent Forward output
 
-  description: Configure Forward protocol output for returning processed events to Vector
+  description: send processed events back to Vector over the Fluent Forward protocol
 
-  doc: +include $=TenXEnv.get("docGenerate") ? "run/modules/input/forwarder/vector/output/doc.md":""
+  doc: '+include $=TenXEnv.get("docGenerate") ? "run/modules/input/forwarder/vector/output/doc.md":""'
 
   allowMultiple: false
 
   options:
 
     - names:
-      - vectorOutputForwardAddress
-      description: Forward output Unix socket address
+        - vectorOutputHost
+      description: TCP host of the Vector fluent source receiving processed events
       type: String
       required: false
-      defValue: /tmp/tenx-vector-out.sock
+      defValue: 127.0.0.1
       doc: |
-        Unix domain socket address for the Forward protocol output.
-        Vector's `fluent` source should listen on this socket.
+        Hostname or IP where Vector's `fluent` source is listening for
+        processed events from Log10x. Pairs with `vectorOutputPort`.
 
-        Example: `/tmp/tenx-vector-out.sock`
+    - names:
+        - vectorOutputPort
+      description: TCP port of the Vector fluent source receiving processed events
+      type: String
+      required: false
+      defValue: 9001
+      doc: |
+        TCP port where Vector's `fluent` source is listening for processed
+        events from Log10x. MUST differ from the port Log10x's own socket
+        input listens on (default `9000`) or the two would collide on the
+        same listener.
+
+    - names:
+        - vectorOutputPath
+      description: Unix domain socket path of the Vector fluent source (Linux/macOS)
+      type: String
+      required: false
+      defValue:
+      doc: |
+        Optional Unix domain socket path for Vector's `fluent` source.
+        When set, takes precedence over `vectorOutputHost` / `vectorOutputPort`.
+        Linux/macOS only — ignored on Windows.

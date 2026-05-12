@@ -1,32 +1,27 @@
 ---
 icon: simple/vector
+hidden: true
 ---
 
-Configure the Unix socket input stream for receiving events from Vector's `socket` sink.
+Reads events from Vector's `socket` sink as newline-delimited JSON — TCP on every OS, or a Unix domain socket on Linux/macOS.
 
-## Overview
+Each event from Vector arrives as a JSON record (`encoding.codec: json`, `framing.method: newline_delimited`). The input pulls out:
 
-This module configures a Unix domain socket server that receives newline-delimited records from Vector's `socket` sink (`mode: unix`). Each line becomes one event in the Log10x processing pipeline.
+- The actual log line from the **`message`** field (configurable via `vectorMessageField`) — becomes the event's `text`, the input to every message-content enrichment downstream.
+- The **`tag`** field stamped by Vector's ingest transform — becomes the event's `source`, used for rate-based grouping inside Log10x and as the outgoing Fluent Forward tag when events are sent back to Vector. The field name is fixed (`tag`); the recipe's `ingest` `remap` transform writes it.
+- The **`kubernetes.*`** sub-object, when present and the Receiver app has `k8sExtractorName: fluentK8s` — materialized as pod/container metadata fields on the event.
 
-## Requirements
+The full record is preserved on the event's `fullText`, so destinations that want the verbatim event still receive it intact.
 
-| Requirement | Details |
-|---|---|
-| Vector | v0.34+ |
-| Protocol | Newline-delimited bytes (text or JSON) over Unix domain socket |
-| Default Socket | `/tmp/tenx-vector-in.sock` |
-
-## Vector sink configuration
+The matching Vector sink config:
 
 ```yaml
 sinks:
   tenx_in:
     type: socket
-    inputs: [your_source]
-    mode: unix
-    path: /tmp/tenx-vector-in.sock
-    encoding:
-      codec: text
+    inputs: [ingest]
+    mode: tcp                      # or unix on Linux/macOS
+    address: 127.0.0.1:9000        # or path: /tmp/tenx-vector-in.sock
+    encoding: { codec: json }
+    framing: { method: newline_delimited }
 ```
-
-The `text` codec writes the `.message` field of each event followed by a newline. Use `json` if you want to ship the full event envelope as NDJSON instead.

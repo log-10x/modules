@@ -2,200 +2,113 @@
 icon: simple/vector
 ---
 
-Integrate Log10x with [Vector](https://vector.dev) to report, receive, and optimize log events _before_ shipping to outputs (Elasticsearch, Splunk, S3).
+Runs 10x Engine as a [sidecar](https://doc.log10x.com/engine/launcher/sidecar) to [Vector](https://vector.dev) for reporting, receiving, and optimizing events before they ship to their destination (Elasticsearch, Splunk, S3, Kafka, …). Vector and Log10x run as peer processes — Vector sends events to Log10x via its native `socket` sink (newline-delimited JSON over TCP or Unix socket) and receives processed events back via its native `fluent` source (Fluent Forward protocol). Works against any stock Vector build (Linux/macOS/Windows) and the official `vector/vector` Helm chart with a values overlay.
 
 ## Architecture
 
+<div style="text-align: center;">
+
 ```mermaid
 graph LR
-    A["📂 Vector<br/>sources"] --> B["📤 socket sink<br/>Unix / text"]
-    B --> C["⚡ 10x Engine<br/>Report/Receive/Optimize"]
-    C --> D["📥 fluent source<br/>Unix"]
-    D --> E["📤 Vector<br/>sinks"]
+    A["<div style='font-size: 14px;'>📂 Sources</div><div style='font-size: 10px;'>file, kubernetes_logs, journald</div>"] --> F["<div style='font-size: 14px;'>🧪 transforms</div><div style='font-size: 10px;'>enrichment</div>"]
+    F --> B["<div style='font-size: 14px;'>📤 socket sink</div><div style='font-size: 10px;'>tcp/unix → :9000</div>"]
+    B --> E["<div style='font-size: 14px;'>⚡ 10x Engine</div><div style='font-size: 10px;'>Receive/Optimize</div>"]
+    E --> C["<div style='font-size: 14px;'>📥 fluent source</div><div style='font-size: 10px;'>:9001 (no transforms)</div>"]
+    C --> D["<div style='font-size: 14px;'>📤 Destinations</div><div style='font-size: 10px;'>ES, Splunk, S3, Kafka</div>"]
+
+    classDef input fill:#2563eb,stroke:#1d4ed8,color:#ffffff,stroke-width:2px,rx:8,ry:8
+    classDef filter fill:#ea580c,stroke:#c2410c,color:#ffffff,stroke-width:2px,rx:8,ry:8
+    classDef engine fill:#7c3aed,stroke:#6d28d9,color:#ffffff,stroke-width:2px,rx:8,ry:8
+    classDef output fill:#16a34a,stroke:#15803d,color:#ffffff,stroke-width:2px,rx:8,ry:8
+
+    class A input
+    class B filter
+    class C filter
+    class D output
+    class E engine
+    class F filter
 ```
+
+</div>
 
 ### Data Flow
 
-- 📂 **Sources** — Vector reads logs from `file`, `kubernetes_logs`, `journald`, `vector` (gRPC), etc.
-- 📤 **Socket Sink** — Vector writes events as newline-delimited text/JSON to a Unix socket.
-- ⚡ **10x Engine** — Processes events (report metrics / receive filtering / optimize encoding).
-- 📥 **Fluent Source** — Vector receives processed events back via the Fluent Forward protocol over a Unix socket.
-- 📤 **Final Sinks** — Vector ships processed events to Elasticsearch, Splunk, S3, etc.
+- 📂 **Sources** — Your existing Vector sources (`file`, `kubernetes_logs`, `journald`, `socket`, …) feed events into the enrichment transforms.
+- 🧪 **Transforms** — Your enrichment transforms (`remap`, `filter`, `route`, …) run here exactly once before the event is handed off to Log10x. The recipe places them between your sources and the `tenx_in` sink — so the bypass is structural, not configured.
+- 📤 **socket sink** → Log10x — Vector forwards the enriched event to the Log10x sidecar over TCP `:9000` (or a Unix socket on Linux/macOS) as newline-delimited JSON.
+- ⚡ **10x Engine** — The Receiver app applies rate/policy-based filtering and optionally compacts events for volume reduction.
+- 📥 **fluent source** — Processed events come back to Vector on `:9001` over the Fluent Forward protocol. Only your destination sinks consume `tenx_out`; no transforms sit between them, so enrichment never re-fires.
+- 📤 **Destinations** — Vector's destination sinks (`elasticsearch`, `splunk_hec`, `kafka`, `aws_s3`, …) consume `tenx_out` and ship to the real destinations.
 
-### Component Details
+### What an event looks like on the way back
 
-| Component | Protocol | Description |
-|---|---|---|
-| 📤 `sinks.tenx_in` (`socket`, `mode: unix`) | newline-delimited text | Sends logs to Log10x for processing |
-| ⚡ 10x Engine | Internal | Report metrics, filter (receive), or encode (optimize) |
-| 📥 `sources.tenx_out` (`fluent`) | Forward / Unix | Receives processed logs back from Log10x |
-| 🔀 Disconnected component graph | N/A | The to-tenx and from-tenx legs are not wired together, so loops are impossible |
+The record structure of the original Vector event is preserved end-to-end — every field comes back to your destination sinks with the same name and same position. What changes depends on the Receiver app mode:
 
-### Key Files
+| Mode | Difference vs the event Vector sent in |
+|------|----------------------------------------|
+| Receive (default) | None. Same record. |
+| Receive + `symbolMessageHashField <name>` | Adds one new field with the symbol-pattern hash (a stable identifier for the message pattern — usable as a dedup key, metric dimension, or correlation ID). |
+| `receiverOptimize true` | The value of the message field (`message` by default, or whatever `vectorMessageField` is set to) is replaced with a compact encoded form. A separate `tenx-template` event is emitted with the template needed to decode it. All other fields stay verbatim. |
+| `receiverOptimize true` + `symbolMessageHashField <name>` | Both of the above. |
 
-| File | Purpose |
-|---|---|
-| `receive/tenxNix.yaml` | Vector config for Receiver mode (Linux/macOS, Unix sockets) |
-| `input/stream.yaml` | 10x Unix socket input, plain newline-delimited records |
-| `output/unix/stream.yaml` | 10x Forward protocol output configuration |
+The `tag` field stamped by Vector's ingest transform (typically from `.source_type`) is carried on the Forward wire as the Fluent tag, and surfaces as the event's `source` inside Log10x — used for rate-based grouping and emitted back to Vector on the return Forward record. Internally, Log10x's Vector input module reads the message text from the field named by `vectorMessageField` (default `message`); when the Receiver app is configured with `k8sExtractorName: fluentK8s`, the `kubernetes.*` sub-object is also materialized as enrichment fields for use by message-pattern and rate filtering.
+
+??? tenx-keyfiles "Key Files"
+
+    | File | Purpose |
+    |------|---------|
+    | [`input/stream.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/vector/input/stream.yaml) | Vector socket input — reads newline-delimited JSON from Vector's `socket` sink |
+    | [`output/stream.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/vector/output/stream.yaml) | Vector Fluent Forward output — sends processed events back to Vector's `fluent` source |
+    | [`conf/tenx-sidecar.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/vector/conf/tenx-sidecar.yaml) | Reference Vector config showing the ingest sink + egress source with no return-path transforms |
 
 ## Quickstart
 
-**1. Set environment variables:**
+**1. Run Log10x:**
 
 ```bash
-export TENX_MODULES=/path/to/config/modules
-export TENX_CONFIG=/path/to/config/config
-export TENX_API_KEY=your-api-key
+tenx @run/input/forwarder/vector @apps/receiver
 ```
 
-**2. Start Log10x first:**
+**2. Wire up your Vector config** — start from the sidecar recipe and add your real sources + destinations:
 
-```bash
-# Read-only (no return loop to Vector — metrics only)
-tenx run @run/input/forwarder/vector/receive @apps/receiver receiverReadOnly true
+```yaml title="vector.yaml"
+sources:
+  app_logs:
+    type: file
+    include: [/var/log/app.log]
+    read_from: end
 
-# Receiver (filter noisy logs)
-tenx run @run/input/forwarder/vector/receive @apps/receiver
+  # Receive processed events back from Log10x
+  tenx_out:
+    type: fluent
+    mode: tcp
+    address: 127.0.0.1:9001
 
-# Optimizer (Lossless Compact)
-tenx run @run/input/forwarder/vector/receive @apps/receiver receiverOptimize true
+transforms:
+  # Enrichment runs here exactly once — the return path skips this block.
+  ingest:
+    type: remap
+    inputs: [app_logs]
+    source: |
+      .cluster = get_env_var("CLUSTER_NAME") ?? "unset"
+      .tag = .source_type
+
+sinks:
+  # Hand off to the Log10x sidecar
+  tenx_in:
+    type: socket
+    inputs: [ingest]
+    mode: tcp
+    address: 127.0.0.1:9000
+    encoding: { codec: json }
+    framing: { method: newline_delimited }
+
+  # Destinations consume tenx_out (not the raw sources or `ingest`) so
+  # enrichment never re-fires on the return path.
+  destinations:
+    type: console
+    inputs: [tenx_out]
+    encoding: { codec: json }
 ```
 
-**3. Copy and customize Vector config:**
-
-```bash
-cp $TENX_MODULES/pipelines/run/modules/input/forwarder/vector/receive/tenxNix.yaml /etc/vector/
-```
-
-**4. Start Vector:**
-
-```bash
-vector --config /etc/vector/tenxNix.yaml
-```
-
-!!! note "Requirements"
-    Vector v0.34+ — the `fluent` source and `socket` sink with `mode: unix` are stable in current releases.
-
-## :material-kubernetes: Kubernetes sidecar
-
-The Kubernetes integration uses the official [vector/vector](https://helm.vector.dev) chart with a values overlay that adds the 10x sidecar container, a shared `emptyDir` for the Unix sockets, and the matching Vector socket sink + fluent source.
-
-If Vector is already installed in your cluster, this is the only change needed to wire it into Log10x.
-
-### Helm values overlay
-
-Add the blocks below to your existing Vector `values.yaml` (or create a `tenx-overlay.yaml` and pass it as `helm upgrade -f values.yaml -f tenx-overlay.yaml`):
-
-```yaml title="tenx-overlay.yaml"
-# Shared emptyDir for the Unix sockets between Vector and the 10x sidecar.
-extraVolumes:
-  - name: tenx-sockets
-    emptyDir: {}
-
-extraVolumeMounts:
-  - name: tenx-sockets
-    mountPath: /tmp/tenx-sockets
-
-# 10x sidecar container.
-extraContainers:
-  - name: tenx
-    image: log10x/edge-10x:latest
-    args:
-      - "run"
-      - "@run/input/forwarder/vector/receive"
-      - "@apps/receiver"
-      - "vectorInputPath"
-      - "/tmp/tenx-sockets/tenx-vector-in.sock"
-      - "vectorOutputForwardAddress"
-      - "/tmp/tenx-sockets/tenx-vector-out.sock"
-      # Read-only mode (no return loop, metrics-only). Omit for full
-      # receive/optimize round-trip back to Vector.
-      # - "receiverReadOnly"
-      # - "true"
-      # Optimize mode (lossless compaction). Mutually exclusive with read-only.
-      # - "receiverOptimize"
-      # - "true"
-    env:
-      - name: TENX_API_KEY
-        value: "YOUR-LOG10X-API-KEY"
-    volumeMounts:
-      - name: tenx-sockets
-        mountPath: /tmp/tenx-sockets
-
-# Both containers must be able to read/write the shared Unix sockets.
-# `runAsUser: 0` is the simplest portable choice for a quick test;
-# in production align both containers to a UID with permission to
-# the emptyDir.
-podSecurityContext:
-  runAsUser: 0
-  runAsGroup: 0
-  fsGroup: 0
-
-# Vector side of the contract: write events to the 10x input socket,
-# receive received events back from the 10x output socket, ship from there.
-customConfig:
-  data_dir: /vector-data-dir
-
-  sources:
-    # ... your existing Vector sources ...
-
-    tenx_out:
-      type: fluent
-      mode: unix
-      path: /tmp/tenx-sockets/tenx-vector-out.sock
-
-  sinks:
-    tenx_in:
-      type: socket
-      inputs:
-        - YOUR-EXISTING-SOURCE-NAMES
-      mode: unix
-      path: /tmp/tenx-sockets/tenx-vector-in.sock
-      encoding:
-        codec: text
-
-    # Replace `tenx_in` with your existing destination sink(s) and switch
-    # them to consume `tenx_out` instead — that is the leg that ships
-    # processed events to your final destination.
-    your_destination:
-      type: elasticsearch  # or splunk_hec, kafka, s3, …
-      inputs:
-        - tenx_out
-      # ... destination-specific options ...
-```
-
-Apply with:
-
-```bash
-helm upgrade --install vector vector/vector \
-  --namespace YOUR-VECTOR-NAMESPACE \
-  --values your-existing-values.yaml \
-  --values tenx-overlay.yaml
-```
-
-### Mode selection (read-only / receive / optimize)
-
-All three modes share the same launch — only the `args:` list changes:
-
-| Mode | Extra args | Behavior |
-|---|---|---|
-| **receive** (default) | none | Filter events; surviving events return to Vector |
-| **read-only** | `receiverReadOnly true` | Read + aggregate + publish metrics; do **not** write events back |
-| **optimize** | `receiverOptimize true` | Filter + losslessly compact surviving events for 50–80% volume reduction |
-
-In read-only mode the 10x sidecar binds the input socket but never connects the output socket — Vector's `fluent` source receives nothing, so Vector's existing direct-to-destination sinks are unaffected; 10x is a passive observer publishing metrics to the Log10x backend.
-
-### Startup race
-
-When both containers start at the same time, Vector's `socket` sink may briefly fail to connect because the 10x input socket isn't bound yet (a few hundred milliseconds). Vector retries with backoff and recovers automatically — this shows up in Vector's logs as one or two `Unable to connect` errors followed by suppression. No action needed.
-
-### Verifying the sidecar is wired
-
-Look for these signals in `kubectl logs <pod> -c tenx`:
-
-- `🚦 Applying local rate receiver to: vector` — the Vector input wrapper loaded
-- `📈 Publishing TenXSummary metrics to the log10x backend` — metrics are flowing to the Log10x backend
-- `📝 Writing TenXObject fields: 'fullText' → Fluentd: /tmp/tenx-sockets/tenx-vector-out.sock` — return-loop is wired (absent in read-only mode, by design)
-
-If logs show only `[level] timestamp` with no message text, set `TENX_LOG_LAYOUT="[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS} %c{1} - %msg%n"` on the sidecar to expose warnings/errors.
+For Splunk integration see the [10x for Splunk](https://doc.log10x.com/apps/receiver/splunk/) documentation. For Kubernetes deployment via the official Vector Helm chart see the [Helm sidecar overlay](https://doc.log10x.com/apps/receiver/deploy/#vector).

@@ -11,7 +11,7 @@
 #                                                              ▼
 #                                                           Receiver
 #                                                              │
-#   destinations ◄── logs/from-tenx ◄── fluent_forward ◄── Log10x:24225
+#   destinations ◄── logs/from-tenx ◄── otlp/tenx receiver ◄── Log10x:24225
 #                                       (no processors)
 #
 # How each event is handled:
@@ -27,10 +27,10 @@
 #      all preserved on the wire.
 #   4. Log10x processes the event (rate/policy filtering, optional compaction).
 #   5. The processed event comes back to the Collector on `:24225` via the
-#      `fluent_forward/tenx` receiver, surfacing on the `logs/from-tenx`
-#      pipeline. Every attribute that came in on OTLP returns as an
-#      attribute on the OTel log record (resource-vs-log distinction
-#      collapses; everything comes back as a log attribute).
+#      `otlp/tenx` receiver, surfacing on the `logs/from-tenx` pipeline. The
+#      OTLP `LogRecord.body` carries the message verbatim; everything else
+#      that came in on OTLP returns as a log-record attribute (the resource-
+#      vs-log distinction collapses; everything comes back as a log attribute).
 #   6. `logs/from-tenx` holds only destination exporters — no processors.
 #      Keep this pipeline processor-free so enrichment runs exactly once.
 #
@@ -38,11 +38,10 @@
 #
 #   tenx @run/input/forwarder/otel-collector @apps/receiver
 #
-# Run the Collector (the `fluent_forward` receiver requires the
-# `otelcol-contrib` distribution; the core `otelcol` distribution does
-# not ship it):
+# Run the Collector — both ports use the core `otlp` receiver and exporter,
+# so the core `otelcol` distribution works (no `otelcol-contrib` needed):
 #
-#   otelcol-contrib --config=<this-file>
+#   otelcol --config=<this-file>
 #
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -60,8 +59,10 @@ receivers:
   # Bind on 0.0.0.0 so a Kubernetes kubelet probe can reach the port from
   # the pod IP. The Log10x sidecar still connects via 127.0.0.1 (same pod,
   # same network namespace).
-  fluent_forward/tenx:
-    endpoint: 0.0.0.0:24225
+  otlp/tenx:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:24225
 
 processors:
 
@@ -100,5 +101,5 @@ service:
       exporters: [otlp/tenx]
 
     logs/from-tenx:
-      receivers: [fluent_forward/tenx]
+      receivers: [otlp/tenx]
       exporters: [debug]

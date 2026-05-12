@@ -28,12 +28,13 @@ module:
 
     - names:
         - otelCollectorMessageField
-      description: name of the JSON field carrying the original log line
+      description: dotted JSON path to the field carrying the log line text
       type: String
       required: false
-      defValue: message
+      defValue: body
       doc: |
-        Name of the field on the flattened OTLP record that contains the
-        actual log message text. The default (`message`) carries the OTel log
-        record's body text. Set to e.g. `log` if your Collector pipeline
-        copies the log line into a different attribute before exporting.
+        Top-level JSON field name on the input record that carries the actual
+        log line text. The default (`body`) matches the flattened shape the
+        input emits for plain-text OTLP bodies. Set to a different field name
+        if your Collector pipeline copies the log line into a different
+        attribute before exporting (e.g. an `<attr_key>` set via a transform).

@@ -2,11 +2,10 @@
 # 🔟❎ 'run' OpenTelemetry Collector input module
 #
 # Sidecar-only integration. Log10x runs as a peer process to the OpenTelemetry
-# Collector; the Collector sends events to Log10x via its native `otlp` exporter
-# (OTLP/gRPC) and receives processed events back via its `fluent_forward`
-# receiver (Fluent Forward protocol). The `fluent_forward` receiver ships
-# in the `otelcol-contrib` distribution; the core `otelcol` distribution
-# does not include it.
+# Collector; the Collector sends events to Log10x via its native `otlp`
+# exporter (OTLP/gRPC) and receives processed events back via its `otlp`
+# receiver. Both ports use core OTLP/gRPC, so the core `otelcol` distribution
+# is sufficient (no `otelcol-contrib` build required).
 
 module:
 
@@ -14,7 +13,7 @@ module:
 
   title: OpenTelemetry Collector
 
-  description: receive and optimize events collected by the OpenTelemetry Collector via OTLP/gRPC and the fluent_forward receiver
+  description: receive and optimize events collected by the OpenTelemetry Collector via OTLP/gRPC (both directions)
 
   moduleSort: [otelCollectorInput, otelCollectorOutput]
 

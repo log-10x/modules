@@ -17,7 +17,7 @@ extractor:
   - name: otel
     type: json
     actions:
-      - $=yield "captureFirst:" + TenXEnv.get("otelCollectorMessageField", "message")
+      - $=yield "captureFirst:" + TenXEnv.get("otelCollectorMessageField", "body")
       - drop:tag
 
 # ============================== Input ========================================

@@ -1,20 +1,17 @@
-# 🔟❎ 'run' OpenTelemetry Collector Fluent Forward output stream
+# 🔟❎ 'run' OpenTelemetry Collector OTLP/gRPC output stream
 #
-# Sends processed events back to the OpenTelemetry Collector over the Fluent
-# Forward protocol — the Collector's `fluent_forward` receiver consumes
-# Forward natively. Each top-level field of the rendered event becomes a
-# Fluent field, which the receiver maps onto an attribute on the returning
-# OTel log record.
+# Sends processed events back to the OpenTelemetry Collector over OTLP/gRPC.
+# The Collector receives them on its `otlp` receiver and forwards to the
+# destination exporters on the return pipeline.
 #
-# Defaults to TCP `127.0.0.1:24225` so it pairs with the OTLP input
-# listening on `:4317`. Override with:
+# Defaults to TCP `127.0.0.1:24225` so it pairs with the OTLP input listening
+# on `:4317`. Override with:
 #
 #   otelCollectorOutputHost: 0.0.0.0
 #   otelCollectorOutputPort: 9999
 #
-# Or use a Unix domain socket on Linux/macOS:
-#
-#   otelCollectorOutputPath: /tmp/tenx-otel-out.sock
+# Each top-level field of the rendered event is mapped to an OTLP attribute on
+# the returning `LogRecord`. The `body` field is lifted into `LogRecord.body`.
 #
 # The output mode is driven by `outputEncodeField` and `outputWriteTemplates`
 # (see run/modules/input/forwarder/module.yaml):
@@ -26,13 +23,12 @@
 tenx: run
 
 include:
-  - run/modules/output/event/forward
+  - run/modules/output/event/otlp
 
-outputForward:
+outputOtlp:
 
-  - hostAddress: $=yield TenXEnv.get("otelCollectorOutputHost", "127.0.0.1")
-    hostPort: $=yield TenXEnv.get("otelCollectorOutputPort", "24225")
-    address: $=yield TenXEnv.get("otelCollectorOutputPath")
+  - host: $=yield TenXEnv.get("otelCollectorOutputHost", "127.0.0.1")
+    port: $=yield TenXEnv.get("otelCollectorOutputPort", "24225")
 
     fields:
       - $?outputEncodeField=fullText

@@ -5,14 +5,19 @@ hidden: true
 
 Reads events from the OpenTelemetry Collector over [OTLP/gRPC](https://opentelemetry.io/docs/specs/otlp/) on TCP — every OS.
 
-Each `ExportLogsServiceRequest` is unpacked and every log record inside is flattened into a single JSON record. The log body, log-record attributes, severity (`severity_text`, `severity_number`), `timestamp`, `trace_id` / `span_id` (when set), the resource attributes (`service_name`, `k8s_pod_name`, `k8s_namespace_name`, …), and the scope identity (`scope_name`, `scope_version`, plus any scope attributes prefixed with `scope_`) all become top-level fields on the resulting record. Dots in attribute keys are replaced with underscores so they read as flat fields rather than nested paths.
+Each log record inside an incoming `ExportLogsServiceRequest` is emitted as a single JSON line carrying:
 
-The input pulls out:
+- The OTLP **`body`** — flattened to a top-level string field for plain-text bodies (OTLP `AnyValue.stringValue`), or kept in its `AnyValue` shape (e.g. `{"kvlistValue":…}`) for non-string bodies. Flattening the common case lets the engine's outer-text accessor preserve the surrounding envelope intact in optimize mode, so `encode()` only swaps the body value and leaves every other attribute untouched.
+- All **log-record attributes** flat at the top level, with keys preserved as they came in (`log.file.name`, `log.iostream`, …).
+- All **resource attributes** flat at the top level, also with keys preserved (`service.name`, `k8s.pod.name`, `k8s.namespace.name`, `k8s.container.name`, …).
+- A synthetic **`tag`** field — set to `service.name` if present, otherwise `k8s.pod.name`, otherwise the literal `otel` — used as the wire tag on the outgoing OTLP output back to the Collector and as the event's source inside Log10x.
 
-- The actual log line from the **`message`** field (configurable via `otelCollectorMessageField`) — becomes the event's `text`, the input to every message-content enrichment downstream.
-- A synthetic **`tag`** field — set to `service.name` (or `k8s.pod.name` if `service.name` is unset, or the literal `otel` if neither is set) — becomes the event's `source`, used for rate-based grouping inside Log10x and as the outgoing Fluent Forward tag when events are sent back to the Collector.
+The input pulls out two things via the engine's JSON extractor:
 
-Every other attribute that came in over OTLP is preserved on the event's `fullText`, so destinations that want the verbatim event still receive every attribute that came in.
+- The actual log line — captured by `captureFirst` from the path configured via `otelCollectorMessageField` (default `body`, matching the flattened shape above). Becomes the event's `text`, the input to every message-content enrichment downstream.
+- The synthetic **`tag`** — captured by `sourcePattern` as the event's `source`. Used for rate-based grouping and as the outgoing OTLP tag when events are sent back to the Collector.
+
+Every other field — every attribute that came in over OTLP — stays on the event's `fullText` and round-trips back to the Collector as a log-record attribute on the returning side.
 
 The matching Collector exporter config:
 

@@ -121,6 +121,10 @@ module:
       category: encoding
       required: false
       defValue: true
+      doc: |
+        Controls whether instance field values for TenXObjects passed to this
+        output are written. Disable to keep templates-only emission active
+        without ferrying every event payload over OTLP/gRPC.
 
     - names:
         - outputOtlpWriteTemplates
@@ -129,6 +133,11 @@ module:
       category: encoding
       required: false
       defValue: false
+      doc: |
+        Controls whether template values for TenXObjects passed to this output
+        are written. Each new template is emitted at most once. Enable this
+        alongside `receiverOptimize true` so the destination Collector can
+        decode the compact body using the matching template.
 
     - names:
         - outputOtlpFilter
@@ -136,6 +145,11 @@ module:
       type: string
       category: encoding
       required: false
+      doc: |
+        Specifies a JavaScript expression that a TenXObject must evaluate as
+        truthy to be written to this output. For example,
+        `outputOtlpFilter: this.timestamp` will only emit TenXObjects whose
+        intrinsic `timestamp` field is set.
 
     - names:
         - outputOtlpEncodeType
@@ -157,3 +171,7 @@ module:
       category: encoding
       required: false
       defValue: ','
+      doc: |
+        Delimiter used to separate TenXObject field values when
+        `outputOtlpEncodeType` is `delimited`. Ignored when `outputOtlpEncodeType`
+        is `json` (which emits a JSON object instead of delimited values).

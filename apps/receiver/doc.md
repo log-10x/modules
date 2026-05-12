@@ -253,7 +253,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
     === ":simple-opentelemetry: OTel Collector"
 
         !!! note "Requires otelcol-contrib"
-            The `syslog` exporter and `fluent_forward` receiver ship in the **`otelcol-contrib`** distribution only — the core `otelcol` distribution does not include them. Tested against `otelcol-contrib` v0.151.0+. Log10x communicates with the Collector over RFC5424 syslog (Collector → Log10x) and Fluent Forward (Log10x → Collector); TCP on every OS, or Unix domain sockets on Linux/macOS.
+            The `fluent_forward` receiver ships in the **`otelcol-contrib`** distribution only — the core `otelcol` distribution does not include it. Tested against `otelcol-contrib` v0.151.0+. The `otlp` exporter is in both distributions. Log10x communicates with the Collector over OTLP/gRPC (Collector → Log10x) and Fluent Forward (Log10x → Collector).
 
         **Step 1**: Copy the Collector sidecar recipe:
 
@@ -261,7 +261,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
         cp $TENX_MODULES/pipelines/run/modules/input/forwarder/otel-collector/conf/tenx-sidecar.yaml /etc/otelcol-contrib/
         ```
 
-        **Step 2**: Update receivers and destination exporters to match your environment. The `logs/to-tenx` pipeline carries your receivers and enrichment processors through the `syslog/tenx` exporter; the `logs/from-tenx` pipeline carries returning events directly to your destination exporters:
+        **Step 2**: Update receivers and destination exporters to match your environment. The `logs/to-tenx` pipeline carries your receivers and enrichment processors through the `otlp/tenx` exporter; the `logs/from-tenx` pipeline carries returning events directly to your destination exporters:
 
         ```yaml title="tenx-sidecar.yaml"
         receivers:
@@ -280,21 +280,21 @@ Follow the steps below. Steps that require customization link to the relevant [C
           pipelines:
             logs/to-tenx:
               receivers: [filelog]
-              processors: [transform/tenx_message, batch]
-              exporters: [syslog/tenx]
+              processors: [batch]
+              exporters: [otlp/tenx]
             logs/from-tenx:
               receivers: [fluent_forward/tenx]
               exporters: [debug]
         ```
 
-        **Step 3**: Start Log10x first, then the Collector:
+        **Step 3**: Start Log10x first so the OTLP/gRPC port is listening, then the Collector:
 
         ```bash
         tenx run @run/input/forwarder/otel-collector @apps/receiver
         otelcol-contrib --config=/etc/otelcol-contrib/tenx-sidecar.yaml
         ```
 
-        Two disconnected pipelines in the Collector's graph prevent loops: `logs/to-tenx` (events out to 10x) and `logs/from-tenx` (events in from 10x) never share a stage — the egress pipeline has no processors, so enrichment never re-fires on the return path.
+        Keep the egress pipeline (`logs/from-tenx`) processor-free — it carries returning events directly to your destination exporters so enrichment runs exactly once.
 
     === ":simple-vector: Vector"
 
@@ -519,11 +519,8 @@ Follow the steps below. Steps that require customization link to the relevant [C
               region: us-east-1
               s3_bucket: your-archive-bucket
           # → 10x sidecar processes and receives, results land on logs/from-tenx
-          syslog/tenx:
-            endpoint: 127.0.0.1
-            port: 24226
-            network: tcp
-            protocol: rfc5424
+          otlp/tenx:
+            endpoint: 127.0.0.1:4317
             tls:
               insecure: true
 
@@ -531,9 +528,9 @@ Follow the steps below. Steps that require customization link to the relevant [C
           pipelines:
             logs/to-tenx:
               receivers: [filelog]
-              processors: [transform/tenx_message, batch]
+              processors: [batch]
               # Full-volume fanout: archive + 10x sidecar
-              exporters: [awss3, syslog/tenx]
+              exporters: [awss3, otlp/tenx]
             logs/from-tenx:
               receivers: [fluent_forward/tenx]
               exporters: [otlp/siem]   # receiver-processed stream
@@ -725,15 +722,10 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
     === ":simple-opentelemetry: OTel Collector"
 
-        **Step 1**: Start Log10x first so its syslog input port is bound when the Collector starts (a first flush from the Collector hits a connection-refused otherwise):
+        Start Log10x first so its OTLP/gRPC port is listening when the Collector starts, then start the Collector:
 
         ```console
         $ tenx run @run/input/forwarder/otel-collector @apps/receiver
-        ```
-
-        **Step 2**: Start the Collector with the 10x sidecar recipe:
-
-        ```console
         $ otelcol-contrib --config=/etc/otelcol-contrib/tenx-sidecar.yaml
         ```
 

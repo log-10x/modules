@@ -31,12 +31,12 @@ module:
       description: TCP port of the OpenTelemetry Collector's fluent_forward receiver
       type: String
       required: false
-      defValue: 24227
+      defValue: 24225
       doc: |
         TCP port where the OpenTelemetry Collector's `fluent_forward` receiver
         is listening for processed events from Log10x. MUST differ from the
-        port Log10x's own syslog input listens on (default `24226`) or the two
-        would collide on the same listener.
+        port Log10x's own OTLP/gRPC input listens on (default `4317`) or the
+        two would collide on the same listener.
 
     - names:
         - otelCollectorOutputPath

@@ -2,11 +2,11 @@
 # 🔟❎ 'run' OpenTelemetry Collector input module
 #
 # Sidecar-only integration. Log10x runs as a peer process to the OpenTelemetry
-# Collector; the Collector sends events to Log10x via its `syslog` exporter
-# (RFC5424 over TCP or Unix socket) and receives processed events back via
-# its `fluent_forward` receiver (Fluent Forward protocol). Both components
-# ship in `otelcol-contrib` — the core `otelcol` distribution does not
-# include them.
+# Collector; the Collector sends events to Log10x via its native `otlp` exporter
+# (OTLP/gRPC) and receives processed events back via its `fluent_forward`
+# receiver (Fluent Forward protocol). The `fluent_forward` receiver ships
+# in the `otelcol-contrib` distribution; the core `otelcol` distribution
+# does not include it.
 
 module:
 
@@ -14,7 +14,7 @@ module:
 
   title: OpenTelemetry Collector
 
-  description: receive and optimize events collected by the OpenTelemetry Collector via the syslog exporter and fluent_forward receiver
+  description: receive and optimize events collected by the OpenTelemetry Collector via OTLP/gRPC and the fluent_forward receiver
 
   moduleSort: [otelCollectorInput, otelCollectorOutput]
 
@@ -22,7 +22,6 @@ module:
 
   allowMultiple: false
 
-  # Shared output-formatting options used by the Forward output back to OTel.
   options:
 
     - names:
@@ -42,7 +41,7 @@ module:
       description: "output format when outputFields are set. Possible values: [json, delimited]"
       type: string
       required: false
-      defValue: json
+      defValue: delimited
       doc: |
         specifies how the combined output (main event field plus outputFields)
         is encoded when writing back to the OpenTelemetry Collector. Possible

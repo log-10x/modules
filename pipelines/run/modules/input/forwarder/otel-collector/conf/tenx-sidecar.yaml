@@ -6,38 +6,41 @@
 # existing config) to wire the Collector up to a Log10x sidecar process.
 # Events flow:
 #
-#   receivers ──► logs/to-tenx ──► syslog/tenx exporter ──► Log10x:24226
-#                  (enrichment)                                  │
-#                                                                ▼
-#                                                             Receiver
-#                                                                │
-#   destinations ◄── logs/from-tenx ◄── fluent_forward ◄── Log10x:24227
+#   receivers ──► logs/to-tenx ──► otlp/tenx exporter ──► Log10x:4317
+#                  (enrichment)                                │
+#                                                              ▼
+#                                                           Receiver
+#                                                              │
+#   destinations ◄── logs/from-tenx ◄── fluent_forward ◄── Log10x:24225
 #                                       (no processors)
 #
 # How each event is handled:
 #
 #   1. Receivers feed events into the `logs/to-tenx` pipeline.
-#   2. Processors on `logs/to-tenx` (transform, attributes, resource, …)
-#      apply enrichment exactly once per event before the handoff to Log10x.
-#   3. The `syslog/tenx` exporter sends the enriched event to the Log10x
-#      sidecar as an RFC5424 syslog message on TCP `:24226`. The exporter's
-#      MSG field is driven by the `message` attribute on the log record —
-#      see the transform below.
+#   2. Processors on `logs/to-tenx` (k8sattributes, resource, attributes,
+#      transform, …) apply enrichment exactly once per event before the
+#      handoff to Log10x.
+#   3. The `otlp/tenx` exporter sends the enriched event to the Log10x
+#      sidecar over OTLP/gRPC on TCP `:4317`. Resource attributes
+#      (`service.name`, `k8s.pod.name`, `k8s.namespace.name`, …), scope
+#      identity, log-record attributes, severity, timestamp, and body are
+#      all preserved on the wire.
 #   4. Log10x processes the event (rate/policy filtering, optional compaction).
-#   5. The processed event comes back to the Collector on `:24227` via the
+#   5. The processed event comes back to the Collector on `:24225` via the
 #      `fluent_forward/tenx` receiver, surfacing on the `logs/from-tenx`
-#      pipeline.
+#      pipeline. Every attribute that came in on OTLP returns as an
+#      attribute on the OTel log record (resource-vs-log distinction
+#      collapses; everything comes back as a log attribute).
 #   6. `logs/from-tenx` holds only destination exporters — no processors.
-#      OTel's separate-pipeline model IS the bypass mechanism; the enrichment
-#      processors above never see the returning event.
+#      Keep this pipeline processor-free so enrichment runs exactly once.
 #
 # Run Log10x:
 #
 #   tenx @run/input/forwarder/otel-collector @apps/receiver
 #
-# Run the Collector (requires the `otelcol-contrib` distribution — the core
-# `otelcol` distribution does not ship the syslog exporter or fluent_forward
-# receiver):
+# Run the Collector (the `fluent_forward` receiver requires the
+# `otelcol-contrib` distribution; the core `otelcol` distribution does
+# not ship it):
 #
 #   otelcol-contrib --config=<this-file>
 #
@@ -54,52 +57,36 @@ receivers:
 
   # Receive processed events back from the Log10x sidecar.
   #
-  # Bind on 0.0.0.0 so a Kubernetes kubelet tcpSocket probe can reach the
-  # port from the pod IP — a loopback-only bind would refuse the probe.
-  # The Log10x sidecar still connects via 127.0.0.1 (same pod, same network
-  # namespace).
+  # Bind on 0.0.0.0 so a Kubernetes kubelet probe can reach the port from
+  # the pod IP. The Log10x sidecar still connects via 127.0.0.1 (same pod,
+  # same network namespace).
   fluent_forward/tenx:
-    endpoint: 0.0.0.0:24227
+    endpoint: 0.0.0.0:24225
 
 processors:
 
-  # Put all your enrichment here — `transform`, `attributes`, `resource`,
-  # `filter`, k8s-metadata lookups, etc. This pipeline (`logs/to-tenx`) fires
-  # the processors exactly once per event before the handoff to Log10x. The
+  # Put all your enrichment here — `k8sattributes`, `resource`, `attributes`,
+  # `transform`, `filter`, etc. This pipeline (`logs/to-tenx`) fires the
+  # processors exactly once per event before the handoff to Log10x. The
   # return pipeline (`logs/from-tenx`) bypasses them by structural wiring.
-  #
-  # The `syslog` exporter writes its MSG field from the `message` attribute
-  # (or falls back to the body if that attribute is unset). The transform
-  # below copies `body` into `attributes["message"]` when missing so MSG is
-  # always populated.
-  transform/tenx_message:
-    log_statements:
-      - context: log
-        statements:
-          - set(attributes["message"], body) where attributes["message"] == nil
-
   batch:
     timeout: 1s
     send_batch_size: 100
 
 exporters:
 
-  # Hand off to the Log10x sidecar over RFC5424 syslog. On Linux/macOS swap
-  # `network: tcp` + `endpoint`/`port` for `network: unix` + `endpoint: <path>`
-  # to use a Unix domain socket instead.
-  syslog/tenx:
-    endpoint: 127.0.0.1
-    port: 24226
-    network: tcp
-    protocol: rfc5424
+  # Hand off to the Log10x sidecar over OTLP/gRPC. All resource attributes,
+  # scope info, log-record attributes, and the body survive the wire.
+  otlp/tenx:
+    endpoint: 127.0.0.1:4317
     tls:
       insecure: true
 
   # `debug` is the terminal exporter for this recipe — replace it with your
   # real destinations (`elasticsearch`, `splunk_hec`, `kafka`, `awss3`, …).
-  # Keep the destination exporters wired to `logs/from-tenx`; that structural
-  # wiring is what keeps the enrichment processors from running a second time
-  # on returning events.
+  # Wire your destination exporters into `logs/from-tenx` only; that's what
+  # keeps the enrichment processors above from running a second time on
+  # returning events.
   debug:
     verbosity: detailed
 
@@ -109,8 +96,8 @@ service:
 
     logs/to-tenx:
       receivers: [filelog]
-      processors: [transform/tenx_message, batch]
-      exporters: [syslog/tenx]
+      processors: [batch]
+      exporters: [otlp/tenx]
 
     logs/from-tenx:
       receivers: [fluent_forward/tenx]

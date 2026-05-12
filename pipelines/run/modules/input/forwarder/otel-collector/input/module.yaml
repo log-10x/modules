@@ -1,13 +1,13 @@
 #
-# 🔟❎ 'run' OpenTelemetry Collector syslog input module
+# 🔟❎ 'run' OpenTelemetry Collector OTLP/gRPC input module
 
 module:
 
   name: otelCollectorInput
 
-  title: OpenTelemetry Collector syslog input
+  title: OpenTelemetry Collector OTLP input
 
-  description: read events from the OpenTelemetry Collector over RFC5424 syslog (TCP or Unix socket)
+  description: read events from the OpenTelemetry Collector over OTLP/gRPC
 
   doc: '+include $=TenXEnv.get("docGenerate") ? "run/modules/input/forwarder/otel-collector/input/doc.md":""'
 
@@ -17,36 +17,23 @@ module:
 
     - names:
         - otelCollectorInputPort
-      description: TCP port to listen on for events from the OpenTelemetry Collector's syslog exporter
+      description: TCP port to listen on for OTLP/gRPC events from the OpenTelemetry Collector
       type: String
       required: false
-      defValue: 24226
+      defValue: 4317
       doc: |
-        TCP port where Log10x listens for events sent by the OpenTelemetry
-        Collector's `syslog` exporter (`network: tcp`, `protocol: rfc5424`).
-        Match this against the `endpoint` + `port` in your Collector exporter
-        block.
+        TCP port where Log10x listens for OTLP/gRPC log records from the
+        OpenTelemetry Collector's `otlp` exporter. Match this against the
+        `endpoint` of your Collector exporter.
 
     - names:
-        - otelCollectorInputPath
-      description: Unix domain socket path to listen on (Linux/macOS)
+        - otelCollectorMessageField
+      description: name of the JSON field carrying the original log line
       type: String
       required: false
-      defValue:
+      defValue: message
       doc: |
-        When set, Log10x listens on a Unix domain socket instead of TCP — useful
-        on Linux/macOS to avoid TCP overhead. Configure the Collector's `syslog`
-        exporter with `network: unix` and a matching `endpoint` path. Ignored
-        on Windows.
-
-    - names:
-        - otelCollectorInputSyslog
-      description: parse incoming bytes as RFC5424 syslog and extract MSG only
-      type: String
-      required: false
-      defValue: "true"
-      doc: |
-        When `true` (the default), the input strips the RFC5424 syslog envelope
-        and surfaces only the MSG field as the event text. Set to `false` if
-        you've configured the Collector's `syslog` exporter to skip the
-        RFC5424 envelope, or if you want to handle parsing downstream.
+        Name of the field on the flattened OTLP record that contains the
+        actual log message text. The default (`message`) carries the OTel log
+        record's body text. Set to e.g. `log` if your Collector pipeline
+        copies the log line into a different attribute before exporting.

@@ -79,9 +79,8 @@ output:
       - $outputSocketPort
       - $?outputSocketProtocol=TCP
 
-    # Templates are emitted by default when there are any to emit (the
-    # `filter: isNewTemplate()` below gates per-event). Matches the Forward
-    # output's gate default — opt out with `outputSocketWriteTemplates: false`.
+    # 'enabled' is false by default. 'outputSocketWriteTemplates' must be set to
+    # true for templates to be encoded.
     # `receiverReadOnly=true` short-circuits so no templates are emitted in read-only mode.
     enabled: $=yield !TenXEnv.get("receiverReadOnly", false) && TenXEnv.get("outputSocketWriteTemplates", true)
 

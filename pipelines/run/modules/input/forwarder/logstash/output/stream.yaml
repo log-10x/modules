@@ -25,8 +25,8 @@ include:
 outputSocket:
 
   - protocol: TCP
-    host: $=TenXEnv.get("logstashOutputHost", "127.0.0.1")
-    port: $=TenXEnv.get("logstashOutputPort", 5045)
+    host: $=yield TenXEnv.get("logstashOutputHost", "127.0.0.1")
+    port: $=yield TenXEnv.get("logstashOutputPort", "5045")
 
     fields:
       # Carries the whole Logstash record in receive mode and an encoded form

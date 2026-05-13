@@ -58,3 +58,16 @@ module:
         defines a regex pattern to capture 'source' values for each transformed TenXObject.
         The Forward protocol tag is injected into each record as a "tag" field.
         The default pattern extracts this tag as the event source.
+
+    - names:
+        - forwardExtractors
+      description: JSON / regex extractor names applied to each Forward record
+      type: list
+      required: false
+      defValue: []
+      doc: |
+        List of extractor names to apply to each event after Forward-protocol
+        decoding. Each named extractor must be defined elsewhere in the pipeline
+        (see https://doc.log10x.com/run/input/extract). Useful when the records
+        coming over Forward carry a custom JSON shape and you want to capture
+        specific fields as TenXObject properties.

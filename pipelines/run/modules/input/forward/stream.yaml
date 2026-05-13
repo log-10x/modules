@@ -34,6 +34,11 @@ input:
       - '$=yield TenXEnv.get("forwardInputPath", "") ? "path" : ""'
       - $=yield TenXEnv.get("forwardInputPath", "")
 
+    # Apply user-configured extractors (referenced by name) to each
+    # decoded Forward record.
+    extractors:
+      - $?forwardExtractors
+
     # Extract the event source from the injected "tag" field
     sourcePattern: $=TenXEnv.get("forwardSourcePattern", "\"tag\":\"(.*?)\"")
 

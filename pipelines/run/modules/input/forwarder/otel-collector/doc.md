@@ -2,7 +2,10 @@
 icon: simple/opentelemetry
 ---
 
-Integrate Log10x with OpenTelemetry Collector to report, receive, and optimize log events _before_ shipping to outputs (Elasticsearch, Splunk, S3).
+Runs 10x Engine as a [sidecar](https://doc.log10x.com/engine/launcher/sidecar) to the [OpenTelemetry Collector](https://opentelemetry.io/docs/collector/) for reporting, receiving, and optimizing events before they ship to their destination (Elasticsearch, Splunk, S3, Kafka, …). The Collector and Log10x run as peer processes — the Collector sends events to Log10x via its native [OTLP/gRPC exporter](https://github.com/open-telemetry/opentelemetry-collector/tree/main/exporter/otlpexporter) and receives processed events back via its OTLP/gRPC receiver. The OTLP wire preserves resource attributes, scope info, log-record attributes, severity, timestamp, and body end-to-end, so k8s metadata (`k8s.pod.name`, `k8s.namespace.name`, `k8s.container.name`, labels, …) round-trips back to your destinations.
+
+!!! note "Distribution"
+    Both the OTLP receiver and OTLP exporter ship in the core `otelcol` distribution — no `otelcol-contrib` build is required. Tested against `otelcol` v0.151.0+.
 
 ## Architecture
 
@@ -10,102 +13,100 @@ Integrate Log10x with OpenTelemetry Collector to report, receive, and optimize l
 
 ```mermaid
 graph LR
-    A["<div style='font-size: 14px;'>📂 OTel Collector</div><div style='font-size: 10px;'>receivers</div>"] --> B["<div style='font-size: 14px;'>📤 syslog exporter</div><div style='font-size: 10px;'>Unix socket</div>"]
-    B --> C["<div style='font-size: 14px;'>⚡ 10x Engine</div><div style='font-size: 10px;'>Report/Receive/Optimize</div>"]
-    C --> D["<div style='font-size: 14px;'>📥 fluentforward</div><div style='font-size: 10px;'>receiver</div>"]
-    D --> E["<div style='font-size: 14px;'>📤 OTel Collector</div><div style='font-size: 10px;'>exporters</div>"]
+    A["<div style='font-size: 14px;'>📂 Receivers</div><div style='font-size: 10px;'>filelog, otlp, journald</div>"] --> F["<div style='font-size: 14px;'>🧪 logs/to-tenx</div><div style='font-size: 10px;'>k8sattributes, resource, transform</div>"]
+    F --> B["<div style='font-size: 14px;'>📤 otlp exporter</div><div style='font-size: 10px;'>OTLP/gRPC → :4317</div>"]
+    B --> E["<div style='font-size: 14px;'>⚡ 10x Engine</div><div style='font-size: 10px;'>Receive/Optimize</div>"]
+    E --> C["<div style='font-size: 14px;'>📥 otlp receiver</div><div style='font-size: 10px;'>:24225 (no processors)</div>"]
+    C --> D["<div style='font-size: 14px;'>📤 Destinations</div><div style='font-size: 10px;'>ES, Splunk, S3, Kafka</div>"]
 
     classDef input fill:#2563eb,stroke:#1d4ed8,color:#ffffff,stroke-width:2px,rx:8,ry:8
-    classDef exporter fill:#ea580c,stroke:#c2410c,color:#ffffff,stroke-width:2px,rx:8,ry:8
+    classDef filter fill:#ea580c,stroke:#c2410c,color:#ffffff,stroke-width:2px,rx:8,ry:8
     classDef engine fill:#7c3aed,stroke:#6d28d9,color:#ffffff,stroke-width:2px,rx:8,ry:8
     classDef output fill:#16a34a,stroke:#15803d,color:#ffffff,stroke-width:2px,rx:8,ry:8
 
     class A input
-    class B exporter
-    class C engine
-    class D exporter
-    class E output
+    class B filter
+    class C filter
+    class D output
+    class E engine
+    class F filter
 ```
 
 </div>
 
 ### Data Flow
 
-- 📂 **Receivers** - OTel Collector receives logs via `filelog`, `otlp`, or other receivers
-- 📤 **Syslog Exporter** - Sends events as RFC5424 syslog to Log10x via Unix socket
-- ⚡ **10x Engine** - Processes events (report metrics / receive / optimize encoding)
-- 🔌 **Forward Output** - Returns processed events via Forward protocol (Unix socket)
-- 📥 **FluentForward Receiver** - OTel Collector receives processed events
-- 📤 **Final Exporters** - Ships to Elasticsearch, Splunk, S3, etc.
+- 📂 **Receivers** — Your existing OTel receivers (`filelog`, `otlp`, `journald`, `kafka`, …) feed events into the `logs/to-tenx` pipeline.
+- 🧪 **`logs/to-tenx`** — Your enrichment processors (`k8sattributes`, `resource`, `attributes`, `transform`, `filter`, …) run here exactly once before the event is handed off to Log10x. The processors live on this pipeline only; the return-path pipeline never sees them.
+- 📤 **OTLP exporter** → Log10x — The Collector forwards the enriched event to the Log10x sidecar over OTLP/gRPC on TCP `:4317`. Resource attributes, scope info, log-record attributes, and the body all travel on the wire.
+- ⚡ **10x Engine** — The Receiver app applies rate/policy-based filtering and optionally compacts events for volume reduction.
+- 📥 **`logs/from-tenx`** — Processed events come back to the Collector on `:24225` via its OTLP/gRPC receiver. Keep this pipeline processor-free; the destination exporters consume events directly so enrichment never re-fires on the return path.
+- 📤 **Destinations** — Your OTel destination exporters (`elasticsearch`, `splunkhec`, `kafka`, `awss3`, …) consume the return pipeline and ship to the real destinations.
 
-### Component Details
+### What an event looks like on the way back
 
-| Component | Protocol | Description |
-|-----------|----------|-------------|
-| 📤 `syslog/tenx` | RFC5424 / Unix | Sends logs to Log10x for processing |
-| ⚡ 10x Engine | Internal | Report metrics, filter (receive), or encode (optimize) |
-| 📥 `fluentforward/tenx` | Forward / Unix | Receives processed logs back from Log10x |
-| 🔀 Separate Pipelines | N/A | `logs/to-tenx` and `logs/from-tenx` prevent loops |
+Every attribute that came in over OTLP — resource attributes, scope info, log-record attributes, body — round-trips back to the Collector. The `LogRecord.body` carries the message verbatim in its original `AnyValue` shape (so a `body.stringValue` is byte-for-byte unchanged); the resource-vs-log-attribute distinction is collapsed (everything comes back as a log-record attribute), but no data is lost. What changes between in and out depends on the Receiver app mode:
 
-### Loop Prevention
+| Mode | Difference vs the event the Collector sent in |
+|------|------------------------------------------------|
+| Receive (default) | None. Same record. |
+| Receive + `symbolMessageHashField <name>` | Same record + one new field named `<name>` carrying the symbol-pattern hash (a stable identifier for the message pattern — usable as a dedup key, metric dimension, or correlation ID). |
+| `receiverOptimize true` | The value of the field captured by `otelCollectorMessageField` (default `body`) is replaced with a compact encoded form. A separate `tenx-template` event is emitted with the template needed to decode it. All other fields stay verbatim. |
+| `receiverOptimize true` + `symbolMessageHashField <name>` | Both of the above. |
 
-OTel Collector's **separate pipelines** naturally prevent infinite loops:
-
-- `logs/to-tenx` - Original logs flow TO Log10x
-- `logs/from-tenx` - Processed logs flow FROM Log10x to final destinations
-
-Events in `logs/from-tenx` never feed back to `logs/to-tenx`.
+Log10x reads the log line text via the JSON field configured by `otelCollectorMessageField` (default `body`); the `tag` field stamped by the input (from `service.name`, falling back to `k8s.pod.name`, then to the literal `"otel"`) becomes the event's source. All other resource and log-record attributes (`k8s.pod.name`, `k8s.namespace.name`, `service.name`, …) come through as flat top-level fields on the record, available for message-pattern and rate filtering.
 
 ??? tenx-keyfiles "Key Files"
 
     | File | Purpose |
     |------|---------|
-    | [`conf/tenx-report-linux.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/otel-collector/conf/tenx-report-linux.yaml) | OTel Collector config for Reporter mode |
-    | [`conf/tenx-receive-linux.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/otel-collector/conf/tenx-receive-linux.yaml) | OTel Collector config for Receiver mode |
-    | [`conf/tenx-optimize-linux.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/otel-collector/conf/tenx-optimize-linux.yaml) | OTel Collector config for Optimizer mode |
-    | [`input/stream.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/otel-collector/input/stream.yaml) | 10x Unix socket input with syslog parsing |
-    | [`output/unix/stream.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/otel-collector/output/unix/stream.yaml) | 10x Forward protocol output configuration |
+    | [`input/stream.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/otel-collector/input/stream.yaml) | OTel Collector OTLP/gRPC input — flattens resource + scope + log attributes + body into a JSON record |
+    | [`output/stream.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/otel-collector/output/stream.yaml) | OTel Collector OTLP/gRPC output — sends processed events back to the Collector's `otlp` receiver |
+    | [`conf/tenx-sidecar.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/otel-collector/conf/tenx-sidecar.yaml) | Reference Collector config showing the two-pipeline split with no return-path processors |
 
 ## Quickstart
 
-**1. Set environment variables:**
+**1. Run Log10x:**
 
 ```bash
-export TENX_MODULES=/path/to/config/modules
-export TENX_CONFIG=/path/to/config/config
-export TENX_API_KEY=your-api-key
+tenx @run/input/forwarder/otel-collector @apps/receiver
 ```
 
-**2. Start Log10x first:**
+**2. Wire up your Collector config** — start from the sidecar recipe and add your real receivers + destination exporters. The `logs/to-tenx` pipeline carries everything from sources through enrichment to the `otlp/tenx` exporter; the `logs/from-tenx` pipeline carries the returning events directly to your destination exporters:
 
-```bash
-# Reporter (read-only analytics)
-tenx run @run/input/forwarder/otel-collector/report @apps/reporter
+```yaml title="otelcol.yaml"
+receivers:
+  filelog:
+    include: [/var/log/app.log]
 
-# Receiver (filter noisy logs)
-tenx run @run/input/forwarder/otel-collector/receive @apps/receiver
+  # Receive processed events back from Log10x over OTLP/gRPC
+  otlp/tenx:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:24225
 
-# Optimizer (Lossless Compact)
-tenx run @run/input/forwarder/otel-collector/optimize @apps/receiver receiverOptimize true
+processors:
+  batch: {}
+
+exporters:
+  # Hand off to the Log10x sidecar over OTLP/gRPC
+  otlp/tenx:
+    endpoint: 127.0.0.1:4317
+    tls:
+      insecure: true
+
+  debug:
+    verbosity: detailed
+
+service:
+  pipelines:
+    logs/to-tenx:
+      receivers: [filelog]
+      processors: [batch]
+      exporters: [otlp/tenx]
+    logs/from-tenx:
+      receivers: [otlp/tenx]
+      exporters: [debug]
 ```
 
-**3. Copy and customize OTel Collector config:**
-
-```bash
-cp $TENX_MODULES/pipelines/run/modules/input/forwarder/otel-collector/conf/tenx-receive-linux.yaml /etc/otelcol-contrib/
-```
-
-**4. Start OTel Collector:**
-
-```bash
-otelcol-contrib --config=/etc/otelcol-contrib/tenx-receive-linux.yaml
-```
-
-!!! note "Requirements"
-    - **OTel Collector Contrib v0.143.0+** - Required for syslog exporter Unix socket support (`network: unix`)
-    - Components needed: `syslogexporter` and `fluentforwardreceiver`
-
-!!! warning "Message Attribute"
-    The syslog exporter uses the `message` **attribute** for the MSG field, NOT the log body.
-    Ensure your logs have a `message` attribute set, or use a transform processor to copy the body to a message attribute before the syslog exporter.
-
+For Splunk integration see the [10x for Splunk](https://doc.log10x.com/apps/receiver/splunk/) documentation. For Kubernetes deployment via the official OpenTelemetry Collector Helm chart see the [Helm sidecar overlay](https://doc.log10x.com/apps/receiver/deploy/#otel-collector).

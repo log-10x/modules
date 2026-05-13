@@ -1,41 +1,20 @@
 ---
-icon: simple/opentelemetry
+icon: material/export
+hidden: true
 ---
 
-Configure output encoding options for writing processed TenXObjects back to OpenTelemetry Collector via Forward protocol.
+Sends processed events back to the OpenTelemetry Collector over [OTLP/gRPC](https://opentelemetry.io/docs/specs/otlp/) — the Collector consumes them on its `otlp` receiver and forwards to the destination exporters on the return pipeline.
 
-## Overview
+Each rendered event is parsed back into a JSON envelope and emitted as an OTLP `LogRecord`: the `body` field is lifted into `LogRecord.body` (top-level string → `AnyValue.stringValue`; nested OTLP `AnyValue` shapes like `kvlistValue` are decoded back losslessly), and every other top-level field becomes a log-record attribute. The synthetic envelope `tag` is dropped on output so it does not surface on the destination side. Resource attributes, log-record attributes, and the body all round-trip back as distinct OTLP fields (the resource-vs-log-attribute distinction is collapsed; everything comes back as log-record attributes). The Receiver app's mode determines whether the message field stays verbatim or is replaced with a compacted encoded form, and whether the symbol-pattern hash field is added.
 
-This module configures the Forward protocol output for returning processed events to OTel Collector. Events are written to a Unix domain socket where OTel Collector's `fluentforward` receiver listens.
+Defaults to TCP `127.0.0.1:24225` so it pairs with the [input](../input/) listening on `:4317`. Override the destination with `otelCollectorOutputHost` / `otelCollectorOutputPort`.
 
-## Output Modes
+The matching Collector receiver config:
 
-| Mode | Setting | Output |
-|------|---------|--------|
-| **Plain-text** | `encodeObjects: false` | Original log text (`fullText` field) |
-| **Encoded** | `encodeObjects: true` | compact format via `encode()` function |
-
-## Architecture
-
-```mermaid
-graph LR
-    A["Log10x Pipeline"] -->|Forward| B["Unix Socket"]
-    B --> C["OTel Collector"]
-    C -->|fluentforward| D["Final Exporters"]
-
-    classDef engine fill:#7c3aed,stroke:#6d28d9,color:#ffffff,stroke-width:2px
-    classDef socket fill:#0891b2,stroke:#0e7490,color:#ffffff,stroke-width:2px
-    classDef otel fill:#f97316,stroke:#ea580c,color:#ffffff,stroke-width:2px
-
-    class A engine
-    class B socket
-    class C,D otel
+```yaml
+receivers:
+  otlp/tenx:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:24225
 ```
-
-## Configuration
-
-| Option | Default | Description |
-|--------|---------|-------------|
-| `encodeObjects` | `false` | Enable lossless compact for optimizer mode |
-| `otelCollectorOutputForwardAddress` | `/tmp/tenx-otel-out.sock` | Unix socket path for output |
-

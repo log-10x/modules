@@ -1,41 +1,30 @@
 ---
-icon: simple/opentelemetry
+icon: material/import
+hidden: true
 ---
 
-Configure the Unix socket input stream for receiving syslog events from OpenTelemetry Collector.
+Reads events from the OpenTelemetry Collector over [OTLP/gRPC](https://opentelemetry.io/docs/specs/otlp/) on TCP — every OS.
 
-## Overview
+Each log record inside an incoming `ExportLogsServiceRequest` is emitted as a single JSON line carrying:
 
-This module configures a Unix domain socket server that receives RFC5424 syslog messages from OpenTelemetry Collector's `syslog` exporter. The syslog MSG field is extracted and passed to the Log10x processing pipeline.
+- The OTLP **`body`** — flattened to a top-level string field for plain-text bodies (OTLP `AnyValue.stringValue`), or kept in its `AnyValue` shape (e.g. `{"kvlistValue":…}`) for non-string bodies. Flattening the common case lets the engine's outer-text accessor preserve the surrounding envelope intact in optimize mode, so `encode()` only swaps the body value and leaves every other attribute untouched.
+- All **log-record attributes** flat at the top level, with keys preserved as they came in (`log.file.name`, `log.iostream`, …).
+- All **resource attributes** flat at the top level, also with keys preserved (`service.name`, `k8s.pod.name`, `k8s.namespace.name`, `k8s.container.name`, …).
+- A synthetic **`tag`** field — set to `service.name` if present, otherwise `k8s.pod.name`, otherwise the literal `otel` — used as the wire tag on the outgoing OTLP output back to the Collector and as the event's source inside Log10x.
 
-## Requirements
+The input pulls out two things via the engine's JSON extractor:
 
-| Requirement | Details |
-|-------------|---------|
-| OTel Collector | **Contrib v0.143.0+** (for syslog exporter Unix socket support) |
-| Protocol | RFC5424 syslog over Unix domain socket |
-| Default Socket | `/tmp/tenx-otel-in.sock` |
+- The actual log line — captured by `captureFirst` from the path configured via `otelCollectorMessageField` (default `body`, matching the flattened shape above). Becomes the event's `text`, the input to every message-content enrichment downstream.
+- The synthetic **`tag`** — captured by `sourcePattern` as the event's `source`. Used for rate-based grouping and as the outgoing OTLP tag when events are sent back to the Collector.
 
-## Architecture
+Every other field — every attribute that came in over OTLP — stays on the event's `fullText` and round-trips back to the Collector as a log-record attribute on the returning side.
 
-```mermaid
-graph LR
-    A["OTel Collector"] -->|syslog/unix| B["Unix Socket"]
-    B -->|RFC5424| C["Log10x Input"]
-    C -->|MSG field| D["Processing Pipeline"]
+The matching Collector exporter config:
 
-    classDef otel fill:#f97316,stroke:#ea580c,color:#ffffff,stroke-width:2px
-    classDef socket fill:#0891b2,stroke:#0e7490,color:#ffffff,stroke-width:2px
-    classDef engine fill:#7c3aed,stroke:#6d28d9,color:#ffffff,stroke-width:2px
-
-    class A otel
-    class B socket
-    class C,D engine
+```yaml
+exporters:
+  otlp/tenx:
+    endpoint: 127.0.0.1:4317
+    tls:
+      insecure: true
 ```
-
-## Message Handling
-
-!!! important "Syslog MSG Field"
-    The syslog exporter uses the `message` **attribute** for the MSG field, NOT the log body.
-    Ensure your logs have a `message` attribute set before the syslog exporter.
-

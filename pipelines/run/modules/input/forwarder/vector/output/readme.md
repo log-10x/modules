@@ -1,6 +1,6 @@
-## 1️⃣0️⃣❎ Vector Forward output module
+## 1️⃣0️⃣❎ Vector Fluent Forward output module
 
-Configure Forward protocol output for returning processed events to Vector.
+Send processed events back to Vector over the Fluent Forward protocol.
 
-To learn more see the Vector Forward output [module documentation](https://doc.log10x.com/run/input/forwarder/vector/output "Configure Forward protocol output for returning processed events to Vector").
+To learn more see the Vector Fluent Forward output [module documentation](https://doc.log10x.com/run/input/forwarder/vector/output "Send processed events back to Vector over the Fluent Forward protocol").
 

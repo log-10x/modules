@@ -82,7 +82,7 @@ output:
     # 'enabled' is false by default. 'outputSocketWriteTemplates' must be set to
     # true for templates to be encoded.
     # `receiverReadOnly=true` short-circuits so no templates are emitted in read-only mode.
-    enabled: $=yield !TenXEnv.get("receiverReadOnly", false) && TenXEnv.get("outputSocketWriteTemplates", false)
+    enabled: $=yield !TenXEnv.get("receiverReadOnly", false) && TenXEnv.get("outputSocketWriteTemplates", true)
 
     # 'filter' uses the 'isNewTemplate' 10x JavaScript function to skip templates
     #  loaded via the https://doc.log10x.com/run/template/#templatefiles or previously written to this output
@@ -92,3 +92,4 @@ output:
     fields:
       - templateHash
       - template
+      - tag="tenx-template" # constant marker identifying TenXTemplate events on the wire

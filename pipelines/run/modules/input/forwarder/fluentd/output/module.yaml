@@ -1,17 +1,49 @@
 #
-# 🔟❎ 'run' Fluentd output module
+# 🔟❎ 'run' Fluentd Forward output module
 
 module:
 
   name: fluentdOutput
 
-  title: Fluentd output
+  title: Fluentd Forward output
 
-  description: encode TenXObjects to Fluentd
-     
-  # 'doc' specifies the markdown doc content, only required when generating docs.
-  doc: +include $=TenXEnv.get("docGenerate") ? "run/modules/input/forwarder/fluentd/output/doc.md":""
+  description: send processed events back to Fluentd over the Fluent Forward protocol
 
-  # 'allowMultiple' is disabled for this module. Pipeline command line arguments and configuration files
-  #  can specify a single value at max for each option defined below.
+  doc: '+include $=TenXEnv.get("docGenerate") ? "run/modules/input/forwarder/fluentd/output/doc.md":""'
+
   allowMultiple: false
+
+  options:
+
+    - names:
+        - fluentdOutputHost
+      description: TCP host of the Fluentd in_forward source receiving processed events
+      type: String
+      required: false
+      defValue: 127.0.0.1
+      doc: |
+        Hostname or IP where the Fluentd `in_forward` source is listening for
+        processed events from Log10x. Pairs with `fluentdOutputPort`.
+
+    - names:
+        - fluentdOutputPort
+      description: TCP port of the Fluentd in_forward source receiving processed events
+      type: String
+      required: false
+      defValue: 24225
+      doc: |
+        TCP port where the Fluentd `in_forward` source is listening for
+        processed events from Log10x. MUST differ from the port Log10x's own
+        Forward input listens on (default `24224`) or the two would collide
+        on the same socket.
+
+    - names:
+        - fluentdOutputPath
+      description: Unix domain socket path of the Fluentd in_forward source (Linux/macOS)
+      type: String
+      required: false
+      defValue:
+      doc: |
+        Optional Unix domain socket path for the Fluentd `in_forward` source.
+        When set, takes precedence over `fluentdOutputHost` / `fluentdOutputPort`.
+        Linux/macOS only — ignored on Windows.

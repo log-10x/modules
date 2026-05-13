@@ -2,17 +2,21 @@
 
 import {TenXInput, TenXEnv, TenXConsole} from '@tenx/tenx'
 
-export class LogstashInput extends TenXInput {
+export class LogstashSocketInput extends TenXInput {
 
     // @https://doc.log10x.com/api/js/#TenXEngine.shouldLoad
     static shouldLoad(config) {
        return !TenXEnv.get("quiet");
     }
 
-    constructor() { 
-        
+    constructor() {
+
         if (this.inputName == "logstash") {
-            TenXConsole.log("📥 Reading events from Logstash via stdin");
+            if (TenXEnv.get("logstashInputPath")) {
+                TenXConsole.log("📥 Reading events from Logstash unix output on unix://" + TenXEnv.get("logstashInputPath"));
+            } else {
+                TenXConsole.log("📥 Reading events from Logstash tcp output on tcp://0.0.0.0:" + TenXEnv.get("logstashInputPort"));
+            }
         }
     }
 }

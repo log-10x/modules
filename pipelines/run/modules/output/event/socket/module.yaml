@@ -41,8 +41,9 @@ module:
     - names:
         - outputSocketPort
       description: endpoint port number
-      type: number
-      required: true
+      type: string
+      required: false
+      defValue: 9000
       doc: |
         specifies the port number  (e.g., 9000) of the endpoint to transmit data to
 

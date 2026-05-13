@@ -1,0 +1,44 @@
+# 🔟❎ 'run' Logstash JSON socket output stream
+#
+# Sends processed events back to Logstash as newline-delimited JSON over a
+# TCP socket. Logstash consumes them via the `tcp` input plugin with
+# `codec => json_lines`.
+#
+# Defaults to TCP `127.0.0.1:5045` so it pairs with the Logstash input
+# listening on `:5044`. Override with:
+#
+#   logstashOutputHost: 0.0.0.0
+#   logstashOutputPort: 9999
+#
+# The output mode is driven by `outputEncodeField` and `outputWriteTemplates`
+# (see run/modules/input/forwarder/module.yaml):
+#
+#   receive  (default)               → emit the verbatim event (`fullText`)
+#   compact  (receiverOptimize=true) → emit losslessly compacted events +
+#                                       the TenXTemplates needed to decode them
+
+tenx: run
+
+include:
+  - run/modules/output/event/socket
+
+outputSocket:
+
+  - protocol: TCP
+    host: $=yield TenXEnv.get("logstashOutputHost", "127.0.0.1")
+    port: $=yield TenXEnv.get("logstashOutputPort", "5045")
+
+    fields:
+      # Carries the whole Logstash record in receive mode and an encoded form
+      # in compact mode. Picked automatically based on the Receiver app's
+      # mode (`receiverOptimize`, `compactReceiverLookupFile`,
+      # `symbolMessageHashField`).
+      - $?outputEncodeField=fullText
+
+    # `delimited` with a single `fullText` field emits the raw JSON record
+    # value as the line — exactly what Logstash's `codec => json_lines`
+    # expects on its `tcp` input.
+    encodeType: $?logstashOutputEncodeType=delimited
+    encodeDelimiter: ","
+
+    writeTemplates: $?outputWriteTemplates=false

@@ -1,6 +1,6 @@
-## 1️⃣0️⃣❎ OpenTelemetry Collector Forward output module
+## 1️⃣0️⃣❎ OpenTelemetry Collector OTLP/gRPC output module
 
-Configure Forward protocol output for returning processed events to OpenTelemetry Collector.
+Send processed events back to the OpenTelemetry Collector over OTLP/gRPC.
 
-To learn more see the OpenTelemetry Collector Forward output [module documentation](https://doc.log10x.com/run/input/forwarder/otel-collector/output "Configure Forward protocol output for returning processed events to OpenTelemetry Collector").
+To learn more see the OpenTelemetry Collector OTLP/gRPC output [module documentation](https://doc.log10x.com/run/input/forwarder/otel-collector/output "Send processed events back to the OpenTelemetry Collector over OTLP/gRPC").
 

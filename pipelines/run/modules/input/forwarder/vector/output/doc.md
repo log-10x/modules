@@ -1,5 +1,5 @@
 ---
-icon: simple/vector
+icon: material/export
 hidden: true
 ---
 

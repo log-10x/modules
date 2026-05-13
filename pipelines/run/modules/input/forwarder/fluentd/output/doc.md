@@ -1,5 +1,5 @@
 ---
-icon: simple/fluentd
+icon: material/export
 hidden: true
 ---
 

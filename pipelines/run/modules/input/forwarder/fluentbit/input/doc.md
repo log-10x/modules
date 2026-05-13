@@ -1,5 +1,5 @@
 ---
-icon: simple/fluentbit
+icon: material/import
 hidden: true
 ---
 

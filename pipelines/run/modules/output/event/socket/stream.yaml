@@ -92,3 +92,4 @@ output:
     fields:
       - templateHash
       - template
+      - tag="tenx-template" # constant marker identifying TenXTemplate events on the wire

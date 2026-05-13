@@ -1,6 +1,6 @@
-## 1️⃣0️⃣❎ Logstash input module
+## 1️⃣0️⃣❎ Logstash module
 
-Receive and optimize events collected by Logstash forwarders.
+Receive and optimize events collected by Logstash via newline-delimited JSON.
 
-To learn more see the Logstash input [module documentation](https://doc.log10x.com/run/input/forwarder/logstash "Receive and optimize events collected by Logstash forwarders").
+To learn more see the Logstash [module documentation](https://doc.log10x.com/run/input/forwarder/logstash "Receive and optimize events collected by Logstash via newline-delimited JSON").
 

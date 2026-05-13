@@ -1,5 +1,5 @@
 ---
-icon: simple/opentelemetry
+icon: material/import
 hidden: true
 ---
 

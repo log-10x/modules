@@ -51,7 +51,7 @@ The record structure of the original Logstash event is preserved end-to-end — 
 | `receiverOptimize true` | The value of the message field (`message` by default, or whatever `logstashMessageField` is set to) is replaced with a compact encoded form. A separate event with `tag` set to `tenx-template` is emitted with the template needed to decode it. All other fields stay verbatim. |
 | `receiverOptimize true` + `symbolMessageHashField <name>` | Both of the above. |
 
-The `tag` field that the ingest pipeline stamps becomes the event's `source` inside Log10x — used for rate-based grouping and emitted back to Logstash as a top-level field on the return path. Internally, Log10x's Logstash input module reads the message text from the field named by `logstashMessageField` (default `message`); when the Receiver app is configured with `k8sExtractorName: fluentK8s`, the `kubernetes.*` sub-object is also materialized as enrichment fields for use by message-pattern and rate filtering.
+The `tag` field that the ingest pipeline stamps becomes the event's `source` inside Log10x — used for rate-based grouping and preserved on each event as it returns to Logstash. The message text is read from the `message` field by default (override with `logstashMessageField`). When the Receiver app is configured with `k8sExtractorName: fluentK8s`, the `kubernetes.*` sub-object is also lifted into pod/container metadata fields used by message-pattern and rate filtering.
 
 ??? tenx-keyfiles "Key Files"
 

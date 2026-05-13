@@ -2,16 +2,17 @@
 # Log10x Logstash sidecar — pipelines.yml driver
 # ─────────────────────────────────────────────────────────────────────────────
 #
-# Logstash isolates filter chains by running them in separate pipelines. The
-# sidecar pattern uses two pipelines: `ingest` (sources + enrichment filters
-# + tcp output to Log10x) and `destinations` (tcp input from Log10x + real
-# destination outputs). Filters under `ingest` never run on returning events
-# because Logstash's pipeline boundary is the structural bypass — equivalent
-# to Fluentd's `@INGEST` / `@OUTPUT` label split.
+# Logstash runs two pipelines side-by-side:
 #
-# Reference the per-pipeline `.conf` files from this directory. In your own
-# deployment, point `path.config` at copies you've customized for your
-# environment.
+#   • `ingest`       — your sources + filters, hands off to the Log10x sidecar
+#   • `destinations` — receives processed events back from Log10x and routes
+#                      them to your real destinations
+#
+# Filters under `ingest` only see events on the way in. The `destinations`
+# pipeline is filter-free, so each event is enriched exactly once.
+#
+# Point `path.config` at copies of the per-pipeline `.conf` files you've
+# customized for your environment.
 
 - pipeline.id: ingest
   path.config: "${TENX_MODULES}/pipelines/run/modules/input/forwarder/logstash/conf/tenx-ingest.conf"

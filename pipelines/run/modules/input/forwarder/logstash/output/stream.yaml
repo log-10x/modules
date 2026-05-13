@@ -22,12 +22,6 @@ tenx: run
 include:
   - run/modules/output/event/socket
 
-# The socket output's template branch defaults `outputSocketWriteTemplates`
-# to false (unlike the Forward output, which defaults true). Surface the
-# Receiver app's `outputWriteTemplates` decision through to the socket
-# module's option so the template branch activates in compact mode.
-outputSocketWriteTemplates: $=yield TenXEnv.get("outputWriteTemplates", "false")
-
 outputSocket:
 
   - protocol: TCP

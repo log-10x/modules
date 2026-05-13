@@ -91,7 +91,7 @@ module:
         controls whether to write template values of TenXObjects passed to this output.
         The output will only emit TenXTemplates that the pipeline did not load at startup via the [templateFile](https://doc.log10x.com/run/template/#templatefiles) argument,
         and will only emit an TenXTemplate once based on its [templateHash](https://doc.log10x.com/api/js/#TenXBaseObject+templateHash) value.
-      defValue: false
+      defValue: true
 
     - names:
         - outputSocketEncodeType

@@ -1,15 +1,16 @@
-# 🔟❎ 'run' OpenTelemetry Collector OTLP/gRPC input stream
+# 🔟❎ 'run' OpenTelemetry Collector input + output streams
 #
-# Listens for OTLP/gRPC log records from the OpenTelemetry Collector's `otlp`
-# exporter on TCP `:4317` by default. Each `ExportLogsServiceRequest` is
-# flattened so that resource attributes, scope attributes, log-record
-# attributes, and the body all become top-level fields on the JSON record
-# that the engine sees as fullText.
+# Listens for log records via OTLP/gRPC (paired with the Collector's
+# `otlp` exporter) and sends processed records back via OTLP/gRPC
+# (paired with the Collector's `otlp` receiver).
 
 tenx: run
 
 runtimeAttributes:
   - fwd_input:otel-collector
+
+include:
+  - run/modules/output/event/otlp
 
 # ============================== Extractor ====================================
 
@@ -42,3 +43,17 @@ input:
     backpressure:
       intervalBytesLimit: $=parseBytes("2MB")
       intervalBytesDuration: $=parseDuration("1s")
+
+# ============================== Output =======================================
+
+outputOtlp:
+
+  - host: $=yield TenXEnv.get("otelCollectorOutputHost", "127.0.0.1")
+    port: $=yield TenXEnv.get("otelCollectorOutputPort", "24225")
+
+    fields:
+      - $?outputEncodeField=fullText
+
+    encodeType: $?otelCollectorOutputEncodeType=delimited
+
+    writeTemplates: $?outputWriteTemplates=false

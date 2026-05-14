@@ -1,28 +1,17 @@
-# 🔟❎ 'run' Logstash JSON socket input stream
+# 🔟❎ 'run' Logstash input + output streams
 #
-# Listens for events from Logstash's `tcp` output (with `codec => json_lines`)
-# on TCP `:5044` by default — set `logstashInputPath` to use a Unix domain
-# socket on Linux/macOS instead, paired with Logstash's `unix` output plugin.
-# Each event arrives as a newline-delimited JSON record and is mapped to a
-# TenXObject by the `logstash` extractor below:
-#
-#   • The message text comes from the `message` field (or whatever
-#     `logstashMessageField` is set to) and becomes the event's `text` — the
-#     input to all downstream message-content enrichments.
-#
-#   • The tag stamped by Logstash's ingest pipeline (default field name
-#     `tag`) becomes the event's `source`, used for rate-based grouping and
-#     as the outgoing record tag when events are sent back to Logstash.
-#
-#   • The full record is preserved as `fullText` for verbatim downstream use.
-#
-# Logstash has no Fluent Forward sink, but its `tcp` output with `json_lines`
-# is a natural NDJSON producer — same wire shape Vector's `socket` sink uses.
+# Listens for newline-delimited JSON over a TCP socket (paired with
+# Logstash's `tcp` output + `json_lines` codec) and sends processed
+# events back over a separate TCP socket (paired with Logstash's
+# `tcp` input + `json_lines` codec).
 
 tenx: run
 
 runtimeAttributes:
   - fwd_input:logstash
+
+include:
+  - run/modules/output/event/socket
 
 # ============================== Extractor ====================================
 
@@ -75,3 +64,26 @@ input:
     backpressure:
       intervalBytesLimit: $=parseBytes("2MB")
       intervalBytesDuration: $=parseDuration("1s")
+
+# ============================== Output =======================================
+
+outputSocket:
+
+  - protocol: TCP
+    host: $=yield TenXEnv.get("logstashOutputHost", "127.0.0.1")
+    port: $=yield TenXEnv.get("logstashOutputPort", "5045")
+
+    fields:
+      # Carries the whole Logstash record in receive mode and an encoded form
+      # in compact mode. Picked automatically based on the Receiver app's
+      # mode (`receiverOptimize`, `compactReceiverLookupFile`,
+      # `symbolMessageHashField`).
+      - $?outputEncodeField=fullText
+
+    # `delimited` with a single `fullText` field emits the raw JSON record
+    # value as the line — exactly what Logstash's `codec => json_lines`
+    # expects on its `tcp` input.
+    encodeType: $?logstashOutputEncodeType=delimited
+    encodeDelimiter: ","
+
+    writeTemplates: $?outputWriteTemplates=false

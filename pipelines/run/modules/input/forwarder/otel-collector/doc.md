@@ -60,8 +60,7 @@ Log10x reads the log line text via the JSON field configured by `otelCollectorMe
 
     | File | Purpose |
     |------|---------|
-    | [`input/stream.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/otel-collector/input/stream.yaml) | OTel Collector OTLP/gRPC input — flattens resource + scope + log attributes + body into a JSON record |
-    | [`output/stream.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/otel-collector/output/stream.yaml) | OTel Collector OTLP/gRPC output — sends processed events back to the Collector's `otlp` receiver |
+    | [`stream.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/otel-collector/stream.yaml) | OTel Collector OTLP/gRPC input + output stream definitions |
     | [`conf/tenx-sidecar.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/otel-collector/conf/tenx-sidecar.yaml) | Reference Collector config showing the two-pipeline split with no return-path processors |
 
 ## Quickstart

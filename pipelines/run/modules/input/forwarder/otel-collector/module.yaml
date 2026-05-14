@@ -1,11 +1,9 @@
 #
-# 🔟❎ 'run' OpenTelemetry Collector input module
+# 🔟❎ 'run' OpenTelemetry Collector module
 #
-# Sidecar-only integration. Log10x runs as a peer process to the OpenTelemetry
-# Collector; the Collector sends events to Log10x via its native `otlp`
-# exporter (OTLP/gRPC) and receives processed events back via its `otlp`
-# receiver. Both ports use core OTLP/gRPC, so the core `otelcol` distribution
-# is sufficient (no `otelcol-contrib` build required).
+# OpenTelemetry Collector integration over OTLP/gRPC in both
+# directions. Declares the input + output options consumed by the
+# paired streams.
 
 module:
 
@@ -15,7 +13,8 @@ module:
 
   description: receive and optimize events collected by the OpenTelemetry Collector via OTLP/gRPC (both directions)
 
-  moduleSort: [otelCollectorInput, otelCollectorOutput]
+  # 'configFolder' specifies a folder containing default configuration files for the settings defined by this unit/module
+  configFolder: run/input/forwarder/otel-collector
 
   doc: +include $=TenXEnv.get("docGenerate") ? "run/modules/input/forwarder/otel-collector/doc.md":""
 
@@ -24,22 +23,62 @@ module:
   options:
 
     - names:
-      - otelCollectorOutputFields
-      description: list of TenXObject field names to include alongside the main event in output
-      type: list
+        - otelCollectorInputPort
+      description: TCP port to listen on for OTLP/gRPC events from the OpenTelemetry Collector
+      type: String
       required: false
-      defValue: []
+      category: input
+      defValue: 4317
       doc: |
-        specifies TenXObject field names to emit alongside the main event text
-        when writing back to the OpenTelemetry Collector. When empty (default),
-        only the main event field is written. Example fields: level, group,
-        symbolMessage.
+        TCP port where Log10x listens for OTLP/gRPC log records from the
+        OpenTelemetry Collector's `otlp` exporter. Match this against the
+        `endpoint` of your Collector exporter.
+
+    - names:
+        - otelCollectorMessageField
+      description: dotted JSON path to the field carrying the log line text
+      type: String
+      required: false
+      category: input
+      defValue: body
+      doc: |
+        Top-level JSON field name on the input record that carries the actual
+        log line text. The default (`body`) matches the flattened shape the
+        input emits for plain-text OTLP bodies. Set to a different field name
+        if your Collector pipeline copies the log line into a different
+        attribute before exporting (e.g. an `<attr_key>` set via a transform).
+
+    - names:
+        - otelCollectorOutputHost
+      description: TCP host of the OpenTelemetry Collector's OTLP/gRPC receiver
+      type: String
+      required: false
+      category: output
+      defValue: 127.0.0.1
+      doc: |
+        Hostname or IP where the OpenTelemetry Collector's `otlp` receiver is
+        listening for processed events from Log10x. Pairs with
+        `otelCollectorOutputPort`.
+
+    - names:
+        - otelCollectorOutputPort
+      description: TCP port of the OpenTelemetry Collector's OTLP/gRPC receiver
+      type: String
+      required: false
+      category: output
+      defValue: 24225
+      doc: |
+        TCP port where the OpenTelemetry Collector's `otlp` receiver is
+        listening for processed events from Log10x. MUST differ from the port
+        Log10x's own OTLP/gRPC input listens on (default `4317`) or the two
+        would collide on the same listener.
 
     - names:
       - otelCollectorOutputEncodeType
       description: "output format when outputFields are set. Possible values: [json, delimited]"
       type: string
       required: false
+      category: output
       defValue: delimited
       doc: |
         specifies how the combined output (main event field plus outputFields)

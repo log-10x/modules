@@ -1,30 +1,17 @@
-# 🔟❎ 'run' Vector socket input stream
+# 🔟❎ 'run' Vector input + output streams
 #
-# Listens for events from Vector's `socket` sink on TCP `:9000` by default
-# (set `vectorInputPath` to use a Unix domain socket on Linux/macOS instead).
-# Each event arrives as a newline-delimited JSON record produced by Vector's
-# `encoding.codec: json` + `framing.method: newline_delimited` and is mapped
-# to a TenXObject by the `vector` extractor below:
-#
-#   • The message text comes from the `message` field (or whatever
-#     `vectorMessageField` is set to) and becomes the event's `text` — the
-#     input to all downstream message-content enrichments.
-#
-#   • The tag stamped by Vector's ingest transform (default field name
-#     `tag`, configurable via `vectorTagField`) becomes the event's
-#     `source`, used for rate-based grouping and as the outgoing Fluent
-#     Forward tag when events are sent back to Vector.
-#
-#   • The full record is preserved as `fullText` for verbatim downstream use.
-#
-# Unlike Fluentd, Vector has no `fluent`/`forward` sink — the ingest leg
-# uses Vector's `socket` sink with NDJSON. The egress leg back to Vector
-# does use Fluent Forward (Vector's `fluent` source consumes it).
+# Listens for newline-delimited JSON over a TCP socket (paired with
+# Vector's `socket` sink in `newline_delimited` mode) and sends
+# processed events back over the Fluent Forward protocol (paired
+# with Vector's `fluent` source).
 
 tenx: run
 
 runtimeAttributes:
   - fwd_input:vector
+
+include:
+  - run/modules/output/event/forward
 
 # ============================== Extractor ====================================
 
@@ -77,3 +64,25 @@ input:
     backpressure:
       intervalBytesLimit: $=parseBytes("2MB")
       intervalBytesDuration: $=parseDuration("1s")
+
+# ============================== Output =======================================
+
+outputForward:
+
+  - hostAddress: $=yield TenXEnv.get("vectorOutputHost", "127.0.0.1")
+    hostPort: $=yield TenXEnv.get("vectorOutputPort", "9001")
+    address: $=yield TenXEnv.get("vectorOutputPath")
+
+    fields:
+      # Carries the whole Vector record in receive mode and an encoded
+      # form in compact mode. Picked automatically based on the Receiver
+      # app's mode (`receiverOptimize`, `compactReceiverLookupFile`,
+      # `symbolMessageHashField`).
+      - $?outputEncodeField=fullText
+
+    # Emit each top-level field of the rendered record as its own field on
+    # the outgoing Forward event — so the record structure of the original
+    # Vector event survives the round trip.
+    encodeType: $?vectorOutputEncodeType=delimited
+
+    writeTemplates: $?outputWriteTemplates=false

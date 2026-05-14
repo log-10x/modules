@@ -1,11 +1,8 @@
 #
-# 🔟❎ 'run' Vector input module
+# 🔟❎ 'run' Vector module
 #
-# Sidecar-only integration. Log10x runs as a peer process to Vector; Vector
-# sends events to Log10x over its native `socket` sink (newline-delimited
-# JSON) and receives processed events back via its native `fluent` source
-# (Fluent Forward protocol). The two protocols are asymmetric because
-# Vector has no `fluent`/`forward` sink — only a `fluent` source.
+# Vector integration — NDJSON socket input + Fluent Forward output.
+# Declares the input + output options consumed by the paired streams.
 
 module:
 
@@ -15,31 +12,94 @@ module:
 
   description: receive and optimize events collected by Vector via the socket sink and fluent source
 
-  moduleSort: [vectorInput, vectorOutput]
+  # 'configFolder' specifies a folder containing default configuration files for the settings defined by this unit/module
+  configFolder: run/input/forwarder/vector
 
   doc: +include $=TenXEnv.get("docGenerate") ? "run/modules/input/forwarder/vector/doc.md":""
 
   allowMultiple: false
 
-  # Shared output-formatting options used by the Vector Forward output.
   options:
 
     - names:
-      - vectorOutputFields
-      description: list of TenXObject field names to include alongside the main event in output
-      type: list
+        - vectorInputPort
+      description: TCP port to listen on for events from Vector's socket sink
+      type: String
       required: false
-      defValue: []
+      category: input
+      defValue: 9000
       doc: |
-        specifies TenXObject field names to emit alongside the main event text
-        when writing back to Vector. When empty (default), only the main event
-        field is written. Example fields: level, group, symbolMessage.
+        TCP port where Log10x listens for events sent by Vector's `socket`
+        sink (`mode: tcp`, `encoding.codec: json`, `framing.method: newline_delimited`).
+        Match this against the `address` in your Vector sink.
+
+    - names:
+        - vectorInputPath
+      description: Unix domain socket path to listen on (Linux/macOS)
+      type: String
+      required: false
+      category: input
+      defValue:
+      doc: |
+        When set, Log10x listens on a Unix domain socket instead of TCP — useful
+        on Linux/macOS to avoid TCP overhead. Configure Vector's `socket` sink
+        with `mode: unix` and a matching `path`. Ignored on Windows.
+
+    - names:
+        - vectorMessageField
+      description: name of the JSON field carrying the original log line
+      type: String
+      required: false
+      category: input
+      defValue: message
+      doc: |
+        Name of the field in each Vector record that contains the actual log
+        message text. The default (`message`) matches Vector's convention for
+        the `file`, `kubernetes_logs`, `journald`, and `socket` sources. Set
+        to e.g. `log` if your sources emit the log line under a different key.
+
+    - names:
+        - vectorOutputHost
+      description: TCP host of the Vector fluent source receiving processed events
+      type: String
+      required: false
+      category: output
+      defValue: 127.0.0.1
+      doc: |
+        Hostname or IP where Vector's `fluent` source is listening for
+        processed events from Log10x. Pairs with `vectorOutputPort`.
+
+    - names:
+        - vectorOutputPort
+      description: TCP port of the Vector fluent source receiving processed events
+      type: String
+      required: false
+      category: output
+      defValue: 9001
+      doc: |
+        TCP port where Vector's `fluent` source is listening for processed
+        events from Log10x. MUST differ from the port Log10x's own socket
+        input listens on (default `9000`) or the two would collide on the
+        same listener.
+
+    - names:
+        - vectorOutputPath
+      description: Unix domain socket path of the Vector fluent source (Linux/macOS)
+      type: String
+      required: false
+      category: output
+      defValue:
+      doc: |
+        Optional Unix domain socket path for Vector's `fluent` source.
+        When set, takes precedence over `vectorOutputHost` / `vectorOutputPort`.
+        Linux/macOS only — ignored on Windows.
 
     - names:
       - vectorOutputEncodeType
       description: "output format when outputFields are set. Possible values: [json, delimited]"
       type: string
       required: false
+      category: output
       defValue: delimited
       doc: |
         specifies how the combined output (main event field plus outputFields)

@@ -1,25 +1,16 @@
-# 🔟❎ 'run' Fluent Bit Forward input stream
+# 🔟❎ 'run' Fluent Bit input + output streams
 #
-# Listens for events from Fluent Bit's `forward` output on TCP `:24224` by
-# default (set `fluentbitInputPath` to use a Unix domain socket on Linux/macOS
-# instead). Each event arrives as a JSON record and is mapped to a TenXObject
-# by the `fluentbit` extractor below:
-#
-#   • The message text comes from the `log` field (or whatever
-#     `fluentbitMessageField` is set to) and becomes the event's `text` — the
-#     input to all downstream message-content enrichments.
-#
-#   • The Fluent Bit tag carried by the Forward protocol becomes the event's
-#     `source`, used for rate-based grouping and as the outgoing tag when
-#     events are sent back to Fluent Bit (the egress `forward` input on the
-#     Fluent Bit side prepends `tenx.` to it, providing the bypass).
-#
-#   • The full record is preserved as `fullText` for verbatim downstream use.
+# Listens for events from Fluent Bit's `forward` output plugin and
+# sends processed events back to a paired `forward` input — both legs
+# over the Fluent Forward protocol (TCP or Unix domain socket).
 
 tenx: run
 
 runtimeAttributes:
   - fwd_input:fluentbit
+
+include:
+  - run/modules/output/event/forward
 
 # ============================== Extractor ====================================
 
@@ -68,3 +59,25 @@ input:
     backpressure:
       intervalBytesLimit: $=parseBytes("2MB")
       intervalBytesDuration: $=parseDuration("1s")
+
+# ============================== Output =======================================
+
+outputForward:
+
+  - hostAddress: $=yield TenXEnv.get("fluentbitOutputHost", "127.0.0.1")
+    hostPort: $=yield TenXEnv.get("fluentbitOutputPort", "24225")
+    address: $=yield TenXEnv.get("fluentbitOutputPath")
+
+    fields:
+      # Carries the whole Fluent Bit record in receive mode and an encoded
+      # form in compact mode. Picked automatically based on the Receiver
+      # app's mode (`receiverOptimize`, `compactReceiverLookupFile`,
+      # `symbolMessageHashField`).
+      - $?outputEncodeField=fullText
+
+    # Emit each top-level field of the rendered record as its own field on
+    # the outgoing Forward event — so the record structure of the original
+    # Fluent Bit event survives the round trip.
+    encodeType: $?fluentbitOutputEncodeType=delimited
+
+    writeTemplates: $?outputWriteTemplates=false

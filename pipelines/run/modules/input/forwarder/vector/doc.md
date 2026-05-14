@@ -57,8 +57,7 @@ The `tag` field stamped by Vector's ingest transform (typically from `.source_ty
 
     | File | Purpose |
     |------|---------|
-    | [`input/stream.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/vector/input/stream.yaml) | Vector socket input — reads newline-delimited JSON from Vector's `socket` sink |
-    | [`output/stream.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/vector/output/stream.yaml) | Vector Fluent Forward output — sends processed events back to Vector's `fluent` source |
+    | [`stream.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/vector/stream.yaml) | Vector socket input + Fluent Forward output stream definitions |
     | [`conf/tenx-sidecar.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/vector/conf/tenx-sidecar.yaml) | Reference Vector config showing the ingest sink + egress source with no return-path transforms |
 
 ## Quickstart

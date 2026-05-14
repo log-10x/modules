@@ -57,8 +57,7 @@ The `tag` field that the ingest pipeline stamps becomes the event's `source` ins
 
     | File | Purpose |
     |------|---------|
-    | [`input/stream.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/logstash/input/stream.yaml) | Logstash JSON socket input — reads NDJSON and captures the message field |
-    | [`output/stream.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/logstash/output/stream.yaml) | Logstash JSON socket output — sends processed events back to Logstash |
+    | [`stream.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/logstash/stream.yaml) | Logstash JSON socket input + output stream definitions |
     | [`conf/tenx-sidecar.conf`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/logstash/conf/tenx-sidecar.conf) | Reference Logstash pipeline config showing the `ingest` / `destinations` split |
 
 ## Quickstart

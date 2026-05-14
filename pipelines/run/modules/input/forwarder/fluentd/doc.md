@@ -57,8 +57,7 @@ The original Fluentd tag is carried by the Forward protocol itself and surfaces 
 
     | File | Purpose |
     |------|---------|
-    | [`input/stream.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentd/input/stream.yaml) | Fluentd Forward input — decodes msgpack and captures the message field |
-    | [`output/stream.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentd/output/stream.yaml) | Fluentd Forward output — sends processed events back to Fluentd |
+    | [`stream.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentd/stream.yaml) | Fluentd Forward input + output stream definitions |
     | [`conf/tenx-sidecar.conf`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentd/conf/tenx-sidecar.conf) | Reference Fluentd config showing `@INGEST` / `@OUTPUT` label routing |
 
 ## Quickstart

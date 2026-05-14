@@ -57,8 +57,7 @@ The original Fluent Bit tag is carried by the Forward protocol itself and surfac
 
     | File | Purpose |
     |------|---------|
-    | [`input/stream.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentbit/input/stream.yaml) | Fluent Bit Forward input — decodes msgpack and captures the message field |
-    | [`output/stream.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentbit/output/stream.yaml) | Fluent Bit Forward output — sends processed events back to Fluent Bit |
+    | [`stream.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentbit/stream.yaml) | Fluent Bit Forward input + output stream definitions |
     | [`conf/tenx-sidecar.conf`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-sidecar.conf) | Reference Fluent Bit config showing tag-prefix bypass via `Tag_Prefix tenx.` |
 
 ## Quickstart

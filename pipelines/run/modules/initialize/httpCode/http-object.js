@@ -143,28 +143,22 @@ export class HttpCodeObject extends TenXObject {
 
         var httpToken = HttpCodeTemplate.httpToken;
 
-        if (!httpToken) {
-            return;
+        if (httpToken) {
+            var tokenValue = this.token(httpToken);
+
+            if (tokenValue) {
+                var httpCodeNum = TenXMath.parseInt(tokenValue);
+
+                // Range-check the parsed integer against the valid HTTP status code
+                // window. Every code in the configured httpCodeValidValues list is a
+                // 3-digit 1xx–5xx value, so (100..599) is the exact admissible range.
+                // A substring check against the validValues list would let "3" slip
+                // through because "3" is a substring of "300"/"403"/"503"; the
+                // explicit numeric bound is the simplest correct check.
+                if ((httpCodeNum >= 100) && (httpCodeNum <= 599)) {
+                    this.set(TenXEnv.get("httpCodeField"), httpCodeNum);
+                }
+            }
         }
-
-        var tokenValue = this.token(httpToken);
-
-        if (!tokenValue) {
-            return;
-        }
-
-        var httpCodeNum = TenXMath.parseInt(tokenValue);
-
-        // Range-check the parsed integer against the valid HTTP status code
-        // window. Every code in the configured httpCodeValidValues list is a
-        // 3-digit 1xx–5xx value, so (100..599) is the exact admissible range.
-        // A substring check against the validValues list would let "3" slip
-        // through because "3" is a substring of "300"/"403"/"503"; the
-        // explicit numeric bound is the simplest correct check.
-        if ((httpCodeNum < 100) || (httpCodeNum > 599)) {
-            return;
-        }
-
-        this.set(TenXEnv.get("httpCodeField"), httpCodeNum);
     }
 }

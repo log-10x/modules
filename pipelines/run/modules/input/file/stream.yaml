@@ -25,7 +25,7 @@ input:
     # 'name' defines a logical name for this input.
     #  This value identifies TenXObjects instantiated from this input via their 'inputName' field
   - name: $inputFilePath
-    
+
     # 'type' defines the type of input (e.g., stdin, file, stream).
     type: file
 
@@ -34,16 +34,17 @@ input:
 
     # 'enabled' specifies wither the input is open
     enabled: $?inputFileEnabled=true
- 
+
     # 'extractors' are set to the 'inputFileExtractors' argument
-   #extractors: 
-   #   - $?inputFileExtractors
-    
-    # 'sourcePattern' is set to the 'inputFileSourcePattern' argument    
+    extractors:
+     - "$=yield TenXEnv.get(\"k8sExtractorName\") ? \"fluentK8s\" : \"\""
+     - $?inputFileExtractors
+
+    # 'sourcePattern' is set to the 'inputFileSourcePattern' argument
     sourcePattern: $?inputFileSourcePattern
 
-    # 'sourcePattern' is set to the 'inputFileSourcePattern' argument    
-    sourceFields: 
+    # 'sourcePattern' is set to the 'inputFileSourcePattern' argument
+    sourceFields:
       - $?inputFileSourceFields
 
     printProgress: $?inputFilePrintProgress=true
@@ -51,7 +52,3 @@ input:
     # the 'foreach' macro will duplicate the input node for every instance of the
     #'fileInput' option group
     foreach: fileInput
-
-    #extractors:
-    #  - metric
-

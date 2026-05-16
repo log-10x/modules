@@ -36,7 +36,7 @@ export class MessageTemplate extends TenXTemplate {
 
             if (TenXEnv.get("symbolMessageHashField")) {
                 TenXTemplate.setStatic(
-                    TenXEnv.get("symbolMessageHashField"), TenXString.hash(symbolSequence));
+                    TenXEnv.get("symbolMessageHashField"), TenXString.patternHash(symbolSequence));
             }
         }
     }

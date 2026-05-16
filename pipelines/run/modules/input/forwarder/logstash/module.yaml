@@ -46,7 +46,7 @@ module:
         plugin with `codec => json_lines` and a matching `path`. Ignored on Windows.
 
     - names:
-        - logstashMessageField
+        - logstashInputMessageField
       description: name of the JSON field carrying the original log line
       type: String
       required: false

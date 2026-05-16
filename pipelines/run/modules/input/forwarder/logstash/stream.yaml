@@ -20,7 +20,7 @@ extractor:
     type: json
     actions:
       # Capture the configurable message field as the event's text
-      - $=yield "captureFirst:" + TenXEnv.get("logstashMessageField", "message")
+      - $=yield "captureFirst:" + TenXEnv.get("logstashInputMessageField", "message")
       # NOTE: unlike Fluentd / Vector, Logstash's NDJSON wire has no
       # protocol-level envelope — the `tag` field stamped by the ingest
       # pipeline is a regular record field. We keep it in the record body

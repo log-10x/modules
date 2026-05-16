@@ -46,7 +46,7 @@ module:
         with `mode: unix` and a matching `path`. Ignored on Windows.
 
     - names:
-        - vectorMessageField
+        - vectorInputMessageField
       description: name of the JSON field carrying the original log line
       type: String
       required: false

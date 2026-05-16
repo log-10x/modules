@@ -46,7 +46,7 @@ module:
         output with `Unix_Path` set to a matching path. Ignored on Windows.
 
     - names:
-        - fluentbitMessageField
+        - fluentbitInputMessageField
       description: name of the JSON field carrying the original log line
       type: String
       required: false

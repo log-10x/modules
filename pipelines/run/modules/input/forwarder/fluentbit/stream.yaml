@@ -19,7 +19,7 @@ extractor:
     type: json
     actions:
       # Capture the configurable message field as the event's text
-      - $=yield "captureFirst:" + TenXEnv.get("fluentbitMessageField", "log")
+      - $=yield "captureFirst:" + TenXEnv.get("fluentbitInputMessageField", "log")
       # The Forward decoder surfaces the wire tag as a `tag` field for the
       # `sourcePattern` to capture below; remove it from the record body so
       # the event going back out to Fluent Bit has the same shape as the one

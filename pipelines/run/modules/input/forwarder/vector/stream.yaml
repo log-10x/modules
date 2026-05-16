@@ -20,7 +20,7 @@ extractor:
     type: json
     actions:
       # Capture the configurable message field as the event's text
-      - $=yield "captureFirst:" + TenXEnv.get("vectorMessageField", "message")
+      - $=yield "captureFirst:" + TenXEnv.get("vectorInputMessageField", "message")
       # Strip the `tag` field stamped by the ingest transform from the
       # record body — `sourcePattern` below has already extracted it as
       # the source, so the event going back out to Vector has the same

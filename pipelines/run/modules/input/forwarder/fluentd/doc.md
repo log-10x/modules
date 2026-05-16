@@ -48,10 +48,10 @@ The record structure of the original Fluentd event is preserved end-to-end — e
 |------|-----------------------------------------|
 | Receive (default) | None. Same record. |
 | Receive + `symbolMessageHashField <name>` | Adds one new field with the symbol-pattern hash (a stable identifier for the message pattern — usable as a dedup key, metric dimension, or correlation ID). |
-| `receiverOptimize true` | The value of the message field (`log` by default, or whatever `fluentdMessageField` is set to) is replaced with a compact encoded form. A separate `tenx-template` event is emitted with the template needed to decode it. All other fields stay verbatim. |
+| `receiverOptimize true` | The value of the message field (`log` by default, or whatever `fluentdInputMessageField` is set to) is replaced with a compact encoded form. A separate `tenx-template` event is emitted with the template needed to decode it. All other fields stay verbatim. |
 | `receiverOptimize true` + `symbolMessageHashField <name>` | Both of the above. |
 
-The original Fluentd tag is carried by the Forward protocol itself and surfaces on the event as its `source` inside Log10x — used for rate-based grouping and emitted back to Fluentd as the wire tag on the return path. Internally, Log10x's Fluentd input module reads the message text from the field named by `fluentdMessageField` (default `log`); when the Receiver app is configured with `k8sExtractorName: fluentK8s`, the `kubernetes.*` sub-object is also materialized as enrichment fields for use by message-pattern and rate filtering.
+The original Fluentd tag is carried by the Forward protocol itself and surfaces on the event as its `source` inside Log10x — used for rate-based grouping and emitted back to Fluentd as the wire tag on the return path. Internally, Log10x's Fluentd input module reads the message text from the field named by `fluentdInputMessageField` (default `log`); when the Receiver app is configured with `k8sExtractorName: fluentK8s`, the `kubernetes.*` sub-object is also materialized as enrichment fields for use by message-pattern and rate filtering.
 
 ??? tenx-keyfiles "Key Files"
 

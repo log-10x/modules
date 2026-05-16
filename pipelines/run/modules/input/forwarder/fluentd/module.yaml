@@ -45,7 +45,7 @@ module:
         with `<transport unix>` + a matching `path`. Ignored on Windows.
 
     - names:
-        - fluentdMessageField
+        - fluentdInputMessageField
       description: name of the JSON field carrying the original log line
       type: String
       required: false

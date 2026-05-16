@@ -35,7 +35,7 @@ module:
         `endpoint` of your Collector exporter.
 
     - names:
-        - otelCollectorMessageField
+        - otelCollectorInputMessageField
       description: dotted JSON path to the field carrying the log line text
       type: String
       required: false

@@ -17,9 +17,9 @@ Core module definitions for the Log10x engine — the brain that powers log cost
 │  │  │     Runtime Apps        │  │        Setup / Tools            │   │  │
 │  │  │                         │  │                                 │   │  │
 │  │  │  ├─ Reporter (DaemonSet)│  │  ├─ Dev (local CLI)             │   │  │
-│  │  │  ├─ Receiver (sidecar) │  │  ├─ Compiler (symbol generation)│   │  │
+│  │  │  ├─ Receiver (sidecar)  │  │  ├─ Compiler (symbol generation)│   │  │
 │  │  │  │  Filter + Compact    │  │  └─ MCP scaffold (validation)   │   │  │
-│  │  │  └─ Retriever (S3 query) │  │                                 │   │  │
+│  │  │  └─ Retriever (S3 query)│  │                                 │   │  │
 │  │  └─────────────────────────┘  └─────────────────────────────────┘   │  │
 │  └─────────────────────────────────────────────────────────────────────┘  │
 │                                                                           │

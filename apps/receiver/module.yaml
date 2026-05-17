@@ -43,9 +43,8 @@ module:
         to the forwarder in read-only mode).
 
         **Effect on forwarder output:**
-        When optimization is enabled, the forwarder output `encodeObjects` option
-        defaults to `true`, and the aggregator tracks `optimized_size` metrics
-        to measure optimization effectiveness.
+        When optimization is enabled, the forwarder outputs compacted events and the
+        aggregator tracks `optimized_size` metrics to measure optimization effectiveness.
 
         **Usage (helm chart value):**
         ```yaml

@@ -48,17 +48,16 @@ The record structure of the original Fluent Bit event is preserved end-to-end �
 |------|--------------------------------------------|
 | Receive (default) | None. Same record. Tag is `tenx.<original>`. |
 | Receive + `symbolMessageHashField <name>` | Adds one new field with the symbol-pattern hash (a stable identifier for the message pattern — usable as a dedup key, metric dimension, or correlation ID). |
-| `receiverOptimize true` | The value of the message field (`log` by default, or whatever `fluentbitMessageField` is set to) is replaced with a compact encoded form. A separate `tenx-template` event is emitted with the template needed to decode it. All other fields stay verbatim. |
+| `receiverOptimize true` | The value of the message field (`log` by default, or whatever `fluentbitInputMessageField` is set to) is replaced with a compact encoded form. A separate `tenx-template` event is emitted with the template needed to decode it. All other fields stay verbatim. |
 | `receiverOptimize true` + `symbolMessageHashField <name>` | Both of the above. |
 
-The original Fluent Bit tag is carried by the Forward protocol itself and surfaces on the event as its `source` inside Log10x — used for rate-based grouping and re-emitted as the wire tag on the return path (with `tenx.` prepended by the egress `forward` input). Internally, Log10x's Fluent Bit input module reads the message text from the field named by `fluentbitMessageField` (default `log`); when the Receiver app is configured with `k8sExtractorName: fluentK8s`, the `kubernetes.*` sub-object is also materialized as enrichment fields for use by message-pattern and rate filtering.
+The original Fluent Bit tag is carried by the Forward protocol itself and surfaces on the event as its `source` inside Log10x — used for rate-based grouping and re-emitted as the wire tag on the return path (with `tenx.` prepended by the egress `forward` input). Internally, Log10x's Fluent Bit input module reads the message text from the field named by `fluentbitInputMessageField` (default `log`); when the Receiver app is configured with `k8sExtractorName: fluentK8s`, the `kubernetes.*` sub-object is also materialized as enrichment fields for use by message-pattern and rate filtering.
 
 ??? tenx-keyfiles "Key Files"
 
     | File | Purpose |
     |------|---------|
-    | [`input/stream.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentbit/input/stream.yaml) | Fluent Bit Forward input — decodes msgpack and captures the message field |
-    | [`output/stream.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentbit/output/stream.yaml) | Fluent Bit Forward output — sends processed events back to Fluent Bit |
+    | [`stream.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentbit/stream.yaml) | Fluent Bit Forward input + output stream definitions |
     | [`conf/tenx-sidecar.conf`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-sidecar.conf) | Reference Fluent Bit config showing tag-prefix bypass via `Tag_Prefix tenx.` |
 
 ## Quickstart

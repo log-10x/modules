@@ -1,9 +1,8 @@
 #
-# 🔟❎ 'run' Fluentd input module
+# 🔟❎ 'run' Fluentd module
 #
-# Sidecar-only integration. Log10x runs as a peer process to Fluentd; the
-# two exchange events over the native Fluent Forward protocol on both
-# directions. No `exec_filter` / stdin subprocess pattern is supported.
+# Fluentd integration over the Fluent Forward protocol. Declares the
+# input + output options consumed by the paired streams.
 
 module:
 
@@ -13,35 +12,100 @@ module:
 
   description: receive and optimize events collected by Fluentd via the Fluent Forward protocol
 
-  moduleSort: [fluentdInput, fluentdOutput]
+  # 'configFolder' specifies a folder containing default configuration files for the settings defined by this unit/module
+  configFolder: run/input/forwarder/fluentd
 
   doc: +include $=TenXEnv.get("docGenerate") ? "run/modules/input/forwarder/fluentd/doc.md":""
 
   allowMultiple: false
 
-  # Shared output-formatting options used by the Fluentd Forward output.
   options:
 
     - names:
-      - fluentdOutputFields
-      description: list of TenXObject field names to include alongside the main event in output
-      type: list
+        - fluentdInputPort
+      description: TCP port to listen on for events from Fluentd's out_forward plugin
+      type: String
       required: false
-      defValue: []
+      category: input
+      defValue: 24224
       doc: |
-        specifies TenXObject field names to emit alongside the main event text
-        when writing back to Fluentd. When empty (default), only the main event
-        field is written. Example fields: level, group, symbolMessage.
+        TCP port where Log10x listens for events sent by Fluentd's `out_forward`
+        plugin. Match this against the `port` in your Fluentd `<server>` block.
+
+    - names:
+        - fluentdInputPath
+      description: Unix domain socket path to listen on (Linux/macOS)
+      type: String
+      required: false
+      category: input
+      defValue:
+      doc: |
+        When set, Log10x listens on a Unix domain socket instead of TCP — useful
+        on Linux/macOS to avoid TCP overhead. Configure Fluentd's `out_forward`
+        with `<transport unix>` + a matching `path`. Ignored on Windows.
+
+    - names:
+        - fluentdInputMessageField
+      description: name of the JSON field carrying the original log line
+      type: String
+      required: false
+      category: input
+      defValue: log
+      doc: |
+        Name of the field in each Fluentd record that contains the actual log
+        message text. The default (`log`) matches Fluentd's `in_tail` plugin
+        convention for container and file logs. Set to e.g. `message` if your
+        sources emit the log line under a different key.
+
+    - names:
+        - fluentdOutputHost
+      description: TCP host of the Fluentd in_forward source receiving processed events
+      type: String
+      required: false
+      category: output
+      defValue: 127.0.0.1
+      doc: |
+        Hostname or IP where the Fluentd `in_forward` source is listening for
+        processed events from Log10x. Pairs with `fluentdOutputPort`.
+
+    - names:
+        - fluentdOutputPort
+      description: TCP port of the Fluentd in_forward source receiving processed events
+      type: String
+      required: false
+      category: output
+      defValue: 24225
+      doc: |
+        TCP port where the Fluentd `in_forward` source is listening for
+        processed events from Log10x. MUST differ from the port Log10x's own
+        Forward input listens on (default `24224`) or the two would collide
+        on the same socket.
+
+    - names:
+        - fluentdOutputPath
+      description: Unix domain socket path of the Fluentd in_forward source (Linux/macOS)
+      type: String
+      required: false
+      category: output
+      defValue:
+      doc: |
+        Optional Unix domain socket path for the Fluentd `in_forward` source.
+        When set, takes precedence over `fluentdOutputHost` / `fluentdOutputPort`.
+        Linux/macOS only — ignored on Windows.
 
     - names:
       - fluentdOutputEncodeType
-      description: "output format when outputFields are set. Possible values: [json, delimited]"
+      description: "output format for the Forward record. Possible values: [json, delimited]"
       type: string
       required: false
+      category: output
       defValue: delimited
       doc: |
-        specifies how the combined output (main event field plus outputFields)
-        is encoded when writing back to Fluentd. Possible values:
-        - **json**: formats all fields as a JSON object
-        - **delimited**: formats field values separated by the output delimiter
-        Only takes effect when fluentdOutputFields is set.
+        How the rendered event field(s) are encoded on the outgoing Forward
+        record. Possible values:
+        - **delimited**: each top-level field of the rendered record becomes
+          its own Forward record field — preserves the original record's
+          structure on the wire.
+        - **json**: the whole rendered record is wrapped as one stringified
+          field.
+        Defaults to `delimited`, which is almost always what you want.

@@ -53,15 +53,3 @@ module:
         True for encoding modes (compact-all, compact-lookup) so decoders can
         reconstruct events from templateHash + vars. False for receive mode
         (no encoding → no templates needed).
-
-    - names:
-      - encodeObjects
-      description: legacy shared flag; used only by fluentd/stdio and logstash-input to gate internal behavior
-      type: string
-      required: false
-      defValue: false
-      doc: |
-        Primarily kept for fluentd/stdio (which emits TSV with a "source" prefix
-        via joinFields and can't use the outputEncodeField substitution cleanly)
-        and the Logstash input extractor name selector. New transports should
-        use `outputEncodeField` / `outputWriteTemplates` instead.

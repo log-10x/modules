@@ -24,12 +24,19 @@ export class MessageTemplate extends TenXTemplate {
 
     constructor() {
 
-        if (GroupTemplate.isStandalone) {
+        //if (GroupTemplate.isStandalone) {
 
             var symbolSequence = this.symbolSequence(
                     TenXEnv.get("symbolContexts", "log,exec"),
                     TenXEnv.get("inputField"),
                     TenXEnv.get("symbolMaxLen", 0));
+
+            if (!symbolSequence) {
+
+                symbolSequence = this.symbolSequence("any",
+                    TenXEnv.get("inputField"),
+                    TenXEnv.get("symbolMaxLen", 0));
+            }
 
             TenXTemplate.setStatic(
                 TenXEnv.get("symbolMessageField"), symbolSequence);
@@ -38,6 +45,6 @@ export class MessageTemplate extends TenXTemplate {
                 TenXTemplate.setStatic(
                     TenXEnv.get("symbolMessageHashField"), TenXString.patternHash(symbolSequence));
             }
-        }
+       // }
     }
 }

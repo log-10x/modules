@@ -29,7 +29,7 @@ export class HttpCodeTemplate extends TenXTemplate {
 
         // only extract HTTP codes from standalone events (e.g., do not look for HTTP codes in stack trace lines)
         // To learn more see https://doc.log10x.com/run/initialize/group
-        if (!GroupTemplate.isStandalone) {
+        if (!GroupTemplate.isGroup) {
             return;
         }
 

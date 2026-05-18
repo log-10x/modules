@@ -58,6 +58,14 @@ set its [extractorKey](https://doc.log10x.com/api/js/#TenXObject+extractorKey) v
 
 Only one default capture action is allowed.
 
+#### **`Field`**
+
+Capture a JSON field value and attach it to every TenXObject produced by the extractor, under the alias name. Unlike the other capture actions, `captureField` does not emit its own TenXObject.
+
+For example, the [k8s enrichment](https://doc.log10x.com/run/initialize/k8s/) module declares `captureField:kubernetes.namespace_name:namespace_name` to attach pod namespace as a context [field](https://doc.log10x.com/run/initialize/#enrichmentFields) on every extracted TenXObject.
+
+Only the first matching value per field is captured.
+
 ### :material-filter-outline: Filter
 
 Filter actions allow for filtering an entire event or redacting some of its values. These actions serve a dual purpose of providing a fast mechanism for filtering out unnecessary events to save on the CPU resources as well as redacting sensitive information (i.e., HIPAA, PII).

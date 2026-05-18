@@ -8,18 +8,6 @@
 # Set the 10x pipeline to 'run'
 tenx: run
 
-# define an extractor to extract results from the Prometheus query response
-# extractor:
-
-#   - name: metric
-#     type: json
-
-#     actions:
-#       - captureAll:result
-
-#groupExpressions:
-#  - extractorKey == "symbolMessage"
-
 input:
 
     # 'name' defines a logical name for this input.

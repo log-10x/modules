@@ -21,14 +21,14 @@ Run the dev app on your log files locally to preview how edge and cloud apps wil
     | Variable | Description |
     |----------|-------------|
     | `TENX_CONFIG` | Path to your [configuration directory](https://doc.log10x.com/install/paths/#config) |
-    | `TENX_API_KEY` | Your Log10x API key ([get one](https://doc.log10x.com/run/bootstrap/#apikey)). Not needed for previewing savings on local logs. |
+    | `TENX_LICENSE_KEY` | Your Log10x license JWT ([download from console](https://console.log10x.com)). Not needed for previewing savings on local logs. |
 
     ```bash
     export TENX_CONFIG=/path/to/your/config
-    export TENX_API_KEY=your-api-key  # skip if just previewing local logs
+    export TENX_LICENSE_KEY="$(cat license.jwt)"   # skip if just previewing local logs
     ```
 
-    See [best practices](https://doc.log10x.com/engine/gitops/#best-practices) for managing secrets in production.
+    For production deployments, prefer mounting the license as a file and setting `TENX_LICENSE_FILE` — see [deployment](https://doc.log10x.com/engine/gitops/#best-practices).
 
 ???+ tenx-analyzerinputs "Step 3: Set Up Input Logs"
 
@@ -86,12 +86,12 @@ Run the dev app on your log files locally to preview how edge and cloud apps wil
         docker run --rm \
           -v $TENX_CONFIG:/etc/tenx/config/ \
           -e TENX_CONFIG=/etc/tenx/config/ \
-          -e TENX_API_KEY=${TENX_API_KEY} \
+          -e TENX_LICENSE_KEY="$(cat license.jwt)" \
           log10x/pipeline-10x:latest \
           @apps/dev
         ```
 
-        Skip `-e TENX_API_KEY` if just previewing savings on local logs.
+        Skip `-e TENX_LICENSE_KEY` to run with the image's built-in limited license (fine for previewing savings on local logs).
 
     === ":material-docker: Docker (+ :material-github: GitOps config)"
 
@@ -101,13 +101,13 @@ Run the dev app on your log files locally to preview how edge and cloud apps wil
 
         ```bash
         docker run --rm \
-          -e TENX_API_KEY=${TENX_API_KEY} \
+          -e TENX_LICENSE_KEY="$(cat license.jwt)" \
           log10x/pipeline-10x:latest \
           '@github={"token": "<gh-token>", "repo": "my-user/my-repo"}' \
           @apps/dev
         ```
 
-        Skip `-e TENX_API_KEY` if just previewing savings on local logs.
+        Skip `-e TENX_LICENSE_KEY` to run with the image's built-in limited license (fine for previewing savings on local logs).
 
 ???+ tenx-preview "Step 7: Preview Savings"
 

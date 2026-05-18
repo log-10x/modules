@@ -48,17 +48,16 @@ The record structure of the original Logstash event is preserved end-to-end — 
 |------|------------------------------------------|
 | Receive (default) | None. Same record. |
 | Receive + `symbolMessageHashField <name>` | Adds one new field with the symbol-pattern hash (a stable identifier for the message pattern — usable as a dedup key, metric dimension, or correlation ID). |
-| `receiverOptimize true` | The value of the message field (`message` by default, or whatever `logstashMessageField` is set to) is replaced with a compact encoded form. A separate event with `tag` set to `tenx-template` is emitted with the template needed to decode it. All other fields stay verbatim. |
+| `receiverOptimize true` | The value of the message field (`message` by default, or whatever `logstashInputMessageField` is set to) is replaced with a compact encoded form. A separate event with `tag` set to `tenx-template` is emitted with the template needed to decode it. All other fields stay verbatim. |
 | `receiverOptimize true` + `symbolMessageHashField <name>` | Both of the above. |
 
-The `tag` field that the ingest pipeline stamps becomes the event's `source` inside Log10x — used for rate-based grouping and preserved on each event as it returns to Logstash. The message text is read from the `message` field by default (override with `logstashMessageField`). When the Receiver app is configured with `k8sExtractorName: fluentK8s`, the `kubernetes.*` sub-object is also lifted into pod/container metadata fields used by message-pattern and rate filtering.
+The `tag` field that the ingest pipeline stamps becomes the event's `source` inside Log10x — used for rate-based grouping and preserved on each event as it returns to Logstash. The message text is read from the `message` field by default (override with `logstashInputMessageField`). When the Receiver app is configured with `k8sExtractorName: fluentK8s`, the `kubernetes.*` sub-object is also lifted into pod/container metadata fields used by message-pattern and rate filtering.
 
 ??? tenx-keyfiles "Key Files"
 
     | File | Purpose |
     |------|---------|
-    | [`input/stream.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/logstash/input/stream.yaml) | Logstash JSON socket input — reads NDJSON and captures the message field |
-    | [`output/stream.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/logstash/output/stream.yaml) | Logstash JSON socket output — sends processed events back to Logstash |
+    | [`stream.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/logstash/stream.yaml) | Logstash JSON socket input + output stream definitions |
     | [`conf/tenx-sidecar.conf`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/logstash/conf/tenx-sidecar.conf) | Reference Logstash pipeline config showing the `ingest` / `destinations` split |
 
 ## Quickstart

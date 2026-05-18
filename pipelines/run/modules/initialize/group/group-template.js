@@ -22,7 +22,7 @@ export class GroupTemplate extends TenXTemplate {
     // this constructor is invoked once per tenXTemplate instance
     constructor() {
 
-        var event = this.fullText;
+        var event = this.get(TenXEnv.get("inputField"));
         var isGroup = false;
 
         // timestamped templates are assumed to be a group head

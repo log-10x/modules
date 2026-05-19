@@ -18,4 +18,5 @@ include:
 enrichmentFields:
   # use yield to ensure all arguments are loaded
   - $=yield TenXEnv.get("symbolMessageField") ? (TenXEnv.get("symbolMessageField")):""
+  - $=yield TenXEnv.get("symbolMessageHashField") ? (TenXEnv.get("symbolMessageHashField")):""
   - $=yield TenXEnv.get("symbolOriginField") ? (TenXEnv.get("symbolOriginField")):""

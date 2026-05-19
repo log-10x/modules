@@ -41,18 +41,8 @@ export class GroupTemplate extends TenXTemplate {
             // https://doc.log10x.com/run/transform/group/#groupindicators
             isGroup = true;
 
-        } else if (!TenXString.startsWith(event, TenXEnv.get("groupNegators"))) {
-
-            // Default to standalone when no known-continuation (negator) matches.
-            // Negators are the authoritative definition of stack-frame continuations;
-            // anything else is a standalone log line, not a child of the previous group.
-            isGroup = true;
         }
 
         GroupTemplate.isGroup = isGroup;
-
-        if (isGroup || !TenXString.startsWith(event, TenXEnv.get("groupNegators"))) {
-            GroupTemplate.isStandalone = true;
-        }
     }  
 }

@@ -43,26 +43,11 @@ TenXObjects qualify as group heads (`isGroup = true`) when they meet one of thes
 
 Subsequent TenXObjects attach to the active group until encountering another head, exceeding the maximum group size, or hitting the flush timeout.
 
-### isStandalone
-
-TenXObjects qualify as standalone (`isStandalone = true`) when they meet one of these conditions:
-
-1. **Group head** - If `isGroup` is true, the event is standalone.
-2. **Not a continuation** - If the event does NOT match any [groupNegators](#groupnegators) pattern, it is standalone.
-
-Standalone events have message and origin patterns calculated for them. This optimization skips pattern calculation for known continuation lines (e.g., stack trace frames) while ensuring events without timestamps or severity levels still get patterns calculated unless they're definitely continuations.
-
-| isGroup | matches negator | isStandalone |
-|---------|-----------------|--------------|
-| true    | any             | true         |
-| false   | no              | true         |
-| false   | yes             | false        |
 
 ### Default Configuration
 
 Default [groupIndicators](#groupindicators) encompass patterns like private IP addresses (e.g., '192.', '10.'), HTTP methods (e.g., 'GET ', 'POST '), system logs (e.g., 'kernel:', 'sshd['), and stack trace starters (e.g., 'Traceback ', 'Exception in thread ').
 
-Default [groupNegators](#groupnegators) include stack trace continuation patterns for Java (e.g., '\tat ', 'Caused by:'), .NET (e.g., '   at '), Python (e.g., '  File "'), Node.js (e.g., '    at '), Go, Ruby, Rust, and PHP.
 
 Users can customize these patterns in their configuration to suit specific log formats.
 

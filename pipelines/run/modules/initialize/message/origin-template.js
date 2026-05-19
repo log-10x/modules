@@ -12,7 +12,7 @@ export class OriginTemplate extends TenXTemplate {
 
     constructor() {
 
-        if (GroupTemplate.isStandalone) {
+        if (GroupTemplate.isGroup) {
 
             // use the setStatic reflection function as the target `symbolOriginField` is dynamic
             TenXTemplate.setStatic(

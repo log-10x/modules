@@ -24,7 +24,7 @@ export class GroupTemplate extends TenXTemplate {
 
         if (this.groupSize == 1) {
 
-            var event = this.fullText;
+            var event = this.get(TenXEnv.get("inputField"));
             var groupHead = false;
 
             // timestamped templates are assumed to be a group head

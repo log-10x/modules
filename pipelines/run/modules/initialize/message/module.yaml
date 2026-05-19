@@ -64,12 +64,14 @@ module:
       type: string
       required: false
       doc: |
-         specifies the name of the field to assign a compact, alphanumeric hash of the
+         specifies the name of the field to assign a stable, URL-safe hash of the
          [symbolMessageField](https://doc.log10x.com/run/initialize/message/#symbolmessagefield) value,
-         computed via [TenXString.hash](https://doc.log10x.com/api/js/#TenXString.hash).
+         computed via [TenXString.patternHash](https://doc.log10x.com/api/js/#TenXString.patternHash).
 
-         The hash is a stable, JSON-safe identifier suitable for use as a deduplication key,
-         metric dimension, or compact reference to the underlying message pattern.
+         The value is an 11-character base64url identifier (xxHash64 of the UTF-8
+         bytes, big-endian, no padding). It is one-way and reproduces byte-for-byte
+         outside the engine, so it is safe to use directly as a deduplication key,
+         metric dimension, SIEM query term, or forwarder filter key.
 
          Defaults to `tenx_hash`. Set to an empty value to disable.
       defValue: tenx_hash

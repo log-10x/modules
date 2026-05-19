@@ -57,15 +57,15 @@ Follow the steps below. Steps that require customization link to the relevant [C
     |----------|-------------|
     | `TENX_MODULES` | Path to your [modules directory](https://doc.log10x.com/install/paths/#modules) |
     | `TENX_CONFIG` | Path to your [configuration directory](https://doc.log10x.com/install/paths/#config) |
-    | `TENX_API_KEY` | Your Log10x API key ([get one](https://doc.log10x.com/run/bootstrap/#apikey)) |
+    | `TENX_LICENSE_KEY` | Your Log10x license JWT ([download from console](https://console.log10x.com)) |
 
     ```bash
     export TENX_MODULES=/etc/tenx/modules
     export TENX_CONFIG=/etc/tenx/config
-    export TENX_API_KEY=your-api-key
+    export TENX_LICENSE_KEY="$(cat license.jwt)"
     ```
 
-    See [best practices](https://doc.log10x.com/engine/gitops/#best-practices) for managing secrets in production.
+    For production deployments, mount the license as a file and set `TENX_LICENSE_FILE` instead — see [deploy](https://doc.log10x.com/apps/receiver/deploy/).
 
 ??? tenx-forwarderinputs "Step 3: Configure Your Forwarder"
 

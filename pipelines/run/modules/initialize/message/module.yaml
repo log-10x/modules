@@ -66,7 +66,7 @@ module:
       doc: |
          specifies the name of the field to assign a stable, URL-safe hash of the
          [symbolMessageField](https://doc.log10x.com/run/initialize/message/#symbolmessagefield) value,
-         computed via [TenXString.patternHash](https://doc.log10x.com/api/js/#TenXString.patternHash).
+         computed via [TenXString.hash](https://doc.log10x.com/api/js/#TenXString.hash).
 
          The value is an 11-character base64url identifier (xxHash64 of the UTF-8
          bytes, big-endian, no padding). It is one-way and reproduces byte-for-byte

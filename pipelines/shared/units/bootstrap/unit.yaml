@@ -56,14 +56,30 @@ unit:
         ```
 
     - names:
-      - apiKey
-      - TENX_API_KEY
-      description: 10x api key
+      - licenseFile
+      - TENX_LICENSE_FILE
+      description: path to a file containing the 10x license JWT
       type: string
-      required: true
+      required: false
       doc: |
-        Specifies an api key used for authenticating against the 10x service.
-        This value is accessible from your [account settings](https://console.log10x.com).
+        Path to a file containing the signed 10x license JWT.
+        Preferred over `licenseKey` for production: the token is not visible in `ps` output and is easy to rotate by replacing the file.
+
+        Download a license from your [account](https://console.log10x.com).
+
+        If both `licenseFile` and `licenseKey` are provided, the file wins.
+
+    - names:
+      - licenseKey
+      - TENX_LICENSE_KEY
+      description: 10x license JWT (inline)
+      type: string
+      required: false
+      doc: |
+        The signed 10x license JWT, passed inline.
+        Discouraged on the command line because the value is visible in `ps` output; prefer `licenseFile` in production.
+
+        Download a license from your [account](https://console.log10x.com).
 
     - names:
       - metricEndpoint

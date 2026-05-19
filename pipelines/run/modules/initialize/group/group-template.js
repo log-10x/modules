@@ -22,37 +22,31 @@ export class GroupTemplate extends TenXTemplate {
     // this constructor is invoked once per tenXTemplate instance
     constructor() {
 
-        var event = this.get(TenXEnv.get("inputField"));
-        var isGroup = false;
+        if (this.groupSize == 1) {
 
-        // timestamped templates are assumed to be a group head
-        if (this.timestamped) {
+            var event = this.fullText;
+            var groupHead = false;
 
-            isGroup = true;
+            // timestamped templates are assumed to be a group head
+            if (this.timestamped) {
 
-        } else if (TenXTemplate.getStatic(TenXEnv.get("levelField"))) {
+                groupHead = true;
 
-            // templates with an assigned severity level are assumed to be a group head
-            isGroup = true;
+            } else if (TenXTemplate.getStatic(TenXEnv.get("levelField"))) {
 
-        } else if (TenXString.startsWith(event, TenXEnv.get("groupIndicators"))) {
+                // templates with an assigned severity level are assumed to be a group head
+                groupHead = true;
 
-            // instances starting with a group indicator term are assumed to be a group head
-            // https://doc.log10x.com/run/transform/group/#groupindicators
-            isGroup = true;
+            } else if (TenXString.startsWith(event, TenXEnv.get("groupIndicators"))) {
 
-        } else if (!TenXString.startsWith(event, TenXEnv.get("groupNegators"))) {
+                // instances starting with a group indicator term are assumed to be a group head
+                // https://doc.log10x.com/run/transform/group/#groupindicators
+                groupHead = true;
 
-            // Default to standalone when no known-continuation (negator) matches.
-            // Negators are the authoritative definition of stack-frame continuations;
-            // anything else is a standalone log line, not a child of the previous group.
-            isGroup = true;
-        }
+            }
 
-        GroupTemplate.isGroup = isGroup;
+            GroupTemplate.isGroup = groupHead;
 
-        if (isGroup || !TenXString.startsWith(event, TenXEnv.get("groupNegators"))) {
-            GroupTemplate.isStandalone = true;
         }
     }  
 }

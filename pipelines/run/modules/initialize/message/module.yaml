@@ -71,8 +71,8 @@ module:
          The hash is a stable, JSON-safe identifier suitable for use as a deduplication key,
          metric dimension, or compact reference to the underlying message pattern.
 
-         Set to an empty value to disable.
-      defValue: ""
+         Defaults to `tenx_hash`. Set to an empty value to disable.
+      defValue: tenx_hash
 
     - names:
       - symbolOriginField

@@ -8,24 +8,12 @@
 # Set the 10x pipeline to 'run'
 tenx: run
 
-# define an extractor to extract results from the Prometheus query response
-# extractor:
-
-#   - name: metric
-#     type: json
-
-#     actions:
-#       - captureAll:result
-
-#groupExpressions:
-#  - extractorKey == "symbolMessage"
-
 input:
 
     # 'name' defines a logical name for this input.
     #  This value identifies TenXObjects instantiated from this input via their 'inputName' field
   - name: $inputFilePath
-
+    
     # 'type' defines the type of input (e.g., stdin, file, stream).
     type: file
 
@@ -34,17 +22,16 @@ input:
 
     # 'enabled' specifies wither the input is open
     enabled: $?inputFileEnabled=true
-
+ 
     # 'extractors' are set to the 'inputFileExtractors' argument
-    extractors:
-     - "$=yield TenXEnv.get(\"k8sExtractorName\") ? \"fluentK8s\" : \"\""
-     - $?inputFileExtractors
-
-    # 'sourcePattern' is set to the 'inputFileSourcePattern' argument
+    extractors: 
+      - $?inputFileExtractors
+    
+    # 'sourcePattern' is set to the 'inputFileSourcePattern' argument    
     sourcePattern: $?inputFileSourcePattern
 
-    # 'sourcePattern' is set to the 'inputFileSourcePattern' argument
-    sourceFields:
+    # 'sourcePattern' is set to the 'inputFileSourcePattern' argument    
+    sourceFields: 
       - $?inputFileSourceFields
 
     printProgress: $?inputFilePrintProgress=true

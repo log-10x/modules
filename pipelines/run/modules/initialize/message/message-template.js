@@ -24,7 +24,10 @@ export class MessageTemplate extends TenXTemplate {
 
     constructor() {
 
-        if ((this.groupSize > 1) || (GroupTemplate.isGroup)) {
+
+        if ((this.groupSize > 1)  || 
+            GroupTemplate.isGroup ||
+            !TenXString.startsWith(this.get(TenXEnv.get("inputField")), TenXEnv.get("messageNegators"))) {
 
             var symbolSequence = this.symbolSequence(
                     TenXEnv.get("symbolContexts", "log,exec"),

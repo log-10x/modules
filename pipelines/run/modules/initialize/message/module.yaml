@@ -82,5 +82,28 @@ module:
       type: string
       required: false
       doc: |
-         specifies the name of the field to assign the return value of [symbolOrigin](https://doc.log10x.com/api/js/#TenXObject+symbolOrigin) function. 
+         specifies the name of the field to assign the return value of [symbolOrigin](https://doc.log10x.com/api/js/#TenXObject+symbolOrigin) function.
       defValue: ""
+
+    - names:
+      - messageNegators
+      description: list of strings that, when matched at the start of a log line's text, mark it as low-value continuation/boilerplate that does NOT receive its own message pattern.
+      type: list
+      required: false
+      doc: |
+        A list of strings that, when matched at the start of a log line's text, mark it as a known
+        continuation pattern (e.g., stack trace frame, indented detail, banner) that should not
+        receive its own message pattern.
+
+        Negators are evaluated by the message template's gate when the event is neither part of a
+        multi-event group (groupSize > 1) nor a group head: in that case, an event still receives
+        a pattern unless it matches a negator. This is the "Hello World vs orphan stack frame"
+        discriminator.
+
+        - ` ` - any indented line (universal continuation signal).
+        - `	` - any tab-prefixed line (Java/Go stack frames etc.).
+        - `Caused by: ` - Java chained exception (column 0).
+        - `Suppressed: ` - Java suppressed exception (column 0).
+        - `--- End of ` - .NET inner exception marker.
+        - `created by ` - Go goroutine creator.
+        - `#0 `..`#5 ` - PHP stack frames (depth 0-5).

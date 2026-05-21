@@ -34,7 +34,7 @@ export class MessageTemplate extends TenXTemplate {
                     TenXEnv.get("inputField"),
                     TenXEnv.get("symbolMaxLen", 0));
 
-            if (!symbolSequence) {
+            if (!TenXString.includes(symbolSequence, "_")) {
 
                 symbolSequence = this.symbolSequence("any",
                     TenXEnv.get("inputField"),

@@ -224,6 +224,78 @@ module:
       defValue: 300000
 
     - names:
+      - rateReceiverCapLookupFile
+      description: declarative per-container byte cap file, keyed by the `rateReceiverContainerField` value
+      type: string
+      required: false
+      doc: |
+        defines the path to a declarative **per-container cap file**. Each entry assigns a byte cap
+        to a specific container (the value of `rateReceiverContainerField`, which defaults to the k8s
+        container name). The file's cap wins per-event over `rateReceiverAbsoluteCap`: listed
+        containers get the file's cap, unlisted containers fall back to the fleet-wide cap (or to
+        no cap, if `rateReceiverAbsoluteCap` is `0`).
+
+        **File format** (CSV; header row + one comma-separated entry per row):
+
+        ```
+        container,cap
+        <container>,<bytes>[:<untilEpochSec>][:<reason>]
+        ```
+
+        - `container` — value of `rateReceiverContainerField` for the events to cap. In k8s this is
+          the k8s container name, stable across pod replicas.
+        - `bytes` — integer byte cap per pattern per container per window. `0` exempts the
+          container from the absolute cap entirely (the over-cap branch is skipped for it).
+        - `untilEpochSec` — optional Unix-epoch (seconds) expiry. Past that, the entry becomes a
+          no-op and the fallback cap applies.
+        - `reason` — optional free-text string for audit. Not used at runtime. Must not contain
+          commas (would break CSV parsing).
+
+        **Example**:
+
+        ```
+        container,cap
+        payment-service,4194304:1735689600:annual budget protection PAY-101
+        auth-service,2097152
+        istio-proxy,0:1735689600:exempt platform sidecar PLAT-42
+        ```
+
+        **Why this shape**:
+
+        - **Container-keyed**, matching the regulator's container axis. The file's key is the same
+          value the regulator's counters are bucketed by, so listed caps map 1:1 to counters without
+          translation.
+        - **Git-friendly**: a human-readable declaration that lives in a config repo, reviewed via
+          PR, `git blame`-d for who/why.
+        - **Self-healing**: every entry can carry an explicit expiry, so forgotten caps eventually
+          stop filtering instead of silently dropping production data forever.
+        - **AI-editable**: an operator can ask an assistant (e.g., Claude Code via the Log10x MCP
+          `configure_regulator` tool) to derive a cap from a monthly dollar budget, append the
+          entry, and open a PR. The cap file is the interface.
+
+        **Severity floor still applies.** Even at a tight cap the regulator's `rateReceiverSeverityFloors`
+        retain ERROR/CRITICAL events at their floor fraction, so a tight cap never fully silences
+        high-severity traffic.
+
+        When `rateReceiverCapLookupFile` is **unset**, every container falls back to
+        `rateReceiverAbsoluteCap` (which itself defaults to `0` = disabled).
+      defValue: ""
+
+    - names:
+      - rateReceiverCapLookupRetain
+      description: retention period for the per-container cap file before it is considered stale
+      type: number
+      required: false
+      doc: |
+        Defines the retention period (in milliseconds) for the cap file (`rateReceiverCapLookupFile`).
+        If the file's last modified time is older than this period, a warning is logged. The cap
+        entries continue to apply; the staleness check is advisory so operators notice when an
+        automated tooling pipeline has stopped updating the file.
+
+        **Validation:** Must be greater than 60000 milliseconds.
+      defValue: 300000
+
+    - names:
       - rateReceiverWarmupMs
       description: startup grace period per container before regulation begins
       type: number
@@ -255,22 +327,34 @@ module:
 
     - names:
       - rateReceiverAbsoluteCap
-      description: maximum bytes per pattern per container per window before the regulator engages
+      description: fleet-wide byte cap per pattern per container per window; `0` (default) disables the cap unless overridden per-container via `rateReceiverCapLookupFile`
       type: number
       required: false
       doc: |
-        defines the absolute byte cap (the headline guarantee): the maximum bytes of a single pattern
-        (a unique combination of `rateReceiverFieldNames` values) that may be retained per container
-        within the current window (`rateReceiverResetIntervalMs`).
+        defines a **fleet-wide** byte cap: the maximum bytes of a single pattern (a unique combination
+        of `rateReceiverFieldNames` values) that may be retained per container within the current
+        window (`rateReceiverResetIntervalMs`). Applies to every container the regulator sees, unless
+        that container has its own entry in `rateReceiverCapLookupFile`, which wins per-event.
 
-        At or below the cap the pattern is kept untouched. Above it, the regulator engages: if the
-        pattern is also above `rateReceiverMinSharePercent` (the sanity guard), the event is sampled
-        at the severity floor probability.
+        At or below the resolved cap the pattern is kept untouched. Above it, the regulator engages:
+        if the pattern is also above `rateReceiverMinSharePercent` (the sanity guard), the event is
+        sampled at the severity floor probability.
+
+        **`0` (the default) disables the fleet-wide cap.** With no fleet-wide cap and no per-container
+        entry in `rateReceiverCapLookupFile`, the regulator's over-cap branch never engages for that
+        container. Protection is strictly opt-in. Three configurations are first-class:
+
+        - **Per-container only**: set `rateReceiverCapLookupFile`. Listed containers get their cap;
+          unlisted containers are unregulated by the absolute cap. Most selective.
+        - **Fleet-wide only**: set `rateReceiverAbsoluteCap` to a positive integer. Applies to every
+          container.
+        - **Both**: per-container entries override the fleet-wide cap; unlisted containers fall back
+          to the fleet-wide cap (safety floor).
 
         **Example:** 10485760 (10 MB) means no single pattern can exceed 10 MB per container per
-        5-minute window. The customer can compute the maximum monthly spend per pattern per container
-        from this cap and their vendor's per-GB rate.
-      defValue: 10485760
+        5-minute window. The maximum monthly spend per pattern per container can be computed from
+        this cap and the vendor's per-GB rate.
+      defValue: 0
 
     - names:
       - rateReceiverMinSharePercent

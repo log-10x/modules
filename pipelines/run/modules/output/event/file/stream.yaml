@@ -36,7 +36,7 @@ output:
 
     # 'filter' is set to skip templates when encoding object field values.
     #  A separate output stream is defined below to encode templates
-    filter: $?outputFileFilter=isObject && !isDropped
+    filter: $?outputFileFilter=isObject
 
     # 'group' sets 'outputFilePath' as a key to group all file outputs
     #  pointing to a location on disk to a single output stream. This

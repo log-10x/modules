@@ -30,7 +30,7 @@ output:
 
     # 'filter' is set to skip templates when encoding object field values.
     #  A separate output stream is defined below to encode templates
-    filter: $?outputStreamFilter=isObject && !isDropped
+    filter: $?outputStreamFilter=isObject
 
     # 'foreach' sets 'outputStream' as the options group for whose instances
     #  to create matching output streams to allow multiple stream outputs.

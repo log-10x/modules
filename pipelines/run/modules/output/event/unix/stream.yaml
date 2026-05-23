@@ -30,7 +30,7 @@ output:
 
     # 'filter' is set to skip templates when encoding object field values.
     #  A separate unix output stream is defined below to encode templates
-    filter: $?outputUnixSocketFilter=isObject && !isDropped
+    filter: $?outputUnixSocketFilter=isObject
 
     # 'foreach' sets 'unixSocketOutput' as the options group for whose instances
     #  to create matching output streams to allow multiple Unix domain socket outputs.

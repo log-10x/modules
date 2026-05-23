@@ -3,21 +3,28 @@
 # Set the 10x pipeline to 'run'
 tenx: run
 
-# Exactly one regulator class is loaded based on whether a mute file is
-# configured (the two variants are mutually exclusive via `shouldLoad`):
-#   - rateReceiverLookupFile UNSET -> RegulatorObject (rate-object-local.js)
-#     -> shouldRetainEvent(): pure share-cap regulator.
-#   - rateReceiverLookupFile SET   -> RegulatorWithMuteObject
-#     (rate-object-lookup.js) -> shouldRetainEventWithMute(): same regulator
-#     preceded by a "file wins" mute check.
+# Exactly one regulator-decision class is loaded per (mute, cap) cartesian
+# combination, dispatched by the 4-way ternary below. The four classes have
+# mutually-exclusive `shouldLoad` gates:
+#   - rateReceiverObject             (rate-object-local.js):     !mute && !cap  -> shouldRetainEvent()
+#   - rateReceiverCapObject          (rate-object-cap.js):       !mute &&  cap  -> shouldRetainEventWithCap()
+#   - rateReceiverLookupObject       (rate-object-lookup.js):     mute && !cap  -> shouldRetainEventWithMute()
+#   - rateReceiverLookupCapObject    (rate-object-lookup-cap.js): mute &&  cap  -> shouldRetainEventWithMuteAndCap()
 #
-# The two classes expose DIFFERENT getter names because method names are in a
-# GLOBAL namespace across all parsed classes (the engine validates every class
-# regardless of shouldLoad). The single groupFilters slot dispatches via an env
-# ternary so only ONE method is referenced per event; the other class has
-# shouldLoad=false and its method is never invoked.
+# Each class duplicates the regulator algorithm with the lookups it needs
+# inlined. The cartesian split exists because TenX DSL parse-validates
+# `TenXLookup.get` against runtime-registered tables -- a class that
+# references a lookup may-not-be-loaded fails engine init. Cross-class
+# getter composition was attempted first and verified broken on the demo
+# cluster: the regulator class could not read a getter declared on a
+# separate cap-class. Inlining + cartesian shouldLoad is the working pattern.
+#
+# Method names live in a GLOBAL namespace across all parsed classes, so the
+# four getters have four distinct names. The single groupFilters slot
+# dispatches the right one per event; the other three classes have
+# shouldLoad=false and their methods are never invoked.
 #
 # Outer quotes on the list entry are REQUIRED -- the inner `: "..."` of the
 # ternary is YAML mapping syntax otherwise.
 groupFilters:
-  - '$=yield TenXEnv.get("rateReceiverLookupFile") ? "shouldRetainEventWithMute()" : "shouldRetainEvent()"'
+  - '$=yield (TenXEnv.get("rateReceiverLookupFile") && TenXEnv.get("rateReceiverCapLookupFile")) ? "shouldRetainEventWithMuteAndCap()" : TenXEnv.get("rateReceiverLookupFile") ? "shouldRetainEventWithMute()" : TenXEnv.get("rateReceiverCapLookupFile") ? "shouldRetainEventWithCap()" : "shouldRetainEvent()"'

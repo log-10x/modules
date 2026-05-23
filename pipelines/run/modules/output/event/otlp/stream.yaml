@@ -22,7 +22,7 @@ output:
     # as a non-intervening reporter.
     enabled: $=yield !TenXEnv.get("receiverReadOnly", false) && TenXEnv.get("outputOtlpWriteObjects", true)
 
-    filter: $?outputOtlpFilter=isObject
+    filter: $?outputOtlpFilter=isObject && !isDropped
 
     path: run/modules/output/event/otlp
 

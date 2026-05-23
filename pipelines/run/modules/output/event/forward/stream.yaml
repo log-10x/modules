@@ -30,7 +30,7 @@ output:
 
     # 'filter' is configured only to encode TenXObject instance field values.
     #  A separate output stream is defined below to encode TenXTemplates
-    filter: $?outputForwardFilter=isObject
+    filter: $?outputForwardFilter=isObject && !isDropped
 
     # 'path' points to the log4j2 configuration used for the output's
     #  appender and logger at: https://github.com/log-10x/modules/blob/main/pipelines/run/modules/output/event/forward/log4j2.yaml

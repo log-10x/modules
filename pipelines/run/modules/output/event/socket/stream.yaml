@@ -42,7 +42,7 @@ output:
 
     # 'filter' is set to skip templates when encoding object field values.
     #  A separate socket output stream is defined below to encode templates
-    filter: $?outputSocketFilter=isObject
+    filter: $?outputSocketFilter=isObject && !isDropped
 
     # 'encodedLinePrefix', 'encodeType' and 'encodeDelimiter' control how TenXObject field values are
     #  written to output. To learn more see 'outputSocketEncodeType' in https://doc.log10x.com/run/output/event/socket

@@ -31,7 +31,7 @@ output:
 
     # 'filter' is configured only to encode TenXObject instance field values.
     #  A separate output stream is defined below to encode TenXTemplates
-    filter: $?outputHttpFilter=isObject
+    filter: $?outputHttpFilter=isObject && !isDropped
 
     # 'group' sets 'outputHttpAddress' as the key for grouping all forward outputs
     #  targeting a socket into a single log4j2 appender. This

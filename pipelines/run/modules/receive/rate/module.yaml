@@ -164,29 +164,36 @@ module:
         declaration wins, and the regulator is skipped for that event), while every other
         pattern is handled by the share-based regulator.
 
-        **File format** — one entry per line, keyed by the joined field-set value:
+        **File format** (CSV; header row + one comma-separated entry per row):
 
         ```
-        <fieldSet>=<sampleRate>:<untilEpochSec>[:<reason>]
+        fieldSet,value
+        <fieldSetKey>,<sampleRate>:<untilEpochSec>[:<reason>]
         ```
 
-        - `fieldSet` — the joined values of the fields named in `rateReceiverFieldNames`,
+        - `fieldSetKey` — the joined values of the fields named in `rateReceiverFieldNames`,
           separated by `_`. With `rateReceiverFieldNames: [symbolMessage]` the key is just
-          `symbolMessage` (e.g. `Error_syncing_pod`). With `[symbolMessage, container]` the
-          key is `symbolMessage_container` (e.g. `heartbeat_debug_frontend`).
-        - `sampleRate` — probability in `[0.0, 1.0]` that a matching event is retained.
-          `0.0` = full mute; `0.1` = keep 10%; `1.0` = no-op.
+          the symbolMessage (e.g. `Error_syncing_pod`). With `[symbolMessage, container]`
+          the key is `symbolMessage_container` (e.g. `heartbeat_debug_frontend`).
+        - `sampleRate` — probability in `[0, 1.0]` that a matching event is retained.
+          `0` = full mute; `0.1` = keep 10%; `1.0` = no-op.
         - `untilEpochSec` — mute expires at this Unix epoch (seconds). Past that, the
           entry becomes a no-op until someone edits or removes it. Self-healing by design.
-        - `reason` — optional free-text string for audit. Not used at runtime.
+        - `reason` — optional free-text string for audit. Not used at runtime. Must not
+          contain commas (would break CSV parsing).
 
         **Example** (with `rateReceiverFieldNames: [symbolMessage]`):
 
         ```
-        Error_syncing_pod=0.10:1744848000:pod error spam OPS-4821
-        heartbeat_debug=0.00:1744416000:k8s liveness 200s
-        jwt_validated=0.25:1744502400:auth flood after deploy
+        fieldSet,value
+        Error_syncing_pod,0.10:1744848000:pod error spam OPS-4821
+        heartbeat_debug,0:1744416000:k8s liveness 200s
+        jwt_validated,0.25:1744502400:auth flood after deploy
         ```
+
+        The file is hot-reloaded on in-place writes (the gitops pattern); a Kubernetes
+        `ConfigMap` mount won't reload because the CM swap is a symlink rename, not an
+        in-place write.
 
         **Why this shape:**
 
@@ -279,6 +286,10 @@ module:
 
         When `rateReceiverCapLookupFile` is **unset**, every container falls back to
         `rateReceiverAbsoluteCap` (which itself defaults to `0` = disabled).
+
+        The file is hot-reloaded on in-place writes (the gitops pattern); a Kubernetes
+        `ConfigMap` mount won't reload because the CM swap is a symlink rename, not an
+        in-place write.
       defValue: ""
 
     - names:
@@ -297,22 +308,28 @@ module:
 
     - names:
       - rateReceiverWarmupMs
-      description: startup grace period per container before regulation begins
+      description: per-container grace period before this regulator instance starts capping
       type: number
       required: false
       doc: |
-        defines a per-container startup grace period in milliseconds. A brand-new container is left
-        unregulated for this long, so startup transients (init logs, queue burn-down, cache warming)
-        are not mistaken for a dominating pattern.
+        defines a per-container grace period in milliseconds. A container is left unregulated for this
+        long after this regulator instance first sees its events. The default is 5 minutes.
 
-        This is a **delay only** — no learned baseline is built. The only state that survives the
-        grace period is the container's first-seen timestamp; once the period elapses, the regulator
-        enforces the cap against the current window like any other time. Patterns that are
-        legitimately dominant in steady state are handled via the mute file, not by warmup.
+        Why it exists: the regulator's per-pattern sample counts start empty. Without a few minutes of
+        accumulation, a low-volume pattern can look like the dominant one purely because of ordering.
+        The warmup defers cap decisions until there are enough samples to tell a noisy pattern from a
+        quiet one with confidence. This is a **delay only**; no learned baseline is built, and the
+        only state that survives is the container's first-seen timestamp.
 
-        The default of 15 minutes is chosen to ride out common startup transients while not leaving a
-        container unregulated longer than necessary.
-      defValue: 900000
+        "First sees" is per regulator instance, not per container birth. A container that has been
+        running for hours but whose events have only just started flowing through this regulator
+        (e.g. after a regulator restart or forwarder reconnect) restarts the warmup window. On a
+        daemonset rolling restart the cap is therefore disabled for `warmupMs` per node as it cycles.
+
+        Lower the value for fast-starting apps that should be capped sooner after a restart. Raise it
+        for slow-ramping JVMs or workloads with long init phases. Patterns that are legitimately
+        dominant in steady state belong on the mute file, not in a longer warmup.
+      defValue: 300000
 
     - names:
       - rateReceiverBaselineCount

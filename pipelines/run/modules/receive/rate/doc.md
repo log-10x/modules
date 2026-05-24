@@ -18,7 +18,11 @@ The cap never silences high-severity logs. `severityFloors` sets a minimum reten
 
 ## :material-timer-sand: Warmup
 
-A brand-new container is left unregulated for `warmupMs` (default 15 minutes) so startup traffic (init logs, queue burn-down, cache warming) is not mistaken for a dominating pattern. This is a delay, not a learning phase: nothing about the container is remembered past the grace period beyond the fact that it has been seen. A pattern that is legitimately dominant in steady state belongs on the protection list, not in a learned baseline.
+A container is left unregulated for `warmupMs` (default 5 minutes) after this regulator instance first sees its events. Lower for fast-starting apps that should be capped sooner after a restart, raise for slow-ramping JVMs or workloads with long init phases.
+
+The warmup exists because the regulator's per-pattern sample counts start empty. Without a few minutes of accumulation, a low-volume pattern can look dominant purely because of ordering. Five minutes gives enough samples for typical Kubernetes traffic to tell a noisy pattern from a quiet one.
+
+"First sees" is per regulator instance, not per container birth. A container that has been running for hours but whose events have only just started flowing through this regulator, after a regulator restart or a forwarder reconnect, restarts the warmup window. On a daemonset rolling restart the cap is therefore disabled for `warmupMs` per node as it cycles.
 
 The first `baselineCount` events (default 5) of every pattern are also kept each window, so even a heavily-trimmed pattern leaves a sample to inspect.
 
@@ -26,17 +30,18 @@ The first `baselineCount` events (default 5) of every pattern are also kept each
 
 An optional mute file overrides the regulator for patterns an operator has declared. A listed, active pattern is decided by its entry, so the human declaration wins and the regulator is skipped for it; every other pattern is handled by the cap. The two run together rather than as separate modes.
 
-**File format**, one entry per line keyed by the joined `fieldNames`:
+**File format**, CSV with a header row, keyed by the joined `fieldNames`:
 
 ```
-<fieldSet>=<sampleRate>:<untilEpochSec>[:<reason>]
+fieldSet,value
+<fieldSetKey>,<sampleRate>:<untilEpochSec>[:<reason>]
 ```
 
 - `sampleRate` retains that fraction: `1.0` is never sampled, `0.0` is a full mute.
 - `untilEpochSec` expires the entry, which then self-heals to a no-op.
 - `reason` is free text for audit.
 
-The severity floor still applies, so a `0.0` mute never silences ERROR or FATAL. The file is typically committed to a repo and pulled via [gitops](https://doc.log10x.com/config/github/#config), so each change carries a diff, a review, and a merge.
+The severity floor still applies, so a `0.0` mute never silences ERROR or FATAL. The file is typically committed to a repo and pulled via [gitops](https://doc.log10x.com/config/github/#config), so each change carries a diff, a review, and a merge. The engine hot-reloads on in-place file writes (the gitops pattern); Kubernetes `ConfigMap` mounts don't reload because the CM swap is a symlink rename, not an in-place write.
 
 ## :material-clipboard-list-outline: Per-container caps
 
@@ -54,6 +59,8 @@ container,cap
 - `reason` is free text for audit. Must not contain commas (would break CSV parsing).
 
 The cap value changes; the share guard and severity floor still apply. Intended use is via the `log10x_configure_regulator` MCP tool, which derives per-container caps from a monthly dollar budget and opens a PR against the file.
+
+Same hot-reload contract as the mute file above: in-place writes only; Kubernetes `ConfigMap` mounts don't reload.
 
 ## :material-kubernetes: Containers
 
@@ -78,9 +85,11 @@ rateReceiver:
     - INFO=0.1
     - WARN=0.3
     - ERROR=0.5
-  warmupMs: 900000           # 15m startup grace period
+  warmupMs: 300000           # 5m per-instance grace; raise for slow-ramping apps
   baselineCount: 5
   capLookup:
     # file: $=path("data/caps") + "/caps.csv"   # optional per-container overrides
     retain: $=parseDuration("10m")
 ```
+
+Tune these values in this config block, not via container environment variables. Any `rateReceiver:` key set here resolves to a launch argument at engine init and shadows a same-named env var, so env-only overrides are silently ignored. Edit the config (via a gitops PR) to change a value at runtime.

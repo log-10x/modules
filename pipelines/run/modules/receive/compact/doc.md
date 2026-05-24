@@ -2,52 +2,67 @@
 icon: material/tune-variant
 ---
 
-Ship every high-value event as full text and every low-signal event as a compact template+values tuple — without redeploying the engine.
+Compact specific containers' events into a template+values tuple — without redeploying the engine.
 
-The compact receiver makes a per-event decision whether to emit via `encode()` (the pattern's template hash plus extracted variable values — typically 20–40× smaller than the original line) or preserve `fullText`. The decision is keyed by the same field-set identity the [rate receiver](https://doc.log10x.com/run/receive/rate/) uses, so the same `symbolMessage` value a Reporter attributes cost to is the key an operator targets to reduce that cost.
+The compact receiver makes a per-event decision whether to emit via `encode()` (the pattern's template hash plus extracted variable values, typically 20–40× smaller than the original line) or preserve `fullText`. The decision is keyed by the container name (or any event field of your choice), so an operator targets compaction at the same unit they think about cost in.
 
-Entries are declared in a CSV lookup file, typically committed to a git repo and edited by PR. The file is re-read on forwarder pod restart — so the surface area of a policy change is a diff, a review, a merge, and a rolling restart.
+Entries live in a CSV cap-file, typically committed to a git repo and edited by PR. The file is hot-reloaded on in-place writes; a merged PR takes effect within ~10 seconds, no pod restart.
 
-## :material-file-document-edit-outline: Lookup entry format
+## :material-clipboard-list-outline: Per-container caps
 
-Standard CSV with a `key,value` header:
+A cap-file declares, for each container, whether its events are compacted or preserved. Containers not listed fall back to `compactReceiverDefault`.
 
-```csv
-key,value
-<fieldSet>,true
-<fieldSet>,false
-```
-
-- `<fieldSet>` — the joined values of `compactReceiverFieldNames` on the event. With the default `[symbolMessage]` it's just the symbolMessage value (e.g. `payment_retry_gateway_timeout`); with `[symbolMessage, container]` it becomes `<symbolMessage>_<container>`.
-- `value` — `true` to compact via `encode()`, `false` to preserve `fullText`. Entries are *deviations* from `compactReceiverDefault`.
-
-**Example** (with `compactReceiverFieldNames: [symbolMessage]` and `compactReceiverDefault: false`):
+**File format**, CSV with a header row, keyed by the `containerField` value (k8s container name by default):
 
 ```csv
-key,value
-payment_retry_gateway_timeout,true
-auth_audit_trail,false
+container,value
+<container>,<true|false>[:<untilEpochSec>][:<reason>]
 ```
 
-For time-bounded overrides, remove the entry via PR once no longer needed — the receiver falls back to `compactReceiverDefault` for any unlisted field-set.
+- `container` — the value of `containerField`. Stable across pod replicas in Kubernetes.
+- `value` — `true` compacts via `encode()`; `false` explicitly preserves `fullText` for this container (beats the default).
+- `untilEpochSec` — optional Unix-epoch (seconds) expiry. Past it the entry self-heals and the container falls back to `compactReceiverDefault`.
+- `reason` — optional free-text for audit. Must not contain commas (would break CSV parsing).
+
+**Example** (with `compactReceiverDefault: false`):
+
+```csv
+container,value
+payment-service,true:1735689600:high-volume PAY-101
+auth-service,true
+istio-proxy,false:1735689600:keep verbose during incident PLAT-42
+```
+
+The file is hot-reloaded on in-place writes (the gitops pattern); a Kubernetes `ConfigMap` mount won't reload because the CM swap is a symlink rename, not an in-place write.
+
+## :material-kubernetes: Containers
+
+The lookup is scoped by `containerField`, defaulting to the k8s container name. That name is stable across replicas, so scaling from one pod to ten does not unintentionally change a container's compaction decision, and a sidecar never inherits the application container's decision. Set `containerField` to any other event field to scope by service, deployment, tenant, etc.
+
+Outside Kubernetes, or when no container field is present on an event, the event falls back to `compactReceiverDefault`.
 
 ## :material-swap-horizontal: Default policy
 
-`compactReceiverDefault` sets the fallback decision when no entry matches:
+`compactReceiverDefault` sets the fallback decision when no cap-file entry matches:
 
-- **`false`** (default) — preserve `fullText`. Entries opt specific patterns *into* compaction. Right when most traffic is already high-signal.
-- **`true`** — compact via `encode()`. Entries opt specific patterns *out* of compaction (e.g. audit/compliance patterns that must stay verbose). Right when most traffic is low-signal machinery and only a few patterns need full-text fidelity.
+- **`false`** (default) — preserve `fullText`. Cap-file entries opt specific containers *into* compaction. Right when most traffic is already high-signal.
+- **`true`** — compact via `encode()`. Cap-file entries opt specific containers *out* of compaction (e.g. audit/compliance containers that must stay verbose). Right when most traffic is low-signal machinery and only a few containers need full-text fidelity.
 
-Flipping the default is a policy decision that affects every event and requires a pod rollout. Lookup edits handle pattern-level exceptions without restart.
-
-## :material-timer-refresh-outline: Reload
-
-The lookup file is read once at pod startup. Pushing a new entry requires a rolling restart of the forwarder daemonset for it to take effect.
-
-`compactReceiverLookupRetain` controls the staleness warning logged at startup when the file's mtime is older than the interval (default `5m`). It does not currently trigger a mid-run reload — reload-on-file-change is a planned enhancement.
+Flipping the default is a policy decision that affects every event and requires a pod rollout. Cap-file edits handle per-container exceptions without restart.
 
 ## :material-cog-box: Wiring
 
-- Set `compactReceiverLookupFile` to the CSV path — that's the single gate that loads the module (both `CompactInput` and `CompactObject` check it in `shouldLoad`).
-- The forwarder output streams then branch on a single ternary field expression: `encoded=shouldEncode() ? encode() : fullText`. No field mutation — the decision lives in the stream expression, not on the event.
+```yaml
+compactReceiver:
+  containerField: k8s_container      # scopes the cap-file lookup
+  default: false                     # fallback when no entry matches
+  lookup:
+    file: $=path("data/caps") + "/compact-cap.csv"
+    retain: $=parseDuration("10m")
+```
+
+- Set `compactReceiverLookupFile` (via the `lookup.file` config key) to the CSV path. That same env var is also the gate the engine's `TenXReceiver.encodeField()` checks to substitute `encoded=shouldEncode() ? encode() : fullText` into the forwarder output stream.
+- Both `CompactInput` and `CompactObject` check `compactReceiverLookupFile` in `shouldLoad`, so they only register when the cap-file is configured.
 - When `compactReceiverLookupFile` is *not* set, the pre-compact path is preserved unchanged (receive-only emits `fullText`; `receiverOptimize=true` emits `encoded=encode()` for every event).
+
+Tune these values in this config block, not via container environment variables. Any `compactReceiver:` key set here resolves to a launch argument at engine init and shadows a same-named env var, so env-only overrides are silently ignored. Edit the config (via a gitops PR) to change a value at runtime.

@@ -414,7 +414,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
     === ":simple-macos: Homebrew"
 
         ```bash
-        brew uninstall --cask log10x && rm -rf /etc/tenx
+        brew uninstall log10x
         ```
 
     === ":simple-linux: Linux"

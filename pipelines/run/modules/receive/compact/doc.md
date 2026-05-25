@@ -33,7 +33,7 @@ auth-service,true
 istio-proxy,false:1735689600:keep verbose during incident PLAT-42
 ```
 
-The file is hot-reloaded on in-place writes (the gitops pattern); a Kubernetes `ConfigMap` mount won't reload because the CM swap is a symlink rename, not an in-place write.
+The engine hot-reloads on in-place file writes (the gitops pattern); Kubernetes `ConfigMap` mounts don't reload because the CM swap is a symlink rename, not an in-place write.
 
 ## :material-kubernetes: Containers
 
@@ -61,8 +61,6 @@ compactReceiver:
     retain: $=parseDuration("10m")
 ```
 
-- Set `compactReceiverLookupFile` (via the `lookup.file` config key) to the CSV path. That same env var is also the gate the engine's `TenXReceiver.encodeField()` checks to substitute `encoded=shouldEncode() ? encode() : fullText` into the forwarder output stream.
-- Both `CompactInput` and `CompactObject` check `compactReceiverLookupFile` in `shouldLoad`, so they only register when the cap-file is configured.
-- When `compactReceiverLookupFile` is *not* set, the pre-compact path is preserved unchanged (receive-only emits `fullText`; `receiverOptimize=true` emits `encoded=encode()` for every event).
+- Setting `lookup.file` enables the per-container compaction path; leaving it unset preserves the pre-compact behavior (receive-only emits `fullText`; `receiverOptimize=true` compacts every event).
 
 Tune these values in this config block, not via container environment variables. Any `compactReceiver:` key set here resolves to a launch argument at engine init and shadows a same-named env var, so env-only overrides are silently ignored. Edit the config (via a gitops PR) to change a value at runtime.

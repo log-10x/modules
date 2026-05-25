@@ -63,12 +63,6 @@ module:
         Kubernetes `ConfigMap` mount won't reload because the CM swap is a
         symlink rename, not an in-place write.
 
-        Setting this env var also gates the forwarder output stream's
-        compaction dispatch: when set, the engine's `TenXReceiver.encodeField()`
-        helper emits `encoded=shouldEncode() ? encode() : fullText` so each
-        event's compaction decision is dispatched through the `shouldEncode`
-        getter on `CompactObject`.
-
     - names:
       - compactReceiverLookupRetain
       description: retention period for the per-container cap-file before it is considered stale

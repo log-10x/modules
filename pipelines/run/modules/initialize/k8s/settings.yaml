@@ -15,7 +15,12 @@ extractor:
     type: json
 
     actions:
-      # Capture common k8s metadata
+      # Capture common k8s metadata. pod_name is still captured unconditionally;
+      # gating it on k8sPodNameField (so we'd skip the parse when pod resolution
+      # is opted out) was attempted but the engine rejects an extractor whose
+      # `actions:` list contains an empty/null entry. The captureField parses
+      # pod_name into an event field that gets dropped at enrichment time when
+      # the field name is empty; cheap but not free.
       - captureField:kubernetes.namespace_name:namespace_name
       - captureField:kubernetes.container_name:container_name
       - captureField:kubernetes.pod_name:pod_name
@@ -24,7 +29,9 @@ extractor:
     type: json
 
     actions:
-      # Capture common k8s metadata
+      # Capture common k8s metadata. Same caveat as fluentK8s: the pod.name
+      # capture stays unconditional because the engine rejects empty action
+      # entries.
       - $="captureField:kubernetes.namespace:" + TenXEnv.get("k8sNamespaceNameField", "namespace")
       - $="captureField:kubernetes.container.name:" + TenXEnv.get("k8sContainerNameField", "container")
       - $="captureField:kubernetes.pod.name:" + TenXEnv.get("k8sPodNameField", "pod")

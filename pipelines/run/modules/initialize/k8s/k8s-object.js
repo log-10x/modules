@@ -39,15 +39,15 @@ export class K8sFluentObject extends TenXObject {
 
 // Separate class for the pod-name enrichment. Gated on k8sPodNameField being
 // truthy via `shouldLoad`. The class only loads when the operator has opted in,
-// and the constructor — and its `set(TenXEnv.get("k8sPodNameField"), ...)` call —
+// and the constructor (and its `set(TenXEnv.get("k8sPodNameField"), ...)` call)
 // is only parsed when the field name is non-empty.
 //
 // Why two classes: the engine parse-validates `set()` at init regardless of
 // runtime guards. If we inline `if (TenXEnv.get("k8sPodNameField")) { set(..., ...) }`
 // in K8sFluentObject's constructor, the engine still validates set()'s shape
 // against an empty field name when k8sPodNameField="" and refuses to load.
-// shouldLoad is plain JS — it runs at class-load time, before the constructor
-// body gets transpiled to DSL — so gating there avoids the parse pass entirely.
+// shouldLoad is plain JS, runs at class-load time before the constructor body
+// gets transpiled to DSL, so gating there avoids the parse pass entirely.
 export class K8sFluentPodObject extends TenXObject {
 
     static shouldLoad(config) {

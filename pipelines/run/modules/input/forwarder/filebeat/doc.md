@@ -71,10 +71,9 @@ Unlike other forwarders, Filebeat uses `sourceFilter` with the pattern `\"tenx\"
 
     | File | Purpose |
     |------|---------|
-    | [`script/tenx-optimize.js`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/filebeat/script/tenx-optimize.js) | Filebeat script processor - encodes events to stdout |
-    | [`script/tenx-receive.js`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/filebeat/script/tenx-receive.js) | Filebeat script processor for receive mode |
-    | [`optimize/tenxNix.yml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/filebeat/optimize/tenxNix.yml) | Filebeat Unix socket input config (Linux/macOS) |
-    | [`optimize/tenxWin.yml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/filebeat/optimize/tenxWin.yml) | Filebeat Unix socket input config (Windows) |
-    | [`input/stream.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/filebeat/input/stream.yaml) | 10x stdin input with Filebeat config parsing |
-    | [`input/log4j2.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/filebeat/input/log4j2.yaml) | Log4j config for Filebeat internal logs |
-    | [`output/stream.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/filebeat/output/stream.yaml) | 10x Unix socket output configuration |
+    | [`stream.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/filebeat/stream.yaml) | Stdin input (Filebeat events + config parsing) + Unix socket output (loop back to Filebeat) |
+    | [`log4j2.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/filebeat/log4j2.yaml) | Log4j appenders for Filebeat-internal log messages (mirrors filebeat.yml's logging.*) |
+    | [`script/tenx-receive.js`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/filebeat/script/tenx-receive.js) | Filebeat script processor — marks + emits events to stdout, then cancels them so they loop back over the socket |
+    | [`script/tenx-report.js`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/filebeat/script/tenx-report.js) | Filebeat script processor — read-only variant that emits to stdout without canceling (Reporter mode) |
+    | [`conf/tenxNix.yml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/filebeat/conf/tenxNix.yml) | Filebeat `unix` input snippet, Linux/macOS — referenced by Filebeat via `filebeat.config.inputs` AND parsed by the engine for the socket path |
+    | [`conf/tenxWin.yml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/filebeat/conf/tenxWin.yml) | Same as above for Windows (uses `${TEMP}\tenx_filebeat.sock`) |

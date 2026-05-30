@@ -28,7 +28,7 @@ output:
 
     # 'filter' is set to skip templates when encoding object field values.
     #  A separate output stream is defined below to encode templates
-    filter: $?githubOutputFilter=isObject
+    filter: $?githubOutputFilter=isObject && !this.isDropped
 
     # 'foreach' sets 'githubOutput' as the options group for whose instances
     #  to create matching output streams to allow multiple GitHub stream outputs.

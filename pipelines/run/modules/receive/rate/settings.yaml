@@ -28,3 +28,23 @@ tenx: run
 # ternary is YAML mapping syntax otherwise.
 groupFilters:
   - '$=yield (TenXEnv.get("rateReceiverLookupFile") && TenXEnv.get("rateReceiverCapLookupFile")) ? "shouldRetainEventWithMuteAndCap()" : TenXEnv.get("rateReceiverLookupFile") ? "shouldRetainEventWithMute()" : TenXEnv.get("rateReceiverCapLookupFile") ? "shouldRetainEventWithCap()" : "shouldRetainEvent()"'
+
+# ============================ Metric Dimension ===============================
+#
+# Append `isDropped` to the global enrichmentFields (same additive mechanism as
+# run/modules/initialize/k8s & level settings.yaml). Each pattern's all_events /
+# emitted_events series then carries an `isDropped` label, bifurcating it into
+# the regulator-marked events (true: compacted by 10x, or down-tiered by the
+# SIEM e.g. Datadog Flex) vs the kept events (false). This makes per-service /
+# per-pattern attribution of reduction a DIRECT query (all_events{isDropped="true"})
+# instead of an all-minus-emitted subtraction, with no extra aggregator.
+#
+# `isDropped` is a first-class field accessor (EventIsDroppedFieldAccessor),
+# get-by-name and groupable exactly like any enrichment field. Boolean, so it at
+# most doubles series for patterns that are partially regulated; for a pattern
+# with no cap it is uniformly "false" (harmless).
+include:
+  - run/modules/initialize/module.yaml
+
+enrichmentFields:
+  - isDropped

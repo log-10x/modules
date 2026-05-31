@@ -123,13 +123,14 @@ output:
 outputUnixSocket:
 
   # Main event emitter
-  - filter: extractorKey == "message"
-    address: $=rawOutputUnixSocketAddress
+  - address: $=rawOutputUnixSocketAddress
+
+    filter: extractorKey == "message"
+    
 
     fields:
       - $?outputEncodeField=fullText
 
-    encodeType: $?filebeatOutputEncodeType
     encodeDelimiter: ","
 
     # When grouping events and emitting back to Filebeat, escape the line
@@ -137,11 +138,10 @@ outputUnixSocket:
     encodeGroupDelimiter: "\\n"
 
   # Template emitter — only fires in encoding modes (outputWriteTemplates=true)
-  - writeObjects: $?outputWriteTemplates=false
+  - address: $=rawOutputUnixSocketAddress
+    writeObjects: $?outputWriteTemplates=false
 
     filter: (extractorKey == "message") && isNewTemplate()
-
-    address: $=rawOutputUnixSocketAddress
 
     # Send custom TenXTemplate JSON, with duplicated templateHash field as
     # 'templateHashDocId'. Filebeat's `decode_json_fields` uses that to set

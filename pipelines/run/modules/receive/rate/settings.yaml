@@ -47,4 +47,11 @@ include:
   - run/modules/initialize/module.yaml
 
 enrichmentFields:
-  - isDropped
+  # The aggregator groups raw events by the intrinsic `isDropped` (correct at
+  # event time), but a TenXSummary instance is itself never dropped, so reading
+  # the intrinsic on the summary at metric-output time returns false for every
+  # row. The `l1e_` prefix forces the resolver to read the value ENCODED INTO
+  # the summary (the grouped bucket value) instead of the summary's intrinsic.
+  # So: at event time isSummary is false -> intrinsic isDropped (true/false);
+  # at output time isSummary is true -> l1e_isDropped (the encoded bucket value).
+  - 'isDropped=isSummary?l1e_isDropped:isDropped'

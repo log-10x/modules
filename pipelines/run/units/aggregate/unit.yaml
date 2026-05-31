@@ -12,6 +12,7 @@ unit:
   # 'configFolders' specifies folders containing default configuration files for this module
   configFolders:
     dev: run/aggregate/dev
+    mcp: run/aggregate/mcp
     report: run/aggregate/report
     receive: run/aggregate/receive
     index: run/aggregate/index

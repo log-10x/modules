@@ -66,6 +66,7 @@ module:
       description: configuration file path
       type: file
       required: false
+      category: filebeatLog
       doc: |
         path containing Filebeat configuration files
 
@@ -74,6 +75,7 @@ module:
       description: log file path
       type: file
       required: false
+      category: filebeatLog
       doc: |
         path containing Filebeat log files
 
@@ -82,6 +84,7 @@ module:
       description: control log file rotation
       type: boolean
       required: false
+      category: filebeatLog
       doc: |
         sets Filebeat logging to rotating files.
         Set logging.to_files to false to disable logging to files.
@@ -91,6 +94,7 @@ module:
       description: Filebeat logging to stderr
       type: boolean
       required: false
+      category: filebeatLog
       doc: |
         Filebeat logging to stderr.
         Set logging.to_stderr to false to disable logging to stderr.
@@ -100,6 +104,7 @@ module:
       description: Filebeat logging to syslog
       type: boolean
       required: false
+      category: filebeatLog
       doc: |
         Filebeat logging to syslog.
         Set logging.to_syslog to false to disable logging to syslog.
@@ -109,6 +114,7 @@ module:
       description: Filebeat log name
       type: file
       required: false
+      category: filebeatLog
       doc: |
         name of the Filebeat files where the logs are written to
 
@@ -117,6 +123,7 @@ module:
       description: output path for Filebeat logs
       type: file
       required: false
+      category: filebeatLog
       doc: |
         configures the path where the Filebeat logs are written
 
@@ -125,6 +132,7 @@ module:
       description: enable Filebeat log file rotation
       type: String
       required: false
+      category: filebeatLog
       doc: |
         enable Filebeat log file rotation on time intervals in addition to the size-based rotation
 
@@ -133,6 +141,7 @@ module:
       description: Filebeat log file size limit
       type: number
       required: false
+      category: filebeatLog
       doc: |
         configure Filebeat log file size limit.
         If limit is reached, log file will be automatically rotated
@@ -142,6 +151,7 @@ module:
       description: rotate existing Filebeat logs upon startup
       type: boolean
       required: false
+      category: filebeatLog
       doc: |
         rotate existing Filebeat logs on startup rather than appending them to the existing file
 
@@ -150,6 +160,7 @@ module:
       description: log file permissions mask
       type: string
       required: false
+      category: filebeatLog
       doc: |
         POSIX permissions mask to apply when rotating Filebeat log files
 
@@ -158,6 +169,7 @@ module:
       description: number of rotated Filebeat log files to keep
       type: number
       required: false
+      category: filebeatLog
       doc: |
         number of rotated Filebeat log files to keep.
         Oldest files will be deleted first
@@ -169,6 +181,7 @@ module:
       description: internal
       type: string
       required: false
+      category: internal
       doc: |
         internal variable used to load socket address to be used in multiple encoders
 
@@ -177,5 +190,6 @@ module:
       description: internal
       type: string
       required: false
+      category: internal
       doc: |
         an internal marker used to indicate Filebeat input ready

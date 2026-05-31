@@ -53,3 +53,38 @@ module:
         True for encoding modes (compact-all, compact-lookup) so decoders can
         reconstruct events from templateHash + vars. False for receive mode
         (no encoding → no templates needed).
+
+    - names:
+      - outputSoftDrop
+      description: soft/hard toggle for regulator-dropped events (truthy = soft, unset = hard)
+      type: string
+      required: false
+      doc: |
+        The single soft/hard knob. The regulator only marks `isDropped`; this flag
+        tells the output stream what to do with a marked event:
+
+        - **unset (default) = hard-drop**: the stream filter is `isObject && !isDropped`,
+          so a dropped event is NOT written (saves ingest + index).
+        - **truthy = soft-drop**: the stream filter is `isObject` (everything is written)
+          and the output field becomes `isDropped ? encode() : fullText`, so dropped
+          events are emitted losslessly compacted instead of in full.
+
+        Use truthiness, not string equality (the engine's string `==` is identity
+        compare): set it to a non-empty value (e.g. `true`) for soft, leave unset for hard.
+
+    - names:
+      - outputDropFilter
+      description: the filter expression each output stream uses to decide whether a marked object is written
+      type: string
+      required: false
+      defValue: isObject && !this.isDropped
+      doc: |
+        Resolved once by the user-facing config.yaml from `outputSoftDrop`, so the
+        soft/hard logic lives in one place instead of being duplicated per stream:
+
+        - **hard** (default): `isObject && !this.isDropped` — dropped objects not written
+        - **soft** (`outputSoftDrop` truthy): `isObject` — everything written; the
+          output field compacts the dropped ones
+
+        Each output stream references it via `$?outputDropFilter`. Named outputDropFilter
+        rather than outputFilter, which is a built-in per-stream engine option.

@@ -72,7 +72,7 @@ output:
       - "*"
 
     # 'filter' selects TenXObject and encoded instances
-    filter: $?devOutputFilter=(isObject || isEncoded) && !this.isDropped
+    filter: $?devOutputFilter=isObject || isEncoded
 
     encodeType: json
 

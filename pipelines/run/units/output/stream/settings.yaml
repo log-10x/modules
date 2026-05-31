@@ -21,7 +21,7 @@ outputActions:
   - $?outputActions
 
 # Below is an example of a definition of an 'output' stream defined within
-# the Filebeat input/output integration in https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/filebeat/input/stream.yaml
+# the Filebeat input/output integration in https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/filebeat/stream.yaml
 
 # output:
 #   - name: event

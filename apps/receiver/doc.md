@@ -239,9 +239,9 @@ Follow the steps below. Steps that require customization link to the relevant [C
         filebeat.config.inputs:
           enabled: true
           # Nix/OSX
-          path: ${TENX_MODULES}/pipelines/run/modules/input/forwarder/filebeat/receive/tenxNix.yml
+          path: ${TENX_MODULES}/pipelines/run/modules/input/forwarder/filebeat/conf/tenxNix.yml
           # Windows
-          # path: ${TENX_MODULES}/pipelines/run/modules/input/forwarder/filebeat/receive/tenxWin.yml
+          # path: ${TENX_MODULES}/pipelines/run/modules/input/forwarder/filebeat/conf/tenxWin.yml
         ```
 
         **Step 2**: Add the receiver processor:
@@ -781,11 +781,11 @@ Follow the steps below. Steps that require customization link to the relevant [C
     === ":simple-beats: Filebeat"
 
         ```console title="Nix/OSX"
-        $ filebeat -c my-filebeat.yml -e 2>&1 | /opt/tenx-edge/bin/tenx run @run/input/forwarder/filebeat/receive/config.yaml @apps/receiver
+        $ filebeat -c my-filebeat.yml -e 2>&1 | /opt/tenx-edge/bin/tenx run @run/input/forwarder/filebeat @apps/receiver
         ```
 
         ```console title="Windows"
-        $ filebeat -c my-filebeat.yml -e 2>&1 | "c:\program files\tenx-edge\tenx" run @run/input/forwarder/filebeat/receive/config.yaml @apps/receiver
+        $ filebeat -c my-filebeat.yml -e 2>&1 | "c:\program files\tenx-edge\tenx" run @run/input/forwarder/filebeat @apps/receiver
         ```
 
     === ":simple-logstash: Logstash"

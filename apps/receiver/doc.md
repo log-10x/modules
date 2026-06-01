@@ -32,9 +32,9 @@ receiver:
   optimize: false       # readwrite + optimize=true → compact mode
 ```
 
-<h3 id="compact">Compact mode (was Optimizer)</h3>
+<h3 id="compact">Compact mode</h3>
 
-Compact mode was previously a separate app (`@apps/edge/optimizer`). It is now a feature of the receiver: both are the execution arm, both are commanded via GitOps, both operate on stable pattern identity. The former optimizer's deploy/run content is merged into the receiver's [deploy](https://doc.log10x.com/apps/receiver/deploy/) and [run](https://doc.log10x.com/apps/receiver/run/) pages. For SIEM-side plugin install, see the [Splunk](compact/splunk.md) and [Elasticsearch](compact/elasticsearch.md) pages.
+Compact mode is the execution arm for lossless wire-format reduction, commanded via GitOps and operating on stable pattern identity. For SIEM-side plugin install, see the [Splunk](compact/splunk.md) and [Elasticsearch](compact/elasticsearch.md) pages.
 
 ## :material-clipboard-play-outline: Setup Guide
 

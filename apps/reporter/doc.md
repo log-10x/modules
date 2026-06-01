@@ -320,11 +320,11 @@ Follow the steps below. Steps that require customization link to the relevant [C
     === ":simple-beats: Filebeat"
 
         ```console title="Nix/OSX"
-        $ filebeat -c my-filebeat.yml -e 2>&1 | /opt/tenx-edge/bin/tenx run @run/input/forwarder/filebeat/report/config.yaml @apps/reporter
+        $ filebeat -c my-filebeat.yml -e 2>&1 | /opt/tenx-edge/bin/tenx run @run/input/forwarder/filebeat @apps/reporter
         ```
 
         ```console title="Windows"
-        $ filebeat -c my-filebeat.yml -e 2>&1 | "c:\program files\tenx-edge\tenx" run @run/input/forwarder/filebeat/report/config.yaml @apps/reporter
+        $ filebeat -c my-filebeat.yml -e 2>&1 | "c:\program files\tenx-edge\tenx" run @run/input/forwarder/filebeat @apps/reporter
         ```
 
     === ":simple-logstash: Logstash"

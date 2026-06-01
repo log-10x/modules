@@ -73,6 +73,24 @@ module:
         compare): set it to a non-empty value (e.g. `true`) for soft, leave unset for hard.
 
     - names:
+      - outputOffload
+      description: full-text offload of regulator-dropped events for a forwarder S3 route (truthy = offload)
+      type: string
+      required: false
+      doc: |
+        Offload mode for regulator-dropped events. Like soft-drop it keeps marked
+        events flowing (stream filter `isObject`), but unlike soft-drop it does NOT
+        compact them: the output field stays `fullText` for every event with the
+        `isDropped` marker spliced on, so a downstream forwarder can route the dropped
+        slice to the customer's own S3 as FULL, lossless JSONL (the form the retriever
+        indexes) while the rest flows to the SIEM.
+
+        Use truthiness (engine string `==` is identity compare): set a non-empty value
+        (e.g. `true`) for offload, leave unset otherwise. Distinct from `outputSoftDrop`,
+        which compacts the dropped slice for SIEM down-tier; offload takes precedence
+        when both are set.
+
+    - names:
       - outputDropFilter
       description: the filter expression each output stream uses to decide whether a marked object is written
       type: string

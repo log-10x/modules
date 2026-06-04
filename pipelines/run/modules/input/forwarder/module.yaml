@@ -17,14 +17,28 @@ module:
 
   moduleSort: [fluentbit,fluentd,otelCollector,vector,filebeat,logstash,splunkUF,datadogAgent]
 
-  # Shared options applicable across all forwarder flavors. Mode selection
-  # (receive / compact-all / compact-lookup) is driven by outputEncodeField,
-  # which each forwarder's user-facing config.yaml derives from `receiverOptimize`
-  # and `compactReceiverLookupFile` via a `$=yield` expression. Substitution
-  # into the transport stream.yaml happens at config-load before DSL parse, so
-  # `shouldEncode()` only appears in the parsed field expression when the
-  # compact lookup is actually configured — and CompactObject only loads under
-  # that same condition.
+  # Shared options applicable across all forwarder flavors.
+  #
+  # The regulator-dropped behavior is controlled by two orthogonal booleans
+  # the user sets directly:
+  #
+  #   emit_dropped     = does the regulator-marked slice survive the output filter?
+  #   compact_emitted  = do all emitted events emit as encode() bytes or as fullText?
+  #
+  # They compose into four coherent behaviors:
+  #
+  #   emit_dropped | compact_emitted | behavior
+  #   -------------|-----------------|--------------------------------------------------
+  #   false        | false           | hard-drop the bad ones. Kept events emit fullText.
+  #   false        | true            | hard-drop the bad ones. Kept events emit compacted.
+  #   true         | false           | emit everything fullText. Forwarder routes by `isDropped`.
+  #   true         | true            | emit everything compacted. (niche)
+  #
+  # `isDropped` is always written as a top-level field on the wire, so the
+  # downstream forwarder can route by it regardless of which combination is set.
+  # The customer-facing config.yaml maps these two flags into the engine's
+  # internal `outputDropFilter` and `outputEncodeField` primitives via $=yield
+  # expressions — see the receiver app config for the canonical wiring.
   options:
 
     - names:
@@ -34,12 +48,14 @@ module:
       required: false
       defValue: fullText
       doc: |
-        Selected per forwarder mode by the user-facing config.yaml:
+        Derived by the customer-facing config.yaml from `compact_emitted` (and
+        from the legacy per-pattern `compactReceiverLookupFile` lookup when set):
 
-        - **receive** (default): `fullText` — plain passthrough, no encoding
-        - **compact-all**: `encoded=encode()` — every event compacted
-        - **compact-lookup**: `encoded=shouldEncode() ? encode() : fullText` — per-pattern
-          decision via the compactReceiver module (requires `compactReceiverLookupFile`)
+        - **compact_emitted=false** (default): `fullText` — every event passes through full text
+        - **compact_emitted=true**: `encoded=encode()` — every emitted event compacted losslessly
+        - **compact-lookup (legacy)**: `encoded=shouldEncode() ? encode() : fullText` —
+          per-pattern decision via the compactReceiver module (requires
+          `compactReceiverLookupFile`)
 
         Advanced users can override directly to customize the output field expression.
 
@@ -55,40 +71,42 @@ module:
         (no encoding → no templates needed).
 
     - names:
-      - outputSoftDrop
-      description: soft/hard toggle for regulator-dropped events (truthy = soft, unset = hard)
+      - emit_dropped
+      description: whether regulator-marked (`isDropped=true`) events survive the output filter
       type: string
       required: false
       doc: |
-        The single soft/hard knob. The regulator only marks `isDropped`; this flag
-        tells the output stream what to do with a marked event:
+        Single boolean controlling whether the regulator-dropped slice reaches the
+        forwarder. Orthogonal to `compact_emitted`.
 
-        - **unset (default) = hard-drop**: the stream filter is `isObject && !isDropped`,
-          so a dropped event is NOT written (saves ingest + index).
-        - **truthy = soft-drop**: the stream filter is `isObject` (everything is written)
-          and the output field becomes `isDropped ? encode() : fullText`, so dropped
-          events are emitted losslessly compacted instead of in full.
+        - **unset (default) = hard-drop**: outputDropFilter resolves to
+          `isObject && !this.isDropped`, dropped events never leave the engine.
+        - **truthy = emit**: outputDropFilter resolves to `isObject`, all events
+          flow. The downstream forwarder routes by the wire-level `isDropped`
+          record field.
 
-        Use truthiness, not string equality (the engine's string `==` is identity
-        compare): set it to a non-empty value (e.g. `true`) for soft, leave unset for hard.
+        Use truthiness (engine string `==` is identity compare): set a non-empty
+        value (e.g. `true`) to emit dropped events, leave unset to hard-drop.
 
     - names:
-      - outputOffload
-      description: full-text offload of regulator-dropped events for a forwarder S3 route (truthy = offload)
+      - compact_emitted
+      description: whether all emitted events are written as `encode()` bytes or as `fullText`
       type: string
       required: false
       doc: |
-        Offload mode for regulator-dropped events. Like soft-drop it keeps marked
-        events flowing (stream filter `isObject`), but unlike soft-drop it does NOT
-        compact them: the output field stays `fullText` for every event with the
-        `isDropped` marker spliced on, so a downstream forwarder can route the dropped
-        slice to the customer's own S3 as FULL, lossless JSONL (the form the retriever
-        indexes) while the rest flows to the SIEM.
+        Single boolean controlling whether ALL emitted events are compacted on the
+        wire. Orthogonal to `emit_dropped`. Applies uniformly: when set, both kept
+        and dropped events (if `emit_dropped`) emit as `encode()`; when unset, both
+        emit as `fullText`.
 
-        Use truthiness (engine string `==` is identity compare): set a non-empty value
-        (e.g. `true`) for offload, leave unset otherwise. Distinct from `outputSoftDrop`,
-        which compacts the dropped slice for SIEM down-tier; offload takes precedence
-        when both are set.
+        - **unset (default) = fullText**: outputEncodeField resolves to `fullText`
+        - **truthy = compact**: outputEncodeField resolves to `encoded=encode()`
+
+        Use truthiness (engine string `==` is identity compare): set a non-empty
+        value (e.g. `true`) for compact, leave unset for fullText.
+
+        Per-pattern compact-lookup mode (via `compactReceiverLookupFile`) still
+        overrides this when the lookup file is configured.
 
     - names:
       - outputDropFilter
@@ -97,12 +115,15 @@ module:
       required: false
       defValue: isObject && !this.isDropped
       doc: |
-        Resolved once by the user-facing config.yaml from `outputSoftDrop`, so the
-        soft/hard logic lives in one place instead of being duplicated per stream:
+        Resolved once by the customer-facing config.yaml from `emit_dropped`, so
+        the emit/hard-drop logic lives in one place instead of being duplicated
+        per stream:
 
-        - **hard** (default): `isObject && !this.isDropped` — dropped objects not written
-        - **soft** (`outputSoftDrop` truthy): `isObject` — everything written; the
-          output field compacts the dropped ones
+        - **hard-drop** (default): `isObject && !this.isDropped` — dropped objects not written
+        - **emit** (`emit_dropped` truthy): `isObject` — everything written; routing
+          decision moves downstream to the forwarder based on the wire-level
+          `isDropped` field.
 
-        Each output stream references it via `$?outputDropFilter`. Named outputDropFilter
-        rather than outputFilter, which is a built-in per-stream engine option.
+        Each output stream references it via `$?outputDropFilter`. Named
+        outputDropFilter rather than outputFilter, which is a built-in per-stream
+        engine option.

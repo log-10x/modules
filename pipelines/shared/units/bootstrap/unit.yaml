@@ -46,7 +46,7 @@ unit:
 
         ``` yaml
         tenx: run # set the pipeline to 'run'
-        apiKey: <my-key>
+        licenseKey: <my-license-jwt>
         ...
         ```
 

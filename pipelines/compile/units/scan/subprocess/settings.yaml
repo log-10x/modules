@@ -25,11 +25,15 @@ args:
   - includePaths
   - $=TenXString.join(";", TenXEnv.get("includePaths"))
 
-  - apiKey
-  - $apiKey
+  # forward the license to the scan subprocess (skip empty license values)
+  - airgapped
+  - $=TenXEnv.get("airgapped", false)
 
-  - backendEndpoint
-  - $backendEndpoint
+  - '$=TenXEnv.get("licenseFile") ? "licenseFile" : ""'
+  - $=TenXEnv.get("licenseFile", "")
+
+  - '$=TenXEnv.get("licenseKey") ? "licenseKey" : ""'
+  - $=TenXEnv.get("licenseKey", "")
 
   - runtimeName
   - $=TenXString.concat(TenXEnv.get("runtimeName", "scan"), "-child")

@@ -32,9 +32,9 @@ receiver:
   optimize: false       # readwrite + optimize=true → compact mode
 ```
 
-<h3 id="compact">Compact mode (was Optimizer)</h3>
+<h3 id="compact">Compact mode</h3>
 
-Compact mode was previously a separate app (`@apps/edge/optimizer`). It is now a feature of the receiver: both are the execution arm, both are commanded via GitOps, both operate on stable pattern identity. The former optimizer's deploy/run content is merged into the receiver's [deploy](https://doc.log10x.com/apps/receiver/deploy/) and [run](https://doc.log10x.com/apps/receiver/run/) pages. For SIEM-side plugin install, see the [Splunk](compact/splunk.md) and [Elasticsearch](compact/elasticsearch.md) pages.
+Compact mode is the execution arm for lossless wire-format reduction, commanded via GitOps and operating on stable pattern identity. For SIEM-side plugin install, see the [Splunk](compact/splunk.md) and [Elasticsearch](compact/elasticsearch.md) pages.
 
 ## :material-clipboard-play-outline: Setup Guide
 
@@ -239,9 +239,9 @@ Follow the steps below. Steps that require customization link to the relevant [C
         filebeat.config.inputs:
           enabled: true
           # Nix/OSX
-          path: ${TENX_MODULES}/pipelines/run/modules/input/forwarder/filebeat/receive/tenxNix.yml
+          path: ${TENX_MODULES}/pipelines/run/modules/input/forwarder/filebeat/conf/tenxNix.yml
           # Windows
-          # path: ${TENX_MODULES}/pipelines/run/modules/input/forwarder/filebeat/receive/tenxWin.yml
+          # path: ${TENX_MODULES}/pipelines/run/modules/input/forwarder/filebeat/conf/tenxWin.yml
         ```
 
         **Step 2**: Add the receiver processor:
@@ -777,11 +777,11 @@ Follow the steps below. Steps that require customization link to the relevant [C
     === ":simple-beats: Filebeat"
 
         ```console title="Nix/OSX"
-        $ filebeat -c my-filebeat.yml -e 2>&1 | /opt/tenx-edge/bin/tenx run @run/input/forwarder/filebeat/receive/config.yaml @apps/receiver
+        $ filebeat -c my-filebeat.yml -e 2>&1 | /opt/tenx-edge/bin/tenx run @run/input/forwarder/filebeat @apps/receiver
         ```
 
         ```console title="Windows"
-        $ filebeat -c my-filebeat.yml -e 2>&1 | "c:\program files\tenx-edge\tenx" run @run/input/forwarder/filebeat/receive/config.yaml @apps/receiver
+        $ filebeat -c my-filebeat.yml -e 2>&1 | "c:\program files\tenx-edge\tenx" run @run/input/forwarder/filebeat @apps/receiver
         ```
 
     === ":simple-logstash: Logstash"
@@ -874,7 +874,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
     === ":simple-macos: Homebrew"
 
         ```bash
-        brew uninstall --cask log10x && rm -rf /etc/tenx
+        brew uninstall log10x
         ```
 
     === ":simple-linux: Linux"

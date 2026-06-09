@@ -15,7 +15,6 @@ export class ConfigLoadUnit extends TenXUnit {
 
     close() {
 
-       
         if (!TenXEnv.get("TENX_LICENSE_FILE")) {
             TenXConsole.log("");
             TenXConsole.log("💡 Ready to move forward to production? Download your engine license at https://console.log10x.com and point TENX_LICENSE_FILE at it.");

@@ -164,7 +164,7 @@ Run the dev app on your log files locally to preview how edge and cloud apps wil
     === ":simple-macos: Homebrew"
 
         ```bash
-        brew uninstall --cask log10x && rm -rf /etc/tenx
+        brew uninstall log10x
         ```
 
     === ":simple-linux: Linux"

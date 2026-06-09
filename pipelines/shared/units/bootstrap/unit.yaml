@@ -82,6 +82,22 @@ unit:
         Download a license from your [account](https://console.log10x.com).
 
     - names:
+      - airgapped
+      - TENX_AIRGAPPED
+      description: run without contacting the 10x service
+      type: boolean
+      required: false
+      defValue: false
+      doc: |
+        When `true`, the license is verified locally (signature + claims) and no calls are made to the 10x service —
+        no startup validation, no metrics reporting, no user-attribute enrichment. Suitable for fully airgapped deployments
+        where the engine has no path to the vendor SaaS.
+
+        When `false` (default), the engine additionally validates the license against the 10x service at startup; a non-2xx response refuses to start.
+
+        `demo` and `limited` license types cannot run airgapped — if `airgapped: true` is set with one of these license types, a warning is logged and the engine runs in online mode anyway.
+
+    - names:
       - metricEndpoint
       description: 10x service Prometheus metrics endpoint
       type: string

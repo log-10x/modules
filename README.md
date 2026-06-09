@@ -227,7 +227,7 @@ definitions are open source, **running Log10x requires a commercial license.**
 | What's Open Source | What Requires License |
 |-------------------|----------------------|
 | Module YAML definitions | Log10x engine/runtime |
-| Documentation files | Log10x apps (Reporter, Optimizer, etc.) |
+| Documentation files | Log10x apps (Reporter, Receiver, Retriever) |
 | Schema definitions | Executing pipelines |
 
 **Get a Log10x License:**

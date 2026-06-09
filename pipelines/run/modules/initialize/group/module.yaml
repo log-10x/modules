@@ -32,7 +32,7 @@ unit:
       doc: |
         A list of strings that, when matched at the start of a log line's text, designate it as a group head.
 
-        Unmatched lines default to `false`, indicating they are group children.
+        Unmatched lines default to `false`, indicating they are group children (continuation-by-default).
 
         - `192.` - Indicates a private IP address, common in web server logs (e.g., "192.168.1.1 - - [...]").
         - `10.` - Indicates a private IP range, often in Kubernetes or internal network logs (e.g., "10.244.0.125 - - [...]").

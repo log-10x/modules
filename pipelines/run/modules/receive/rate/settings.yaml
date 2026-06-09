@@ -3,5 +3,55 @@
 # Set the 10x pipeline to 'run'
 tenx: run
 
-# apply the 'rateReceiver' function to all outputs if limit is set
-groupFilters: '$=yield TenXEnv.get("rateReceiverLookupFile") ? "shouldRetainEventWithLookup()" : "shouldRetainEventWithoutLookup()"'
+# Exactly one regulator-decision class is loaded per (mute, cap) cartesian
+# combination, dispatched by the 4-way ternary below. The four classes have
+# mutually-exclusive `shouldLoad` gates:
+#   - rateReceiverObject             (rate-object-local.js):     !mute && !cap  -> shouldRetainEvent()
+#   - rateReceiverCapObject          (rate-object-cap.js):       !mute &&  cap  -> shouldRetainEventWithCap()
+#   - rateReceiverLookupObject       (rate-object-lookup.js):     mute && !cap  -> shouldRetainEventWithMute()
+#   - rateReceiverLookupCapObject    (rate-object-lookup-cap.js): mute &&  cap  -> shouldRetainEventWithMuteAndCap()
+#
+# Each class duplicates the regulator algorithm with the lookups it needs
+# inlined. The cartesian split exists because TenX DSL parse-validates
+# `TenXLookup.get` against runtime-registered tables -- a class that
+# references a lookup may-not-be-loaded fails engine init. Cross-class
+# getter composition was attempted first and verified broken on the demo
+# cluster: the regulator class could not read a getter declared on a
+# separate cap-class. Inlining + cartesian shouldLoad is the working pattern.
+#
+# Method names live in a GLOBAL namespace across all parsed classes, so the
+# four getters have four distinct names. The single groupFilters slot
+# dispatches the right one per event; the other three classes have
+# shouldLoad=false and their methods are never invoked.
+#
+# Outer quotes on the list entry are REQUIRED -- the inner `: "..."` of the
+# ternary is YAML mapping syntax otherwise.
+groupFilters:
+  - '$=yield (TenXEnv.get("rateReceiverLookupFile") && TenXEnv.get("rateReceiverCapLookupFile")) ? "shouldRetainEventWithMuteAndCap()" : TenXEnv.get("rateReceiverLookupFile") ? "shouldRetainEventWithMute()" : TenXEnv.get("rateReceiverCapLookupFile") ? "shouldRetainEventWithCap()" : "shouldRetainEvent()"'
+
+# ============================ Metric Dimension ===============================
+#
+# Append `isDropped` to the global enrichmentFields (same additive mechanism as
+# run/modules/initialize/k8s & level settings.yaml). Each pattern's all_events /
+# emitted_events series then carries an `isDropped` label, bifurcating it into
+# the regulator-marked events (true: compacted by 10x, or down-tiered by the
+# SIEM e.g. Datadog Flex) vs the kept events (false). This makes per-service /
+# per-pattern attribution of reduction a DIRECT query (all_events{isDropped="true"})
+# instead of an all-minus-emitted subtraction, with no extra aggregator.
+#
+# `isDropped` is a first-class field accessor (EventIsDroppedFieldAccessor),
+# get-by-name and groupable exactly like any enrichment field. Boolean, so it at
+# most doubles series for patterns that are partially regulated; for a pattern
+# with no cap it is uniformly "false" (harmless).
+include:
+  - run/modules/initialize/module.yaml
+
+enrichmentFields:
+  # The aggregator groups raw events by the intrinsic `isDropped` (correct at
+  # event time), but a TenXSummary instance is itself never dropped, so reading
+  # the intrinsic on the summary at metric-output time returns false for every
+  # row. The `l1e_` prefix forces the resolver to read the value ENCODED INTO
+  # the summary (the grouped bucket value) instead of the summary's intrinsic.
+  # So: at event time isSummary is false -> intrinsic isDropped (true/false);
+  # at output time isSummary is true -> l1e_isDropped (the encoded bucket value).
+  - 'isDropped=isSummary?l1e_isDropped:isDropped'

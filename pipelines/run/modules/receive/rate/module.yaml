@@ -67,8 +67,28 @@ module:
         ```
         Each (event type × app) combo gets its own cap. Provides fairness within apps but allows apps with many event types to potentially exceed one total cap.
 
-        Use `container` (not `pod`) for aggregation—`container` name is stable across replicas while `pod` names are unique per instance.
+        The container is configured separately via `rateReceiverContainerField` (it scopes the
+        share denominator), so `fieldNames` identifies only the log pattern itself.
       defValue: [symbolMessage]
+
+    - names:
+      - rateReceiverContainerField
+      description: field whose value scopes the per-container share denominator
+      type: string
+      required: false
+      doc: |
+        names the field whose value scopes the share denominator (the per-container total).
+        A pattern's share is measured against the total volume of the container it belongs to,
+        so the cap is enforced per `(pattern, container)`.
+
+        Defaults to the [k8s container name](https://doc.log10x.com/run/initialize/k8s/), which is
+        stable across pod replicas — scaling from 1 to 10 pods does not bypass the cap, and a
+        sidecar never consumes the application container's allowance. Use `container`, never `pod`.
+
+        When the field is absent on an event (non-k8s input, or no k8s extractor configured), the
+        regulator falls back to a single node-wide bucket and enforces the cap per pattern across
+        the node.
+      defValue: ""
 
     - names:
       - rateReceiverResetIntervalMs
@@ -76,82 +96,56 @@ module:
       type: number
       required: false
       doc: |
-        defines the interval in milliseconds after which to reset rate counters.
-        Controls how frequently the receiver resets its tracking counters.
+        defines the window in milliseconds over which a pattern's recent share is measured. The
+        counters reset every interval, so share reflects recent volume rather than all-time totals.
 
-        Default of 5 minutes (300000ms) provides stable cost averages and smooths out bursts while remaining responsive.
-        Shorter windows (e.g., 1 minute) are more reactive but noisier; longer windows (e.g., 10 minutes) are smoother but slower to adapt.
+        Shorter windows (e.g., 1 minute) are more reactive but noisier; longer windows are smoother but
+        slower to adapt. The default of 4 minutes balances the two.
 
-        **Trade-offs:**
-        - **1 minute**: Very responsive for bursts, but unstable averages and over-reactive throttling
-        - **5 minutes**: Balanced—stable averages, catches sustained patterns, aligns with hourly budgets (1/12 hour)
-        - **10+ minutes**: Very stable for long-term trends, but slower to adapt and less suitable for short-lived nodes
-
-        **Validation:** Must be at least 60000 milliseconds (1 minute).
-      defValue: 300000
+        **Validation:** Must be at least 60000 milliseconds (1 minute). The engine caps counter reset
+        intervals at 255 seconds, so the effective maximum window is ~4.25 minutes — values above that
+        are clamped.
+      defValue: 240000
 
     - names:
       - rateReceiverMinRetentionThreshold
-      description: minimum retention threshold for events when budget is exceeded
+      description: default retention floor for severity levels not listed in severityFloors
       type: number
       required: false
       doc: |
-        defines the minimum retention rate (0.0 to 1.0) applied to events even when budget is exceeded.
-        Ensures some events are always retained even for very high-spend patterns, preventing complete data loss.
-
-        This value ensures a floor on retention, preventing complete data loss even when budget is exceeded.
-        The severity level boost (from `rateReceiverLevelBoost`) is multiplied with this value to determine the actual minimum retention threshold for each severity level.
-
-        **How boost works:**
-        - Boost only affects the minimum retention threshold, not the calculated threshold based on budget
-        - When under budget: retention threshold is based on budget utilization (boost has no effect)
-        - When over budget: retention threshold is clamped to `minRetentionThreshold * boost`
-
-        **Examples:**
-        - `minRetentionThreshold: 0.1` with `boost: 1.0` (INFO) → minimum 10% retention when over budget
-        - `minRetentionThreshold: 0.1` with `boost: 2.0` (ERROR) → minimum 20% retention when over budget
-        - `minRetentionThreshold: 0.1` with `boost: 0.25` (DEBUG) → minimum 2.5% retention when over budget
-
-        **Important:** Boost values < 1.0 reduce minimum retention for low-priority events. This prevents them from consuming budget when over limit, while still ensuring some events are retained.
-
-        **Trade-offs:**
-        - **0.01 (1%)**: Very aggressive throttling, minimal retention when over budget. Use only if budget is critical.
-        - **0.1 (10%)**: Balanced default. Ensures observability even during budget overruns while still enforcing cost control.
-        - **0.25 (25%)**: Conservative. Prioritizes data retention over strict budget enforcement.
+        defines the retention floor (0.0 to 1.0) used for any severity level not present in
+        `rateReceiverSeverityFloors`. Ensures a pattern over its cap still retains at least this
+        fraction of events whose level has no explicit floor, preventing complete data loss.
 
         **Validation:** Must be greater than 0.01.
       defValue: 0.1
 
     - names:
-      - rateReceiverLevelBoost
-      description: severity level boost mapping for retention rates
+      - rateReceiverSeverityFloors
+      description: minimum retention per severity level, applied as an absolute floor
       type: list
       required: false
       doc: |
-        defines a map of [severity levels](https://doc.log10x.com/run/initialize/level/) to boost multipliers for minimum retention thresholds.
-        Higher severity events can be given higher minimum retention rates through boost values.
+        defines a map of [severity levels](https://doc.log10x.com/run/initialize/level/) to a minimum
+        retention fraction. The floor is **absolute** (not a multiplier) and **beats the share cap**:
+        even a pattern over its cap keeps at least this fraction of each level, so high-severity
+        events are never fully suppressed.
 
-        The boost multiplier is applied only to `rateReceiverMinRetentionThreshold`, not to the entire retention threshold.
-        This ensures critical events (ERROR, FATAL) have higher minimum retention floors when budget is exceeded,
-        while preventing boost values < 1.0 from reducing retention when under budget.
+        The floor also applies under a mute-file entry, so a `0.0` mute never silences ERROR/FATAL.
 
-        **How it works:**
-        - The receiver calculates a retention threshold based on budget utilization
-        - The threshold is clamped to at least `rateReceiverMinRetentionThreshold * boost`
-        - Boost only affects the minimum floor, not the calculated threshold
-        - Higher boost values result in higher minimum retention for events of that severity when over budget
-        - Lower boost values (< 1.0) reduce minimum retention for low-priority events (e.g., DEBUG, TRACE)
+        Floor-map keys must match the level vocabulary emitted by the level enrichment. Any level not
+        listed uses `rateReceiverMinRetentionThreshold`.
 
         For example:
 
         ``` yaml
-        levelBoost:
-          - TRACE=0.25
-          - DEBUG=0.5
-          - INFO=1
-          - WARN=1.5
-          - ERROR=2
-          - FATAL=3
+        severityFloors:
+          - TRACE=0.1
+          - DEBUG=0.1
+          - INFO=0.1
+          - WARN=0.3
+          - ERROR=0.5
+          - FATAL=0.5
         ```
 
     - names:
@@ -165,33 +159,41 @@ module:
         `container`, `httpCode`). The key format is the same one the local receiver uses
         for per-node counters.
 
-        When this option is set, the receiver switches from local per-node budget sampling
-        to mute-file mode: it does nothing until an event's field-set matches an entry in
-        the file, at which point that entry's `sampleRate` and `untilEpochSec` decide retention.
+        When this option is set, the mute file **composes with** the regulator rather than
+        replacing it: a listed, active pattern is decided by its file entry (the human
+        declaration wins, and the regulator is skipped for that event), while every other
+        pattern is handled by the share-based regulator.
 
-        **File format** — one entry per line, keyed by the joined field-set value:
+        **File format** (CSV; header row + one comma-separated entry per row):
 
         ```
-        <fieldSet>=<sampleRate>:<untilEpochSec>[:<reason>]
+        fieldSet,value
+        <fieldSetKey>,<sampleRate>:<untilEpochSec>[:<reason>]
         ```
 
-        - `fieldSet` — the joined values of the fields named in `rateReceiverFieldNames`,
+        - `fieldSetKey` — the joined values of the fields named in `rateReceiverFieldNames`,
           separated by `_`. With `rateReceiverFieldNames: [symbolMessage]` the key is just
-          `symbolMessage` (e.g. `Error_syncing_pod`). With `[symbolMessage, container]` the
-          key is `symbolMessage_container` (e.g. `heartbeat_debug_frontend`).
-        - `sampleRate` — probability in `[0.0, 1.0]` that a matching event is retained.
-          `0.0` = full mute; `0.1` = keep 10%; `1.0` = no-op.
+          the symbolMessage (e.g. `Error_syncing_pod`). With `[symbolMessage, container]`
+          the key is `symbolMessage_container` (e.g. `heartbeat_debug_frontend`).
+        - `sampleRate` — probability in `[0, 1.0]` that a matching event is retained.
+          `0` = full mute; `0.1` = keep 10%; `1.0` = no-op.
         - `untilEpochSec` — mute expires at this Unix epoch (seconds). Past that, the
           entry becomes a no-op until someone edits or removes it. Self-healing by design.
-        - `reason` — optional free-text string for audit. Not used at runtime.
+        - `reason` — optional free-text string for audit. Not used at runtime. Must not
+          contain commas (would break CSV parsing).
 
         **Example** (with `rateReceiverFieldNames: [symbolMessage]`):
 
         ```
-        Error_syncing_pod=0.10:1744848000:pod error spam OPS-4821
-        heartbeat_debug=0.00:1744416000:k8s liveness 200s
-        jwt_validated=0.25:1744502400:auth flood after deploy
+        fieldSet,value
+        Error_syncing_pod,0.10:1744848000:pod error spam OPS-4821
+        heartbeat_debug,0:1744416000:k8s liveness 200s
+        jwt_validated,0.25:1744502400:auth flood after deploy
         ```
+
+        The file is hot-reloaded on in-place writes (the gitops pattern); a Kubernetes
+        `ConfigMap` mount won't reload because the CM swap is a symlink rename, not an
+        in-place write.
 
         **Why this shape:**
 
@@ -208,13 +210,10 @@ module:
           mute file is the interface.
 
         **Severity floor still applies.** Even a `0.0` mute will retain high-severity
-        events at `rateReceiverMinRetentionThreshold * boost` (see `rateReceiverLevelBoost`).
-        This prevents a poorly-scoped mute from silencing ERROR/FATAL traffic.
+        events at their `rateReceiverSeverityFloors` fraction. This prevents a poorly-scoped
+        mute from silencing ERROR/FATAL traffic.
 
-        When `rateReceiverLookupFile` is **unset**, the receiver falls back to the local
-        per-node budget strategy driven by `rateReceiverBudgetPerHour`,
-        `rateReceiverMaxSharePerFieldSet`, and `rateReceiverIngestionCostPerGB`. Those
-        options are ignored in mute-file mode.
+        When `rateReceiverLookupFile` is **unset**, the regulator runs alone on every pattern.
       defValue: ""
 
     - names:
@@ -232,62 +231,175 @@ module:
       defValue: 300000
 
     - names:
-      - rateReceiverBudgetPerHour
-      description: target spending budget per hour in USD
-      type: number
+      - rateReceiverCapLookupFile
+      description: declarative per-container byte cap file, keyed by the `rateReceiverContainerField` value
+      type: string
       required: false
       doc: |
-        defines the soft target budget per hour for total cost across all event types on this node.
-        Actual spend may exceed this by 10-20% due to soft enforcement.
+        defines the path to a declarative **per-container cap file**. Each entry assigns a byte cap
+        to a specific container (the value of `rateReceiverContainerField`, which defaults to the k8s
+        container name). The file's cap wins per-event over `rateReceiverAbsoluteCap`: listed
+        containers get the file's cap, unlisted containers fall back to the fleet-wide cap (or to
+        no cap, if `rateReceiverAbsoluteCap` is `0`).
 
-        Hourly budgets align naturally with cloud infrastructure costs and work for both short-lived and long-lived nodes.
+        **File format** (CSV; header row + one comma-separated entry per row):
 
-        **Examples:**
-        - $1.50/hour → reasonable for a production log forwarder (~$36/day, ~$1080/month if running 24/7)
-        - $0.10/hour → conservative for dev/test environments
-        - $0.02/hour → minimal for low-volume services
-      defValue: 1.0
+        ```
+        container,cap
+        <container>,<bytes>[:<untilEpochSec>][:<reason>]
+        ```
+
+        - `container` — value of `rateReceiverContainerField` for the events to cap. In k8s this is
+          the k8s container name, stable across pod replicas.
+        - `bytes` — integer byte cap per pattern per container per window. `0` exempts the
+          container from the absolute cap entirely (the over-cap branch is skipped for it).
+        - `untilEpochSec` — optional Unix-epoch (seconds) expiry. Past that, the entry becomes a
+          no-op and the fallback cap applies.
+        - `reason` — optional free-text string for audit. Not used at runtime. Must not contain
+          commas (would break CSV parsing).
+
+        **Example**:
+
+        ```
+        container,cap
+        payment-service,4194304:1735689600:annual budget protection PAY-101
+        auth-service,2097152
+        istio-proxy,0:1735689600:exempt platform sidecar PLAT-42
+        ```
+
+        **Why this shape**:
+
+        - **Container-keyed**, matching the regulator's container axis. The file's key is the same
+          value the regulator's counters are bucketed by, so listed caps map 1:1 to counters without
+          translation.
+        - **Git-friendly**: a human-readable declaration that lives in a config repo, reviewed via
+          PR, `git blame`-d for who/why.
+        - **Self-healing**: every entry can carry an explicit expiry, so forgotten caps eventually
+          stop filtering instead of silently dropping production data forever.
+        - **AI-editable**: an operator can ask an assistant (e.g., Claude Code via the Log10x MCP
+          `configure_regulator` tool) to derive a cap from a monthly dollar budget, append the
+          entry, and open a PR. The cap file is the interface.
+
+        **Severity floor still applies.** Even at a tight cap the regulator's `rateReceiverSeverityFloors`
+        retain ERROR/CRITICAL events at their floor fraction, so a tight cap never fully silences
+        high-severity traffic.
+
+        When `rateReceiverCapLookupFile` is **unset**, every container falls back to
+        `rateReceiverAbsoluteCap` (which itself defaults to `0` = disabled).
+
+        The file is hot-reloaded on in-place writes (the gitops pattern); a Kubernetes
+        `ConfigMap` mount won't reload because the CM swap is a symlink rename, not an
+        in-place write.
+      defValue: ""
 
     - names:
-      - rateReceiverMaxSharePerFieldSet
-      description: maximum % of total spend any single field set can consume
+      - rateReceiverCapLookupRetain
+      description: retention period for the per-container cap file before it is considered stale
       type: number
       required: false
       doc: |
-        defines the maximum share (0.0 to 1.0) of the total budget that any single unique field set can use.
-        A "field set" is a unique combination of the field values specified in `rateReceiverFieldNames`.
+        Defines the retention period (in milliseconds) for the cap file (`rateReceiverCapLookupFile`).
+        If the file's last modified time is older than this period, a warning is logged. The cap
+        entries continue to apply; the staleness check is advisory so operators notice when an
+        automated tooling pipeline has stopped updating the file.
 
-        Enforced independently of whether the total budget is exceeded—prevents noisy field sets from dominating even when under budget.
+        **Validation:** Must be greater than 60000 milliseconds.
+      defValue: 300000
 
-        In global mode, this is enforced cluster-wide based on aggregate spend data from the lookup file.
+    - names:
+      - rateReceiverWarmupMs
+      description: per-container grace period before this regulator instance starts capping
+      type: number
+      required: false
+      doc: |
+        defines a per-container grace period in milliseconds. A container is left unregulated for this
+        long after this regulator instance first sees its events. The default is 5 minutes.
 
-        **Example with `rateReceiverFieldNames: [symbolMessage]`:**
-        - 0.2 means no single event type (e.g., "heartbeat_debug") can use more than 20% of total spend
-        - If "heartbeat_debug" is costing 35% of total, it gets throttled to 20% regardless of whether you're over budget
+        Why it exists: the regulator's per-pattern sample counts start empty. Without a few minutes of
+        accumulation, a low-volume pattern can look like the dominant one purely because of ordering.
+        The warmup defers cap decisions until there are enough samples to tell a noisy pattern from a
+        quiet one with confidence. This is a **delay only**; no learned baseline is built, and the
+        only state that survives is the container's first-seen timestamp.
 
-        **Example with `rateReceiverFieldNames: [container]` (Kubernetes: per-app total):**
-        - Each app (e.g., "frontend", "backend", "payment-service") is tracked separately
-        - 0.2 means no single app can exceed 20% of total spend across ALL its event types
-        - Aggregates across all pods and all event types for each app
-        - If "frontend" app (all events, 5 pods) costs 30%, it gets throttled to 20%
+        "First sees" is per regulator instance, not per container birth. A container that has been
+        running for hours but whose events have only just started flowing through this regulator
+        (e.g. after a regulator restart or forwarder reconnect) restarts the warmup window. On a
+        daemonset rolling restart the cap is therefore disabled for `warmupMs` per node as it cycles.
 
-        **Example with `rateReceiverFieldNames: [symbolMessage, container]` (Kubernetes: per event type per app):**
-        - Each unique combination (e.g., "error_login|frontend", "heartbeat_debug|backend") is tracked separately
-        - 0.2 means no single (event type × app) can exceed 20% of total spend
-        - If "frontend" app's "heartbeat_debug" events cost 30% across its 5 pods, they get throttled to 20%
-        - Note: "frontend" could have multiple event types, each with their own 20% cap
-      defValue: 0.2
+        Lower the value for fast-starting apps that should be capped sooner after a restart. Raise it
+        for slow-ramping JVMs or workloads with long init phases. Patterns that are legitimately
+        dominant in steady state belong on the mute file, not in a longer warmup.
+      defValue: 300000
+
+    - names:
+      - rateReceiverBaselineCount
+      description: events per pattern kept each window regardless of share
+      type: number
+      required: false
+      doc: |
+        defines how many events of each `(pattern, container)` are always kept per window, regardless
+        of share, so even a heavily-capped pattern leaves a small forensic sample to inspect during an
+        incident.
+      defValue: 5
+
+    - names:
+      - rateReceiverAbsoluteCap
+      description: fleet-wide byte cap per pattern per container per window; `0` (default) disables the cap unless overridden per-container via `rateReceiverCapLookupFile`
+      type: number
+      required: false
+      doc: |
+        defines a **fleet-wide** byte cap: the maximum bytes of a single pattern (a unique combination
+        of `rateReceiverFieldNames` values) that may be retained per container within the current
+        window (`rateReceiverResetIntervalMs`). Applies to every container the regulator sees, unless
+        that container has its own entry in `rateReceiverCapLookupFile`, which wins per-event.
+
+        At or below the resolved cap the pattern is kept untouched. Above it, the regulator engages:
+        if the pattern is also above `rateReceiverMinSharePercent` (the sanity guard), the event is
+        sampled at the severity floor probability.
+
+        **`0` (the default) disables the fleet-wide cap.** With no fleet-wide cap and no per-container
+        entry in `rateReceiverCapLookupFile`, the regulator's over-cap branch never engages for that
+        container. Protection is strictly opt-in. Three configurations are first-class:
+
+        - **Per-container only**: set `rateReceiverCapLookupFile`. Listed containers get their cap;
+          unlisted containers are unregulated by the absolute cap. Most selective.
+        - **Fleet-wide only**: set `rateReceiverAbsoluteCap` to a positive integer. Applies to every
+          container.
+        - **Both**: per-container entries override the fleet-wide cap; unlisted containers fall back
+          to the fleet-wide cap (safety floor).
+
+        **Example:** 10485760 (10 MB) means no single pattern can exceed 10 MB per container per
+        5-minute window. The maximum monthly spend per pattern per container can be computed from
+        this cap and the vendor's per-GB rate.
+      defValue: 0
+
+    - names:
+      - rateReceiverMinSharePercent
+      description: minimum share of container volume below which a pattern is exempt from sampling
+      type: number
+      required: false
+      doc: |
+        defines the share-of-container sanity guard (0.0 to 1.0): if a pattern is above the absolute
+        cap BUT below this share of its container's total volume, the regulator skips it. The pattern
+        is part of a legitimately high-volume container (busy API gateway, access log workload), not
+        a noisy outlier.
+
+        Share is `(pattern bytes + event) / (container bytes + event)` over the current window.
+
+        **Example:** 0.05 means a pattern above the absolute cap is still retained if it represents
+        less than 5% of its container's total volume. Prevents false positives on naturally chatty
+        containers.
+      defValue: 0.05
 
     - names:
       - rateReceiverIngestionCostPerGB
-      description: vendor ingestion cost per GB in USD
+      description: vendor ingestion cost per GB in USD, for rendering savings in dollars
       type: number
       required: false
       doc: |
-        defines the cost per GB charged by your observability vendor for log ingestion.
-        Used to calculate per-event costs (event byte size × cost per GB) for budget enforcement.
-
-        **Note:** `ingestionCostPerGB` only affects per-node budget mode. In mute-file mode, sampling is declarative and does not use cost calculations.
+        defines the cost per GB charged by your observability vendor for log ingestion. Used **only**
+        to render savings metrics in dollars (dropped bytes × cost per GB); it does **not** affect the
+        keep/drop decision, which is share-based.
 
         **Common vendor pricing (2025):**
         - **Splunk Cloud**: ~$1.50/GB (varies by contract, SKU)
@@ -296,6 +408,4 @@ module:
         - **New Relic**: ~$0.30/GB (Data Plus)
         - **Sumo Logic**: ~$1.50/GB (depends on plan)
         - **AWS CloudWatch Logs**: ~$0.50/GB ingestion + $0.03/GB storage
-
-        **Example:** A 10KB error log at $1.50/GB costs ~$0.000015. Over 1 million such events per hour, that's $15/hour ($360/day). The receiver tracks this spend per field set and enforces your `rateReceiverBudgetPerHour` by probabilistically sampling events when over budget.
       defValue: 1.5

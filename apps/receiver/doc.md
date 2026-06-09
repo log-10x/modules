@@ -6,7 +6,7 @@ The Receiver runs alongside your log forwarder and acts on events as they flow t
 
 - **Read-only** (observation): receive events from the forwarder, run aggregators, and publish pattern-identity metrics. Events keep flowing to your destination unchanged. Use when you want visibility into per-pattern volume and cost without touching the event stream.
 - **Read-write** (receiving): receive events, then write back a shaped stream to the forwarder. Two sub-options inside read-write:
-    - **Filter** (lossy): drop events matching a rule via [rate-based](https://doc.log10x.com/run/receive/rate) filtering or declarative [field-set mute files](https://doc.log10x.com/run/receive/rate/#mute-file-mode-declarative-field-set-caps). Safe defaults are deny; explicit allow required. Up to 80% volume reduction.
+    - **Filter** (lossy): drop events matching a rule via [rate-based](https://doc.log10x.com/run/receive/rate) filtering or declarative [mute files](https://doc.log10x.com/run/receive/rate/#protection-list). Safe defaults are deny; explicit allow required. Up to 80% volume reduction.
     - **Compact** (lossless): replace events with a compact wire-form that the downstream SIEM plugin expands at query time. 50–80% reduction (64% on K8s OTel logs) with no dashboard or query changes. Requires the expand plugin installed in [Splunk](compact/splunk.md) or [Elasticsearch](compact/elasticsearch.md).
 
 All modes are commanded via GitOps. Operators (or an agent via the [log10x-mcp](https://github.com/log-10x/log10x-mcp) server) open PRs in the customer's config repo; the receiver pulls the latest on reload.
@@ -691,44 +691,40 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
     Configure [rate receivers](https://doc.log10x.com/run/receive/rate/) for common scenarios. Edit these settings in your receiver [config.yaml](#receivers).
 
-    === ":material-percent: Per-Event-Type Budget"
+    === ":material-percent: Per-Pattern Cap"
 
-        Cap any single event type at 20% of total spend. Use the [Level Classifier](https://doc.log10x.com/run/initialize/level/) to enrich events with severity levels, so ERROR events have a higher minimum retention floor than DEBUG and critical events survive throttling.
+        Cap any single log pattern at 20% of its container's volume. The [Level Classifier](https://doc.log10x.com/run/initialize/level/) enriches events with severity, so the floor keeps ERROR events flowing even when a pattern is over its cap.
 
         ```yaml
         rateReceiver:
-          budgetPerHour: 1.50
-          ingestionCostPerGB: 1.5          # Splunk Cloud
-          maxSharePerFieldSet: 0.2         # No event type exceeds 20%
-          minRetentionThreshold: 0.1       # At least 10% retained when over budget
-          levelBoost:
-            - TRACE=0.25
-            - DEBUG=0.5
-            - INFO=1
-            - WARN=1.5
-            - ERROR=2
-            - FATAL=3
+          fieldNames:
+            - symbolMessage              # the pattern identity
+          containerField: container      # scopes the share denominator
+          maxSharePerFieldSet: 0.2       # no pattern exceeds 20% of its container
+          severityFloors:
+            - INFO=0.1
+            - WARN=0.3
+            - ERROR=0.5
         ```
 
-        With `minRetentionThreshold: 0.1` and `levelBoost`, the minimum retention floor when over budget is: DEBUG = 5% (0.1 &times; 0.5), INFO = 10% (0.1 &times; 1), ERROR = 20% (0.1 &times; 2). Under budget, all events pass through — boost only affects the floor.
+        The floor beats the cap: a pattern over 20% still keeps Error 50%, Warn 30%, Info 10%. At or below the cap every event passes through untouched.
 
     === ":material-kubernetes: Multi-App Kubernetes"
 
-        Prevent any single app from exceeding 20% of the budget across all its pods. Uses [k8s container name](https://doc.log10x.com/run/initialize/k8s/) for stable aggregation across replicas.
+        Cap each pattern per app, scoped by container so all of an app's replicas share one cap. The [container name](https://doc.log10x.com/run/initialize/k8s/) stays constant across pods.
 
         ```yaml
         rateReceiver:
           fieldNames:
             - symbolMessage
-            - container                    # Same name across all pod replicas
-          ingestionCostPerGB: 2.50         # Datadog
+          containerField: container      # same name across all pod replicas
         ```
 
-        Each (event type &times; app) combination gets its own 20% cap. Scaling from 1 to 10 pods doesn't bypass limits because `container` name is stable across replicas.
+        Each (pattern, container) pair gets its own 20% cap. Scaling from 1 to 10 pods does not bypass it because the container name is stable across replicas.
 
     === ":material-file-document-edit-outline: Mute File (GitOps)"
 
-        Apply a declarative, field-set keyed mute file pulled from a git repo. Entries are keyed by the same `rateReceiverFieldNames` values the local receiver uses (e.g. `symbolMessage`), so mutes target the same patterns the Reporter attributes cost to. Each entry caps a specific pattern with an explicit sample rate and epoch expiry, so mutes are diff-reviewed, audited, and self-healing.
+        Layer a declarative mute file over the regulator, pulled from a git repo. Entries are keyed by the same `fieldNames` values the regulator uses (e.g. `symbolMessage`), so mutes target the same patterns a Reporter attributes cost to. A listed, active pattern is decided by its entry; every other pattern stays on the cap. Each entry has an explicit sample rate and epoch expiry, so mutes are diff-reviewed, audited, and self-healing.
 
         ```yaml
         rateReceiver:
@@ -736,10 +732,10 @@ Follow the steps below. Steps that require customization link to the relevant [C
             - symbolMessage
           lookup:
             file: /etc/log10x/config/data/sample/mutes/mutes.csv
-            retain: 300000                 # 5 minutes — log a drift warning if stale
+            retain: 300000                 # mark stale after 5 minutes
         ```
 
-        Entries in `mutes.csv` look like `Error_syncing_pod=0.10:1744848000:pod error spam OPS-4821`. See [mute file mode](https://doc.log10x.com/run/receive/rate/#mute-file-mode-declarative-field-set-caps) for the full format and workflow.
+        Entries in `mutes.csv` look like `Error_syncing_pod=0.10:1744848000:pod error spam OPS-4821`. See [protection list](https://doc.log10x.com/run/receive/rate/#protection-list) for the format and workflow.
 
 ??? tenx-initializers "Step 7: Enrichments (optional)"
 

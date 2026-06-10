@@ -57,6 +57,12 @@ args:
   - '$=TenXEnv.get("inputPaths") ? "inputPaths" : ""'
   - $=TenXString.join(";", TenXEnv.get("inputPaths"))
 
+  # chain the parent pipeline temp folder as an input path, so the subprocess
+  # scans content the parent expanded there (archives, pulled sources) while
+  # keeping its own process temp folder
+  - '$=TenXEnv.get("tenx.io.tmpdir") ? "inputPaths" : ""'
+  - '$=TenXEnv.get("tenx.io.tmpdir") ? TenXEnv.get("tenx.io.tmpdir") + "/" + TenXEnv.get("uniqueId") : ""'
+
   # 'scanInProcess' designates the worker process as a subprocess of the current 10x process
   - scanInProcess
   - true

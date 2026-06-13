@@ -31,10 +31,10 @@ module:
   #   -------------|-----------------|--------------------------------------------------
   #   false        | false           | hard-drop the bad ones. Kept events emit fullText.
   #   false        | true            | hard-drop the bad ones. Kept events emit compacted.
-  #   true         | false           | emit everything fullText. Forwarder routes by `isDropped`.
+  #   true         | false           | emit everything fullText. Forwarder routes by `routeState`.
   #   true         | true            | emit everything compacted. (niche)
   #
-  # `isDropped` is always written as a top-level field on the wire, so the
+  # `routeState` is always written as a top-level field on the wire, so the
   # downstream forwarder can route by it regardless of which combination is set.
   # The customer-facing config.yaml maps these two flags into the engine's
   # internal `outputDropFilter` and `outputEncodeField` primitives via $=yield
@@ -72,7 +72,7 @@ module:
 
     - names:
       - emit_dropped
-      description: whether regulator-marked (`isDropped=true`) events survive the output filter
+      description: whether regulator-marked (`routeState="drop"`) events survive the output filter
       type: string
       required: false
       doc: |
@@ -80,9 +80,9 @@ module:
         forwarder. Orthogonal to `compact_emitted`.
 
         - **unset (default) = hard-drop**: outputDropFilter resolves to
-          `isObject && !this.isDropped`, dropped events never leave the engine.
+          `isObject && !isRoute("drop")`, dropped events never leave the engine.
         - **truthy = emit**: outputDropFilter resolves to `isObject`, all events
-          flow. The downstream forwarder routes by the wire-level `isDropped`
+          flow. The downstream forwarder routes by the wire-level `routeState`
           record field.
 
         Use truthiness (engine string `==` is identity compare): set a non-empty
@@ -113,16 +113,16 @@ module:
       description: the filter expression each output stream uses to decide whether a marked object is written
       type: string
       required: false
-      defValue: isObject && !this.isDropped
+      defValue: isObject && !isRoute("drop")
       doc: |
         Resolved once by the customer-facing config.yaml from `emit_dropped`, so
         the emit/hard-drop logic lives in one place instead of being duplicated
         per stream:
 
-        - **hard-drop** (default): `isObject && !this.isDropped` — dropped objects not written
+        - **hard-drop** (default): `isObject && !isRoute("drop")` — dropped objects not written
         - **emit** (`emit_dropped` truthy): `isObject` — everything written; routing
           decision moves downstream to the forwarder based on the wire-level
-          `isDropped` field.
+          `routeState` field.
 
         Each output stream references it via `$?outputDropFilter`. Named
         outputDropFilter rather than outputFilter, which is a built-in per-stream

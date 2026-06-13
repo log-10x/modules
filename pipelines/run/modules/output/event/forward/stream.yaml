@@ -31,8 +31,8 @@ output:
     # 'filter' decides whether a (possibly regulator-marked) object is written.
     #  Resolved once in the forwarder config.yaml from `outputSoftDrop` and shared
     #  via $?outputDropFilter (default below = hard): soft = "isObject" (write all),
-    #  hard = "isObject && !this.isDropped" (omit dropped).
-    filter: $?outputDropFilter=isObject && !this.isDropped
+    #  hard = "isObject && !isRoute(\"drop\")" (omit dropped).
+    filter: $?outputDropFilter=isObject && !isRoute("drop")
 
     # 'path' points to the log4j2 configuration used for the output's
     #  appender and logger at: https://github.com/log-10x/modules/blob/main/pipelines/run/modules/output/event/forward/log4j2.yaml

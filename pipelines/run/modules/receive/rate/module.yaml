@@ -231,6 +231,35 @@ module:
       defValue: 300000
 
     - names:
+      - rateReceiverActionLookupFile
+      description: declarative per-service action file, keyed by the `rateReceiverContainerField` value; decides the disposition of each service's regulator excess
+      type: string
+      required: false
+      doc: |
+        Defines the path to a declarative **per-service action file** (sibling to the cap file).
+        Each entry assigns the disposition of a service's regulator-identified excess: `drop`
+        (default), `offload` (to customer S3), `tier_down` (SIEM cheap tier), `compact` (lossless
+        encode), `sample`, or `pass`. The byte cap (`rateReceiverCapLookupFile`) still bounds the
+        excess; the action only decides what happens to it. Unlisted services default to `drop`
+        (the original regulator behavior). Read by the cap-variant regulator classes, which call
+        `route(action)` at the over-budget decision point instead of a hardcoded drop.
+
+        **File format** (CSV; header row + one comma-separated entry per row):
+
+        ```
+        container,action
+        <container>,<action>[:<untilEpochSec>][:<reason>]
+        ```
+
+        - `container` — value of `rateReceiverContainerField` (the k8s container = the service).
+        - `action` — one of `drop` / `offload` / `tier_down` / `compact` / `sample` / `pass`.
+        - `untilEpochSec` — optional Unix-epoch (seconds) expiry; past it the entry is a no-op.
+        - `reason` — optional free-text for audit. Must not contain commas (would break CSV parsing).
+
+        Intended to be managed via GitOps + the `log10x_configure_engine` MCP tool, which derives
+        per-service actions from the per-pattern action plan it already computes.
+
+    - names:
       - rateReceiverCapLookupFile
       description: declarative per-container byte cap file, keyed by the `rateReceiverContainerField` value
       type: string

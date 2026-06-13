@@ -7,7 +7,7 @@ module:
 
   title: compact receiver
 
-  description: Per-container compaction decision via a declarative cap-file. Decides whether each event is emitted via encode() (compact templateHash+vars form, ~20-40x volume reduction) or as fullText. GitOps-controlled — the MCP writes per-container entries via PR, engine hot-reloads the cap-file without restart.
+  description: Per-pattern compaction decision via a declarative cap-file. Decides whether each event is emitted via encode() (compact templateHash+vars form, ~20-40x volume reduction) or as fullText. GitOps-controlled — the MCP writes per-pattern entries via PR, engine hot-reloads the cap-file without restart.
 
   # 'configFolder' specifies a folder containing default configuration files for the settings defined by this unit/module
   configFolder: run/receive/compact
@@ -21,31 +21,32 @@ module:
 
     - names:
       - compactReceiverLookupFile
-      description: path or URL to a per-container compact decisions cap-file
+      description: path or URL to a per-pattern compact decisions cap-file
       type: string
       required: false
       doc: |
         points the engine at a cap-file whose entries decide whether each
-        container's events are compacted via `encode()` or preserved as
-        `fullText`. Containers not listed fall back to `compactReceiverDefault`.
+        pattern's events are compacted via `encode()` or preserved as
+        `fullText`. Patterns not listed fall back to `compactReceiverDefault`.
 
-        The container identity is the value of `compactReceiverContainerField`
-        (defaults to the k8s container name), so listed entries are stable
-        across pod replicas.
+        The lookup key is the event fields named by `compactReceiverFieldNames`
+        joined with `_` (defaults to `[symbolMessage]`), matching the same
+        pattern identity the Reporter attributes cost to.
 
         **File format** (CSV; header row + one comma-separated entry per row):
 
         ```
-        container,value
-        <container>,<true|false>[:<untilEpochSec>][:<reason>]
+        fieldSet,value
+        <fieldSet>,<true|false>[:<untilEpochSec>][:<reason>]
         ```
 
-        - `container` — value of `compactReceiverContainerField` for the events
-          to act on. In k8s this is the k8s container name.
+        - `fieldSet` — the event fields named by `compactReceiverFieldNames`
+          joined with `_`. With the default `[symbolMessage]` this is the
+          symbolMessage value for the pattern.
         - `value` — `true` (compact via `encode()`) or `false` (explicitly
-          preserve `fullText` for this container, beating the default).
+          preserve `fullText` for this pattern, beating the default).
         - `untilEpochSec` — optional Unix-epoch (seconds) expiry. Past it the
-          entry becomes a no-op and the container falls back to
+          entry becomes a no-op and the pattern falls back to
           `compactReceiverDefault`.
         - `reason` — optional free-text for audit. Must not contain commas
           (would break CSV parsing).
@@ -53,10 +54,9 @@ module:
         **Example**:
 
         ```
-        container,value
-        payment-service,true:1735689600:high-volume PAY-101
-        auth-service,true
-        istio-proxy,false:1735689600:keep verbose during incident PLAT-42
+        fieldSet,value
+        payment_retry_gateway_timeout,true:1745856000:OPS-5123 spike
+        auth_audit_trail,false:1745856000:compliance keep verbose
         ```
 
         The file is hot-reloaded on in-place writes (the gitops pattern); a
@@ -65,7 +65,7 @@ module:
 
     - names:
       - compactReceiverLookupRetain
-      description: retention period for the per-container cap-file before it is considered stale
+      description: retention period for the per-pattern cap-file before it is considered stale
       type: number
       required: false
       doc: |
@@ -79,21 +79,30 @@ module:
       defValue: 300000
 
     - names:
-      - compactReceiverContainerField
-      description: event field whose value scopes the cap-file lookup
-      type: string
+      - compactReceiverFieldNames
+      description: event fields joined to form each event's cap-file lookup key
+      type: array
       required: false
       doc: |
-        defines the event field whose value is used as the cap-file lookup
-        key. Defaults to the k8s container name (`k8s_container`), so listed
-        entries are stable across pod replicas and a sidecar never inherits
-        the application container's compaction decision.
+        defines the list of TenXObject field names joined with `_` to form
+        each event's lookup key into the cap-file. Matches the rate receiver's
+        `rateReceiverFieldNames`, so a cap-file entry targets the same pattern
+        identity the Reporter attributes cost to.
 
-        Set to any extracted field to scope by something else (service,
-        deployment, tenant, etc.). The same value should appear both as the
-        first column of `compactReceiverLookupFile` entries and as a field
-        on every event the receiver sees.
-      defValue: k8s_container
+        **Default**: `[symbolMessage]` — the symbolMessage field, which is the
+        stable pattern identity produced by the engine's classifier.
+
+        Multi-dimensional compaction (e.g., compact a pattern only for a
+        specific tenant):
+
+        ```yaml
+        compactReceiverFieldNames:
+          - symbolMessage
+          - tenantId
+        ```
+
+        Changing this field set requires an engine restart.
+      defValue: [symbolMessage]
 
     - names:
       - compactReceiverDefault
@@ -102,14 +111,14 @@ module:
       required: false
       doc: |
         controls the fallback decision when no cap-file is loaded, no entry
-        matches an event's container, or a matching entry has expired.
+        matches an event's pattern, or a matching entry has expired.
 
         - `false` (default) — preserve `fullText`. Cap-file entries opt
-          specific containers INTO compaction.
+          specific patterns INTO compaction.
         - `true` — compact via `encode()`. Cap-file entries opt specific
-          containers OUT (e.g., audit/compliance containers that must stay
+          patterns OUT (e.g., audit/compliance patterns that must stay
           verbose).
 
         Flipping this value is a policy-level decision (affects every event),
         not a cap-file edit. Changing it requires a pod rollout. The cap-file
-        handles per-container overrides without restart.
+        handles per-pattern overrides without restart.

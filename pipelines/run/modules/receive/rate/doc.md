@@ -37,11 +37,11 @@ fieldSet,value
 <fieldSetKey>,<sampleRate>:<untilEpochSec>[:<reason>]
 ```
 
-- `sampleRate` retains that fraction: `1.0` is never sampled, `0.0` is a full mute.
+- `sampleRate` retains that fraction: `1` is never sampled, `0` is a full mute.
 - `untilEpochSec` expires the entry, which then self-heals to a no-op.
 - `reason` is free text for audit.
 
-The severity floor still applies, so a `0.0` mute never silences ERROR or FATAL. The file is typically committed to a repo and pulled via [gitops](https://doc.log10x.com/config/github/#config), so each change carries a diff, a review, and a merge. The engine hot-reloads on in-place file writes (the gitops pattern); Kubernetes `ConfigMap` mounts don't reload because the CM swap is a symlink rename, not an in-place write.
+The severity floor still applies, so a `0` mute never silences ERROR or FATAL. The file is typically committed to a repo and pulled via [gitops](https://doc.log10x.com/config/github/#config), or read directly from a Kubernetes ConfigMap via the [`@kubernetes` launch macro](https://doc.log10x.com/config/k8s/), so each change carries a diff, a review, and a merge. Both lanes hot-reload via atomic rename; a plain volume-mounted `ConfigMap` does not, because the swap is a symlink rename.
 
 ## :material-clipboard-list-outline: Per-container caps
 
@@ -60,7 +60,7 @@ container,cap
 
 The cap value changes; the share guard and severity floor still apply. Intended use is via the `log10x_configure_regulator` MCP tool, which derives per-container caps from a monthly dollar budget and opens a PR against the file.
 
-Same hot-reload contract as the mute file above: in-place writes only; Kubernetes `ConfigMap` mounts don't reload.
+Same hot-reload rule as the mute file: both launch-macro lanes reload, a plain volume-mounted `ConfigMap` does not.
 
 ## :material-kubernetes: Containers
 

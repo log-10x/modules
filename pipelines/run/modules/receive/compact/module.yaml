@@ -81,7 +81,7 @@ module:
     - names:
       - compactReceiverFieldNames
       description: event fields joined to form each event's cap-file lookup key
-      type: array
+      type: list
       required: false
       doc: |
         defines the list of TenXObject field names joined with `_` to form

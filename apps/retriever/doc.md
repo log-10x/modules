@@ -38,7 +38,7 @@ Test the Retriever locally using [minikube](https://minikube.sigs.k8s.io/) with 
 
         Use real AWS S3 and SQS services. Terraform creates the infrastructure using your AWS credentials, and the pods in minikube access AWS via access keys passed as environment variables.
 
-        **Export your AWS credentials as environment variables.** These are required — Terraform passes them to the retriever pods in minikube so they can reach S3 and SQS.
+        **Export your AWS credentials as environment variables.** These are required, Terraform passes them to the retriever pods in minikube so they can reach S3 and SQS.
 
         If you already have credentials configured via `aws configure` (stored in `~/.aws/credentials`), export them:
 
@@ -65,9 +65,9 @@ Test the Retriever locally using [minikube](https://minikube.sigs.k8s.io/) with 
 
         !!! warning "Environment variables are required"
 
-            Running `aws sts get-caller-identity` alone is not enough — the AWS CLI can authenticate via `~/.aws/credentials` even when the environment variables are empty. The environment variables must be set because they are passed to the retriever pods in Step 7.
+            Running `aws sts get-caller-identity` alone is not enough, the AWS CLI can authenticate via `~/.aws/credentials` even when the environment variables are empty. The environment variables must be set because they are passed to the retriever pods in Step 7.
 
-        The same credentials are passed to the retriever pods in minikube (via `extraEnv` in the Helm chart) so they can reach S3 and SQS. This is appropriate for local testing — for production, use [IAM Roles for Service Accounts (IRSA)](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html).
+        The same credentials are passed to the retriever pods in minikube (via `extraEnv` in the Helm chart) so they can reach S3 and SQS. This is appropriate for local testing. For production, use [IAM Roles for Service Accounts (IRSA)](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html).
 
     === ":material-server: LocalStack"
 
@@ -149,7 +149,7 @@ Test the Retriever locally using [minikube](https://minikube.sigs.k8s.io/) with 
 
     === ":material-console: stdout"
 
-        Default for local testing — events print to container logs.
+        Default for local testing. Events print to container logs.
 
         ```hcl
         fluentBit = {
@@ -257,7 +257,7 @@ Test the Retriever locally using [minikube](https://minikube.sigs.k8s.io/) with 
 
 ??? tenx-metricoutputs "Step 6: Configure Metric Outputs (Optional)"
 
-    For **metric outputs** to time-series databases (Prometheus, Datadog, CloudWatch), configure the [metric output modules](https://doc.log10x.com/run/output/metric/) in your pipeline config. Metric outputs aggregate events into metrics (counters, gauges, histograms) before publishing — different from streaming raw events via Fluent Bit.
+    For **metric outputs** to time-series databases (Prometheus, Datadog, CloudWatch), configure the [metric output modules](https://doc.log10x.com/run/output/metric/) in your pipeline config. Metric outputs aggregate events into metrics (counters, gauges, histograms) before publishing, different from streaming raw events via Fluent Bit.
 
     **Supported metric outputs:**
 
@@ -368,7 +368,7 @@ Test the Retriever locally using [minikube](https://minikube.sigs.k8s.io/) with 
     tenx_retriever_index_trigger_suffix = ".json"   # Only index .json files
     ```
 
-    Leave `prefix` empty (`""`) to match all paths. The suffix is required — S3 event notifications need at least one filter criterion.
+    Leave `prefix` empty (`""`) to match all paths. The suffix is required. S3 event notifications need at least one filter criterion.
 
 ??? tenx-objectstorageindex "Step 9: Test Indexing"
 
@@ -405,7 +405,7 @@ Test the Retriever locally using [minikube](https://minikube.sigs.k8s.io/) with 
         aws --endpoint-url=http://localhost:4566 s3 ls s3://retriever-index/indexed/ --recursive
         ```
 
-    **Verify indexing completed** — check the retriever logs for `IndexTemplates` and `IndexFilterStats` entries:
+    **Verify indexing completed**: check the retriever logs for `IndexTemplates` and `IndexFilterStats` entries:
 
     ```bash
     kubectl logs -n log10x-retriever -l app=retriever-10x -c retriever-10x-all-in-one --tail=50
@@ -452,7 +452,7 @@ Test the Retriever locally using [minikube](https://minikube.sigs.k8s.io/) with 
         Quick test via curl:
 
         ```bash
-        curl -X POST http://localhost:8080/retriever/query \
+        curl -X POST http://localhost:8080/streamer/query \
           -H "Content-Type: application/json" \
           -d '{
             "from": "now(\"-5m\")",
@@ -461,7 +461,7 @@ Test the Retriever locally using [minikube](https://minikube.sigs.k8s.io/) with 
           }'
         ```
 
-        The query endpoint returns HTTP 200 to acknowledge receipt. Events are processed asynchronously and streamed to Fluent Bit over 30-60 seconds.
+        The query handler is served at `POST /streamer/query`. The in-engine app path is `@apps/retriever/query`; the public HTTP route keeps the `/streamer/query` name for now, overridable with `LOG10X_RETRIEVER_QUERY_PATH`. The endpoint returns HTTP 200 to acknowledge receipt. Events are processed asynchronously and streamed to Fluent Bit over 30-60 seconds.
 
         Check the Fluent Bit container logs for streamed events:
 
@@ -520,21 +520,21 @@ Test the Retriever locally using [minikube](https://minikube.sigs.k8s.io/) with 
 
 ??? tenx-faq "No events appearing in Fluent Bit logs after query"
 
-    1. **Wait 30-60 seconds** — in this single-node setup, all worker roles (index, query, stream) share resources. Query processing completes once stream workers pick up results from the Stream SQS queue.
-    2. **Check the time range** — ensure your query's `from`/`to` range covers the timestamp of your uploaded log file. Using `now("-5m")` queries events from the last 5 minutes.
-    3. **Verify query was accepted** — check retriever logs for `QueryWorker` entries:
+    1. **Wait 30-60 seconds**: in this single-node setup, all worker roles (index, query, stream) share resources. Query processing completes once stream workers pick up results from the Stream SQS queue.
+    2. **Check the time range**: ensure your query's `from`/`to` range covers the timestamp of your uploaded log file. Using `now("-5m")` queries events from the last 5 minutes.
+    3. **Verify query was accepted**: check retriever logs for `QueryWorker` entries:
        ```bash
        kubectl logs -n log10x-retriever -l app=retriever-10x -c retriever-10x-all-in-one --tail=100 | grep -i query
        ```
-    4. **Extend processing timeout** — add `"processingTime": "parseDuration(\"5m\")"` to your query request. See [query API reference](https://doc.log10x.com/api/launch/#quarkus) for details.
+    4. **Extend processing timeout** by adding `"processingTimeMs": 300000` to your query request body. See [query API reference](https://doc.log10x.com/api/launch/#quarkus) for details.
 
 ??? tenx-faq "Query returns no results due to incorrect epoch timestamps or clock skew"
 
-    **Use the [`now()` function](https://doc.log10x.com/api/js/#TenXDate.now) for relative time ranges** — it returns epoch milliseconds and accepts an offset string:
+    **Use the [`now()` function](https://doc.log10x.com/api/js/#TenXDate.now) for relative time ranges**: it returns epoch milliseconds and accepts an offset string:
 
-    - `now()` — current time
-    - `now("-5m")` — 5 minutes ago
-    - `now("-1h")` — 1 hour ago
+    - `now()`: current time
+    - `now("-5m")`: 5 minutes ago
+    - `now("-1h")`: 1 hour ago
 
     If you must use literal epochs, ensure they're in **milliseconds** (not seconds). A common mistake is passing epoch seconds (e.g., `1769076000`) instead of milliseconds (`1769076000000`). Multiply seconds by 1000.
 

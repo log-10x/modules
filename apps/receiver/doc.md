@@ -2,39 +2,24 @@
 icon: material/play-circle-outline
 ---
 
-The Receiver runs alongside your log forwarder and acts on events as they flow through. It has two install modes:
+The Receiver runs alongside your log forwarder and acts on events as they flow through. It decides a per-pattern action for every pattern it sees: pass, sample, compact, tier_down, offload, or drop. An AI agent picks the action per service through the log10x MCP (the `configure_engine` tool); the engine enforces it, and the decision travels as a config change through the GitOps repo.
 
-- **Read-only** (observation): receive events from the forwarder, run aggregators, and publish pattern-identity metrics. Events keep flowing to your destination unchanged. Use when you want visibility into per-pattern volume and cost without touching the event stream.
-- **Read-write** (receiving): receive events, then write back a shaped stream to the forwarder. Two sub-options inside read-write:
-    - **Filter** (lossy): drop events matching a rule via [rate-based](https://doc.log10x.com/run/receive/rate) filtering or declarative [mute files](https://doc.log10x.com/run/receive/rate/#protection-list). Safe defaults are deny; explicit allow required. Up to 80% volume reduction.
-    - **Compact** (lossless): replace events with a compact wire-form that the downstream SIEM plugin expands at query time. 50–80% reduction (64% on K8s OTel logs) with no dashboard or query changes. Requires the expand plugin installed in [Splunk](compact/splunk.md) or [Elasticsearch](compact/elasticsearch.md).
+The actions:
 
-All modes are commanded via GitOps. Operators (or an agent via the [log10x-mcp](https://github.com/log-10x/log10x-mcp) server) open PRs in the customer's config repo; the receiver pulls the latest on reload.
+- **pass**: forward unchanged.
+- **sample**: forward a rate-limited share against a per-pattern budget.
+- **compact**: replace repeated lines with an encoded form the destination expands (lossless only where the destination supports it: Splunk, self-hosted Elasticsearch, ClickHouse; a no-op elsewhere). Requires the expand plugin installed in [Splunk](compact/splunk.md) or [Elasticsearch](compact/elasticsearch.md).
+- **tier_down**: tag the pattern for a cheaper storage tier the destination enforces (Datadog Flex, CloudWatch IA).
+- **offload**: route the pattern to customer-owned object storage (S3, GCS, Azure Blob) instead of the destination.
+- **drop**: stop forwarding the pattern.
 
-Receivers ensure **predictable costs** and **free budgets** to focus on analyzing meaningful events.
+The Receiver also runs in **read-only** mode (observation): receive events from the forwarder, run aggregators, and publish pattern-identity metrics with the event stream untouched. Use it for visibility into per-pattern volume and cost before any action is applied. **Read-write** mode (default) applies the per-pattern actions above.
 
-<h3 id="when-to-use-which">When to use which mode</h3>
+Log10x is normally driven by an AI agent (Claude, or a model the customer brings) through the log10x MCP server, which installs, configures, and queries via MCP tools. The agent's `configure_engine` tool turns a target percent or budget into a per-pattern action set, carried as a cap/action CSV that lands in the config repo through a GitOps PR and hot-reloads on the next pull. The hand-authored cap YAML and CSV shown below are the same representation an agent produces.
 
-| | Read-only | Read-write Filter | Read-write Compact |
-|---|---|---|---|
-| **Effect on event stream** | None — events flow through unchanged | Lossy — events matching the rule are dropped | Lossless — every event preserved in compact form |
-| **Downstream requirements** | None | None | Expand plugin installed in Splunk / Elasticsearch |
-| **Volume reduction** | None (observation only) | Up to 80% | 50–80% (64% typical on K8s OTel logs) |
-| **Risk profile** | Lowest — no event loss, no transformation | Higher — dropped events are gone; safe defaults = deny | Lower — survives full round-trip, queryable as normal |
-| **Typical trigger** | Want pattern-identity metrics without altering the stream | A single pattern is over-budget; cap it at a sample rate | Shipping volume is the bottleneck; shrink the wire format |
-| **Pair with** | [Retriever](https://doc.log10x.com/apps/retriever/) (for historical query) | Read-only receivers (to identify what to filter) | [Retriever](https://doc.log10x.com/apps/retriever/) (to archive to S3 in compact form) |
+<h3 id="compact">Compact action</h3>
 
-**Mode selection in helm chart values:**
-
-```yaml
-receiver:
-  mode: readonly        # or readwrite (default)
-  optimize: false       # readwrite + optimize=true → compact mode
-```
-
-<h3 id="compact">Compact mode</h3>
-
-Compact mode is the execution arm for lossless wire-format reduction, commanded via GitOps and operating on stable pattern identity. For SIEM-side plugin install, see the [Splunk](compact/splunk.md) and [Elasticsearch](compact/elasticsearch.md) pages.
+The compact action replaces repeated lines with an encoded form the destination expands at query time, operating on stable pattern identity. It is lossless only on Splunk, self-hosted Elasticsearch, and ClickHouse, where it typically cuts log volume by 50-80%, and a no-op on managed/SaaS destinations (there the levers are offload or drop). For SIEM-side plugin install, see the [Splunk](compact/splunk.md) and [Elasticsearch](compact/elasticsearch.md) pages.
 
 ## :material-clipboard-play-outline: Setup Guide
 
@@ -65,7 +50,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
     export TENX_LICENSE_KEY="$(cat license.jwt)"
     ```
 
-    For production deployments, mount the license as a file and set `TENX_LICENSE_FILE` instead — see [deploy](https://doc.log10x.com/apps/receiver/deploy/).
+    For production deployments, mount the license as a file and set `TENX_LICENSE_FILE` instead. See [deploy](https://doc.log10x.com/apps/receiver/deploy/).
 
 ??? tenx-forwarderinputs "Step 3: Configure Your Forwarder"
 
@@ -168,7 +153,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
     === ":simple-fluentbit: Fluent-bit"
 
         !!! note "Sidecar topology"
-            Fluent Bit and Log10x run as **peer processes** that exchange events over the Fluent Forward protocol in both directions. No Lua filter, no `io.popen()` subprocess. The bypass (preventing the ingest filters from re-firing and the ingest `[OUTPUT] forward` from looping events) is **tag-prefix namespacing** — Fluent Bit has no labels like Fluentd, so the egress `[INPUT] forward` uses `Tag_Prefix tenx.` to put returning events on a tag namespace that the ingest pipeline doesn't match.
+            Fluent Bit and Log10x run as **peer processes** that exchange events over the Fluent Forward protocol in both directions. No Lua filter, no `io.popen()` subprocess. The bypass (preventing the ingest filters from re-firing and the ingest `[OUTPUT] forward` from looping events) is **tag-prefix namespacing**. Fluent Bit has no labels like Fluentd, so the egress `[INPUT] forward` uses `Tag_Prefix tenx.` to put returning events on a tag namespace that the ingest pipeline doesn't match.
 
         **Step 1**: Copy the Fluent Bit sidecar recipe:
 
@@ -176,14 +161,14 @@ Follow the steps below. Steps that require customization link to the relevant [C
         cp $TENX_MODULES/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-sidecar.conf /etc/fluent-bit/
         ```
 
-        **Step 2**: Update sources, filters and destination outputs to match your environment. The recipe wires the ingest `[OUTPUT] forward` to log10x:24224 (matching your source tags) and the egress `[INPUT] forward` listening on :24225 with `Tag_Prefix tenx.` — your destinations match `tenx.*`:
+        **Step 2**: Update sources, filters and destination outputs to match your environment. The recipe wires the ingest `[OUTPUT] forward` to log10x:24224 (matching your source tags) and the egress `[INPUT] forward` listening on :24225 with `Tag_Prefix tenx.`, your destinations match `tenx.*`:
 
         ```toml title="tenx-sidecar.conf"
         [SERVICE]
             Flush        1
             Log_Level    info
 
-        # Replace with your real sources — tag with anything NOT starting
+        # Replace with your real sources, tag with anything NOT starting
         # with `tenx.` so the bypass works.
         [INPUT]
             Name         tail
@@ -206,7 +191,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
             Retry_Limit  False
 
         # Egress: receive processed events back from Log10x. `Tag_Prefix
-        # tenx.` is the bypass — `app.logs` returns as `tenx.app.logs`,
+        # tenx.` is the bypass, `app.logs` returns as `tenx.app.logs`,
         # which filters and the ingest forward output don't match.
         [INPUT]
             Name         forward
@@ -214,7 +199,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
             Port         24225
             Tag_Prefix   tenx.
 
-        # Destinations Match `tenx.*` — replace stdout with your real
+        # Destinations Match `tenx.*`, replace stdout with your real
         # destination (es, splunk, kafka, s3, …).
         [OUTPUT]
             Name         stdout
@@ -295,7 +280,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
     === ":simple-opentelemetry: OTel Collector"
 
         !!! note "Distribution"
-            Both directions use OTLP/gRPC (Collector → Log10x and Log10x → Collector), so the core `otelcol` distribution is sufficient — no `otelcol-contrib` build is required. Tested against `otelcol` v0.151.0+.
+            Both directions use OTLP/gRPC (Collector → Log10x and Log10x → Collector), so the core `otelcol` distribution is sufficient. No `otelcol-contrib` build is required. Tested against `otelcol` v0.151.0+.
 
         **Step 1**: Copy the Collector sidecar recipe:
 
@@ -314,7 +299,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
             start_at: end
 
         exporters:
-          # Replace `debug` with your real destinations — elasticsearch, splunk_hec, kafka, awss3, etc.
+          # Replace `debug` with your real destinations, elasticsearch, splunk_hec, kafka, awss3, etc.
           debug:
             verbosity: detailed
 
@@ -336,12 +321,12 @@ Follow the steps below. Steps that require customization link to the relevant [C
         otelcol --config=/etc/otelcol/tenx-sidecar.yaml
         ```
 
-        Keep the egress pipeline (`logs/from-tenx`) processor-free — it carries returning events directly to your destination exporters so enrichment runs exactly once.
+        Keep the egress pipeline (`logs/from-tenx`) processor-free, it carries returning events directly to your destination exporters so enrichment runs exactly once.
 
     === ":simple-vector: Vector"
 
         !!! note "Requires Vector v0.34+"
-            For the `fluent` source and `socket` sink with `mode: unix`. Vector communicates with the 10x sidecar over Unix domain sockets — newline-delimited text outbound, Fluent Forward inbound.
+            For the `fluent` source and `socket` sink with `mode: unix`. Vector communicates with the 10x sidecar over Unix domain sockets, newline-delimited text outbound, Fluent Forward inbound.
 
         **Step 1**: Copy the Vector configuration:
 
@@ -361,7 +346,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
             read_from: end
 
         sinks:
-          # Replace `console` with your real destination(s) — elasticsearch, splunk_hec, kafka, s3, etc.
+          # Replace `console` with your real destination(s), elasticsearch, splunk_hec, kafka, s3, etc.
           final:
             type: console
             inputs:
@@ -392,7 +377,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
         mkdir -p ${FOLDER_B}
         ```
 
-        **Step 2**: Configure Fluent Bit to read from Folder A, hand off to log10x, and write the regulated events back out to Folder B. The egress `[INPUT] forward Tag_Prefix tenx.` is the bypass — only events that have round-tripped through log10x (and thus carry the `tenx.` prefix) hit the `file` output.
+        **Step 2**: Configure Fluent Bit to read from Folder A, hand off to log10x, and write the processed events back out to Folder B. The egress `[INPUT] forward Tag_Prefix tenx.` is the bypass, only events that have round-tripped through log10x (and thus carry the `tenx.` prefix) hit the `file` output.
 
         ```toml title="fluent-bit-splunk.conf"
         [SERVICE]
@@ -420,7 +405,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
             Port         24225
             Tag_Prefix   tenx.
 
-        # Write regulated events (those with the tenx. prefix only) to Folder B.
+        # Write processed events (those with the tenx. prefix only) to Folder B.
         [OUTPUT]
             Name         file
             Match        tenx.*
@@ -453,7 +438,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
         mkdir -p ${FOLDER_B}
         ```
 
-        **Step 2**: Configure Fluent Bit to read from Folder A, hand off to log10x, and write the regulated events back out to Folder B. The egress `[INPUT] forward Tag_Prefix tenx.` is the bypass — only events that have round-tripped through log10x (and thus carry the `tenx.` prefix) hit the `file` output.
+        **Step 2**: Configure Fluent Bit to read from Folder A, hand off to log10x, and write the processed events back out to Folder B. The egress `[INPUT] forward Tag_Prefix tenx.` is the bypass, only events that have round-tripped through log10x (and thus carry the `tenx.` prefix) hit the `file` output.
 
         ```toml title="fluent-bit-datadog.conf"
         [SERVICE]
@@ -481,7 +466,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
             Port         24225
             Tag_Prefix   tenx.
 
-        # Write regulated events (those with the tenx. prefix only) to Folder B.
+        # Write processed events (those with the tenx. prefix only) to Folder B.
         [OUTPUT]
             Name         file
             Match        tenx.*
@@ -522,7 +507,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
     Archive all events to S3 before receiving for full retention alongside cost control. The receiver filters what reaches your SIEM; filtered events remain in S3, queryable via [Retriever](https://doc.log10x.com/apps/retriever/) for incident investigation, compliance, and auditing.
 
-    Configure your forwarder to duplicate the event stream — one copy to S3 (all events), one through the receiver (filtered events to SIEM):
+    Configure your forwarder to duplicate the event stream, one copy to S3 (all events), one through the receiver (filtered events to SIEM):
 
     === ":simple-fluentbit: Fluent-bit"
 
@@ -535,7 +520,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
             Rule         $log .+ s3.$TAG true
 
         # S3 archive: gets every event (`app.*` originals AND their `s3.app.*` copies
-        # — adjust the rule above if you want only the copies).
+        # adjust the rule above if you want only the copies).
         [OUTPUT]
             Name         s3
             Match        s3.*
@@ -544,7 +529,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
             total_file_size 50M
             upload_timeout 60s
 
-        # Ingest: hand off to the Log10x sidecar (regulated path).
+        # Ingest: hand off to the Log10x sidecar (processed path).
         [OUTPUT]
             Name         forward
             Match        app.*
@@ -553,7 +538,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
             Retry_Limit  False
         ```
 
-        Events tagged `s3.*` go to S3 (every event for full retention); events tagged `app.*` continue through the sidecar (regulated). The egress `[INPUT] forward Tag_Prefix tenx.` and destinations matching `tenx.*` are unchanged from the main recipe.
+        Events tagged `s3.*` go to S3 (every event for full retention); events tagged `app.*` continue through the sidecar (processed). The egress `[INPUT] forward Tag_Prefix tenx.` and destinations matching `tenx.*` are unchanged from the main recipe.
 
     === ":simple-fluentd: Fluentd"
 
@@ -609,7 +594,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
     === ":simple-logstash: Logstash"
 
-        Use multiple outputs — Logstash natively sends to all configured outputs:
+        Use multiple outputs. Logstash natively sends to all configured outputs:
 
         ```ruby
         output {
@@ -628,7 +613,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
     === ":simple-splunk: Splunk UF"
 
-        Splunk UF uses a [file relay pattern](https://doc.log10x.com/run/input/forwarder/splunkUF/) — Fluent Bit + 10x reads from Folder A, processes events, and writes to Folder B. Splunk UF monitors Folder B and forwards to indexers.
+        Splunk UF uses a [file relay pattern](https://doc.log10x.com/run/input/forwarder/splunkUF/). Fluent Bit + 10x reads from Folder A, processes events, and writes to Folder B. Splunk UF monitors Folder B and forwards to indexers.
 
         Add the S3 output to the Fluent Bit configuration alongside the file output:
 
@@ -654,11 +639,11 @@ Follow the steps below. Steps that require customization link to the relevant [C
             Format       plain
         ```
 
-        Splunk UF continues to monitor Folder B via `inputs.conf` — no changes to the UF configuration.
+        Splunk UF continues to monitor Folder B via `inputs.conf`. No changes to the UF configuration.
 
     === ":simple-datadog: Datadog Agent"
 
-        Datadog Agent uses a [file relay pattern](https://doc.log10x.com/run/input/forwarder/datadogAgent/) — Fluent Bit + 10x reads from Folder A, processes events, and writes to Folder B. The Datadog Agent monitors Folder B and forwards to Datadog.
+        Datadog Agent uses a [file relay pattern](https://doc.log10x.com/run/input/forwarder/datadogAgent/). Fluent Bit + 10x reads from Folder A, processes events, and writes to Folder B. The Datadog Agent monitors Folder B and forwards to Datadog.
 
         Add the S3 output to the Fluent Bit configuration alongside the file output:
 
@@ -684,7 +669,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
             Format       plain
         ```
 
-        The Datadog Agent continues to monitor Folder B via `conf.d` — no changes to the Agent configuration.
+        The Datadog Agent continues to monitor Folder B via `conf.d`. No changes to the Agent configuration.
 
 <span id="receivers2"></span>
 ??? tenx-receivers "Step 6: Configure Receivers (optional)"
@@ -724,7 +709,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
     === ":material-file-document-edit-outline: Mute File (GitOps)"
 
-        Layer a declarative mute file over the regulator, pulled from a git repo. Entries are keyed by the same `fieldNames` values the regulator uses (e.g. `symbolMessage`), so mutes target the same patterns a Reporter attributes cost to. A listed, active pattern is decided by its entry; every other pattern stays on the cap. Each entry has an explicit sample rate and epoch expiry, so mutes are diff-reviewed, audited, and self-healing.
+        Layer a declarative mute file over the rate receiver, pulled from a git repo. Entries are keyed by the same `fieldNames` values the rate receiver uses (e.g. `symbolMessage`), so mutes target the same patterns a Reporter attributes cost to. A listed, active pattern is decided by its entry; every other pattern stays on the cap. Each entry has an explicit sample rate and epoch expiry, so mutes are diff-reviewed, audited, and self-healing.
 
         ```yaml
         rateReceiver:
@@ -814,7 +799,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
         $ splunk restart
         ```
 
-        Fluent Bit reads from Folder A, hands off to the Log10x sidecar, and writes regulated events back out to Folder B. Splunk UF monitors Folder B and forwards to indexers.
+        Fluent Bit reads from Folder A, hands off to the Log10x sidecar, and writes processed events back out to Folder B. Splunk UF monitors Folder B and forwards to indexers.
 
     === ":simple-datadog: Datadog Agent"
 
@@ -831,7 +816,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
         $ sudo systemctl restart datadog-agent
         ```
 
-        Fluent Bit reads from Folder A, hands off to the Log10x sidecar, and writes regulated events back out to Folder B. Datadog Agent monitors Folder B and forwards to Datadog.
+        Fluent Bit reads from Folder A, hands off to the Log10x sidecar, and writes processed events back out to Folder B. Datadog Agent monitors Folder B and forwards to Datadog.
 
     === ":material-test-tube: Test (no forwarder)"
 
@@ -869,7 +854,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
 ??? tenx-delete "Step 11: Teardown"
 
-    Nothing runs in the background — uninstall removes only what was installed.
+    Nothing runs in the background. Uninstall removes only what was installed.
 
     === ":simple-macos: Homebrew"
 

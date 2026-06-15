@@ -4,9 +4,13 @@ icon: material/play-circle-outline
 
 The Reporter app is the **read-only insights arm** of the 10x pipeline. It pinpoints high-cost app/infra events **before** forwarders ship them to log analyzers, enabling storage and licensing **cost optimization**.
 
-**Deployment**: a DaemonSet alongside your forwarder — *not* a sidecar injected into it, and *not* a cloud app polling your SIEM's REST API. The reporter tails the same event stream your forwarder sees (pre-SIEM), publishes cost insight metrics, and fails independently: if the reporter goes down, your logs continue flowing to the SIEM uninterrupted.
+**Deployment**: a DaemonSet alongside your forwarder, *not* a sidecar injected into it, and *not* a cloud app polling your SIEM's REST API. The reporter tails the same event stream your forwarder sees (pre-SIEM), publishes cost insight metrics, and fails independently: if the reporter goes down, your logs continue flowing to the SIEM uninterrupted.
 
 Not in the critical log path. No mutation of existing fluent-bit / fluentd / otel-collector configs. Similar deployment pattern to `datadog-agent` or `splunk-otel-collector`.
+
+The engine never moves or stores log data. Its only write is per-pattern metrics, sent to a time-series backend of the customer's choice (Prometheus, Datadog, Elastic, CloudWatch, SignalFx, and others). `prometheus.log10x.com` is an optional hosted backend for evaluation, not a requirement; fully air-gapped operation is supported. Events never leave the customer's path.
+
+Log10x is normally driven by an AI agent (Claude, or a model the customer brings) through the log10x MCP server, which installs, configures, and queries via MCP tools: deploy via `log10x_advise_install`, verify via `log10x_doctor`. To trial without deploying anything, run `log10x_poc_from_local` (local sample files) or `log10x_poc_from_siem` (a SIEM sample). The manual steps below are the same operations without an agent.
 
 ## :material-clipboard-play-outline: Setup Guide
 
@@ -83,10 +87,10 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
         ```toml title="my-fluent-bit.conf"
         # Nix
-        @INCLUDE /etc/tenx/config/pipelines/run/modules/forwarder/fluentbit/conf/tenx-report.conf
+        @INCLUDE /etc/tenx/config/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-report.conf
 
         # Windows
-        # @INCLUDE c:/program files/tenx-edge/config/pipelines/run/modules/forwarder/fluentbit/conf/tenx-report.conf
+        # @INCLUDE c:/program files/tenx-edge/config/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-report.conf
         ```
 
         **Step 2**: The Lua filter catches all events by default. To report on a subset, update the `Match` field:
@@ -167,7 +171,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
               exporters: [syslog/tenx, elasticsearch]  # Add your exporters
         ```
 
-        Reporter mode is **read-only** - logs flow to Log10x for analytics AND to your final destinations in parallel.
+        Reporter mode is **read-only**. Logs flow to your final destinations unchanged; the engine never moves or stores log data. Its only write is per-pattern metrics, sent to a time-series backend of your choice (Prometheus, Datadog, Elastic, CloudWatch, SignalFx, and others).
 
     === ":simple-splunk: Splunk UF"
 
@@ -403,13 +407,15 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
     Verify no errors appear in the [log file](https://doc.log10x.com/manage/logging/#log-file-location). For debugging techniques including enabling verbose logging, see [Engine Logging](https://doc.log10x.com/manage/logging/).
 
+    With an agent, `log10x_doctor` confirms reporter detection and metric freshness, and `log10x_baseline` captures the starting per-pattern volume and cost.
+
     **View results in the dashboard:**
 
     Once running, view your cost analytics in the [Reporter Dashboard](https://doc.log10x.com/roi-analytics/#edge-reporter).
 
 ??? tenx-delete "Step 9: Teardown"
 
-    Nothing runs in the background — uninstall removes only what was installed.
+    Nothing runs in the background. Uninstall removes only what was installed.
 
     === ":simple-macos: Homebrew"
 

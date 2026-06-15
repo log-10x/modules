@@ -95,5 +95,17 @@ unit:
         - `[/\\]vendor[/\\]` - Files anywhere under a `vendor` folder (Go vendored deps)
         - `[/\\]node_modules[/\\]` - Files anywhere under `node_modules`
 
+    - names:
+      - mergeExistingUnits
+      description: merge symbol unit files already on disk that this run did not itself scan
+      type: boolean
+      required: false
+      doc: |
+        merges symbol unit files already present under [outputSymbolFolder](https://doc.log10x.com/compile/scan/#outputsymbolfolder)
+        that the current run did not itself scan, so a folder of pre-compiled units can be linked into a
+        [symbol library](https://doc.log10x.com/compile/link/#outputsymbollibraryfile) with no source scan.
+        Default false: only units this run scanned are merged.
+      defValue: false
+
       
                    

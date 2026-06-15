@@ -111,6 +111,10 @@ symbolFolderFilters:
 #  them to 'outputSymbolLibraryFile' to produce a smaller symbol library file.
 writeMessages: $=!envGet("outputSymbolFolder")
 
+# 'mergeExistingUnits' merges symbol unit files already on disk that this run did not itself
+#  scan, so a folder of pre-compiled units can be linked into a library with no source scan.
+mergeExistingUnits: $?mergeExistingUnits=false
+
 # 'maxSymbolUnitFileSize' controls the maximum file size 'outputFile' can be before
 #  it is split into numbered output files (e.g., <output-file1>, <output-file2>,..)
 #  Splitting is done to ensure 'outputFile' is a GitHub committable artifact

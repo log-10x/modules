@@ -82,7 +82,7 @@ module:
         so the cap is enforced per `(pattern, container)`.
 
         Defaults to the [k8s container name](https://doc.log10x.com/run/initialize/k8s/), which is
-        stable across pod replicas — scaling from 1 to 10 pods does not bypass the cap, and a
+        stable across pod replicas, scaling from 1 to 10 pods does not bypass the cap, and a
         sidecar never consumes the application container's allowance. Use `container`, never `pod`.
 
         When the field is absent on an event (non-k8s input, or no k8s extractor configured), the
@@ -103,7 +103,7 @@ module:
         slower to adapt. The default of 4 minutes balances the two.
 
         **Validation:** Must be at least 60000 milliseconds (1 minute). The engine caps counter reset
-        intervals at 255 seconds, so the effective maximum window is ~4.25 minutes — values above that
+        intervals at 255 seconds, so the effective maximum window is ~4.25 minutes, values above that
         are clamped.
       defValue: 240000
 
@@ -171,15 +171,15 @@ module:
         <fieldSetKey>,<sampleRate>:<untilEpochSec>[:<reason>]
         ```
 
-        - `fieldSetKey` — the joined values of the fields named in `rateReceiverFieldNames`,
+        - `fieldSetKey`, the joined values of the fields named in `rateReceiverFieldNames`,
           separated by `_`. With `rateReceiverFieldNames: [symbolMessage]` the key is just
           the symbolMessage (e.g. `Error_syncing_pod`). With `[symbolMessage, container]`
           the key is `symbolMessage_container` (e.g. `heartbeat_debug_frontend`).
-        - `sampleRate` — probability in `[0, 1.0]` that a matching event is retained.
+        - `sampleRate`, probability in `[0, 1.0]` that a matching event is retained.
           `0` = full mute; `0.1` = keep 10%; `1.0` = no-op.
-        - `untilEpochSec` — mute expires at this Unix epoch (seconds). Past that, the
+        - `untilEpochSec`, mute expires at this Unix epoch (seconds). Past that, the
           entry becomes a no-op until someone edits or removes it. Self-healing by design.
-        - `reason` — optional free-text string for audit. Not used at runtime. Must not
+        - `reason`, optional free-text string for audit. Not used at runtime. Must not
           contain commas (would break CSV parsing).
 
         **Example** (with `rateReceiverFieldNames: [symbolMessage]`):
@@ -205,7 +205,7 @@ module:
         - **Self-healing**: every mute has an explicit expiry, so forgotten entries
           eventually stop filtering instead of silently dropping production data forever.
         - **AI-editable**: an operator can ask an assistant (e.g., Claude Code via the
-          Log10x MCP) to "mute `Error_syncing_pod` for 24 hours at 10%" — the assistant
+          Log10x MCP) to "mute `Error_syncing_pod` for 24 hours at 10%", the assistant
           reads the Reporter's cost attribution, appends the entry, and opens a PR. The
           mute file is the interface.
 
@@ -251,10 +251,10 @@ module:
         <container>,<action>[:<untilEpochSec>][:<reason>]
         ```
 
-        - `container` — value of `rateReceiverContainerField` (the k8s container = the service).
-        - `action` — one of `drop` / `offload` / `tier_down` / `compact` / `sample` / `pass`.
-        - `untilEpochSec` — optional Unix-epoch (seconds) expiry; past it the entry is a no-op.
-        - `reason` — optional free-text for audit. Must not contain commas (would break CSV parsing).
+        - `container`, value of `rateReceiverContainerField` (the k8s container = the service).
+        - `action`, one of `drop` / `offload` / `tier_down` / `compact` / `sample` / `pass`.
+        - `untilEpochSec`, optional Unix-epoch (seconds) expiry; past it the entry is a no-op.
+        - `reason`, optional free-text for audit. Must not contain commas (would break CSV parsing).
 
         Intended to be managed via GitOps + the `log10x_configure_engine` MCP tool, which derives
         per-service actions from the per-pattern action plan it already computes.
@@ -278,13 +278,13 @@ module:
         <container>,<bytes>[:<untilEpochSec>][:<reason>]
         ```
 
-        - `container` — value of `rateReceiverContainerField` for the events to cap. In k8s this is
+        - `container`, value of `rateReceiverContainerField` for the events to cap. In k8s this is
           the k8s container name, stable across pod replicas.
-        - `bytes` — integer byte cap per pattern per container per window. `0` exempts the
+        - `bytes`, integer byte cap per pattern per container per window. `0` exempts the
           container from the absolute cap entirely (the over-cap branch is skipped for it).
-        - `untilEpochSec` — optional Unix-epoch (seconds) expiry. Past that, the entry becomes a
+        - `untilEpochSec`, optional Unix-epoch (seconds) expiry. Past that, the entry becomes a
           no-op and the fallback cap applies.
-        - `reason` — optional free-text string for audit. Not used at runtime. Must not contain
+        - `reason`, optional free-text string for audit. Not used at runtime. Must not contain
           commas (would break CSV parsing).
 
         **Example**:

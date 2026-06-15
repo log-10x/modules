@@ -11,7 +11,7 @@ tenx: run
 
 output:
 
-    # Object stream — encodes TenXObject instance field values.
+    # Object stream, encodes TenXObject instance field values.
   - type: event
 
     name: $=yield TenXEnv.get("outputOtlpHost", "127.0.0.1") + ":" + TenXEnv.get("outputOtlpPort", 4317)
@@ -39,7 +39,7 @@ output:
     fields:
       - $?outputOtlpFields
 
-    # Template stream — encodes TenXTemplate values as JSON objects for
+    # Template stream, encodes TenXTemplate values as JSON objects for
     # transport to the destination. Each new template is emitted exactly once.
   - type: event
 

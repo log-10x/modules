@@ -12,8 +12,8 @@ then compresses it into a URL that opens the Console with cost analysis, top pat
 
 Two output entries share a single `DevOutputStream` instance via the [group](https://doc.log10x.com/run/output/event/file/#outputfileencodetype) mechanism:
 
-1. **Summary** (`isSummary`) — receives aggregated [enrichment fields](https://doc.log10x.com/run/initialize/#enrichmentFields) with [summaryVolume](https://doc.log10x.com/api/js/#TenXSummary+summaryVolume) and [summaryBytes](https://doc.log10x.com/api/js/#TenXSummary+summaryBytes)
-2. **Event** (`isObject || isEncoded`) — receives [templateHash](https://doc.log10x.com/api/js/#TenXBaseObject+templateHash), [template](https://doc.log10x.com/api/js/#TenXBaseObject+template) body and [encode()](https://doc.log10x.com/api/js/#TenXObject+encode) values
+1. **Summary** (`isSummary`), receives aggregated [enrichment fields](https://doc.log10x.com/run/initialize/#enrichmentFields) with [summaryVolume](https://doc.log10x.com/api/js/#TenXSummary+summaryVolume) and [summaryBytes](https://doc.log10x.com/api/js/#TenXSummary+summaryBytes)
+2. **Event** (`isObject || isEncoded`), receives [templateHash](https://doc.log10x.com/api/js/#TenXBaseObject+templateHash), [template](https://doc.log10x.com/api/js/#TenXBaseObject+template) body and [encode()](https://doc.log10x.com/api/js/#TenXObject+encode) values
 
 On close, the stream produces:
 

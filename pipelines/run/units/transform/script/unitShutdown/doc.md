@@ -29,6 +29,6 @@ export class SymbolLoaderUnit extends TenXUnit {
 ```
 
 Both `constructor()` and `close()` are defined in the same TenXUnit subclass.
-The `shouldLoad(config)` method applies to both — if a class is not loaded for a given unit, neither its constructor nor its close method will execute.
+The `shouldLoad(config)` method applies to both, if a class is not loaded for a given unit, neither its constructor nor its close method will execute.
 
 To load unit scripts see [JavaScript configuration](https://doc.log10x.com/config/javascript/).

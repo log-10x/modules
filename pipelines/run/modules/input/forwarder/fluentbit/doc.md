@@ -2,7 +2,7 @@
 icon: simple/fluentbit
 ---
 
-Runs 10x Engine as a [sidecar](https://doc.log10x.com/engine/launcher/sidecar) to Fluent Bit for reporting, receiving, and optimizing events before they ship to their destination (Elasticsearch, Splunk, S3, Kafka, …). Fluent Bit and Log10x run as peer processes and exchange events over the [Fluent Forward protocol](https://docs.fluentbit.io/manual/pipeline/outputs/forward) in both directions — works against any stock Fluent Bit build and the official Fluent Bit Helm chart with a values overlay.
+Runs 10x Engine as a [sidecar](https://doc.log10x.com/engine/launcher/sidecar) to Fluent Bit for reporting, receiving, and optimizing events before they ship to their destination (Elasticsearch, Splunk, S3, Kafka, …). Fluent Bit and Log10x run as peer processes and exchange events over the [Fluent Forward protocol](https://docs.fluentbit.io/manual/pipeline/outputs/forward) in both directions, works against any stock Fluent Bit build and the official Fluent Bit Helm chart with a values overlay.
 
 ## Architecture
 
@@ -33,25 +33,25 @@ graph LR
 
 ### Data Flow
 
-- 📂 **Sources** — Your existing Fluent Bit inputs (`tail`, `http`, `forward`, `systemd`, …) tag events with your normal scheme (e.g. `app.*`, `k8s.*`).
-- 🧪 **Filters** — Your enrichment filters (`kubernetes`, `modify`, `parser`, `lua`, …) `Match` your source tags only (e.g. `Match app.*`). They run exactly once before the event is handed off to Log10x.
-- 📤 **out_forward** → Log10x — A `forward` output with `Match app.*` (or whatever your source tag pattern is) ships the enriched event to the Log10x sidecar over TCP `:24224`.
-- ⚡ **10x Engine** — The Receiver app applies rate/policy-based filtering and optionally compacts events for volume reduction.
-- 📥 **in_forward → destinations** — Processed events come back to Fluent Bit on `:24225` via a `forward` input with `Tag_Prefix tenx.`, which prepends `tenx.` to every returning tag. Your destination outputs `Match tenx.*`; the `tenx.` namespace is what keeps filters from re-firing and the `out_forward` to Log10x from looping events back. Fluent Bit has no label/scope concept, so **tag-prefix namespacing is the bypass mechanism**.
-- 📤 **Destinations** — Your destination outputs (`es`, `splunk`, `kafka`, `s3`, …) `Match tenx.*` and ship to the real destinations. The original tag is preserved after the prefix (`tenx.app.foo`), so destinations that route on the suffix still work.
+- 📂 **Sources**, Your existing Fluent Bit inputs (`tail`, `http`, `forward`, `systemd`, …) tag events with your normal scheme (e.g. `app.*`, `k8s.*`).
+- 🧪 **Filters**, Your enrichment filters (`kubernetes`, `modify`, `parser`, `lua`, …) `Match` your source tags only (e.g. `Match app.*`). They run exactly once before the event is handed off to Log10x.
+- 📤 **out_forward** → Log10x, A `forward` output with `Match app.*` (or whatever your source tag pattern is) ships the enriched event to the Log10x sidecar over TCP `:24224`.
+- ⚡ **10x Engine**, The Receiver app applies rate/policy-based filtering and optionally compacts events for volume reduction.
+- 📥 **in_forward → destinations**, Processed events come back to Fluent Bit on `:24225` via a `forward` input with `Tag_Prefix tenx.`, which prepends `tenx.` to every returning tag. Your destination outputs `Match tenx.*`; the `tenx.` namespace is what keeps filters from re-firing and the `out_forward` to Log10x from looping events back. Fluent Bit has no label/scope concept, so **tag-prefix namespacing is the bypass mechanism**.
+- 📤 **Destinations**, Your destination outputs (`es`, `splunk`, `kafka`, `s3`, …) `Match tenx.*` and ship to the real destinations. The original tag is preserved after the prefix (`tenx.app.foo`), so destinations that route on the suffix still work.
 
 ### What an event looks like on the way back
 
-The record structure of the original Fluent Bit event is preserved end-to-end — every field comes back to your destination outputs with the same name and same position. The wire tag has a `tenx.` prefix prepended on egress (the bypass mechanism); the original tag is the suffix. What changes in the record body depends on the Receiver app mode:
+The record structure of the original Fluent Bit event is preserved end-to-end, every field comes back to your destination outputs with the same name and same position. The wire tag has a `tenx.` prefix prepended on egress (the bypass mechanism); the original tag is the suffix. What changes in the record body depends on the Receiver app mode:
 
 | Mode | Difference vs the event Fluent Bit sent in |
 |------|--------------------------------------------|
 | Receive (default) | None. Same record. Tag is `tenx.<original>`. |
-| Receive + `symbolMessageHashField <name>` | Adds one new field with the symbol-pattern hash (a stable identifier for the message pattern — usable as a dedup key, metric dimension, or correlation ID). |
+| Receive + `symbolMessageHashField <name>` | Adds one new field with the symbol-pattern hash (a stable identifier for the message pattern, usable as a dedup key, metric dimension, or correlation ID). |
 | `receiverOptimize true` | The value of the message field (`log` by default, or whatever `fluentbitInputMessageField` is set to) is replaced with a compact encoded form. A separate `tenx-template` event is emitted with the template needed to decode it. All other fields stay verbatim. |
 | `receiverOptimize true` + `symbolMessageHashField <name>` | Both of the above. |
 
-The original Fluent Bit tag is carried by the Forward protocol itself and surfaces on the event as its `source` inside Log10x — used for rate-based grouping and re-emitted as the wire tag on the return path (with `tenx.` prepended by the egress `forward` input). Internally, Log10x's Fluent Bit input module reads the message text from the field named by `fluentbitInputMessageField` (default `log`); when the Receiver app is configured with `k8sExtractorName: fluentK8s`, the `kubernetes.*` sub-object is also materialized as enrichment fields for use by message-pattern and rate filtering.
+The original Fluent Bit tag is carried by the Forward protocol itself and surfaces on the event as its `source` inside Log10x, used for rate-based grouping and re-emitted as the wire tag on the return path (with `tenx.` prepended by the egress `forward` input). Internally, Log10x's Fluent Bit input module reads the message text from the field named by `fluentbitInputMessageField` (default `log`); when the Receiver app is configured with `k8sExtractorName: fluentK8s`, the `kubernetes.*` sub-object is also materialized as enrichment fields for use by message-pattern and rate filtering.
 
 ??? tenx-keyfiles "Key Files"
 
@@ -68,7 +68,7 @@ The original Fluent Bit tag is carried by the Forward protocol itself and surfac
 tenx @run/input/forwarder/fluentbit @apps/receiver
 ```
 
-**2. Wire up your Fluent Bit config** — include the sidecar recipe and `Match` your sources with the recipe's tag conventions:
+**2. Wire up your Fluent Bit config**, include the sidecar recipe and `Match` your sources with the recipe's tag conventions:
 
 ```ini title="fluent-bit.conf"
 @INCLUDE ${TENX_MODULES}/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-sidecar.conf

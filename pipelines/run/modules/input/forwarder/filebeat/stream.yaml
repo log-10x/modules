@@ -1,6 +1,6 @@
 # 🔟❎ 'run' Filebeat input + output streams
 #
-# Reads events from Filebeat over its stdout pipe — Filebeat runs as a
+# Reads events from Filebeat over its stdout pipe, Filebeat runs as a
 # subprocess of the sidecar (filebeat -e 2>&1 | tenx ...). Processed events
 # are written back over a Unix domain socket; Filebeat's `unix` input then
 # ships them to the real output(s).
@@ -12,7 +12,7 @@
 # used had it been logging directly.
 #
 # IMPORTANT: because the engine reads events from Filebeat's stdout, Filebeat
-# must NOT use `output.console` — console output would write to the same pipe
+# must NOT use `output.console`, console output would write to the same pipe
 # and corrupt the event stream. Use output.elasticsearch / .logstash / .file /
 # .kafka / etc.
 
@@ -32,7 +32,7 @@ include:
     options:
       path: stdin
       regex: Config path:\s*\[(?<filebeatConfigPath>[^\]]*)\].*?Logs path:\s*\[(?<filebeatLogsPath>[^\]]*)\]
-      # backtracking is fine here — runs once at startup, not on every event
+      # backtracking is fine here, runs once at startup, not on every event
       validateRegex: false
       maxLines: 20
 
@@ -52,7 +52,7 @@ include:
       logging.to_stderr: filebeatLoggingToStderr
       logging.to_syslog: filebeatLoggingToSyslog
 
-  # Read the unix-socket path from the OS-appropriate tenx*.yml — the same
+  # Read the unix-socket path from the OS-appropriate tenx*.yml, the same
   # file is fed to Filebeat as a `filebeat.config.inputs` snippet, so engine
   # and Filebeat agree on one address without any extra wiring.
   - source: '$="run/modules/input/forwarder/filebeat/conf/" + (TenXString.includes(TenXEnv.get("os.name"), "Windows") ? "tenxWin.yml" : "tenxNix.yml")'
@@ -137,7 +137,7 @@ outputUnixSocket:
     # break to keep the on-wire JSON valid.
     encodeGroupDelimiter: "\\n"
 
-  # Template emitter — only fires in encoding modes (outputWriteTemplates=true)
+  # Template emitter, only fires in encoding modes (outputWriteTemplates=true)
   - address: $=rawOutputUnixSocketAddress
     writeObjects: $?outputWriteTemplates=false
 

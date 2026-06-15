@@ -1,7 +1,7 @@
 # 🔟❎ 'run' Fluent Bit input + output streams
 #
 # Listens for events from Fluent Bit's `forward` output plugin and
-# sends processed events back to a paired `forward` input — both legs
+# sends processed events back to a paired `forward` input, both legs
 # over the Fluent Forward protocol (TCP or Unix domain socket).
 
 tenx: run
@@ -53,7 +53,7 @@ input:
       - '$=yield TenXEnv.get("fluentbitInputPath", "") ? "path" : ""'
       - $=yield TenXEnv.get("fluentbitInputPath", "")
 
-    # Backpressure ceiling — Log10x stops draining the Forward socket once
+    # Backpressure ceiling, Log10x stops draining the Forward socket once
     # this many bytes have arrived in `intervalBytesDuration`, signalling
     # Fluent Bit to buffer instead of overwhelming the pipeline.
     backpressure:
@@ -76,7 +76,7 @@ outputForward:
       - $?outputEncodeField=fullText
 
     # Emit each top-level field of the rendered record as its own field on
-    # the outgoing Forward event — so the record structure of the original
+    # the outgoing Forward event, so the record structure of the original
     # Fluent Bit event survives the round trip.
     encodeType: $?fluentbitOutputEncodeType=delimited
 

@@ -2,7 +2,7 @@
 icon: simple/vector
 ---
 
-Runs 10x Engine as a [sidecar](https://doc.log10x.com/engine/launcher/sidecar) to [Vector](https://vector.dev) for reporting, receiving, and optimizing events before they ship to their destination (Elasticsearch, Splunk, S3, Kafka, …). Vector and Log10x run as peer processes — Vector sends events to Log10x via its native `socket` sink (newline-delimited JSON over TCP or Unix socket) and receives processed events back via its native `fluent` source (Fluent Forward protocol). Works against any stock Vector build (Linux/macOS/Windows) and the official `vector/vector` Helm chart with a values overlay.
+Runs 10x Engine as a [sidecar](https://doc.log10x.com/engine/launcher/sidecar) to [Vector](https://vector.dev) for reporting, receiving, and optimizing events before they ship to their destination (Elasticsearch, Splunk, S3, Kafka, …). Vector and Log10x run as peer processes, Vector sends events to Log10x via its native `socket` sink (newline-delimited JSON over TCP or Unix socket) and receives processed events back via its native `fluent` source (Fluent Forward protocol). Works against any stock Vector build (Linux/macOS/Windows) and the official `vector/vector` Helm chart with a values overlay.
 
 ## Architecture
 
@@ -33,25 +33,25 @@ graph LR
 
 ### Data Flow
 
-- 📂 **Sources** — Your existing Vector sources (`file`, `kubernetes_logs`, `journald`, `socket`, …) feed events into the enrichment transforms.
-- 🧪 **Transforms** — Your enrichment transforms (`remap`, `filter`, `route`, …) run here exactly once before the event is handed off to Log10x. The recipe places them between your sources and the `tenx_in` sink — so the bypass is structural, not configured.
-- 📤 **socket sink** → Log10x — Vector forwards the enriched event to the Log10x sidecar over TCP `:9000` (or a Unix socket on Linux/macOS) as newline-delimited JSON.
-- ⚡ **10x Engine** — The Receiver app applies rate/policy-based filtering and optionally compacts events for volume reduction.
-- 📥 **fluent source** — Processed events come back to Vector on `:9001` over the Fluent Forward protocol. Only your destination sinks consume `tenx_out`; no transforms sit between them, so enrichment never re-fires.
-- 📤 **Destinations** — Vector's destination sinks (`elasticsearch`, `splunk_hec`, `kafka`, `aws_s3`, …) consume `tenx_out` and ship to the real destinations.
+- 📂 **Sources**, Your existing Vector sources (`file`, `kubernetes_logs`, `journald`, `socket`, …) feed events into the enrichment transforms.
+- 🧪 **Transforms**, Your enrichment transforms (`remap`, `filter`, `route`, …) run here exactly once before the event is handed off to Log10x. The recipe places them between your sources and the `tenx_in` sink, so the bypass is structural, not configured.
+- 📤 **socket sink** → Log10x, Vector forwards the enriched event to the Log10x sidecar over TCP `:9000` (or a Unix socket on Linux/macOS) as newline-delimited JSON.
+- ⚡ **10x Engine**, The Receiver app applies rate/policy-based filtering and optionally compacts events for volume reduction.
+- 📥 **fluent source**, Processed events come back to Vector on `:9001` over the Fluent Forward protocol. Only your destination sinks consume `tenx_out`; no transforms sit between them, so enrichment never re-fires.
+- 📤 **Destinations**, Vector's destination sinks (`elasticsearch`, `splunk_hec`, `kafka`, `aws_s3`, …) consume `tenx_out` and ship to the real destinations.
 
 ### What an event looks like on the way back
 
-The record structure of the original Vector event is preserved end-to-end — every field comes back to your destination sinks with the same name and same position. What changes depends on the Receiver app mode:
+The record structure of the original Vector event is preserved end-to-end, every field comes back to your destination sinks with the same name and same position. What changes depends on the Receiver app mode:
 
 | Mode | Difference vs the event Vector sent in |
 |------|----------------------------------------|
 | Receive (default) | None. Same record. |
-| Receive + `symbolMessageHashField <name>` | Adds one new field with the symbol-pattern hash (a stable identifier for the message pattern — usable as a dedup key, metric dimension, or correlation ID). |
+| Receive + `symbolMessageHashField <name>` | Adds one new field with the symbol-pattern hash (a stable identifier for the message pattern, usable as a dedup key, metric dimension, or correlation ID). |
 | `receiverOptimize true` | The value of the message field (`message` by default, or whatever `vectorInputMessageField` is set to) is replaced with a compact encoded form. A separate `tenx-template` event is emitted with the template needed to decode it. All other fields stay verbatim. |
 | `receiverOptimize true` + `symbolMessageHashField <name>` | Both of the above. |
 
-The `tag` field stamped by Vector's ingest transform (typically from `.source_type`) is carried on the Forward wire as the Fluent tag, and surfaces as the event's `source` inside Log10x — used for rate-based grouping and emitted back to Vector on the return Forward record. Internally, Log10x's Vector input module reads the message text from the field named by `vectorInputMessageField` (default `message`); when the Receiver app is configured with `k8sExtractorName: fluentK8s`, the `kubernetes.*` sub-object is also materialized as enrichment fields for use by message-pattern and rate filtering.
+The `tag` field stamped by Vector's ingest transform (typically from `.source_type`) is carried on the Forward wire as the Fluent tag, and surfaces as the event's `source` inside Log10x, used for rate-based grouping and emitted back to Vector on the return Forward record. Internally, Log10x's Vector input module reads the message text from the field named by `vectorInputMessageField` (default `message`); when the Receiver app is configured with `k8sExtractorName: fluentK8s`, the `kubernetes.*` sub-object is also materialized as enrichment fields for use by message-pattern and rate filtering.
 
 ??? tenx-keyfiles "Key Files"
 
@@ -68,7 +68,7 @@ The `tag` field stamped by Vector's ingest transform (typically from `.source_ty
 tenx @run/input/forwarder/vector @apps/receiver
 ```
 
-**2. Wire up your Vector config** — start from the sidecar recipe and add your real sources + destinations:
+**2. Wire up your Vector config**, start from the sidecar recipe and add your real sources + destinations:
 
 ```yaml title="vector.yaml"
 sources:
@@ -84,7 +84,7 @@ sources:
     address: 127.0.0.1:9001
 
 transforms:
-  # Enrichment runs here exactly once — the return path skips this block.
+  # Enrichment runs here exactly once, the return path skips this block.
   ingest:
     type: remap
     inputs: [app_logs]

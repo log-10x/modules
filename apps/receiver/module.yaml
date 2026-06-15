@@ -56,14 +56,14 @@ module:
 
     - names:
       - receiverReadOnly
-      description: read-only mode — receive events, emit metrics, do not write back to the forwarder
+      description: read-only mode, receive events, emit metrics, do not write back to the forwarder
       type: boolean
       required: false
       defValue: false
       doc: |
         enables read-only mode on the receiver. When true, the receiver reads
         events from the coupled forwarder, runs aggregators, and publishes
-        `emitted_events` / `all_events` TenXSummary metrics — but does **not**
+        `emitted_events` / `all_events` TenXSummary metrics, but does **not**
         write events back to the forwarder.
 
         Read-only mode is for observation deployments where the receiver acts

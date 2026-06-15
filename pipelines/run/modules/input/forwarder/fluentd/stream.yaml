@@ -1,7 +1,7 @@
 # 🔟❎ 'run' Fluentd input + output streams
 #
 # Listens for events from Fluentd's `out_forward` plugin and sends
-# processed events back to a paired `in_forward` source — both legs
+# processed events back to a paired `in_forward` source, both legs
 # over the native Fluent Forward protocol (TCP or Unix domain socket).
 
 tenx: run
@@ -53,7 +53,7 @@ input:
       - '$=yield TenXEnv.get("fluentdInputPath", "") ? "path" : ""'
       - $=yield TenXEnv.get("fluentdInputPath", "")
 
-    # Backpressure ceiling — Log10x stops draining the Forward socket once
+    # Backpressure ceiling, Log10x stops draining the Forward socket once
     # this many bytes have arrived in `intervalBytesDuration`, signalling
     # Fluentd to buffer instead of overwhelming the pipeline.
     backpressure:
@@ -76,7 +76,7 @@ outputForward:
       - $?outputEncodeField=fullText
 
     # Emit each top-level field of the rendered record as its own field on
-    # the outgoing Forward event — so the record structure of the original
+    # the outgoing Forward event, so the record structure of the original
     # Fluentd event survives the round trip.
     encodeType: $?fluentdOutputEncodeType=delimited
 

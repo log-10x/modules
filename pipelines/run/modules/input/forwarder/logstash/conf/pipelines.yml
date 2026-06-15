@@ -1,11 +1,11 @@
 # ─────────────────────────────────────────────────────────────────────────────
-# Log10x Logstash sidecar — pipelines.yml driver
+# Log10x Logstash sidecar, pipelines.yml driver
 # ─────────────────────────────────────────────────────────────────────────────
 #
 # Logstash runs two pipelines side-by-side:
 #
-#   • `ingest`       — your sources + filters, hands off to the Log10x sidecar
-#   • `destinations` — receives processed events back from Log10x and routes
+#   • `ingest`      , your sources + filters, hands off to the Log10x sidecar
+#   • `destinations`, receives processed events back from Log10x and routes
 #                      them to your real destinations
 #
 # Filters under `ingest` only see events on the way in. The `destinations`

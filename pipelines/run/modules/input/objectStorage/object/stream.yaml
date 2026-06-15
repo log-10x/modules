@@ -142,17 +142,17 @@ output:
     # aggregator). TenXObject instances flow to the events writer above.
     filter: isSummary
 
-    # Emit each enrichment field as a NAMED top-level key — same expansion
+    # Emit each enrichment field as a NAMED top-level key, same expansion
     # pattern the events writer above uses. Self-describing per record:
     # group_by lookups in consumers (MCP, log10x_pattern_trend, etc.) hit
     # `record.severity_level` / `record.k8s_pod` directly instead of a
-    # position-based index into an opaque values array — which would
+    # position-based index into an opaque values array, which would
     # silently misattribute when a deployment customizes
     # `enrichmentFields` (adds, removes, or reorders).
     #
     # `summaryVolume` and `summaryBytes` are intrinsic TenXSummary
     # attributes (event count + utf8 byte sum for this group). The slice
-    # bounds come from the S3 key path the writer composes — independent
+    # bounds come from the S3 key path the writer composes, independent
     # of any per-record timestamp.
     fields:
       - summaryVolume

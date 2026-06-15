@@ -2,7 +2,7 @@
 icon: material/butterfly-outline
 ---
 
-Transform raw log events into typed objects with direct access to fields, timestamps, and structure — without per-event parsing or regex. The resulting `TenXObjects` support enrichment, filtering, aggregation, and lossless volume reduction.
+Transform raw log events into typed objects with direct access to fields, timestamps, and structure, without per-event parsing or regex. The resulting `TenXObjects` support enrichment, filtering, aggregation, and lossless volume reduction.
 
 Raw logs are costly, inefficient, and hard to analyze due to:
 
@@ -13,7 +13,7 @@ Raw logs are costly, inefficient, and hard to analyze due to:
 :   combined timestamps, JSON, and free text demand complex parsing
 
 :material-speedometer: **Performance Overhead**
-:   Every event parsed from scratch — same JSON structure, same regex, millions of times per hour
+:   Every event parsed from scratch, same JSON structure, same regex, millions of times per hour
 
 ## :material-language-javascript: Capabilities
 
@@ -138,7 +138,7 @@ Transform capabilities are illustrated below for the following k8s log event ([:
 
 ### :material-forest-outline: Template
 
-TenXTemplates are shared hidden classes — one per event type. Each template maps the fixed structure (symbols like "Error syncing pod") separately from the changing values (IDs, IPs, timestamps). The engine processes events by referencing the template, not by parsing each instance.
+TenXTemplates are shared hidden classes, one per event type. Each template maps the fixed structure (symbols like "Error syncing pod") separately from the changing values (IDs, IPs, timestamps). The engine processes events by referencing the template, not by parsing each instance.
 
 === ":material-format-text: TenXTemplate"
 
@@ -305,7 +305,7 @@ TenXObjects can be efficiently serialized for storage and transport with signifi
 
 ### :octicons-file-binary-24: Compact
 
-The 10x Engine losslessly compacts events using [TenXTemplate](https://doc.log10x.com/engine/design/#optimization-model) schema references — removing repetitive low-cardinality values, JSON/KV field names, and metadata from each instance.
+The 10x Engine losslessly compacts events using [TenXTemplate](https://doc.log10x.com/engine/design/#optimization-model) schema references, removing repetitive low-cardinality values, JSON/KV field names, and metadata from each instance.
 
 This approach mirrors [Protocol Buffers](https://blog.calvinsd.in/data-serialization-how-protocol-buffers-achieve-efficiency) which **losslessly serializes** records by referencing structured schemas instead of repeating information shared across instances of the same type.
 

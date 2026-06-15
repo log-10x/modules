@@ -23,7 +23,7 @@ module; pick one based on the deployment model you want.
 ## What it does NOT create
 
 - **The S3 buckets.** Bring your own. The module reads the bucket names
-  and attaches the notification + IAM policy. This is intentional —
+  and attaches the notification + IAM policy. This is intentional:
   bucket ownership is typically a longer-lived concern than the
   compute layer.
 - **The ECR image.** Build it from
@@ -41,7 +41,7 @@ module "retriever" {
   name_prefix        = "my-retriever"
   image_uri          = "123456789012.dkr.ecr.us-east-1.amazonaws.com/tenx-retriever-lambda:1.0.0"
   source_bucket_name = "my-raw-log-bucket"
-  index_bucket_name  = "my-raw-log-bucket"  # same as source — EKS-style layout
+  index_bucket_name  = "my-raw-log-bucket"  # same as source, EKS-style layout
   tenx_api_key       = var.tenx_api_key
 
   source_prefix = "raw/"
@@ -52,7 +52,7 @@ module "retriever" {
 ## ⚠ Recursion guard
 
 When `source_bucket_name == index_bucket_name` (the single-bucket layout),
-`source_prefix` must scope the notification to where raw logs land — not
+`source_prefix` must scope the notification to where raw logs land, not
 to where the engine writes its index artifacts (under the `tenx/`
 prefix). Without a scoped prefix, the indexer's bloom/reverse-index
 writes re-trigger the S3 notification → indexer → write → loop. AWS's

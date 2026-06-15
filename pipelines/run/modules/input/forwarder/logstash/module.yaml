@@ -41,7 +41,7 @@ module:
       category: input
       defValue:
       doc: |
-        When set, Log10x listens on a Unix domain socket instead of TCP — useful
+        When set, Log10x listens on a Unix domain socket instead of TCP, useful
         on Linux/macOS to avoid TCP overhead. Configure Logstash's `unix` output
         plugin with `codec => json_lines` and a matching `path`. Ignored on Windows.
 

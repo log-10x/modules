@@ -54,7 +54,7 @@ module:
         Only takes effect when filebeatOutputFields is set.
 
     # =========== Parsed from filebeat.yml at startup (engine-internal) ======
-    # These are populated by the `match` source-extractors in stream.yaml —
+    # These are populated by the `match` source-extractors in stream.yaml:
     # filebeatConfigPath/filebeatLogsPath come from Filebeat's startup banner
     # on stdin; the logging.* values come from re-reading filebeat.yml. They
     # feed the filebeatRollingFile / filebeatStderr / filebeatSyslog appenders

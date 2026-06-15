@@ -41,7 +41,7 @@ module:
       category: input
       defValue:
       doc: |
-        When set, Log10x listens on a Unix domain socket instead of TCP — useful
+        When set, Log10x listens on a Unix domain socket instead of TCP, useful
         on Linux/macOS to avoid TCP overhead. Configure Fluent Bit's `forward`
         output with `Unix_Path` set to a matching path. Ignored on Windows.
 
@@ -92,7 +92,7 @@ module:
       doc: |
         Optional Unix domain socket path for Fluent Bit's `forward` input.
         When set, takes precedence over `fluentbitOutputHost` /
-        `fluentbitOutputPort`. Linux/macOS only — ignored on Windows.
+        `fluentbitOutputPort`. Linux/macOS only, ignored on Windows.
 
     - names:
       - fluentbitOutputEncodeType

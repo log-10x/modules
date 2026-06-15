@@ -38,7 +38,7 @@ module:
   # downstream forwarder can route by it regardless of which combination is set.
   # The customer-facing config.yaml maps these two flags into the engine's
   # internal `outputDropFilter` and `outputEncodeField` primitives via $=yield
-  # expressions — see the receiver app config for the canonical wiring.
+  # expressions, see the receiver app config for the canonical wiring.
   options:
 
     - names:
@@ -51,9 +51,9 @@ module:
         Derived by the customer-facing config.yaml from `compact_emitted` (and
         from the legacy per-pattern `compactReceiverLookupFile` lookup when set):
 
-        - **compact_emitted=false** (default): `fullText` — every event passes through full text
-        - **compact_emitted=true**: `encoded=encode()` — every emitted event compacted losslessly
-        - **compact-lookup (legacy)**: `encoded=shouldEncode() ? encode() : fullText` —
+        - **compact_emitted=false** (default): `fullText`, every event passes through full text
+        - **compact_emitted=true**: `encoded=encode()`, every emitted event compacted losslessly
+        - **compact-lookup (legacy)**: `encoded=shouldEncode() ? encode() : fullText`,
           per-pattern decision via the compactReceiver module (requires
           `compactReceiverLookupFile`)
 
@@ -119,8 +119,8 @@ module:
         the emit/hard-drop logic lives in one place instead of being duplicated
         per stream:
 
-        - **hard-drop** (default): `isObject && !isRoute("drop")` — dropped objects not written
-        - **emit** (`emit_dropped` truthy): `isObject` — everything written; routing
+        - **hard-drop** (default): `isObject && !isRoute("drop")`, dropped objects not written
+        - **emit** (`emit_dropped` truthy): `isObject`, everything written; routing
           decision moves downstream to the forwarder based on the wire-level
           `routeState` field.
 

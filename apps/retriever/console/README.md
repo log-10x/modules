@@ -7,7 +7,7 @@ Two modes: a **web GUI** with Monaco editor and live query log, and a **CLI** fo
 ## Prerequisites
 
 - Python 3.8+
-- `boto3` — required for SQS submission and CloudWatch log polling (`pip3 install boto3`)
+- `boto3`, required for SQS submission and CloudWatch log polling (`pip3 install boto3`)
 - AWS credentials configured (`aws configure` or environment variables)
 
 ## Quick Start

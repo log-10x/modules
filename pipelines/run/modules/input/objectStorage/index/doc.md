@@ -84,11 +84,11 @@ Indexing is CPU and memory intensive during file parsing. Default k8s pod resour
 - **Autoscaling:** 2–10 replicas depending on queue depth (default 2 min, scales to 10 if backlog grows)
 - **Throughput:** One pod handles ~10–50 GB/day depending on event size and CPU availability
 
-Indexing runs asynchronously — triggered by S3 event notifications, in parallel with queries. Multiple index workers process files concurrently from the SQS queue. Indexes are built once at ingest time and never recomputed.
+Indexing runs asynchronously, triggered by S3 event notifications, in parallel with queries. Multiple index workers process files concurrently from the SQS queue. Indexes are built once at ingest time and never recomputed.
 
 ### :material-currency-usd: Cost
 
-Index building cost is part of the k8s pod resource costs — no per-GB indexing fee. You pay:
+Index building cost is part of the k8s pod resource costs, no per-GB indexing fee. You pay:
 
 - k8s pod (CPU + memory) running the index workers
 - S3 storage for index objects (~1–5% overhead vs. original data size)
@@ -96,7 +96,7 @@ Index building cost is part of the k8s pod resource costs — no per-GB indexing
 
 ### :material-arrow-up-bold: Scaling
 
-If files upload faster than indexing, the SQS queue buffers pending work — no events are lost. Index worker pods scale up automatically via Kubernetes HPA.
+If files upload faster than indexing, the SQS queue buffers pending work, no events are lost. Index worker pods scale up automatically via Kubernetes HPA.
 
 Unindexed files remain queryable via full scan (slower than indexed queries but functional).
 

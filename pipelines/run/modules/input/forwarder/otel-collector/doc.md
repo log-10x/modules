@@ -2,10 +2,10 @@
 icon: simple/opentelemetry
 ---
 
-Runs 10x Engine as a [sidecar](https://doc.log10x.com/engine/launcher/sidecar) to the [OpenTelemetry Collector](https://opentelemetry.io/docs/collector/) for reporting, receiving, and optimizing events before they ship to their destination (Elasticsearch, Splunk, S3, Kafka, …). The Collector and Log10x run as peer processes — the Collector sends events to Log10x via its native [OTLP/gRPC exporter](https://github.com/open-telemetry/opentelemetry-collector/tree/main/exporter/otlpexporter) and receives processed events back via its OTLP/gRPC receiver. The OTLP wire preserves resource attributes, scope info, log-record attributes, severity, timestamp, and body end-to-end, so k8s metadata (`k8s.pod.name`, `k8s.namespace.name`, `k8s.container.name`, labels, …) round-trips back to your destinations.
+Runs 10x Engine as a [sidecar](https://doc.log10x.com/engine/launcher/sidecar) to the [OpenTelemetry Collector](https://opentelemetry.io/docs/collector/) for reporting, receiving, and optimizing events before they ship to their destination (Elasticsearch, Splunk, S3, Kafka, …). The Collector and Log10x run as peer processes, the Collector sends events to Log10x via its native [OTLP/gRPC exporter](https://github.com/open-telemetry/opentelemetry-collector/tree/main/exporter/otlpexporter) and receives processed events back via its OTLP/gRPC receiver. The OTLP wire preserves resource attributes, scope info, log-record attributes, severity, timestamp, and body end-to-end, so k8s metadata (`k8s.pod.name`, `k8s.namespace.name`, `k8s.container.name`, labels, …) round-trips back to your destinations.
 
 !!! note "Distribution"
-    Both the OTLP receiver and OTLP exporter ship in the core `otelcol` distribution — no `otelcol-contrib` build is required. Tested against `otelcol` v0.151.0+.
+    Both the OTLP receiver and OTLP exporter ship in the core `otelcol` distribution, no `otelcol-contrib` build is required. Tested against `otelcol` v0.151.0+.
 
 ## Architecture
 
@@ -36,21 +36,21 @@ graph LR
 
 ### Data Flow
 
-- 📂 **Receivers** — Your existing OTel receivers (`filelog`, `otlp`, `journald`, `kafka`, …) feed events into the `logs/to-tenx` pipeline.
-- 🧪 **`logs/to-tenx`** — Your enrichment processors (`k8sattributes`, `resource`, `attributes`, `transform`, `filter`, …) run here exactly once before the event is handed off to Log10x. The processors live on this pipeline only; the return-path pipeline never sees them.
-- 📤 **OTLP exporter** → Log10x — The Collector forwards the enriched event to the Log10x sidecar over OTLP/gRPC on TCP `:4317`. Resource attributes, scope info, log-record attributes, and the body all travel on the wire.
-- ⚡ **10x Engine** — The Receiver app applies rate/policy-based filtering and optionally compacts events for volume reduction.
-- 📥 **`logs/from-tenx`** — Processed events come back to the Collector on `:24225` via its OTLP/gRPC receiver. Keep this pipeline processor-free; the destination exporters consume events directly so enrichment never re-fires on the return path.
-- 📤 **Destinations** — Your OTel destination exporters (`elasticsearch`, `splunkhec`, `kafka`, `awss3`, …) consume the return pipeline and ship to the real destinations.
+- 📂 **Receivers**, Your existing OTel receivers (`filelog`, `otlp`, `journald`, `kafka`, …) feed events into the `logs/to-tenx` pipeline.
+- 🧪 **`logs/to-tenx`**, Your enrichment processors (`k8sattributes`, `resource`, `attributes`, `transform`, `filter`, …) run here exactly once before the event is handed off to Log10x. The processors live on this pipeline only; the return-path pipeline never sees them.
+- 📤 **OTLP exporter** → Log10x, The Collector forwards the enriched event to the Log10x sidecar over OTLP/gRPC on TCP `:4317`. Resource attributes, scope info, log-record attributes, and the body all travel on the wire.
+- ⚡ **10x Engine**, The Receiver app applies rate/policy-based filtering and optionally compacts events for volume reduction.
+- 📥 **`logs/from-tenx`**, Processed events come back to the Collector on `:24225` via its OTLP/gRPC receiver. Keep this pipeline processor-free; the destination exporters consume events directly so enrichment never re-fires on the return path.
+- 📤 **Destinations**, Your OTel destination exporters (`elasticsearch`, `splunkhec`, `kafka`, `awss3`, …) consume the return pipeline and ship to the real destinations.
 
 ### What an event looks like on the way back
 
-Every attribute that came in over OTLP — resource attributes, scope info, log-record attributes, body — round-trips back to the Collector. The `LogRecord.body` carries the message verbatim in its original `AnyValue` shape (so a `body.stringValue` is byte-for-byte unchanged); the resource-vs-log-attribute distinction is collapsed (everything comes back as a log-record attribute), but no data is lost. What changes between in and out depends on the Receiver app mode:
+Every attribute that came in over OTLP, resource attributes, scope info, log-record attributes, body, round-trips back to the Collector. The `LogRecord.body` carries the message verbatim in its original `AnyValue` shape (so a `body.stringValue` is byte-for-byte unchanged); the resource-vs-log-attribute distinction is collapsed (everything comes back as a log-record attribute), but no data is lost. What changes between in and out depends on the Receiver app mode:
 
 | Mode | Difference vs the event the Collector sent in |
 |------|------------------------------------------------|
 | Receive (default) | None. Same record. |
-| Receive + `symbolMessageHashField <name>` | Same record + one new field named `<name>` carrying the symbol-pattern hash (a stable identifier for the message pattern — usable as a dedup key, metric dimension, or correlation ID). |
+| Receive + `symbolMessageHashField <name>` | Same record + one new field named `<name>` carrying the symbol-pattern hash (a stable identifier for the message pattern, usable as a dedup key, metric dimension, or correlation ID). |
 | `receiverOptimize true` | The value of the field captured by `otelCollectorInputMessageField` (default `body`) is replaced with a compact encoded form. A separate `tenx-template` event is emitted with the template needed to decode it. All other fields stay verbatim. |
 | `receiverOptimize true` + `symbolMessageHashField <name>` | Both of the above. |
 
@@ -71,7 +71,7 @@ Log10x reads the log line text via the JSON field configured by `otelCollectorIn
 tenx @run/input/forwarder/otel-collector @apps/receiver
 ```
 
-**2. Wire up your Collector config** — start from the sidecar recipe and add your real receivers + destination exporters. The `logs/to-tenx` pipeline carries everything from sources through enrichment to the `otlp/tenx` exporter; the `logs/from-tenx` pipeline carries the returning events directly to your destination exporters:
+**2. Wire up your Collector config**, start from the sidecar recipe and add your real receivers + destination exporters. The `logs/to-tenx` pipeline carries everything from sources through enrichment to the `otlp/tenx` exporter; the `logs/from-tenx` pipeline carries the returning events directly to your destination exporters:
 
 ```yaml title="otelcol.yaml"
 receivers:

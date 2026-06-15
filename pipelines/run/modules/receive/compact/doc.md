@@ -2,7 +2,7 @@
 icon: material/tune-variant
 ---
 
-Compact specific patterns' events into a template+values tuple — without redeploying the engine.
+Compact specific patterns' events into a template+values tuple, without redeploying the engine.
 
 The compact receiver makes a per-event decision whether to emit via `encode()` (the pattern's template hash plus extracted variable values, typically 20–40× smaller than the original line) or preserve `fullText`. The decision is keyed by pattern identity (the same symbolMessage the Reporter attributes cost to), so an operator targets compaction at the same patterns surfaced in cost analysis.
 
@@ -19,10 +19,10 @@ fieldSet,value
 <fieldSet>,<true|false>[:<untilEpochSec>][:<reason>]
 ```
 
-- `fieldSet` — the event fields named by `compactReceiverFieldNames` joined with `_`. With the default `[symbolMessage]` this is the symbolMessage value for the pattern.
-- `value` — `true` compacts via `encode()`; `false` explicitly preserves `fullText` for this pattern (beats the default).
-- `untilEpochSec` — optional Unix-epoch (seconds) expiry. Past it the entry self-heals and the pattern falls back to `compactReceiverDefault`.
-- `reason` — optional free-text for audit. Must not contain commas (would break CSV parsing).
+- `fieldSet`, the event fields named by `compactReceiverFieldNames` joined with `_`. With the default `[symbolMessage]` this is the symbolMessage value for the pattern.
+- `value`, `true` compacts via `encode()`; `false` explicitly preserves `fullText` for this pattern (beats the default).
+- `untilEpochSec`, optional Unix-epoch (seconds) expiry. Past it the entry self-heals and the pattern falls back to `compactReceiverDefault`.
+- `reason`, optional free-text for audit. Must not contain commas (would break CSV parsing).
 
 **Example** (with `compactReceiverDefault: false`):
 
@@ -38,8 +38,8 @@ The engine hot-reloads on in-place file writes (the gitops pattern); Kubernetes 
 
 `compactReceiverDefault` sets the fallback decision when no cap-file entry matches:
 
-- **`false`** (default) — preserve `fullText`. Cap-file entries opt specific patterns *into* compaction. Right when most traffic is already high-signal.
-- **`true`** — compact via `encode()`. Cap-file entries opt specific patterns *out* of compaction (e.g. audit/compliance patterns that must stay verbose). Right when most traffic is low-signal machinery and only a few patterns need full-text fidelity.
+- **`false`** (default), preserve `fullText`. Cap-file entries opt specific patterns *into* compaction. Right when most traffic is already high-signal.
+- **`true`**, compact via `encode()`. Cap-file entries opt specific patterns *out* of compaction (e.g. audit/compliance patterns that must stay verbose). Right when most traffic is low-signal machinery and only a few patterns need full-text fidelity.
 
 Flipping the default is a policy decision that affects every event and requires a pod rollout. Cap-file edits handle per-pattern exceptions without restart.
 

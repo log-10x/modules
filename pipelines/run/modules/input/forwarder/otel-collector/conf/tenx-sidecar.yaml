@@ -31,14 +31,14 @@
 #      OTLP `LogRecord.body` carries the message verbatim; everything else
 #      that came in on OTLP returns as a log-record attribute (the resource-
 #      vs-log distinction collapses; everything comes back as a log attribute).
-#   6. `logs/from-tenx` holds only destination exporters — no processors.
+#   6. `logs/from-tenx` holds only destination exporters, no processors.
 #      Keep this pipeline processor-free so enrichment runs exactly once.
 #
 # Run Log10x:
 #
 #   tenx @run/input/forwarder/otel-collector @apps/receiver
 #
-# Run the Collector — both ports use the core `otlp` receiver and exporter,
+# Run the Collector, both ports use the core `otlp` receiver and exporter,
 # so the core `otelcol` distribution works (no `otelcol-contrib` needed):
 #
 #   otelcol --config=<this-file>
@@ -66,7 +66,7 @@ receivers:
 
 processors:
 
-  # Put all your enrichment here — `k8sattributes`, `resource`, `attributes`,
+  # Put all your enrichment here, `k8sattributes`, `resource`, `attributes`,
   # `transform`, `filter`, etc. This pipeline (`logs/to-tenx`) fires the
   # processors exactly once per event before the handoff to Log10x. The
   # return pipeline (`logs/from-tenx`) bypasses them by structural wiring.
@@ -83,7 +83,7 @@ exporters:
     tls:
       insecure: true
 
-  # `debug` is the terminal exporter for this recipe — replace it with your
+  # `debug` is the terminal exporter for this recipe, replace it with your
   # real destinations (`elasticsearch`, `splunk_hec`, `kafka`, `awss3`, …).
   # Wire your destination exporters into `logs/from-tenx` only; that's what
   # keeps the enrichment processors above from running a second time on

@@ -110,9 +110,9 @@ Index lookups identify matching files in under 1 second. Fetching and streaming 
 
 Parallel [scan](#scan) and [stream](#stream) workers fetch and parse events concurrently. Three configuration options control parallelism:
 
-- [`queryScanFunctionParallelTimeslice`](#queryscanfunctionparalleltimeslice) — max time range per scan worker (e.g., `1m` = each worker scans 1 minute of index)
-- [`queryScanFunctionParallelMaxInstances`](#queryscanfunctionparallelmaxinstances) — max number of parallel scan workers (default 1000)
-- [`queryStreamFunctionParallelObjects`](#querystreamfunctionparallelobjects) — max byte ranges per stream worker (default 50)
+- [`queryScanFunctionParallelTimeslice`](#queryscanfunctionparalleltimeslice), max time range per scan worker (e.g., `1m` = each worker scans 1 minute of index)
+- [`queryScanFunctionParallelMaxInstances`](#queryscanfunctionparallelmaxinstances), max number of parallel scan workers (default 1000)
+- [`queryStreamFunctionParallelObjects`](#querystreamfunctionparallelobjects), max byte ranges per stream worker (default 50)
 
 **Example:** 100K events over a 10-minute time range with a 1-minute timeslice produces ~10 parallel scan workers. Total query time approaches the single-worker baseline (~10–30 sec) rather than scaling linearly with result set size. Actual time depends on file size distribution, S3 API rate limits, network bandwidth, and log parsing overhead.
 

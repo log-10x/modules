@@ -1,7 +1,7 @@
 #
 # 🔟❎ 'run' Vector module
 #
-# Vector integration — NDJSON socket input + Fluent Forward output.
+# Vector integration, NDJSON socket input + Fluent Forward output.
 # Declares the input + output options consumed by the paired streams.
 
 module:
@@ -41,7 +41,7 @@ module:
       category: input
       defValue:
       doc: |
-        When set, Log10x listens on a Unix domain socket instead of TCP — useful
+        When set, Log10x listens on a Unix domain socket instead of TCP, useful
         on Linux/macOS to avoid TCP overhead. Configure Vector's `socket` sink
         with `mode: unix` and a matching `path`. Ignored on Windows.
 
@@ -92,7 +92,7 @@ module:
       doc: |
         Optional Unix domain socket path for Vector's `fluent` source.
         When set, takes precedence over `vectorOutputHost` / `vectorOutputPort`.
-        Linux/macOS only — ignored on Windows.
+        Linux/macOS only, ignored on Windows.
 
     - names:
       - vectorOutputEncodeType

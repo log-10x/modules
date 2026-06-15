@@ -2,7 +2,7 @@
 icon: simple/fluentd
 ---
 
-Runs 10x Engine as a [sidecar](https://doc.log10x.com/engine/launcher/sidecar) to Fluentd for reporting, receiving, and optimizing events before they ship to their destination (Elasticsearch, Splunk, S3, Kafka, …). Fluentd and Log10x run as peer processes and exchange events over the [Fluent Forward protocol](https://docs.fluentd.org/output/forward) — works against any stock Fluentd build (td-agent, fluent-package, OSS) and the official Fluentd Helm chart with a values overlay.
+Runs 10x Engine as a [sidecar](https://doc.log10x.com/engine/launcher/sidecar) to Fluentd for reporting, receiving, and optimizing events before they ship to their destination (Elasticsearch, Splunk, S3, Kafka, …). Fluentd and Log10x run as peer processes and exchange events over the [Fluent Forward protocol](https://docs.fluentd.org/output/forward), works against any stock Fluentd build (td-agent, fluent-package, OSS) and the official Fluentd Helm chart with a values overlay.
 
 ## Architecture
 
@@ -33,25 +33,25 @@ graph LR
 
 ### Data Flow
 
-- 📂 **Sources** — Your existing Fluentd sources (`tail`, `http`, `forward`, syslog, etc.) route their events into the `@INGEST` label.
-- 🧪 **@INGEST** — Your enrichment filters (`kubernetes_metadata`, `record_transformer`, parsers, …) run here exactly once before the event is handed off to Log10x.
-- 📤 **out_forward** → Log10x — Fluentd forwards the enriched event to the Log10x sidecar over TCP `:24224` (or a Unix socket on Linux/macOS).
-- ⚡ **10x Engine** — The Receiver app applies rate/policy-based filtering and optionally compacts events for volume reduction.
-- 📥 **in_forward → @OUTPUT** — Processed events come back to Fluentd on `:24225` and are routed directly to the `@OUTPUT` label, which holds your destination `<match>` blocks. Filters defined under `@INGEST` are **not** re-applied, so each event is enriched exactly once.
-- 📤 **Destinations** — The original Fluentd tag survives the round trip, so destinations that route on `$TAG` (Splunk index, S3 path, Kafka topic, …) behave the same as if Log10x weren't in the path.
+- 📂 **Sources**, Your existing Fluentd sources (`tail`, `http`, `forward`, syslog, etc.) route their events into the `@INGEST` label.
+- 🧪 **@INGEST**, Your enrichment filters (`kubernetes_metadata`, `record_transformer`, parsers, …) run here exactly once before the event is handed off to Log10x.
+- 📤 **out_forward** → Log10x, Fluentd forwards the enriched event to the Log10x sidecar over TCP `:24224` (or a Unix socket on Linux/macOS).
+- ⚡ **10x Engine**, The Receiver app applies rate/policy-based filtering and optionally compacts events for volume reduction.
+- 📥 **in_forward → @OUTPUT**, Processed events come back to Fluentd on `:24225` and are routed directly to the `@OUTPUT` label, which holds your destination `<match>` blocks. Filters defined under `@INGEST` are **not** re-applied, so each event is enriched exactly once.
+- 📤 **Destinations**, The original Fluentd tag survives the round trip, so destinations that route on `$TAG` (Splunk index, S3 path, Kafka topic, …) behave the same as if Log10x weren't in the path.
 
 ### What an event looks like on the way back
 
-The record structure of the original Fluentd event is preserved end-to-end — every field comes back to your `@OUTPUT` label with the same name and same position. What changes depends on the Receiver app mode:
+The record structure of the original Fluentd event is preserved end-to-end, every field comes back to your `@OUTPUT` label with the same name and same position. What changes depends on the Receiver app mode:
 
 | Mode | Difference vs the event Fluentd sent in |
 |------|-----------------------------------------|
 | Receive (default) | None. Same record. |
-| Receive + `symbolMessageHashField <name>` | Adds one new field with the symbol-pattern hash (a stable identifier for the message pattern — usable as a dedup key, metric dimension, or correlation ID). |
+| Receive + `symbolMessageHashField <name>` | Adds one new field with the symbol-pattern hash (a stable identifier for the message pattern, usable as a dedup key, metric dimension, or correlation ID). |
 | `receiverOptimize true` | The value of the message field (`log` by default, or whatever `fluentdInputMessageField` is set to) is replaced with a compact encoded form. A separate `tenx-template` event is emitted with the template needed to decode it. All other fields stay verbatim. |
 | `receiverOptimize true` + `symbolMessageHashField <name>` | Both of the above. |
 
-The original Fluentd tag is carried by the Forward protocol itself and surfaces on the event as its `source` inside Log10x — used for rate-based grouping and emitted back to Fluentd as the wire tag on the return path. Internally, Log10x's Fluentd input module reads the message text from the field named by `fluentdInputMessageField` (default `log`); when the Receiver app is configured with `k8sExtractorName: fluentK8s`, the `kubernetes.*` sub-object is also materialized as enrichment fields for use by message-pattern and rate filtering.
+The original Fluentd tag is carried by the Forward protocol itself and surfaces on the event as its `source` inside Log10x, used for rate-based grouping and emitted back to Fluentd as the wire tag on the return path. Internally, Log10x's Fluentd input module reads the message text from the field named by `fluentdInputMessageField` (default `log`); when the Receiver app is configured with `k8sExtractorName: fluentK8s`, the `kubernetes.*` sub-object is also materialized as enrichment fields for use by message-pattern and rate filtering.
 
 ??? tenx-keyfiles "Key Files"
 
@@ -68,7 +68,7 @@ The original Fluentd tag is carried by the Forward protocol itself and surfaces 
 tenx @run/input/forwarder/fluentd @apps/receiver
 ```
 
-**2. Wire up your Fluentd config** — include the sidecar recipe and route your sources to `@INGEST`:
+**2. Wire up your Fluentd config**, include the sidecar recipe and route your sources to `@INGEST`:
 
 ```xml title="fluentd.conf"
 @include "#{ENV['TENX_MODULES']}/pipelines/run/modules/input/forwarder/fluentd/conf/tenx-sidecar.conf"

@@ -44,4 +44,4 @@ Start with the [**MCP Server**](https://doc.log10x.com/apps/mcp/). Install it in
 
 ## :material-link-variant: Related
 
-- **Need custom symbols?** See the [Compiler app](https://doc.log10x.com/apps/compiler/) to generate custom symbol libraries. Optional.
+- **To optimize your own application's logs,** generate custom symbols with the [Compiler app](https://doc.log10x.com/apps/compiler/). Optional.

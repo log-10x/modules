@@ -44,4 +44,4 @@ Start with the [**MCP Server**](https://doc.log10x.com/apps/mcp/). Install it in
 
 ## :material-link-variant: Related
 
-- **Generating custom symbols?** See [Compile](https://doc.log10x.com/compile/), the AOT symbol generation pipeline. Optional.
+- **Generating custom symbols?** See [Compile](https://doc.log10x.com/apps/compiler/), the AOT symbol generation pipeline. Optional.

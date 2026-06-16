@@ -1,7 +1,7 @@
 ---
 title: "Validate"
 description: "How log10x_validate runs your candidate config, and how to reproduce a failing run locally"
-icon: material/test-tube
+icon: material/play-circle-outline
 ---
 
 When an agent calls `log10x_validate`, the server spawns `tenx @apps/mcp` as a subprocess. The subprocess reads log lines on stdin and writes `TenXObject`s + `TenXTemplate`s as JSON lines on stdout. No filesystem, no network. The server parses the output and returns it to the agent.

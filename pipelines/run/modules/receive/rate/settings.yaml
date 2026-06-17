@@ -55,3 +55,14 @@ enrichmentFields:
   # So: at event time isSummary is false -> intrinsic routeState (name);
   # at output time isSummary is true -> l1e_routeState (the encoded bucket value).
   - 'routeState=isSummary?l1e_routeState:routeState'
+  # Config-version label. The custom initializer (run/initialize/custom/my-object.js)
+  # reads the `config-generation` lookup (the config-generation.csv that the
+  # control-plane writer, the MCP, drops into the cap ConfigMap alongside
+  # caps.csv) and stamps its value as `tenx_config_version` on every event, so
+  # the running engine advertises which config generation it loaded and the
+  # writer can verify the policy it wrote is live. Unlike routeState, this is NOT
+  # an intrinsic field accessor -- it's a plain reflected field, so its name
+  # already resolves to the encoded bucket value on the summary; no isSummary/l1e_
+  # override is needed. Low cardinality: one value per running config in steady
+  # state, at most one extra on a rollover.
+  - tenx_config_version

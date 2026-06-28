@@ -74,7 +74,7 @@ Drops are measured, not estimated. The receive-stage aggregators tally every eve
 
 ## :material-tag-check-outline: Config-version stamp
 
-When the receiver runs the MCP closed loop, the control plane (`log10x_configure_engine`) writes a `config-generation.csv` next to the cap file in the same ConfigMap — a one-row `key,value` CSV whose `generation` is a hash of the cap policy. Point `configGeneration.file` at it (or set the `CONFIG_GENERATION_FILE` env) and the receiver stamps that value on every event as the `tenx_config_version` metric label, so the running engine advertises which config generation it loaded. The MCP then confirms the policy it wrote is actually live by comparing the label to the hash of the current caps — the config-generation closed loop.
+When the receiver runs the MCP closed loop, the control plane (`log10x_configure_engine`) writes a `config-generation.csv` next to the cap file in the same ConfigMap, a one-row `key,value` CSV whose `generation` is a hash of the cap policy. Point `configGeneration.file` at it (or set the `CONFIG_GENERATION_FILE` env) and the receiver stamps that value on every event as the `tenx_config_version` metric label, so the running engine advertises which config generation it loaded. The MCP then confirms the policy it wrote is actually live by comparing the label to the hash of the current caps, the config-generation closed loop.
 
 It is opt-in and decoupled from caps: unset by default, so a regulator managed by GitOps without the MCP emits no `tenx_config_version` label and never depends on the file existing. Hot-reloaded like the cap file, so a new generation goes live without an engine restart (this is the stale → live transition the verifier observes).
 

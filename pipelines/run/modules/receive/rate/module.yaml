@@ -343,17 +343,17 @@ module:
       doc: |
         defines the path to the **config-generation file** the MCP control plane
         (`log10x_configure_engine`) writes as a SIBLING of the cap file in the cap ConfigMap. It is a
-        two-column CSV — `key,value` — with one row, `generation,<hash-of-caps>`, where the generation
+        two-column CSV (`key,value`) with one row, `generation,<hash-of-caps>`, where the generation
         is a deterministic hash of the cap policy. The receiver's config-generation object reads that
         value and stamps it on every event as `tenx_config_version` (declared in this module's
         `enrichmentFields`), so the running engine advertises which config generation it loaded. The MCP
-        then verifies the policy it wrote is actually live by comparing the label to `hash(current caps)`
-        — the config-generation closed loop.
+        then verifies the policy it wrote is actually live by comparing the label to `hash(current caps)`,
+        the config-generation closed loop.
 
         **Opt-in, and decoupled from caps.** Unset by default (`""`); the `tenx_config_version` stamp is
         emitted only when this points at a file. A receiver running the rate regulator WITHOUT the MCP
-        closed loop (e.g. GitOps-managed caps) leaves it unset and emits no `tenx_config_version` label —
-        it never depends on the file existing, so it can't fail init on a missing file. Set it only where
+        closed loop (e.g. GitOps-managed caps) leaves it unset and emits no `tenx_config_version` label.
+        It never depends on the file existing, so it can't fail init on a missing file. Set it only where
         the MCP writes the file (via the `CONFIG_GENERATION_FILE` env or `configGeneration.file` in
         config.yaml).
 
@@ -365,7 +365,7 @@ module:
         ```
 
         Hot-reloaded like the cap file, so a new generation written by `configure_engine` goes live
-        without an engine restart — this is exactly what the verifier observes as the stale -> live
+        without an engine restart. This is exactly what the verifier observes as the stale -> live
         transition.
       defValue: ""
 

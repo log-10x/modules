@@ -4,7 +4,7 @@ icon: material/tune-variant
 
 Compact specific patterns' events into a template+values tuple, without redeploying the engine.
 
-The compact receiver makes a per-event decision whether to emit via `encode()` (the pattern's template hash plus extracted variable values, typically 20–40× smaller than the original line) or preserve `fullText`. The decision is keyed by pattern identity (the same symbolMessage the Reporter attributes cost to), so an operator targets compaction at the same patterns surfaced in cost analysis.
+The compact receiver makes a per-event decision whether to emit via `encode()` (the pattern's template hash plus extracted variable values, typically 50-80% smaller on compaction-capable stacks) or preserve `fullText`. The decision is keyed by pattern identity (the same symbolMessage the Reporter attributes cost to), so an operator targets compaction at the same patterns surfaced in cost analysis.
 
 Entries live in a CSV cap-file, typically committed to a git repo and edited by PR. The file is hot-reloaded on in-place writes; a merged PR takes effect within ~10 seconds, no pod restart.
 

@@ -72,6 +72,12 @@ Outside Kubernetes, or when no container field is present, the regulator falls b
 
 Drops are measured, not estimated. The receive-stage aggregators tally every event by pattern and container both before and after regulation, so the saving for a pattern is the volume seen minus the volume emitted. A dropped event still counts as seen, so the figure reflects exactly what the regulator removed.
 
+## :material-tag-check-outline: Config-version stamp
+
+When the receiver runs the MCP closed loop, the control plane (`log10x_configure_engine`) writes a `config-generation.csv` next to the cap file in the same ConfigMap — a one-row `key,value` CSV whose `generation` is a hash of the cap policy. Point `configGeneration.file` at it (or set the `CONFIG_GENERATION_FILE` env) and the receiver stamps that value on every event as the `tenx_config_version` metric label, so the running engine advertises which config generation it loaded. The MCP then confirms the policy it wrote is actually live by comparing the label to the hash of the current caps — the config-generation closed loop.
+
+It is opt-in and decoupled from caps: unset by default, so a regulator managed by GitOps without the MCP emits no `tenx_config_version` label and never depends on the file existing. Hot-reloaded like the cap file, so a new generation goes live without an engine restart (this is the stale → live transition the verifier observes).
+
 ## :material-cog-box: Wiring
 
 ```yaml
@@ -90,6 +96,8 @@ rateReceiver:
   capLookup:
     # file: $=path("data/caps") + "/caps.csv"   # optional per-container overrides
     retain: $=parseDuration("10m")
+  configGeneration:
+    # file: $=TenXEnv.get("CONFIG_GENERATION_FILE", "")   # MCP config-version stamp; opt-in, sibling of caps.csv
 ```
 
 Tune these values in this config block, not via container environment variables. Any `rateReceiver:` key set here resolves to a launch argument at engine init and shadows a same-named env var, so env-only overrides are silently ignored. Edit the config (via a gitops PR) to change a value at runtime.

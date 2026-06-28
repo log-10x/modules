@@ -153,6 +153,22 @@ module:
         This value corresponds with the [indexWriteTarget](https://doc.log10x.com/run/input/objectStorage/index/#indexwritetarget) argument.
 
     - names:
+        - queryResultTarget
+      description: optional Tier-1 result-sink redirect prefix for query OUTPUT
+      type: string
+      required: false
+      category: filter
+      doc: |
+        Optional bare-token prefix under which query RESULT objects
+        (`qr/`, `qrs/`, `q/` markers, `_DONE.json`) are written, inside the
+        SAME index container as `queryTarget`. When omitted or blank, results
+        are written under `queryTarget`, byte-identical to legacy behavior.
+        Must match `[A-Za-z0-9_-]+` (no slashes, separators, or `..`); a
+        violating value fails the query closed. The READ path for the durable
+        index (templates, byte ranges, reverse index) is unaffected and always
+        uses `queryTarget`.
+
+    - names:
         - querySearch
       description: list of terms to search for
       type: string

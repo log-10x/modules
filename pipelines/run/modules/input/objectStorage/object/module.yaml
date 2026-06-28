@@ -157,6 +157,18 @@ module:
         specifies the logical name used to store index objects produced by the index app.
 
     - names:
+        - queryObjectResultTarget
+      description: Tier-1 result-sink redirect prefix forwarded by the coordinator
+      type: string
+      required: false
+      category: container
+      doc: |
+        Bare-token prefix under which this stream worker writes query OUTPUT
+        (`qr/`, `qrs/`, `q/` markers) inside the index container. Forwarded by
+        the query coordinator from `queryResultTarget`. Blank/absent falls back
+        to `queryObjectTarget`, byte-identical to legacy behavior.
+
+    - names:
         - queryObjectTargetObject
       description: the target object to retrieve from storage
       type: String

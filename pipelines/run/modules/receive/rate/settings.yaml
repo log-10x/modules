@@ -55,14 +55,22 @@ enrichmentFields:
   # So: at event time isSummary is false -> intrinsic routeState (name);
   # at output time isSummary is true -> l1e_routeState (the encoded bucket value).
   - 'routeState=isSummary?l1e_routeState:routeState'
-  # Config-version label. The custom initializer (run/initialize/custom/my-object.js)
-  # reads the `config-generation` lookup (the config-generation.csv that the
-  # control-plane writer, the MCP, drops into the cap ConfigMap alongside
-  # caps.csv) and stamps its value as `tenx_config_version` on every event, so
-  # the running engine advertises which config generation it loaded and the
-  # writer can verify the policy it wrote is live. Unlike routeState, this is NOT
-  # an intrinsic field accessor -- it's a plain reflected field, so its name
-  # already resolves to the encoded bucket value on the summary; no isSummary/l1e_
-  # override is needed. Low cardinality: one value per running config in steady
-  # state, at most one extra on a rollover.
-  - tenx_config_version
+  # Config-version label. The receiver's config-generation object
+  # (run/receive/rate/config-generation-object.js) reads the `config-generation`
+  # lookup (config-generation.csv, which the control-plane writer -- the MCP --
+  # drops into the cap ConfigMap alongside caps.csv) and stamps its value as
+  # `tenx_config_version`, so the running engine advertises which config
+  # generation it loaded and the writer can verify the policy it wrote is live.
+  # Unlike routeState, this is NOT an intrinsic field accessor -- it's a plain
+  # reflected field, so its name already resolves to the encoded bucket value on
+  # the summary; no isSummary/l1e_ override is needed. Low cardinality: one value
+  # per running config in steady state, at most one extra on a rollover.
+  #
+  # Conditional on the `rateReceiverConfigGenerationFile` option (declared in
+  # module.yaml; set via `configGeneration.file` / the `CONFIG_GENERATION_FILE`
+  # env in config.yaml, pointing at the config-generation.csv path). The stamp
+  # object is gated on the same option, so the field is declared exactly when it
+  # can be set -- no orphan dimension on receivers that don't run the closed
+  # loop, and a bare local 'run' (option unset) carries it nowhere. Outer quotes
+  # required (the ternary's inner `: "..."` is YAML mapping syntax otherwise).
+  - '$=yield TenXEnv.get("rateReceiverConfigGenerationFile") ? "tenx_config_version" : ""'

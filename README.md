@@ -1,6 +1,6 @@
 # Log10x Modules
 
-Core module definitions for the Log10x engine, the brain that powers log cost analysis, filtering, and optimization. Start with the [MCP Server](https://doc.log10x.com/manage/mcp-server/), it guides you through installing and configuring the apps below based on k8s discovery of your environment.
+Core module definitions for the Log10x engine, the brain that powers log cost analysis, filtering, and optimization. Start with the [MCP Server](https://doc.log10x.com/apps/mcp/), it guides you through installing and configuring the apps below based on k8s discovery of your environment.
 
 **Full Documentation**: [doc.log10x.com](https://doc.log10x.com/)
 
@@ -94,7 +94,7 @@ Deployed alongside log forwarders (Fluentd, Fluent Bit, Filebeat, Logstash).
 | App | Purpose | Documentation | Run Guide |
 |-----|---------|---------------|-----------|
 | **Retriever** | S3 data lake indexing & queries | [Overview](https://doc.log10x.com/apps/retriever/) | [Run](https://doc.log10x.com/apps/retriever/run/) |
-| **MCP** | Agent control plane, reads Reporter metrics, commands Receiver/Retriever via GitOps | [Overview](https://doc.log10x.com/manage/mcp-server/) | [Run](https://doc.log10x.com/manage/mcp-server/tools/) |
+| **MCP** | Agent control plane, reads Reporter metrics, commands Receiver/Retriever via GitOps | [Overview](https://doc.log10x.com/apps/mcp/) | [Run](https://doc.log10x.com/apps/mcp/tools/) |
 
 For agentless SIEM-side cost analysis (the evolution of the old Cloud Reporter app), use the [log10x-mcp](https://github.com/log-10x/log10x-mcp) server's `log10x_poc_from_siem_submit` tool.
 
@@ -127,7 +127,7 @@ Scans source code and generates symbol files for log template extraction.
 | Module Type | Examples | Docs |
 |-------------|----------|------|
 | Pull | github, docker, helm, local | [Pull Modules](https://doc.log10x.com/compile/pull/) |
-| Scanner | javaParser, pythonAST, scalameta, antlr, bytecode | [Scanner Modules](https://doc.log10x.com/compile/scanner/) |
+| Scanner | javaParser, pythonAST, scalameta, antlr, bytecode | [Scanner Modules](https://doc.log10x.com/compile/scan/) |
 
 ### Run Pipeline
 

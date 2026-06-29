@@ -1,6 +1,6 @@
 # Log10x Modules
 
-Core module definitions for the Log10x engine, the brain that powers log cost analysis, filtering, and optimization. Start with the [MCP Server](https://doc.log10x.com/apps/mcp/), it guides you through installing and configuring the apps below based on k8s discovery of your environment.
+Core module definitions for the [Log10x](https://www.log10x.com/?utm_source=github&utm_medium=readme&utm_campaign=modules&utm_content=hero) engine, the brain that powers log cost analysis, filtering, and optimization. Start with the [MCP Server](https://doc.log10x.com/apps/mcp/), it guides you through installing and configuring the apps below based on k8s discovery of your environment.
 
 **Full Documentation**: [doc.log10x.com](https://doc.log10x.com/)
 

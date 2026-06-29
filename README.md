@@ -231,6 +231,6 @@ definitions are open source, **running Log10x requires a commercial license.**
 | Schema definitions | Executing pipelines |
 
 **Get a Log10x License:**
-- [Pricing](https://log10x.com/pricing)
+- [Pricing](https://www.log10x.com/pricing?utm_source=github&utm_medium=readme&utm_campaign=modules&utm_content=footer)
 - [Documentation](https://doc.log10x.com)
 - [Contact Sales](mailto:sales@log10x.com)

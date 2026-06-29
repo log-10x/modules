@@ -69,7 +69,7 @@ unit:
 
         - **event**: utilizes the java log4j2 library to emit TenXObjects into a wide array of 
            output destinations via log4j appenders (e.g., file, socket, http).
-           To learn more see [appender](https://doc.log10x.com/run/output/event/appender) outputs.
+           To learn more see [appender](https://doc.log10x.com/run/output/event/process) outputs.
 
         - **metric**: utilizes the [Micrometer library](https://micrometer.io/)  to 
            emit [TenXSummary]([TenXObjects](https://doc.log10x.com/api/js/#TenXSummary) instances as metric counter to time series output destinations (e.g., Prometheus). 

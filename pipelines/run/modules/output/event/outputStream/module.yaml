@@ -100,12 +100,12 @@ module:
         ```
     - names:
         - outputStreamWriteObjects
-      description: if true, TenXObject field values specified by [outputStreamFields](https://doc.log10x.com/run/output/event/outputstream/#outputstreamfields) are encoded to this output
+      description: if true, TenXObject field values specified by [outputStreamFields](https://doc.log10x.com/run/output/event/outputStream/#outputstreamfields) are encoded to this output
       type: string
       category: encode
       required: false
       doc: |
-        Determine whether to write [outputStreamFields](https://doc.log10x.com/run/output/event/outputstream/#outputstreamfields) values of an TenXObject passed to this output.
+        Determine whether to write [outputStreamFields](https://doc.log10x.com/run/output/event/outputStream/#outputstreamfields) values of an TenXObject passed to this output.
         This configuration is typically defined using a JavaScript expression.
 
         To enable/disable the output depending on whether a launch argument, environment variable,

@@ -149,7 +149,7 @@ The scanner will capture _price_, _state_, _key_  as a **const** symbol.
 
 ### **`exec`**
 
-Symbol captured from a custom program or OS command via the [executable](https://doc.log10x.com/compile/scan/executable) symbol scanner
+Symbol captured from a custom program or OS command via the [executable](https://doc.log10x.com/compile/scanner/executable) symbol scanner
 (e.g., [strings](https://linux.die.net/man/1/strings)).
 
 For example:
@@ -162,7 +162,7 @@ The scanner will capture _Authentication failure message %s_  as an **exec** sym
 
 ### **`text`**
 
-Config field name/value captured from file (e.g., .xml, .json) via the [text](https://doc.log10x.com/compile/scan/text/) symbol scanner.
+Config field name/value captured from file (e.g., .xml, .json) via the [text](https://doc.log10x.com/compile/scanner/text/) symbol scanner.
 
 For example:
 ``` yaml
@@ -173,5 +173,5 @@ spring:
 
 The scanner will capture the field names _spring_, _name_, and _environment_  as **text** symbols.
 
- The _test_ and _testing_ field values are only captured as text if the [textScanFieldValues](https://doc.log10x.com/compile/scan/text/#textscanfieldvalues) is set to true.
+ The _test_ and _testing_ field values are only captured as text if the [textScanFieldValues](https://doc.log10x.com/compile/scanner/text/#textscanfieldvalues) is set to true.
 

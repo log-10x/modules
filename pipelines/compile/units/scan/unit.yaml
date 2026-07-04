@@ -38,7 +38,7 @@ unit:
         provides a list of folders that are traversed in search of source code (e.g. .js, .cpp), 
         binary (e.g., .so, .jar, .zip) and text (e.g., .json, .xml) files to capture symbol values from and
         output to symbol unit files. Input folders may contain files and folders pulled from [GitHub](https://doc.log10x.com/compile/pull/github/) or 
-        and [Artifactory](https://doc.log10x.com/compile/artifactory).
+        and [Artifactory](https://doc.log10x.com/compile/pull/artifactory).
  
     - names:
       - outputSymbolFolder

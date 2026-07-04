@@ -6,7 +6,7 @@ Generates a shareable [Log10x Console](https://console.log10x.com) URL from [dev
 
 When the pipeline completes, this output builds a compact JSON payload from aggregated [TenXSummary](https://doc.log10x.com/api/js/#TenXSummary) data,
 [templates](https://doc.log10x.com/run/template/) and [encoded](https://doc.log10x.com/api/js/#TenXObject+encode) events,
-then compresses it into a URL that opens the Console with cost analysis, top patterns and volume reduction proof.
+then embeds it in a URL that opens the Console with cost analysis, top patterns and volume reduction proof.
 
 ## How It Works
 

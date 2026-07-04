@@ -71,7 +71,7 @@ module:
          The value is an 11-character base64url identifier (xxHash64 of the UTF-8
          bytes, big-endian, no padding). It is one-way and reproduces byte-for-byte
          outside the engine, so it is safe to use directly as a deduplication key,
-         metric dimension, SIEM query term, or forwarder filter key.
+         metric dimension, analyzer query term, or forwarder filter key.
 
          Defaults to `tenx_hash`. Set to an empty value to disable.
       defValue: tenx_hash

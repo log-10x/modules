@@ -2,7 +2,7 @@
 icon: simple/fluentd
 ---
 
-Runs 10x Engine as a [sidecar](https://doc.log10x.com/engine/launcher/sidecar) to Fluentd for reporting, receiving, and optimizing events before they ship to their destination (Elasticsearch, Splunk, S3, Kafka, …). Fluentd and Log10x run as peer processes and exchange events over the [Fluent Forward protocol](https://docs.fluentd.org/output/forward), works against any stock Fluentd build (td-agent, fluent-package, OSS) and the official Fluentd Helm chart with a values overlay.
+Runs 10x Engine as a [sidecar](https://doc.log10x.com/engine/launcher/sidecar) to Fluentd for reporting, receiving, and optimizing events before they ship to their destination (Elasticsearch, Splunk, S3, Kafka, …). In the VM/host recipe, Fluentd and Log10x run as peer processes and exchange events over the [Fluent Forward protocol](https://docs.fluentd.org/output/forward); works against any stock Fluentd build (td-agent, fluent-package, OSS) and the official Fluentd Helm chart on Kubernetes via an image swap to the prebuilt `log10x/fluentd-10x` image.
 
 ## Architecture
 
@@ -95,4 +95,4 @@ tenx @run/input/forwarder/fluentd @apps/receiver
 </label>
 ```
 
-For Splunk integration see the [10x for Splunk](https://doc.log10x.com/apps/receiver/compact/splunk/) documentation. For Kubernetes deployment via the official Fluentd Helm chart see the [Helm sidecar overlay](https://doc.log10x.com/apps/receiver/deploy/#fluentd).
+For Splunk integration see the [10x for Splunk](https://doc.log10x.com/apps/receiver/compact/splunk/) documentation. For Kubernetes deployment, swap the chart's default Fluentd image for the prebuilt `log10x/fluentd-10x` on top of the official Fluentd chart, see the [Helm chart overlay](https://doc.log10x.com/apps/receiver/deploy/#fluentd).

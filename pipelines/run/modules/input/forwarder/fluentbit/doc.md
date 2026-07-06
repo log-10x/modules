@@ -2,7 +2,7 @@
 icon: simple/fluentbit
 ---
 
-Runs 10x Engine as a [sidecar](https://doc.log10x.com/engine/launcher/sidecar) to Fluent Bit for reporting, receiving, and optimizing events before they ship to their destination (Elasticsearch, Splunk, S3, Kafka, …). Fluent Bit and Log10x run as peer processes and exchange events over the [Fluent Forward protocol](https://docs.fluentbit.io/manual/pipeline/outputs/forward) in both directions, works against any stock Fluent Bit build and the official Fluent Bit Helm chart with a values overlay.
+Runs 10x Engine as a [sidecar](https://doc.log10x.com/engine/launcher/sidecar) to Fluent Bit for reporting, receiving, and optimizing events before they ship to their destination (Elasticsearch, Splunk, S3, Kafka, …). In the VM/host recipe, Fluent Bit and Log10x run as peer processes and exchange events over the [Fluent Forward protocol](https://docs.fluentbit.io/manual/pipeline/outputs/forward) in both directions; works against any stock Fluent Bit build and the official Fluent Bit Helm chart on Kubernetes via an image swap to the prebuilt `log10x/fluent-bit-10x` image.
 
 ## Architecture
 
@@ -89,4 +89,4 @@ tenx @run/input/forwarder/fluentbit @apps/receiver
     # ... destination config
 ```
 
-For Splunk integration see the [10x for Splunk](https://doc.log10x.com/apps/receiver/compact/splunk/) documentation. For Kubernetes deployment via the official Fluent Bit Helm chart see the [Helm sidecar overlay](https://doc.log10x.com/apps/receiver/deploy/#fluent-bit).
+For Splunk integration see the [10x for Splunk](https://doc.log10x.com/apps/receiver/compact/splunk/) documentation. For Kubernetes deployment, swap the chart's default Fluent Bit image for the prebuilt `log10x/fluent-bit-10x` on top of the official Fluent Bit chart, see the [Helm chart overlay](https://doc.log10x.com/apps/receiver/deploy/#fluent-bit).

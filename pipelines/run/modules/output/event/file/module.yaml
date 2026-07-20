@@ -52,6 +52,16 @@ module:
         specifies a header file to write to file in [outputFileAppend](https://doc.log10x.com/run/output/event/file/#outputfileappend) is false.
 
     - names:
+        - outputFileCharset
+      description: charset used to encode text written to this file
+      type: string
+      required: false
+      category: file
+      doc: |
+        sets the charset used to encode characters written to this file.
+        Defaults to UTF-8.
+
+    - names:
         - outputFileWriteObjects
       description: if true, encode TenXObjects [outputFileFields](https://doc.log10x.com/run/output/event/file/#outputfilefields) to this output
       type: string

@@ -105,4 +105,13 @@ module:
       required: false
       doc: |
         sets whether this input prints throughput stats to the console
+
+    - names:
+      - inputFileCharset
+      description: charset used to decode bytes read from this input
+      type: string
+      required: false
+      doc: |
+        sets the charset used to decode bytes read from this input into characters.
+        Defaults to UTF-8.
         

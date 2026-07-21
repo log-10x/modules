@@ -183,7 +183,17 @@ unit:
         Supported values: [json,java,xml,html,javaScript]. If not specified, characters are treated as not escaped.
 
         To learn more see [Unescape algorithms](https://www.unbescape.org/usingunbescape.html).
-                          
+
+    - names:
+      - inputCharset
+      description: charset used to decode bytes read from the underlying input
+      type: string
+      category: parse
+      required: false
+      doc: |
+        sets the charset used to decode bytes read from this input into characters.
+        Defaults to UTF-8.
+
     - names:
        - inputSourcePattern
       description: a regex pattern used to extract the 'source' value

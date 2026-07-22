@@ -9,7 +9,7 @@ The actions:
 - **pass**: forward unchanged.
 - **sample**: forward a rate-limited share against a per-pattern budget.
 - **compact**: replace repeated lines with an encoded form the destination expands (lossless only where the destination supports it: Splunk, self-hosted Elasticsearch, ClickHouse; a no-op elsewhere). Requires the expand plugin installed in [Splunk](compact/splunk.md) or [Elasticsearch](compact/elasticsearch.md).
-- **tier_down**: tag the pattern for a cheaper storage tier the destination enforces (Datadog Flex, CloudWatch IA).
+- **tier_down**: tag the pattern for a cheaper storage tier the destination enforces (Datadog Flex, CloudWatch IA, Azure Monitor Basic/Auxiliary).
 - **offload**: route the pattern to customer-owned object storage (S3, GCS, Azure Blob) instead of the destination.
 - **drop**: stop forwarding the pattern.
 

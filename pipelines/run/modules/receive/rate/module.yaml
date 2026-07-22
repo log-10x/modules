@@ -471,4 +471,5 @@ module:
         - **New Relic**: ~$0.30/GB (Data Plus)
         - **Sumo Logic**: ~$1.50/GB (depends on plan)
         - **AWS CloudWatch Logs**: ~$0.50/GB ingestion + $0.03/GB storage
+        - **Azure Monitor Logs**: ~$2.30/GB Analytics, $0.50/GB Basic, $0.05/GB Auxiliary (+ per-GB query fee)
       defValue: 1.5

@@ -33,8 +33,9 @@ unit:
       category: symbol
       defValue:  ["null", "nil", "true","false"]
       doc: | 
-        defines a list of terms that to ignore when searching for the symbol tokens constituting an 
-        TenXTemplate's 'message' portion (i.e., the longest consecutive sequence of [symbol](https://doc.log10x.com/run/transform/structure/#symbols) tokens).
+        defines a list of terms that to ignore when searching for the symbol tokens constituting an
+        TenXTemplate's 'message' portion (i.e., the [symbol](https://doc.log10x.com/run/transform/structure/#symbols) tokens of the origin
+        ranked highest by coverage, meaning the count of distinct library-known tokens it explains; span length is the last tiebreak).
         For example, for an TenXObject whose text contains: 'connect success = true',
         the value 'true' will not be considered a part of the instance's message,
         as it is mostly likely the result of a variable boolean state.

@@ -31,9 +31,11 @@ module:
       required: false
       doc: |
         Specifies a comma delimited list of [symbol contexts](https://doc.log10x.com/run/transform/symbol/#contexts) values.
-        
+
         This is argument is passed as the `symbolContexts` argument value for the [symbolSequence](https://doc.log10x.com/api/js/#TenXObject+symbolSequence) function.
-        
+
+        The listed contexts are evaluated in a single pass, so list order acts as a filter rather than a precedence chain.
+
       defValue: log,exec
 
     - names:

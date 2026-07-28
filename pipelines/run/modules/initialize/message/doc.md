@@ -10,9 +10,32 @@ The message initializer uses symbol libraries to isolate stable [message pattern
 
 ## :material-target: Message Extraction
 
-The initializer identifies the core message pattern by selecting the longest sequence of consecutive symbols from a [TenXTemplate](https://doc.log10x.com/run/template/ "Import joint JSON schemas files to expand events into typed TenXObjects.") originating from the same source code or binary file.
+Every token the symbol library recognizes carries a set of candidate origins: the source unit, a file or a binary, that can emit the token, together with the enclosing scope the library recorded for it. A token emitted by many units resolves to many candidates, so ambiguity is the normal case and resolving it is the selector's job. Candidates are keyed by originating unit plus enclosing scope, so symbols sharing an origin and a scope coalesce into one candidate.
+
+The initializer identifies the core message pattern by ranking those candidates from a [TenXTemplate](https://doc.log10x.com/run/template/ "Import joint JSON schemas files to expand events into typed TenXObjects.") **by coverage**, on a four-key comparator, every key descending:
+
+1. **Widest matched phrase**: a per-field maximum, rather than a sum, over library-matched, multi-character tokens that are not [reserved](https://doc.log10x.com/run/transform/symbol/#symbolsequencereserved). This is the widest single library-matched phrase the origin accounts for.
+2. **Distinct known tokens**: the count of distinct library-known tokens anywhere on the line that the origin explains. This is the coverage term, and it decides most events.
+3. **Character total**: the combined character length of those distinct tokens.
+4. **Span length**: the run length of the selected span. This is the only run-length key, it sits last, and the comparator reaches it only when the first three keys all tie.
+
+Coverage ranks ahead of length because the more places a word appears across a code base, the less that word says about where a line came from. A word appearing in one file identifies that file; a word appearing in hundreds identifies nothing. Ranking by how many distinct known words an origin explains picks the origin that best accounts for the line.
+
+Contiguity is a property of the emitted value rather than of the selection. Once a candidate wins, the output spans from the candidate's first field start to its last field end, then pads forward and backward while the [`symbolMaxLen`](#symbolmaxlen) budget allows. A candidate whose tokens sit in three separate phrases scattered across the line can beat a candidate holding one longer contiguous run.
+
+The [`symbolContexts`](#symbolcontexts) list filters which symbol contexts participate. Contexts are evaluated in a single pass, so list order acts as a filter rather than a precedence chain.
 
 The `inputField` parameter limits searches to specific JSON fields. Setting `inputField: log` searches only within the log field content.
+
+### Repeatability
+
+The comparator is deterministic: every key is a content-derived integer. Three details bound that guarantee.
+
+- A full four-key tie falls back to candidate insertion order, which holds stable for a given engine build and is not a documented ordering.
+- Two truncation caps can hide a true origin: [`symbolMaxOrigins`](https://doc.log10x.com/run/transform/symbol/#symbolmaxorigins) (default 64, the cap that binds at runtime) and [`maxSymbolUnitsPerToken`](https://doc.log10x.com/run/symbol/#maxsymbolunitspertoken) (default 128, approximate, stopping in the low 130s).
+- When the selected sequence comes back as a single token, the module re-runs the selection under the `any` context, which concatenates all symbol tokens in range and bypasses the comparator.
+
+The claim the engine supports is scoped: the same engine version, the same symbol library, the same configuration and the same event yield the same pattern.
 
 ## :material-fingerprint: Pattern identity: pattern vs template
 
@@ -22,6 +45,10 @@ Four terms are easy to conflate. They are distinct:
 - **`pattern_hash`** (alias: `tenx_hash`), the hash of the `symbolMessage` (the [`symbolMessageHashField`](#symbolmessagehashfield), default `tenx_hash`). This is the **stable, user-facing identity** that tools and metrics key on. It is stable because it keys on the representing **subset**: it stays constant across deploys, restarts, pod renames, and format drift, and many template variants that share the representing tokens collapse to the **same** `pattern_hash`.
 - **Template**, the full `$`-marked structural shape of the line (every token, with variable slots marked `$`). A single pattern sits over a **set** of templates, one per format variant present in the data.
 - **`template_hash`**, the engine-internal fingerprint of a template's field-set. It exists only to join encoded events back to their entry in `templates.json` at decode time. It is **not** the stable identity, it is **many-to-one** with the pattern, and it should never be surfaced to a user or agent as the identifier. Use `pattern_hash` for that.
+
+### Field names by surface
+
+An encoded event opens with a leading segment, and that segment always carries the template join key, the value a decoder uses to rebuild the original line from its `templates.json` entry. Each integration labels that field to suit its own schema: a ClickHouse table names it as a template hash column, and the Splunk app extracts it as `tenx_hash`. The pattern-level identity is a separate value, the hash of the selected pattern, written to the field named by [`symbolMessageHashField`](#symbolmessagehashfield) and also defaulting to `tenx_hash`. The name therefore appears on more than one surface, carrying the join key on an encoded event in Splunk and the pattern hash on an enriched event out of the engine. The two values answer different questions: the join key says which template rebuilds this line, and the pattern hash says which pattern this line belongs to.
 
 Building on this process, here's how it applies to real events:
 

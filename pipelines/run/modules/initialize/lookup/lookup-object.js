@@ -42,21 +42,64 @@ export class LookupInput extends TenXInput {
 export class LookupSummary extends TenXSummary {
 
     // https://doc.log10x.com/api/js/#TenXEngine.shouldLoad
+    //
+    // Gated so this and LookupColumnSummary are mutually exclusive: this one
+    // handles the default columns, the other handles an explicit value column.
     static shouldLoad(config) {
-        return TenXEnv.get("lookupFile");
+        return TenXEnv.get("lookupFile") && (!TenXEnv.get("lookupValueColumn"));
     }
 
-    /** 
-     *  This constructor dynamically assigns the lookupValueField with the result of a {@link TenXLookup.get()} for the value of LookupKeyField. 
+    /**
+     *  This constructor dynamically assigns the lookupValueField with the result of a {@link TenXLookup.get()} for the value of LookupKeyField.
     */
-    constructor() {    
+    constructor() {
 
-        this.set(                               
+        // Two args on purpose. The engine can only DEFER lookup resolution for
+        // the 2-arg form (EventLookupGetFunction: `canDefer = args.size() == 2`),
+        // and the check is on arg COUNT, so passing a blank third arg forced
+        // eager parse-time resolution. That threw "could not resolve lookup
+        // name" in any unit whose script context had no lookup registered yet --
+        // e.g. an aggregator in a pipeline with no input unit ahead of it, which
+        // is exactly how @apps/receiver ships (all forwarder inputs commented
+        // out). Deferring binds the table on first invocation instead, which is
+        // always after input init has registered it.
+        this.set(
             TenXEnv.get("lookupValueField"),             // set the target 'lookupValueField' field into this
-            TenXLookup.get(                              // query the 'lookupFile' table 
-                TenXEnv.get("lookupFile"), 
-                this.get(TenXEnv.get("lookupKeyField")), // get the 'lookupKeyField' from this to use as the key
-                TenXEnv.get("lookupValueColumn")         // select the 'lookupValueColumn' value if specified
+            TenXLookup.get(                              // query the 'lookupFile' table
+                TenXEnv.get("lookupFile"),
+                this.get(TenXEnv.get("lookupKeyField"))  // get the 'lookupKeyField' from this to use as the key
+            )
+        );
+    }
+}
+
+/**
+ * Variant used when 'lookupValueColumn' names an explicit value column.
+ *
+ * Kept separate because explicit column names must be validated against the
+ * table at parse time, so this form cannot defer.
+ */
+export class LookupColumnSummary extends TenXSummary {
+
+    // https://doc.log10x.com/api/js/#TenXEngine.shouldLoad
+    static shouldLoad(config) {
+        return TenXEnv.get("lookupFile") && TenXEnv.get("lookupValueColumn");
+    }
+
+    constructor() {
+
+        // TenXLookup.get(lookup, key, keyColumnName, valueColumnName) -- the
+        // THIRD argument is the KEY column, not the value column. The previous
+        // single-class version passed 'lookupValueColumn' into that slot, so
+        // the value column was used to look the key up and every lookup missed,
+        // silently yielding an empty field.
+        this.set(
+            TenXEnv.get("lookupValueField"),
+            TenXLookup.get(
+                TenXEnv.get("lookupFile"),
+                this.get(TenXEnv.get("lookupKeyField")),
+                0,                                       // key column: first column
+                TenXEnv.get("lookupValueColumn")         // value column, in the correct slot
             )
         );
     }

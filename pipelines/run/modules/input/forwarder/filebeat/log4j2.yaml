@@ -29,7 +29,7 @@ log4j:
           filters:
             thresholdFilter:
               # enable/disable the appender based on 'filebeatLoggingToStderr'
-              level: "${tenxBoolLevel:filebeatLoggingToStderr:true}"
+              level: "${tenxBooleanLevel:envVar=filebeatLoggingToStderr,defaultEnabled=true}"
 
       # this logger emits Filebeat log messages to UNIX Syslog based
       # on the 'logging.to_syslog' configuration value set in 'filebeat.yml'.
@@ -42,7 +42,7 @@ log4j:
           filters:
             thresholdFilter:
               # enable/disable the appender based on 'filebeatLoggingToSyslog'
-              level: "${tenxBoolLevel:filebeatLoggingToSyslog}"
+              level: "${tenxBooleanLevel:envVar=filebeatLoggingToSyslog}"
 
       # this logger emits Filebeat log messages to a rolling file based
       # on the configuration values set in 'filebeat.yml'.
@@ -52,11 +52,30 @@ log4j:
           filters:
             thresholdFilter:
               # enable/disable the appender based on 'filebeatLoggingToFiles'
-              level: "${tenxBoolLevel:filebeatLoggingToFiles}"
+              level: "${tenxBooleanLevel:envVar=filebeatLoggingToFiles}"
 
+          # The directory was "${env:filebeatPath:-${env:filebeatLogsPath}}". log4j2
+          # does not recurse into a ':-' default, so when neither variable is set
+          # the name resolved to that inner text LITERALLY, and because log4j2
+          # constructs appenders eagerly -- the thresholdFilter above does not
+          # prevent construction -- the whole pipeline died at launch:
+          #
+          #   Could not create directory /usr/share/filebeat/${env:filebeatLogsPath}
+          #   -> could not launch pipeline: 'run'
+          #
+          # 'tenxLogPath' takes the env var when set and otherwise falls back to an
+          # OS-specific default, in one non-recursive lookup, so an unset
+          # environment can no longer produce an unresolvable path.
+          #
+          # 'filebeatPath' (from logging.files.path) is dropped rather than
+          # preserved: these lookups read System.getenv, and filebeatPath is
+          # supplied by the filebeat.yml re-parse in stream.yaml, so it could never
+          # arrive here. Verified by setting logging.files.path and watching the
+          # same literal appear. See the PR for the wider issue.
+          #
           # format fileName to <filebeatPath>/<filebeatName>-datetime.ndjson
           fileName:
-            "${env:filebeatPath:-${env:filebeatLogsPath}}\
+            "${tenxLogPath:envVar=filebeatLogsPath,linux=/tmp,windows=\\tenx\\log}\
             ${fileSeperator:}\
             ${env:filebeatName:-filebeat}\
             -\
@@ -65,7 +84,7 @@ log4j:
 
           # format filePattern to <filebeatPath>/<filebeatName>-datetime-%i.ndjson
           filePattern:
-            "${env:filebeatPath:-${env:filebeatLogsPath}}\
+            "${tenxLogPath:envVar=filebeatLogsPath,linux=/tmp,windows=\\tenx\\log}\
             ${fileSeperator:}\
             ${env:filebeatName:-filebeat}\
             -\
@@ -89,7 +108,7 @@ log4j:
             onStartupTriggeringPolicy:
               # If 'filebeatRotateOnStartup' is set to true -> rotate logs on startup (e.g., '1'),
               # otherwise, use '2147483647' (i.e., max int) to disable the policy
-              minSize: "${tenxBoolInt:filebeatRotateOnStartup:1:2147483647}"
+              minSize: "${tenxBooleanInt:envVar=filebeatRotateOnStartup,trueValue=1,falseValue=2147483647}"
 
             sizeBasedTriggeringPolicy:
               size: $?filebeatRotateEveryBytes=10485760 # use a 10MB default, matching filebeat's

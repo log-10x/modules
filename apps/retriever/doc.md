@@ -268,7 +268,6 @@ Test the Retriever locally using [minikube](https://minikube.sigs.k8s.io/) with 
     | Datadog | [datadog](#datadog) |
     | CloudWatch | [cloudwatch](#cloudwatch) |
     | Elastic | [elastic](#elastic) |
-    | SignalFx | [signalFx](#signalfx) |
 
     **To enable locally:** Mount your config repository (Step 4) and edit the pipeline config files below.
 

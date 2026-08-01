@@ -162,7 +162,7 @@ unit:
 
         !!! note ""
 
-            This argument is not supported in the [edge](https://doc.log10x.com/engine/flavors/#edge) runtime flavor.
+            This argument is not supported in the [Runtime](https://doc.log10x.com/engine/flavors/#runtime) flavor.
 
     - names:
       - quiet

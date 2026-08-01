@@ -31,7 +31,6 @@ app:
     metric Outputs+Datadog: run/output/metric/datadog
     metric Outputs+CloudWatch: run/output/metric/cloudwatch
     metric Outputs+Elastic: run/output/metric/elastic
-    metric Outputs+SignalFx: run/output/metric/signalFx
     metric Outputs+Log: run/output/metric/log
 
   advancedConfigFolders:

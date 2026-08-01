@@ -157,6 +157,6 @@ Building on this process, here's how it applies to real events:
 
 📈 **Cost control**: Apply intelligent filtering using the [Receiver](https://doc.log10x.com/apps/receiver/) app to prevent over-billing
 
-🤖 **Multi-platform analytics**: Feed patterns into AIOps and monitoring systems via [metric outputs](https://doc.log10x.com/run/output/metric/) for Datadog, CloudWatch, SignalFx, and Prometheus
+🤖 **Multi-platform analytics**: Feed patterns into AIOps and monitoring systems via [metric outputs](https://doc.log10x.com/run/output/metric/) for Datadog, CloudWatch, and Prometheus
 
 🔄 **Automatic adaptation**: Updates automatically with code changes using [symbol libraries](https://doc.log10x.com/compile/link/#symbol-library). No manual regex pattern configuration and maintenance

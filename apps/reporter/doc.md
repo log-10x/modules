@@ -8,7 +8,7 @@ The Reporter app is the **read-only insights arm** of the 10x pipeline. It pinpo
 
 Not in the critical log path. No mutation of existing fluent-bit / fluentd / otel-collector configs. Similar deployment pattern to `datadog-agent` or `splunk-otel-collector`.
 
-The engine never moves or stores log data. Its only write is per-pattern metrics, sent to a time-series backend of the customer's choice (Prometheus, Datadog, Elastic, CloudWatch, SignalFx, and others). `prometheus.log10x.com` is an optional hosted backend for evaluation, not a requirement; fully air-gapped operation is supported. Events never leave the customer's path.
+The engine never moves or stores log data. Its only write is per-pattern metrics, sent to a time-series backend of the customer's choice (Prometheus, Datadog, Elastic, CloudWatch, and others). `prometheus.log10x.com` is an optional hosted backend for evaluation, not a requirement; fully air-gapped operation is supported. Events never leave the customer's path.
 
 Log10x is normally driven by an AI agent (Claude, or a model the customer brings) through the log10x MCP server, which installs, configures, and queries via MCP tools: deploy via `log10x_advise_install`, verify via `log10x_doctor`. To trial without deploying anything, run `log10x_poc_from_local` (local sample files) or `log10x_poc_from_siem` (a SIEM sample). The manual steps below are the same operations without an agent.
 
@@ -171,7 +171,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
               exporters: [syslog/tenx, elasticsearch]  # Add your exporters
         ```
 
-        Reporter mode is **read-only**. Logs flow to your final destinations unchanged; the engine never moves or stores log data. Its only write is per-pattern metrics, sent to a time-series backend of your choice (Prometheus, Datadog, Elastic, CloudWatch, SignalFx, and others).
+        Reporter mode is **read-only**. Logs flow to your final destinations unchanged; the engine never moves or stores log data. Its only write is per-pattern metrics, sent to a time-series backend of your choice (Prometheus, Datadog, Elastic, CloudWatch, and others).
 
     === ":simple-splunk: Splunk UF"
 

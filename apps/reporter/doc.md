@@ -18,7 +18,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
 ???+ tenx-bootstrap "Step 1: Install"
 
-    Install the engine on the same machine as your log forwarder. The script installs the `Runtime` native binary; the DEB and RPM packages carry the `Compiler`:
+    Install the engine on the same machine as your log forwarder. The script installs the [`Runtime`](https://doc.log10x.com/engine/flavors/#runtime) native binary; the DEB and RPM packages carry either the [`Compiler`](https://doc.log10x.com/engine/flavors/#compiler) or [`Runtime (JVM)`](https://doc.log10x.com/engine/flavors/#runtime-jvm). Windows has no native build, so the PowerShell script installs `Runtime (JVM)`:
 
     - :simple-linux: [Single line script](https://doc.log10x.com/install/singleline/ "curl https://raw.githubusercontent.com/log-10x/pipeline-releases/main/install.sh | bash -s -- --flavor runtime"){data-copy="curl https://raw.githubusercontent.com/log-10x/pipeline-releases/main/install.sh | bash -s -- --flavor runtime"} | [DEB](https://doc.log10x.com/install/linux/#ubuntu-debian) | [RPM](https://doc.log10x.com/install/linux/#red-hat-centos-7)
     - :simple-macos: [Homebrew](https://doc.log10x.com/install/macos/ "brew install log-10x/tap/log10x"){data-copy="brew install log-10x/tap/log10x"}

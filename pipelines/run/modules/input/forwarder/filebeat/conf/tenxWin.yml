@@ -25,5 +25,10 @@
       target: ""
       overwrite_keys: true
       add_error_key: true
+
+      # For 10x templates, we need the document ID in ES to match the template hash.
+      # This also removes the 'templateHashDocId' from the actual document.
+      # See: https://www.elastic.co/guide/en/beats/filebeat/current/decode-json-fields.html
+      document_id: "templateHashDocId"
   - drop_fields:
       fields: ["tenx"]

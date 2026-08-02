@@ -30,5 +30,17 @@
       # This also removes the 'templateHashDocId' from the actual document.
       # See: https://www.elastic.co/guide/en/beats/filebeat/current/decode-json-fields.html
       document_id: "templateHashDocId"
+  - copy_fields:
+      # The l1es Elasticsearch plugin reads the template text from a field named
+      # 'pattern' (DmlConsts.DML_PATTERN_ATTRIBUTE), and its l1es_dml mapping
+      # declares only that field. The engine emits 'template'. Copy rather than
+      # rename: the chart routes template events to l1es_dml with
+      # when.has_fields: ["template", "templateHash"], so removing 'template'
+      # here would send them to the data index instead.
+      fields:
+        - from: "template"
+          to: "pattern"
+      fail_on_error: false
+      ignore_missing: true
   - drop_fields:
       fields: ["tenx"]

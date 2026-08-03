@@ -51,6 +51,8 @@ The record structure of the original Logstash event is preserved end-to-end, eve
 | `receiverOptimize true` | The value of the message field (`message` by default, or whatever `logstashInputMessageField` is set to) is replaced with a compact encoded form. A separate event with `tag` set to `tenx-template` is emitted with the template needed to decode it. All other fields stay verbatim. |
 | `receiverOptimize true` + `symbolMessageHashField <name>` | Both of the above. |
 
+`symbolMessageHashField` is unset by default, which is what makes the first row true: the receive path hands the record back exactly as it arrived. The pattern hash is still computed and still rides the event inside the engine as `tenx_hash` for metrics and aggregation, it just does not reach the wire. Naming a field opts in, either as a launch argument (`tenx @run/input/forwarder/logstash @apps/receiver symbolMessageHashField my_custom_hash`) or as an environment variable of the same name.
+
 The `tag` field that the ingest pipeline stamps becomes the event's `source` inside Log10x, used for rate-based grouping and preserved on each event as it returns to Logstash. The message text is read from the `message` field by default (override with `logstashInputMessageField`). When the Receiver app is configured with `k8sExtractorName: fluentK8s`, the `kubernetes.*` sub-object is also lifted into pod/container metadata fields used by message-pattern and rate filtering.
 
 ??? tenx-keyfiles "Key Files"

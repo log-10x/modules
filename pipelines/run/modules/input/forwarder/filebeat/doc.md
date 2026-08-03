@@ -51,6 +51,8 @@ The record structure of the original Filebeat event is preserved end-to-end, eve
 | `receiverOptimize true` | The value of the `message` field is replaced with a compact encoded form. A separate `tenx-template` event is emitted carrying the template needed to decode it (Filebeat's `decode_json_fields` processor on the return socket uses the embedded `templateHashDocId` to set the Elasticsearch document ID). All other fields stay verbatim. |
 | `receiverOptimize true` + `symbolMessageHashField <name>` | Both of the above. |
 
+`symbolMessageHashField` is unset by default, which is what makes the first row true: the receive path hands the record back exactly as it arrived. The pattern hash is still computed and still rides the event inside the engine as `tenx_hash` for metrics and aggregation, it just does not reach the wire. Naming a field opts in, either as a launch argument (`tenx @run/input/forwarder/filebeat @apps/receiver symbolMessageHashField my_custom_hash`) or as an environment variable of the same name.
+
 Internally, Log10x's Filebeat input module reads the message text from the event's `message` field and surfaces the input source (`log.file.path`, container, etc.) for use in rate-based grouping. When the Receiver app is configured with `k8sExtractorName: filebeatK8s`, the `kubernetes.*` sub-object stamped by `add_kubernetes_metadata` is also materialized as enrichment fields for message-pattern and rate filtering.
 
 ??? tenx-keyfiles "Key Files"

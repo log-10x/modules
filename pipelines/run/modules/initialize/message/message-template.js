@@ -44,9 +44,19 @@ export class MessageTemplate extends TenXTemplate {
             TenXTemplate.setStatic(
                 TenXEnv.get("symbolMessageField"), symbolSequence);
 
-            if (TenXEnv.get("symbolMessageHashField")) {
+            // The hash enrichment is always assigned. `symbolMessageHashField` names
+            // the field; when the user leaves it unset the field keeps its internal
+            // name `tenx_hash`, so metric dimensions and the aggregation key are
+            // unaffected. Setting the option is what puts the field on the wire back
+            // to a coupled forwarder, see run/input/forwarder/config.yaml.
+            //
+            // The TenXEnv.get call is repeated rather than hoisted into a var:
+            // setStatic's first argument must fold to a string literal at parse time,
+            // and a var does not ("argument 1 'fieldName' must be a string literal").
+            if (TenXEnv.get("symbolMessageHashField", "tenx_hash")) {
                 TenXTemplate.setStatic(
-                    TenXEnv.get("symbolMessageHashField"), TenXString.hash(symbolSequence));
+                    TenXEnv.get("symbolMessageHashField", "tenx_hash"),
+                    TenXString.hash(symbolSequence));
             }
         }
     }

@@ -51,6 +51,8 @@ The record structure of the original Fluent Bit event is preserved end-to-end, e
 | `receiverOptimize true` | The value of the message field (`log` by default, or whatever `fluentbitInputMessageField` is set to) is replaced with a compact encoded form. A separate `tenx-template` event is emitted with the template needed to decode it. All other fields stay verbatim. |
 | `receiverOptimize true` + `symbolMessageHashField <name>` | Both of the above. |
 
+`symbolMessageHashField` is unset by default, which is what makes the first row true: the receive path hands the record back exactly as it arrived. The pattern hash is still computed and still rides the event inside the engine as `tenx_hash` for metrics and aggregation, it just does not reach the wire. Naming a field opts in, either as a launch argument (`tenx @run/input/forwarder/fluentbit @apps/receiver symbolMessageHashField my_custom_hash`) or as an environment variable of the same name.
+
 The original Fluent Bit tag is carried by the Forward protocol itself and surfaces on the event as its `source` inside Log10x, used for rate-based grouping and re-emitted as the wire tag on the return path (with `tenx.` prepended by the egress `forward` input). Internally, Log10x's Fluent Bit input module reads the message text from the field named by `fluentbitInputMessageField` (default `log`); when the Receiver app is configured with `k8sExtractorName: fluentK8s`, the `kubernetes.*` sub-object is also materialized as enrichment fields for use by message-pattern and rate filtering.
 
 ??? tenx-keyfiles "Key Files"

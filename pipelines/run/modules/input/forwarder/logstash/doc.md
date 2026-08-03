@@ -58,7 +58,9 @@ The `tag` field that the ingest pipeline stamps becomes the event's `source` ins
     | File | Purpose |
     |------|---------|
     | [`stream.yaml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/logstash/stream.yaml) | Logstash JSON socket input + output stream definitions |
-    | [`conf/tenx-sidecar.conf`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/logstash/conf/tenx-sidecar.conf) | Reference Logstash pipeline config showing the `ingest` / `destinations` split |
+    | [`conf/pipelines.yml`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/logstash/conf/pipelines.yml) | Two-pipeline driver that wires the `ingest` and `destinations` legs together |
+    | [`conf/tenx-ingest.conf`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/logstash/conf/tenx-ingest.conf) | Sources, enrichment filters, and the `tcp` handoff to Log10x on `:5044` |
+    | [`conf/tenx-destinations.conf`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/logstash/conf/tenx-destinations.conf) | `tcp` input on `:5045` for processed events, plus the `output` block holding your real destinations |
 
 ## Quickstart
 
@@ -68,18 +70,39 @@ The `tag` field that the ingest pipeline stamps becomes the event's `source` ins
 tenx @run/input/forwarder/logstash @apps/receiver
 ```
 
-**2. Wire up your Logstash config**, split your work into two pipelines via `pipelines.yml`, with an ingest leg that ends in `tcp { codec => json_lines }` and a destinations leg that starts with `tcp { codec => json_lines }`:
+**2. Wire up your Logstash config**, the recipe ships a `pipelines.yml` that runs the two legs side by side, an ingest leg that ends in `tcp { codec => json_lines }` and a destinations leg that starts with `tcp { codec => json_lines }`:
 
 ```yaml title="pipelines.yml"
 - pipeline.id: ingest
-  path.config: "${TENX_MODULES}/pipelines/run/modules/input/forwarder/logstash/conf/tenx-sidecar.conf"
+  path.config: "${TENX_MODULES}/pipelines/run/modules/input/forwarder/logstash/conf/tenx-ingest.conf"
+
 - pipeline.id: destinations
-  path.config: "/etc/logstash/conf.d/destinations.conf"
+  path.config: "${TENX_MODULES}/pipelines/run/modules/input/forwarder/logstash/conf/tenx-destinations.conf"
 ```
 
-**3. Point the `destinations` pipeline at your real outputs** (the recipe defaults to `stdout` for testing):
+**3. Point the `ingest` pipeline at your own sources** (the recipe defaults to a `file` input over `/var/log/containers/*.log`). Keep the `mutate` that stamps `tag`, Log10x reads it as the event's source, and keep the `tcp` output on `:5044`:
 
-```ruby title="destinations.conf"
+```ruby title="tenx-ingest.conf"
+input {
+  # ... your real sources ...
+}
+filter {
+  mutate {
+    add_field => { "tag" => "logstash" }
+  }
+}
+output {
+  tcp {
+    host  => "127.0.0.1"
+    port  => 5044
+    codec => json_lines
+  }
+}
+```
+
+**4. Point the `destinations` pipeline at your real outputs** (the recipe defaults to `stdout` for testing):
+
+```ruby title="tenx-destinations.conf"
 input {
   tcp {
     host  => "0.0.0.0"

@@ -51,6 +51,8 @@ The record structure of the original Vector event is preserved end-to-end, every
 | `receiverOptimize true` | The value of the message field (`message` by default, or whatever `vectorInputMessageField` is set to) is replaced with a compact encoded form. A separate `tenx-template` event is emitted with the template needed to decode it. All other fields stay verbatim. |
 | `receiverOptimize true` + `symbolMessageHashField <name>` | Both of the above. |
 
+`symbolMessageHashField` is unset by default, which is what makes the first row true: the receive path hands the record back exactly as it arrived. The pattern hash is still computed and still rides the event inside the engine as `tenx_hash` for metrics and aggregation, it just does not reach the wire. Naming a field opts in, either as a launch argument (`tenx @run/input/forwarder/vector @apps/receiver symbolMessageHashField my_custom_hash`) or as an environment variable of the same name.
+
 The `tag` field stamped by Vector's ingest transform (typically from `.source_type`) is carried on the Forward wire as the Fluent tag, and surfaces as the event's `source` inside Log10x, used for rate-based grouping and emitted back to Vector on the return Forward record. Internally, Log10x's Vector input module reads the message text from the field named by `vectorInputMessageField` (default `message`); when the Receiver app is configured with `k8sExtractorName: fluentK8s`, the `kubernetes.*` sub-object is also materialized as enrichment fields for use by message-pattern and rate filtering.
 
 ??? tenx-keyfiles "Key Files"

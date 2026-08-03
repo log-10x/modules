@@ -75,8 +75,18 @@ module:
          outside the engine, so it is safe to use directly as a deduplication key,
          metric dimension, analyzer query term, or forwarder filter key.
 
-         Defaults to `tenx_hash`. Set to an empty value to disable.
-      defValue: tenx_hash
+         **Unset by default.** The enrichment field itself is always present on the
+         TenXObject under the internal name `tenx_hash`, so metrics dimensions, the
+         aggregation key and the MCP artifacts carry the pattern hash whether or not
+         this option is set. What the option controls is the *wire* name, and with it
+         whether the hash reaches a coupled log forwarder: on the
+         [forwarder receive path](https://doc.log10x.com/run/input/forwarder/) the
+         record goes back to the forwarder byte-for-byte as it arrived unless this
+         option names a field, and then that field is spliced onto the returned record.
+
+         Set it to `tenx_hash` to get the historical name, or to any other name to
+         both rename the enrichment field and ship it, for example
+         `symbolMessageHashField my_custom_hash`.
 
     - names:
       - symbolOriginField

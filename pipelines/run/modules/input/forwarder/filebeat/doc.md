@@ -2,7 +2,7 @@
 icon: simple/beats
 ---
 
-Runs 10x Engine as a [sidecar](https://doc.log10x.com/engine/launcher/sidecar) to Filebeat for reporting, receiving, and optimizing events before they ship to their destination (Elasticsearch, Logstash, Kafka, S3, …). Filebeat's plugin model doesn't expose the Fluent Forward protocol used by other forwarders, so Log10x and Filebeat exchange events through Filebeat's own native extension points instead: a `script` processor on every input emits enriched events to Filebeat's stdout, and a `unix` input loads processed events back over a local socket. Filebeat runs as a child process of the sidecar (`filebeat -e 2>&1 | tenx ...`); works against any stock Filebeat build (Linux/macOS/Windows) and the upstream `elastic/filebeat` Helm chart on Kubernetes via an image swap to the prebuilt `log10x/filebeat-10x` image.
+Runs 10x Engine as a [sidecar](https://doc.log10x.com/engine/launcher/sidecar) to Filebeat for reporting, receiving, and optimizing events before they ship to their destination (Elasticsearch, Logstash, Kafka, S3, …). Filebeat's plugin model doesn't expose the Fluent Forward protocol used by other forwarders, so Log10x and Filebeat exchange events through Filebeat's own native extension points instead: a `script` processor on every input emits enriched events to Filebeat's stdout, and a `unix` input loads processed events back over a local socket. Filebeat runs as a child process of the sidecar (`filebeat -e 2>&1 | tenx ...`); works against any stock Filebeat build (Linux/macOS/Windows), and on Kubernetes via the `log10x-elastic/filebeat` chart, which deploys the prebuilt `log10x/filebeat-10x` image.
 
 ## Architecture
 
@@ -105,4 +105,18 @@ output.elasticsearch:
 filebeat -c filebeat.yml -e 2>&1 | tenx run @run/input/forwarder/filebeat @apps/receiver
 ```
 
-For Kubernetes deployment, swap the chart's default Filebeat image for the prebuilt `log10x/filebeat-10x` on top of the upstream `elastic/filebeat` chart, see the [Helm chart overlay](https://doc.log10x.com/apps/receiver/deploy/#filebeat). For read-only Reporter mode (no event diversion) swap `tenx-receive.js` for `tenx-report.js` and run against `@apps/reporter`, see the [Reporter Quickstart](https://doc.log10x.com/apps/reporter/run/#filebeat).
+On Kubernetes, install the `log10x-elastic/filebeat` chart, which is the supported path. It carries the image swap, the licence wiring and probes that observe the engine as chart values:
+
+```bash
+helm repo add log10x-elastic https://log-10x.github.io/elastic-helm-charts
+helm repo update
+helm upgrade --install my-receiver log10x-elastic/filebeat \
+  --version 1.5.0 \
+  --set tenx.enabled=true \
+  --set-file tenx.licenseJwt=license.jwt \
+  --namespace logging --create-namespace
+```
+
+The upstream `elastic/filebeat` chart still works as a values overlay for installs already on it, but that repository was archived by Elastic in April 2023 and its probes test Filebeat only, so a frozen engine holds the pod Ready. See the [Helm chart overlay](https://doc.log10x.com/apps/receiver/deploy/#filebeat) for both paths and the probe detail.
+
+For read-only Reporter mode (no event diversion) swap `tenx-receive.js` for `tenx-report.js` and run against `@apps/reporter`, see the [Reporter Quickstart](https://doc.log10x.com/apps/reporter/run/#filebeat).

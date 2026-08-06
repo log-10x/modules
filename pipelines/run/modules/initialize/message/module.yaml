@@ -107,10 +107,14 @@ module:
         continuation pattern (e.g., stack trace frame, indented detail, banner) that should not
         receive its own message pattern.
 
-        Negators are evaluated by the message template's gate when the event is neither part of a
-        multi-event group (groupSize > 1) nor a group head: in that case, an event still receives
-        a pattern unless it matches a negator. This is the "Hello World vs orphan stack frame"
-        discriminator.
+        Negators have two consumers. The message template's gate evaluates them when the event is
+        neither part of a multi-event group (groupSize > 1) nor a group head: in that case, an
+        event still receives a pattern unless it matches a negator. This is the "Hello World vs
+        orphan stack frame" discriminator. The group template's head detection also consults them
+        as a veto BETWEEN the timestamp and severity checks: a negator-prefixed line cannot be
+        promoted to group head by severity inference alone (a token like `info` inside an object
+        dump), so continuation fragments weld into their parent instead of minting orphan heads.
+        Both consumers are inert until this list is configured — there is no default.
 
         - ` ` - any indented line (universal continuation signal).
         - `	` - any tab-prefixed line (Java/Go stack frames etc.).

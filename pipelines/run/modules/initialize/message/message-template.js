@@ -34,7 +34,11 @@ export class MessageTemplate extends TenXTemplate {
                     TenXEnv.get("inputField"),
                     TenXEnv.get("symbolMaxLen", 0));
 
+            var skeletonFromAny = false;
+
             if (!TenXString.includes(symbolSequence, "_")) {
+
+                skeletonFromAny = true;
 
                 symbolSequence = this.symbolSequence("any",
                     TenXEnv.get("inputField"),
@@ -57,6 +61,33 @@ export class MessageTemplate extends TenXTemplate {
                 TenXTemplate.setStatic(
                     TenXEnv.get("symbolMessageHashField", "tenx_hash"),
                     TenXString.hash(symbolSequence));
+            }
+
+            // The rendering hint: the message's shape with one marker per
+            // identity token, so a consumer holding pattern + skeleton prints
+            // the original log line without the engine ever shipping it (this
+            // is what makes a pattern readable in a metrics-only deployment).
+            // Opt-in by naming the field; unset computes and emits nothing.
+            // The rendering hint MUST come from the same context branch that
+            // produced the identity above. Asking the typed path for the
+            // skeleton of an any-path identity yields two different
+            // computations whose tokens do not line up, and the rendered line
+            // drifts by a token (measured: 32% of events).
+            if (TenXEnv.get("symbolSkeletonField") && skeletonFromAny) {
+                TenXTemplate.setStatic(
+                    TenXEnv.get("symbolSkeletonField"),
+                    this.symbolSkeleton("any",
+                        TenXEnv.get("inputField"),
+                        TenXEnv.get("symbolMaxLen", 0)));
+            }
+
+            if (TenXEnv.get("symbolSkeletonField") && !skeletonFromAny) {
+                TenXTemplate.setStatic(
+                    TenXEnv.get("symbolSkeletonField"),
+                    this.symbolSkeleton(
+                        TenXEnv.get("symbolContexts", "log,exec"),
+                        TenXEnv.get("inputField"),
+                        TenXEnv.get("symbolMaxLen", 0)));
             }
         }
     }

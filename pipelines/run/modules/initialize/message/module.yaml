@@ -98,6 +98,19 @@ module:
       defValue: ""
 
     - names:
+      - symbolSkeletonField
+      description: field name for the pattern rendering hint (the message shape with one marker per identity token)
+      type: string
+      required: false
+      doc: |
+        When set, each template also carries a `skeleton`: the message region of the
+        log line with `~` standing in for every token that went into the message
+        pattern and `$` for every variable. A consumer holding the pattern and the
+        skeleton reconstructs the original line for display — punctuation, spacing
+        and dropped stopwords included — so a readable pattern needs no access to
+        the logs themselves. Unset (the default) computes and emits nothing.
+
+    - names:
       - messageNegators
       description: list of strings that, when matched at the start of a log line's text, mark it as low-value continuation/boilerplate that does NOT receive its own message pattern.
       type: list

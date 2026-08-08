@@ -34,11 +34,29 @@ module:
   #   true         | false           | emit everything fullText. Forwarder routes by `routeState`.
   #   true         | true            | emit everything compacted. (niche)
   #
-  # `routeState` is always written as a top-level field on the wire, so the
-  # downstream forwarder can route by it regardless of which combination is set.
-  # The customer-facing config.yaml maps these two flags into the engine's
-  # internal `outputDropFilter` and `outputEncodeField` primitives via $=yield
-  # expressions, see the receiver app config for the canonical wiring.
+  # `routeState` is NOT always on the wire. It ships only when the resolved
+  # output expression asks for it, which is the offload and soft-drop modes:
+  #
+  #   receiverOptimize=true  -> encode(<hash>)                  no routeState
+  #   outputOffload  truthy  -> fullText(<hash>,"routeState")    routeState
+  #   outputSoftDrop truthy  -> isRoute("compact") ? encode(...) : fullText(...)
+  #                                                              routeState
+  #   neither (receive mode) -> fullText(<hash>)                 no routeState
+  #
+  # The canonical wiring is the `encodeField` ternary in the CONFIG repo,
+  # config/pipelines/run/input/forwarder/config.yaml, keyed on
+  # receiverOptimize / outputOffload / outputSoftDrop. It is NOT keyed on the
+  # `emit_dropped` / `compact_emitted` names documented below, and no config
+  # in either repo reads those two options today, so the paragraph that
+  # claimed a receiver-app mapping pointed at wiring that does not exist.
+  #
+  # Measured 2026-08-08 on a full demo recording (32,805 events, receive mode
+  # with `receiverOptimize false` + `symbolMessageHashField tenx_hash`, which
+  # resolves to the last branch): tenx_hash present on 32,772 records, and
+  # routeState present on ZERO. The 33 records without a hash are ASCII-art
+  # boot banners, which carry no message and therefore no pattern. A reader
+  # who trusted the old sentence would have called that a wire regression;
+  # it is the configured behaviour.
   options:
 
     - names:

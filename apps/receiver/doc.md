@@ -720,7 +720,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
             retain: 300000                 # mark stale after 5 minutes
         ```
 
-        Entries in `mutes.csv` look like `Error_syncing_pod=0.10:1744848000:pod error spam OPS-4821`. See [protection list](https://doc.log10x.com/run/receive/rate/#protection-list) for the format and workflow.
+        The first line of `mutes.csv` is a header row (`fieldSet,value`) — the lookup reads line 1 as column names, so a file without it silently loses its first entry. Entries below it look like `Error_syncing_pod,0.10:1744848000:pod error spam OPS-4821`. See [protection list](https://doc.log10x.com/run/receive/rate/#protection-list) for the format and workflow.
 
 ??? tenx-initializers "Step 7: Enrichments (optional)"
 

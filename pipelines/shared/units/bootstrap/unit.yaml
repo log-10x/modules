@@ -93,9 +93,9 @@ unit:
         no startup validation, no metrics reporting, no user-attribute enrichment. Suitable for fully airgapped deployments
         where the engine has no path to the vendor SaaS.
 
-        When `false` (default), the engine additionally validates the license against the 10x service at startup; a non-2xx response refuses to start.
+        When `false` (default), the engine additionally calls the 10x service at startup. That call is best-effort enrichment: the local verification is the gate, and a service that cannot be reached, or that answers with an error, produces a warning and the engine runs.
 
-        `demo` and `limited` license types cannot run airgapped, if `airgapped: true` is set with one of these license types, a warning is logged and the engine runs in online mode anyway.
+        Airgapped mode is honored for every license type.
 
     - names:
       - metricEndpoint

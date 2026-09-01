@@ -42,7 +42,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
     |----------|-------------|
     | `TENX_MODULES` | Path to your [modules directory](https://doc.log10x.com/install/paths/#modules) |
     | `TENX_CONFIG` | Path to your [configuration directory](https://doc.log10x.com/install/paths/#config) |
-    | `TENX_LICENSE_KEY` | Your Log10x license JWT ([download from console](https://console.log10x.com)) |
+    | `TENX_LICENSE_KEY` | Your Log10x license JWT ([licensing](https://doc.log10x.com/manage/license/)); unset, the engine runs on the built-in evaluation license |
 
     ```bash
     export TENX_MODULES=/etc/tenx/modules

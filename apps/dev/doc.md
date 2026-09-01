@@ -21,7 +21,7 @@ Run the dev app on your log files locally to preview how edge and cloud apps wil
     | Variable | Description |
     |----------|-------------|
     | `TENX_CONFIG` | Path to your [configuration directory](https://doc.log10x.com/install/paths/#config) |
-    | `TENX_LICENSE_KEY` | Your Log10x license JWT ([download from console](https://console.log10x.com)). Not needed for previewing savings on local logs. |
+    | `TENX_LICENSE_KEY` | Your Log10x license JWT ([licensing](https://doc.log10x.com/manage/license/)). Not needed for previewing savings on local logs. |
 
     ```bash
     export TENX_CONFIG=/path/to/your/config

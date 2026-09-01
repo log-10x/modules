@@ -31,7 +31,7 @@ variable "source_suffix" {
 }
 
 variable "tenx_api_key" {
-  description = "Log10x API key. Passed as TENX_API_KEY env var. Get yours at https://console.log10x.com. Leave blank if already wired via a Lambda environment variable."
+  description = "Log10x API key. Passed as TENX_API_KEY env var. Minted by MCP sign-in (https://doc.log10x.com/apps/mcp/). Leave blank if already wired via a Lambda environment variable."
   type        = string
   default     = ""
   sensitive   = true

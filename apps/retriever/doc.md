@@ -10,7 +10,7 @@ Test the Retriever locally using [minikube](https://minikube.sigs.k8s.io/) with 
 
     | Requirement | Description |
     |-------------|-------------|
-    | Log10x License | Get your API key at [console.log10x.com](https://console.log10x.com) to enable analytics dashboards and full functionality. |
+    | Log10x License | Optional: [MCP sign-in](https://doc.log10x.com/apps/mcp/) mints an API key for full functionality. |
     | minikube | Local Kubernetes cluster ([install guide](https://minikube.sigs.k8s.io/docs/start/)) |
     | kubectl | Kubernetes CLI ([install guide](https://kubernetes.io/docs/tasks/tools/)) |
     | Helm | Kubernetes package manager ([install guide](https://helm.sh/docs/intro/install/)) |

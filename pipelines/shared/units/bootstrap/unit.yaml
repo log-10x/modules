@@ -65,7 +65,8 @@ unit:
         Path to a file containing the signed 10x license JWT.
         Preferred over `licenseKey` for production: the token is not visible in `ps` output and is easy to rotate by replacing the file.
 
-        Download a license from your [account](https://console.log10x.com).
+        Without a license the engine runs on the built-in 30-day evaluation license.
+        See [licensing](https://doc.log10x.com/manage/license/) for production licenses.
 
         If both `licenseFile` and `licenseKey` are provided, the file wins.
 
@@ -79,7 +80,8 @@ unit:
         The signed 10x license JWT, passed inline.
         Discouraged on the command line because the value is visible in `ps` output; prefer `licenseFile` in production.
 
-        Download a license from your [account](https://console.log10x.com).
+        Without a license the engine runs on the built-in 30-day evaluation license.
+        See [licensing](https://doc.log10x.com/manage/license/) for production licenses.
 
     - names:
       - airgapped
@@ -93,7 +95,7 @@ unit:
         no startup validation, no metrics reporting, no user-attribute enrichment. Suitable for fully airgapped deployments
         where the engine has no path to the vendor SaaS.
 
-        When `false` (default), the engine additionally calls the 10x service at startup. That call is best-effort enrichment: the local verification is the gate, and a service that cannot be reached, or that answers with an error, produces a warning and the engine runs.
+        When `false` (default), the engine additionally calls the 10x service at startup, and only when a service endpoint is actually configured; the default configuration names none, so an unconfigured engine makes no call either way. The call is best-effort enrichment: the local verification is the gate, and a service that cannot be reached, or that answers with an error, produces a warning and the engine runs.
 
         Airgapped mode is honored for every license type.
 
@@ -106,11 +108,12 @@ unit:
         Specifies the address of the Prometheus remote write endpoint to write
         pipeline usage and health metrics.
 
+        Unset by default: an engine with no metric endpoint configured collects
+        metrics locally and sends them nowhere.
+
         !!! note ""
 
             This argument is only settable in the 10x 'on-premises' build.
-
-      defValue: https://prometheus.log10x.com/api/v1/write
 
     - names:
       - runtimeName

@@ -40,6 +40,14 @@ module:
         ``` yaml
         objectStorageClassName: AWS:com.log10x.ext.cloud.index.access.AWSIndexAccess
         ```
+
+        Azure Blob Storage is reached the same way, and requires a storage account
+        with a flat namespace. Hierarchical namespace accounts order listings
+        differently, which the index scan depends on.
+
+        ``` yaml
+        objectStorageClassName: Azure:com.log10x.ext.cloud.index.access.AzureIndexAccess
+        ```
         
         To configure a target storage (e.g., authenticate) define and specify configuration [launch arguments](https://doc.log10x.com/config) accessible via the [EvaluatorBean](https://github.com/log-10x/pipeline-extensions/blob/main/edge-extensions/src/main/java/com/log10x/api/bean/EvaluatorBean.java#L14) constructor parameter.
 

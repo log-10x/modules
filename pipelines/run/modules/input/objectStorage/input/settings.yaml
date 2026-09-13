@@ -23,6 +23,10 @@ tenx: run
 #
 #  The 'Local:com.log10x.ext.cloud.index.access.LocalIndexAccess' can be used when interacting
 #  with the local file system for POC/testing.
+#  'Azure:com.log10x.ext.cloud.index.access.AzureIndexAccess' accesses Azure Blob
+#  Storage. It requires a flat namespace account: hierarchical namespace accounts
+#  sort '/' lowest, which reorders listings and breaks the index range scan.
 objectStorageClassName:
   - AWS:com.log10x.ext.cloud.index.access.AWSIndexAccess
+  - Azure:com.log10x.ext.cloud.index.access.AzureIndexAccess
   - Local:com.log10x.ext.cloud.index.access.LocalIndexAccess

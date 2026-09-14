@@ -678,7 +678,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
     === ":material-percent: Per-Pattern Cap"
 
-        Cap any single log pattern at 10 MB per container per window. No cap is set by default, so this block is what turns the regulator on. The [Level Classifier](https://doc.log10x.com/run/initialize/level/) enriches events with severity, so the floor keeps ERROR events flowing even when a pattern is over its cap.
+        Set a 10 MB budget for any single log pattern per container per window. No cap is set by default, so this block is what turns the regulator on. The [Level Classifier](https://doc.log10x.com/run/initialize/level/) enriches events with severity, so the floor keeps ERROR events flowing even when a pattern is over its cap.
 
         ```yaml
         rateReceiver:
@@ -695,6 +695,8 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
         The floor beats the cap: a pattern over 10 MB still keeps Error 50%, Warn 30%, Info 10%. At or below the cap every event passes through untouched. Whatever the floor does not keep is dropped, unless an action file gives that container a different action.
 
+        The cap is therefore not a hard bound. The floor check runs after the cap check, so above the cap a flood still passes at the floor rate, and the worst case for one pattern in one container per window is the cap plus the floor share of everything above it.
+
     === ":material-kubernetes: Multi-App Kubernetes"
 
         Cap each pattern per app, scoped by container so all of an app's replicas share one cap. The [container name](https://doc.log10x.com/run/initialize/k8s/) stays constant across pods.
@@ -708,6 +710,8 @@ Follow the steps below. Steps that require customization link to the relevant [C
         ```
 
         Each (pattern, container) pair gets its own 10 MB cap. Scaling from 1 to 10 pods does not bypass it because the container name is stable across replicas. To give one app a different cap, list it in a cap file, which wins over `absoluteCap` for that container.
+
+        The severity floors apply here too, so the cap is where the regulator engages rather than a bound on what a pattern can spend.
 
     === ":material-file-document-edit-outline: Mute File (GitOps)"
 

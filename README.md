@@ -72,7 +72,7 @@ Deployed alongside log forwarders (Fluentd, Fluent Bit, Filebeat, Logstash).
 | App | Purpose | Documentation | Run Guide |
 |-----|---------|---------------|-----------|
 | **Reporter** | Cost attribution metrics (DaemonSet, pre-SIEM, not in log path) | [Overview](https://doc.log10x.com/apps/reporter/) | [Run](https://doc.log10x.com/apps/reporter/run/) |
-| **Receiver** | Two modes: Filter (lossy, budget sampling, mute files) and Compact (lossless, 50-80% volume reduction via SIEM-side expand plugin) | [Overview](https://doc.log10x.com/apps/receiver/) | [Run](https://doc.log10x.com/apps/receiver/run/) |
+| **Receiver** | Two modes: Filter (lossy, budget sampling, mute files) and Compact (lossless volume reduction via SIEM-side expand plugin, where the destination supports it) | [Overview](https://doc.log10x.com/apps/receiver/) | [Run](https://doc.log10x.com/apps/receiver/run/) |
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐

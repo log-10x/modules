@@ -8,7 +8,7 @@ The actions:
 
 - **pass**: forward unchanged.
 - **sample**: forward a rate-limited share against a per-pattern budget.
-- **compact**: replace repeated lines with an encoded form the destination expands (lossless only where the destination supports it: Splunk, self-hosted Elasticsearch, ClickHouse; a no-op elsewhere). Requires the expand plugin installed in [Splunk](compact/splunk.md) or [Elasticsearch](compact/elasticsearch.md).
+- **compact**: replace repeated lines with an encoded form the destination expands (lossless only where the destination supports it: Splunk, self-hosted Elasticsearch; a no-op elsewhere). Requires the expand plugin installed in [Splunk](compact/splunk.md) or [Elasticsearch](compact/elasticsearch.md). On ClickHouse the lever is offload, not compact: the per-pattern cap sends overflow to the customer's own bucket.
 - **tier_down**: tag the pattern for a cheaper storage tier the destination enforces (Datadog Flex, CloudWatch IA, Azure Monitor Basic/Auxiliary).
 - **offload**: route the pattern to customer-owned object storage (S3, GCS, Azure Blob) instead of the destination.
 - **drop**: stop forwarding the pattern.
@@ -19,7 +19,7 @@ Log10x is normally driven by an AI agent (Claude, or a model the customer brings
 
 <h3 id="compact">Compact action</h3>
 
-The compact action replaces repeated lines with an encoded form the destination expands at query time, operating on stable pattern identity. It is lossless only on Splunk, self-hosted Elasticsearch, and ClickHouse, where it typically cuts log volume by 50-80%, and a no-op on managed/SaaS destinations (there the levers are offload or drop). For SIEM-side plugin install, see the [Splunk](compact/splunk.md) and [Elasticsearch](compact/elasticsearch.md) pages.
+The compact action replaces repeated lines with an encoded form the destination expands at query time, operating on stable pattern identity. It is lossless only on Splunk and self-hosted Elasticsearch, and a no-op on managed/SaaS destinations (there the levers are offload or drop). For SIEM-side plugin install, see the [Splunk](compact/splunk.md) and [Elasticsearch](compact/elasticsearch.md) pages.
 
 ## :material-clipboard-play-outline: Setup Guide
 

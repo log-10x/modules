@@ -7,7 +7,7 @@ unit:
 
   title: Pipeline Bootstrapper
 
-  description: Authenticate the log10x account and launch a target pipeline
+  description: Verify the license and launch a target pipeline
 
   # 'configFolders' specifies folders containing default configuration files for this module
   configFolders:

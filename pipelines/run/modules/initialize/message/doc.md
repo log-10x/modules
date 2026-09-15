@@ -29,7 +29,7 @@ The `inputField` parameter limits searches to specific JSON fields. Setting `inp
 
 ### Repeatability
 
-The comparator is deterministic: every key is a content-derived integer. Three details bound that guarantee.
+The comparator is deterministic: every key is a content-derived integer. Three details bound that behavior.
 
 - A full four-key tie falls back to candidate insertion order, which holds stable for a given engine build and is not a documented ordering.
 - Two truncation caps can hide a true origin: [`symbolMaxOrigins`](https://doc.log10x.com/run/transform/symbol/#symbolmaxorigins) (default 64, the cap that binds at runtime) and [`maxSymbolUnitsPerToken`](https://doc.log10x.com/run/symbol/#maxsymbolunitspertoken) (default 128, approximate, stopping in the low 130s).
@@ -48,7 +48,7 @@ Four terms are easy to conflate. They are distinct:
 
 ### Field names by surface
 
-An encoded event opens with a leading segment, and that segment always carries the template join key, the value a decoder uses to rebuild the original line from its `templates.json` entry. Each integration labels that field to suit its own schema: a ClickHouse table names it as a template hash column, and the Splunk app extracts it as `tenx_hash`. The pattern-level identity is a separate value, the hash of the selected pattern, written to the field named by [`symbolMessageHashField`](#symbolmessagehashfield) and also defaulting to `tenx_hash`. The name therefore appears on more than one surface, carrying the join key on an encoded event in Splunk and the pattern hash on an enriched event out of the engine. The two values answer different questions: the join key says which template rebuilds this line, and the pattern hash says which pattern this line belongs to.
+An encoded event opens with a leading segment, and that segment always carries the template join key, the value a decoder uses to rebuild the original line from its `templates.json` entry. Each integration handles that field to suit its own schema: the Splunk app extracts it as `tenx_hash`, and the Elasticsearch plugin looks the key up in its `l1es_dml` template index. The pattern-level identity is a separate value, the hash of the selected pattern, written to the field named by [`symbolMessageHashField`](#symbolmessagehashfield) and also defaulting to `tenx_hash`. The name therefore appears on more than one surface, carrying the join key on an encoded event in Splunk and the pattern hash on an enriched event out of the engine. The two values answer different questions: the join key says which template rebuilds this line, and the pattern hash says which pattern this line belongs to.
 
 Building on this process, here's how it applies to real events:
 

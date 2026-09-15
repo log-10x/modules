@@ -12,7 +12,7 @@ export class PrometheusScrapeOutput extends TenXOutput {
     constructor() { 
                 
         if ((this.prometheusPort)) {
-            TenXConsole.log("📈 Publishing TenXSummary metrics to Prometheus scape on port: " + this.prometheusPort);
+            TenXConsole.log("📈 Publishing TenXSummary metrics to Prometheus scrape on port: " + this.prometheusPort);
         }
     }
 }

@@ -16,9 +16,11 @@ The share guard is a sanity check on the cap. A pattern over its cap but below `
 
 Nothing targets the excess back down to the cap line. The cap decides when the regulator engages, the floor decides what fraction of the excess survives, and the action decides what happens to the rest.
 
+The cap is not a hard bound. The floor check runs after the cap check, so above the cap a flood still passes at the floor rate, and the worst case for one pattern in one container per window is the cap plus the floor share of everything above it.
+
 ## :material-shield-alert-outline: Severity floors
 
-The cap never silences high-severity logs. `severityFloors` sets a minimum retention per level that beats the cap: even a pattern over its cap keeps at least Error 50%, Warn 30%, Info 10%. The floor reads the [severity](https://doc.log10x.com/run/initialize/level/) the level enrichment produced, so it applies whatever field the original log used.
+The cap never silences high-severity logs. `severityFloors` sets a minimum retention per level that beats the cap: even a pattern over its cap keeps at least Error 50%, Warn 30%, Info 10%. Critical and Fatal sit with Error, and any level with no entry of its own falls to `minRetentionThreshold` (10%). That floor share of the excess is what makes the cap a trigger rather than a bound. The floor reads the [severity](https://doc.log10x.com/run/initialize/level/) the level enrichment produced, so it applies whatever field the original log used.
 
 ## :material-timer-sand: Warmup
 

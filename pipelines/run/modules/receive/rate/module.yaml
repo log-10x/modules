@@ -239,8 +239,8 @@ module:
         Defines the path to a declarative **per-service action file** (sibling to the cap file).
         Each entry assigns the disposition of a service's regulator-identified excess: `drop`
         (default), `offload` (to customer S3), `tier_down` (analyzer cheap tier), `compact` (lossless
-        encode), `sample`, or `pass`. The byte cap (`rateReceiverCapLookupFile`) still bounds the
-        excess; the action only decides what happens to it. Unlisted services default to `drop`
+        encode), `sample`, or `pass`. The byte cap (`rateReceiverCapLookupFile`) still decides where the
+        excess starts; the action only decides what happens to it. Unlisted services default to `drop`
         (the original regulator behavior). Read by the cap-variant regulator classes, which call
         `route(action)` at the over-budget decision point instead of a hardcoded drop.
 
@@ -411,10 +411,11 @@ module:
       type: number
       required: false
       doc: |
-        defines a **fleet-wide** byte cap: the maximum bytes of a single pattern (a unique combination
-        of `rateReceiverFieldNames` values) that may be retained per container within the current
-        window (`rateReceiverResetIntervalMs`). Applies to every container the regulator sees, unless
-        that container has its own entry in `rateReceiverCapLookupFile`, which wins per-event.
+        defines a **fleet-wide** byte cap: the byte budget for a single pattern (a unique combination
+        of `rateReceiverFieldNames` values) per container within the current window
+        (`rateReceiverResetIntervalMs`), past which the regulator engages. Applies to every container
+        the regulator sees, unless that container has its own entry in `rateReceiverCapLookupFile`,
+        which wins per-event.
 
         At or below the resolved cap the pattern is kept untouched. Above it, the regulator engages:
         if the pattern is also above `rateReceiverMinSharePercent` (the sanity guard), the event is
@@ -431,9 +432,13 @@ module:
         - **Both**: per-container entries override the fleet-wide cap; unlisted containers fall back
           to the fleet-wide cap (safety floor).
 
-        **Example:** 10485760 (10 MB) means no single pattern can exceed 10 MB per container per
-        5-minute window. The maximum monthly spend per pattern per container can be computed from
-        this cap and the vendor's per-GB rate.
+        **Example:** 10485760 (10 MB) means the regulator engages for a pattern once it has spent
+        10 MB in a container within the 5-minute window.
+
+        **The cap is not a hard bound.** The severity floor check runs after the cap check, so above
+        the cap a flood still passes at the floor rate (ERROR and CRITICAL half, WARN three tenths,
+        everything else a tenth). The worst case for one pattern in one container per window is the
+        cap plus the floor share of everything above it.
       defValue: 0
 
     - names:

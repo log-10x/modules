@@ -4,13 +4,17 @@ icon: material/progress-check
 
 Stop any single log pattern from dominating its container's volume, on the forwarder, before that volume is billed downstream. Errors and warnings keep flowing, and patterns on a protection list are never touched.
 
-The rate regulator watches each container's recent volume and trims back any one [pattern](https://doc.log10x.com/run/initialize/message/ "the message symbol sequence that identifies a log type") that crosses a fixed share of it. That pattern is the same `symbolMessage` value a Reporter attributes cost to, so a top spender maps straight to what gets regulated. Nothing is sampled until a pattern actually dominates.
+The rate regulator watches each container's recent volume and acts on any one [pattern](https://doc.log10x.com/run/initialize/message/ "the message symbol sequence that identifies a log type") that spends more bytes than the cap set for that container. That pattern is the same `symbolMessage` value a Reporter attributes cost to, so a top spender maps straight to what gets regulated. No cap ships by default, so nothing is regulated until an operator sets one.
 
 ## :material-percent-outline: The cap
 
-A pattern is left alone until it crosses `maxSharePerFieldSet` (default 20%) of its container's recent volume. At or below the cap every event is kept. Above it, the pattern is trimmed back toward the cap by dropping a fraction of its events.
+The cap is a byte budget for one pattern in one container over one window. It resolves per event: the container's row in the cap file first, then the fleet-wide `absoluteCap`. Both default to none, and a resolved cap of `0` means keep everything, so protection is opt-in. Set `absoluteCap`, a cap file, or both.
 
-Share is measured per container over a rolling window (`resetIntervalMs`, default 4 minutes): `(pattern bytes + event) / (container bytes + event)`. The window is recent rather than all-time, so a pattern that spikes during a deploy and then goes quiet stops being trimmed on its own.
+At or below the cap every event is kept. Above it the regulator engages, and the event takes one of three exits, in this order: kept by the share guard, kept by the severity floor, or routed by the container's action.
+
+The share guard is a sanity check on the cap. A pattern over its cap but below `minSharePercent` (default 5%) of its container's volume is left alone, so a busy container whose traffic is spread thin does not trip the regulator. Share is measured per container over a rolling window (`resetIntervalMs`, default 4 minutes): `(pattern bytes + event) / (container bytes + event)`. The window is recent rather than all-time, so a pattern that spikes during a deploy and then goes quiet stops being trimmed on its own.
+
+Nothing targets the excess back down to the cap line. The cap decides when the regulator engages, the floor decides what fraction of the excess survives, and the action decides what happens to the rest.
 
 ## :material-shield-alert-outline: Severity floors
 
@@ -62,6 +66,27 @@ The cap value changes; the share guard and severity floor still apply. Intended 
 
 Same hot-reload rule as the mute file: both launch-macro lanes reload, a plain volume-mounted `ConfigMap` does not.
 
+## :material-arrow-decision: Actions
+
+An optional action file decides what happens to the events a pattern spends above its cap. Without it that excess is dropped, which is the regulator's behavior when only a cap is set.
+
+**File format**, CSV with a header row, keyed by the same `containerField` value as the cap file:
+
+```
+container,action
+<container>,<action>[:<untilEpochSec>][:<reason>]
+```
+
+- `action` is one of `drop`, `offload`, `tier_down`, `compact`, `sample`, or `pass`. Unlisted containers get `drop`.
+- `untilEpochSec` expires the entry, which then self-heals to a no-op.
+- `reason` is free text for audit. Must not contain commas (would break CSV parsing).
+
+The action is keyed by container, not by pattern. Every over-cap pattern in a container takes that container's action. Per-pattern thinning comes from the mute file, not from this file.
+
+The event keeps flowing either way. The action lands on the event as its `routeState`, and the output streams and the forwarder recipe act on that, so `offload` and `tier_down` reach their destinations instead of being discarded at the regulator. The cap stays the backstop that decides how much excess there is; the action only decides where it goes.
+
+The action file is a sibling of the cap file in the same ConfigMap, and hot-reloads on the same rule.
+
 ## :material-kubernetes: Containers
 
 Share is scoped per container, named by `containerField` (default the k8s container name). That name is stable across replicas, so scaling from one pod to ten does not bypass the cap, and a sidecar never spends the application container's share. Use `container`, never `pod`.
@@ -96,6 +121,8 @@ rateReceiver:
   capLookup:
     # file: $=path("data/caps") + "/caps.csv"   # optional per-container overrides
     retain: $=parseDuration("10m")
+  actionLookup:
+    # file: $=path("data/caps") + "/actions.csv"  # optional per-container action for the excess; default drop
   configGeneration:
     # file: $=TenXEnv.get("CONFIG_GENERATION_FILE", "")   # MCP config-version stamp; opt-in, sibling of caps.csv
 ```

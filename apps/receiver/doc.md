@@ -2,7 +2,7 @@
 icon: material/play-circle-outline
 ---
 
-The Receiver runs alongside your log forwarder and acts on events as they flow through. It decides a per-pattern action for every pattern it sees: pass, sample, compact, tier_down, offload, or drop. An AI agent picks the action per service through the log10x MCP (the `configure_engine` tool); the engine enforces it, and the decision travels as a config change through the GitOps repo.
+The Receiver runs alongside your log forwarder and acts on events as they flow through. The rate regulator finds which patterns are over the byte cap set for their service, and an action decides what happens to that excess: pass, sample, compact, tier_down, offload, or drop. An AI agent picks the action per service through the log10x MCP (the `configure_engine` tool); the engine enforces it, and the decision travels as a config change through the GitOps repo.
 
 The actions:
 
@@ -13,7 +13,7 @@ The actions:
 - **offload**: route the pattern to customer-owned object storage (S3, GCS, Azure Blob) instead of the destination.
 - **drop**: stop forwarding the pattern.
 
-The Receiver also runs in **read-only** mode (observation): receive events from the forwarder, run aggregators, and publish pattern-identity metrics with the event stream untouched. Use it for visibility into per-pattern volume and cost before any action is applied. **Read-write** mode (default) applies the per-pattern actions above.
+The Receiver also runs in **read-only** mode (observation): receive events from the forwarder, run aggregators, and publish pattern-identity metrics with the event stream untouched. Use it for visibility into per-pattern volume and cost before any action is applied. **Read-write** mode (default) applies the actions above.
 
 Log10x is normally driven by an AI agent (Claude, or a model the customer brings) through the log10x MCP server, which installs, configures, and queries via MCP tools. The agent's `configure_engine` tool turns a target percent or budget into a per-pattern action set, carried as a cap/action CSV that lands in the config repo through a GitOps PR and hot-reloads on the next pull. The hand-authored cap YAML and CSV shown below are the same representation an agent produces.
 
@@ -678,21 +678,22 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
     === ":material-percent: Per-Pattern Cap"
 
-        Cap any single log pattern at 20% of its container's volume. The [Level Classifier](https://doc.log10x.com/run/initialize/level/) enriches events with severity, so the floor keeps ERROR events flowing even when a pattern is over its cap.
+        Cap any single log pattern at 10 MB per container per window. No cap is set by default, so this block is what turns the regulator on. The [Level Classifier](https://doc.log10x.com/run/initialize/level/) enriches events with severity, so the floor keeps ERROR events flowing even when a pattern is over its cap.
 
         ```yaml
         rateReceiver:
           fieldNames:
             - symbolMessage              # the pattern identity
-          containerField: container      # scopes the share denominator
-          maxSharePerFieldSet: 0.2       # no pattern exceeds 20% of its container
+          containerField: container      # scopes the cap to one service
+          absoluteCap: 10485760          # 10 MB per pattern per container per window
+          minSharePercent: 0.05          # leave patterns under 5% of their container alone
           severityFloors:
             - INFO=0.1
             - WARN=0.3
             - ERROR=0.5
         ```
 
-        The floor beats the cap: a pattern over 20% still keeps Error 50%, Warn 30%, Info 10%. At or below the cap every event passes through untouched.
+        The floor beats the cap: a pattern over 10 MB still keeps Error 50%, Warn 30%, Info 10%. At or below the cap every event passes through untouched. Whatever the floor does not keep is dropped, unless an action file gives that container a different action.
 
     === ":material-kubernetes: Multi-App Kubernetes"
 
@@ -703,9 +704,10 @@ Follow the steps below. Steps that require customization link to the relevant [C
           fieldNames:
             - symbolMessage
           containerField: container      # same name across all pod replicas
+          absoluteCap: 10485760          # 10 MB per pattern per container per window
         ```
 
-        Each (pattern, container) pair gets its own 20% cap. Scaling from 1 to 10 pods does not bypass it because the container name is stable across replicas.
+        Each (pattern, container) pair gets its own 10 MB cap. Scaling from 1 to 10 pods does not bypass it because the container name is stable across replicas. To give one app a different cap, list it in a cap file, which wins over `absoluteCap` for that container.
 
     === ":material-file-document-edit-outline: Mute File (GitOps)"
 

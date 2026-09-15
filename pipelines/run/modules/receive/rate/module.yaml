@@ -162,7 +162,7 @@ module:
         When this option is set, the mute file **composes with** the regulator rather than
         replacing it: a listed, active pattern is decided by its file entry (the human
         declaration wins, and the regulator is skipped for that event), while every other
-        pattern is handled by the share-based regulator.
+        pattern is handled by the regulator's cap.
 
         **File format** (CSV; header row + one comma-separated entry per row):
 
@@ -462,7 +462,7 @@ module:
       doc: |
         defines the cost per GB charged by your observability vendor for log ingestion. Used **only**
         to render savings metrics in dollars (dropped bytes × cost per GB); it does **not** affect the
-        keep/drop decision, which is share-based.
+        keep/drop decision, which is driven by the byte cap.
 
         **Common vendor pricing (2025):**
         - **Splunk Cloud**: ~$1.50/GB (varies by contract, SKU)

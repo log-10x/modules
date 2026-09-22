@@ -135,4 +135,4 @@ service:
       exporters: [debug]
 ```
 
-For Splunk integration see the [10x for Splunk](https://doc.log10x.com/apps/receiver/compact/splunk/) documentation. For Kubernetes deployment via the official OpenTelemetry Collector Helm chart see the [Helm sidecar overlay](https://doc.log10x.com/apps/receiver/deploy/#otel-collector).
+For Splunk integration see the [Log10x App](https://doc.log10x.com/apps/receiver/compact/splunk/) documentation. For Kubernetes deployment via the official OpenTelemetry Collector Helm chart see the [Helm sidecar overlay](https://doc.log10x.com/apps/receiver/deploy/#otel-collector).

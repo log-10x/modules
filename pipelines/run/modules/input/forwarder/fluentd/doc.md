@@ -97,4 +97,4 @@ tenx @run/input/forwarder/fluentd @apps/receiver
 </label>
 ```
 
-For Splunk integration see the [10x for Splunk](https://doc.log10x.com/apps/receiver/compact/splunk/) documentation. For Kubernetes deployment, add the `log10x/edge-10x` sidecar on top of the official Fluentd chart via a kustomize post-renderer overlay, see the [Helm chart overlay](https://doc.log10x.com/apps/receiver/deploy/#fluentd).
+For Splunk integration see the [Log10x App](https://doc.log10x.com/apps/receiver/compact/splunk/) documentation. For Kubernetes deployment, add the `log10x/edge-10x` sidecar on top of the official Fluentd chart via a kustomize post-renderer overlay, see the [Helm chart overlay](https://doc.log10x.com/apps/receiver/deploy/#fluentd).

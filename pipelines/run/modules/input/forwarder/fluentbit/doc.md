@@ -91,4 +91,4 @@ tenx @run/input/forwarder/fluentbit @apps/receiver
     # ... destination config
 ```
 
-For Splunk integration see the [10x for Splunk](https://doc.log10x.com/apps/receiver/compact/splunk/) documentation. For Kubernetes deployment, add the `log10x/edge-10x` sidecar on top of the official Fluent Bit chart via an `extraContainers` values overlay, see the [Helm chart overlay](https://doc.log10x.com/apps/receiver/deploy/#fluent-bit).
+For Splunk integration see the [Log10x App](https://doc.log10x.com/apps/receiver/compact/splunk/) documentation. For Kubernetes deployment, add the `log10x/edge-10x` sidecar on top of the official Fluent Bit chart via an `extraContainers` values overlay, see the [Helm chart overlay](https://doc.log10x.com/apps/receiver/deploy/#fluent-bit).

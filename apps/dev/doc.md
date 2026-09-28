@@ -76,18 +76,19 @@ Run the dev app on your log files locally to preview how edge and cloud apps wil
         tenx @apps/dev
         ```
 
-    === ":material-docker: Docker (+ :material-laptop: local config)"
+    === ":material-docker: Docker (+ :material-laptop: local logs)"
 
-        **Best for**: Isolated testing with local configuration files.
+        **Best for**: Isolated testing with no install.
 
-        Mount your config directory and pass environment variables:
+        The image carries its own configuration. Mount the input and output folders only:
 
         ```bash
+        mkdir -p $TENX_CONFIG/data/sample/output
         docker run --rm \
-          -v $TENX_CONFIG:/etc/tenx/config/ \
-          -e TENX_CONFIG=/etc/tenx/config/ \
+          -v $TENX_CONFIG/data/sample/input:/etc/tenx/config/data/sample/input \
+          -v $TENX_CONFIG/data/sample/output:/etc/tenx/config/data/sample/output \
           -e TENX_LICENSE_KEY="$(cat license.jwt)" \
-          log10x/pipeline-10x:1.1.39 \
+          log10x/pipeline-10x:1.1.81 \
           @apps/dev
         ```
 
@@ -102,22 +103,14 @@ Run the dev app on your log files locally to preview how edge and cloud apps wil
         ```bash
         docker run --rm \
           -e TENX_LICENSE_KEY="$(cat license.jwt)" \
-          log10x/pipeline-10x:1.1.39 \
+          log10x/pipeline-10x:1.1.81 \
           '@github={"token": "<gh-token>", "repo": "my-user/my-repo"}' \
           @apps/dev
         ```
 
         Skip `-e TENX_LICENSE_KEY` to run with the image's built-in limited license (fine for previewing savings on local logs).
 
-???+ tenx-preview "Step 7: Preview Savings"
-
-    When the pipeline completes, the [Dev Output](https://doc.log10x.com/run/output/event/dev/) module automatically generates a console URL and opens it in your browser, cost per event type, ROI projections, and top patterns by volume.
-
-    To disable auto-open, set `openBrowser: false` in `$TENX_CONFIG/run/output/event/dev/config.yaml`. The URL is always printed to console.
-
-    For privacy, set `localOnly: true`, all processing stays on your machine, no data sent externally.
-
-??? tenx-top10-events "Step 8: Analyze Output (Optional)"
+???+ tenx-top10-events "Step 7: Analyze Output"
 
     The [File Output](#file) generates the following files in `$TENX_CONFIG/data/sample/output`:
 
@@ -157,7 +150,7 @@ Run the dev app on your log files locally to preview how edge and cloud apps wil
         diff $TENX_CONFIG/data/sample/output/decoded.log /path/to/original.log
         ```
 
-??? tenx-delete "Step 9: Teardown"
+??? tenx-delete "Step 8: Teardown"
 
     Nothing runs in the background, uninstall removes only what was installed.
 
@@ -183,5 +176,5 @@ Run the dev app on your log files locally to preview how edge and cloud apps wil
     === ":simple-docker: Docker"
 
         ```bash
-        docker rmi log10x/pipeline-10x:1.1.39
+        docker rmi log10x/pipeline-10x:1.1.81
         ```

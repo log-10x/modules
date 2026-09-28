@@ -240,6 +240,22 @@ module:
         queryTo: now()
         ```
 
+    - names:
+        - queryWindowFrom
+      description: start of the whole query a remote subquery is a slice of (epoch ms)
+      type: number
+      required: false
+      defValue: 0
+      category: filter
+      doc: |
+        Set by the query coordinator on each remote subquery it dispatches.
+        A subquery sees only its own time slice in `queryFrom`/`queryTo`;
+        this carries the start of the whole query, so the first slice can
+        tell that a byte range beginning before the query window is its own
+        to stream in full (see `queryObjectUntimestamped` on the
+        [object](https://doc.log10x.com/run/input/objectStorage/query/object/) module).
+        `0` (the default) means this query is not a slice of a wider one.
+
   # ----------------------------- Container Options ---------------------------
 
     - names:

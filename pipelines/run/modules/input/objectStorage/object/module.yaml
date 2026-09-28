@@ -116,6 +116,24 @@ module:
         Set by the query coordinator to the upper bound of the timeslice
         being processed by this stream worker. See `queryObjectSliceFrom`.
 
+    - names:
+        - queryObjectUntimestamped
+      description: whether events that carry no timestamp are admitted by this stream worker
+      type: boolean
+      required: false
+      defValue: true
+      category: general
+      doc: |
+        Set by the query coordinator. A request clipped to a time window
+        (`queryObjectFrom`/`queryObjectTo`) cannot place an event that carries
+        no timestamp, so it admits every such event or none. A byte range
+        that straddles a slice boundary is fetched by every slice it touches;
+        the coordinator sets this to `true` on exactly one of those requests
+        (the slice holding the range's start, or the first slice of the query
+        when the range begins before the query window) and to `false` on the
+        rest, so each untimestamped event is returned once. Requests that are
+        not clipped always carry `true`.
+
   # ----------------------------- Container Options ---------------------------
 
     - names:

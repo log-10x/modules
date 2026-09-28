@@ -34,14 +34,16 @@ module:
   #   true         | false           | emit everything fullText. Forwarder routes by `routeState`.
   #   true         | true            | emit everything compacted. (niche)
   #
-  # `routeState` is NOT always on the wire. It ships only when the resolved
-  # output expression asks for it, which is the offload and soft-drop modes:
+  # `routeState` is stamped on every record the receiver handles, receive mode
+  # included (measured 2026-09-28: `pass` on each record). It is NOT always on
+  # the wire, though: it ships only when the resolved output expression asks
+  # for it, which is the offload and soft-drop modes:
   #
-  #   receiverOptimize=true  -> encode(<hash>)                  no routeState
-  #   outputOffload  truthy  -> fullText(<hash>,"routeState")    routeState
+  #   receiverOptimize=true  -> encode(<hash>)                  not on the wire
+  #   outputOffload  truthy  -> fullText(<hash>,"routeState")    on the wire
   #   outputSoftDrop truthy  -> isRoute("compact") ? encode(...) : fullText(...)
-  #                                                              routeState
-  #   neither (receive mode) -> fullText(<hash>)                 no routeState
+  #                                                              on the wire
+  #   neither (receive mode) -> fullText(<hash>)                 not on the wire
   #
   # The canonical wiring is the `encodeField` ternary in the CONFIG repo,
   # config/pipelines/run/input/forwarder/config.yaml, keyed on
@@ -53,7 +55,7 @@ module:
   # Measured 2026-08-08 on a full demo recording (32,805 events, receive mode
   # with `receiverOptimize false` + `symbolMessageHashField tenx_hash`, which
   # resolves to the last branch): tenx_hash present on 32,772 records, and
-  # routeState present on ZERO. The 33 records without a hash are ASCII-art
+  # routeState on the wire on ZERO. The 33 records without a hash are ASCII-art
   # boot banners, which carry no message and therefore no pattern. A reader
   # who trusted the old sentence would have called that a wire regression;
   # it is the configured behaviour.

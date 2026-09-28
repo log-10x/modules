@@ -17,6 +17,14 @@ tenx: run
 groupFilters:
   - 'eval[TenXEnv.get("queryObjectFrom") ? "(!this.timestamp) || TenXDate.isAfterOrEqual(this.timestamp, TenXEnv.get(\"queryObjectFrom\"))" : ("")]'
   - 'eval[TenXEnv.get("queryObjectTo") ? "(!this.timestamp) || TenXDate.isBefore(this.timestamp, TenXEnv.get(\"queryObjectTo\"))" : ("")]'
+  # The two window predicates above let an event that carries no timestamp
+  # through, since nothing places it. A byte range that straddles a slice
+  # boundary is fetched by every slice it touches, so the query coordinator
+  # names one of those requests the owner of the range's untimestamped events
+  # (queryObjectUntimestamped) and the others drop them here. The flag is
+  # compared as text because it arrives typed from a launch request but as
+  # a string from an environment variable.
+  - 'eval[(TenXEnv.get("queryObjectFrom") || TenXEnv.get("queryObjectTo")) && (("" + TenXEnv.get("queryObjectUntimestamped", true)) == "false") ? "this.timestamp" : ("")]'
   - 'eval[TenXEnv.get("queryObjectFilter")]'
   - 'eval[Block(TenXLog_info("QOF-COMPILE: val=["+TenXEnv.get("queryObjectFilter")+"]"),"true")]'
 

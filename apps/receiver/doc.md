@@ -10,7 +10,7 @@ The actions:
 - **sample**: forward a rate-limited share against a per-pattern budget.
 - **compact**: replace repeated lines with an encoded form the destination expands (lossless only where the destination supports it: Splunk, self-hosted Elasticsearch; a no-op elsewhere). Requires the expand plugin installed in [Splunk](compact/splunk.md) or [Elasticsearch](compact/elasticsearch.md). On ClickHouse the lever is offload, not compact: the per-pattern cap sends overflow to the customer's own bucket.
 - **tier_down**: tag the pattern for a cheaper storage tier the destination enforces (Datadog Flex, CloudWatch IA, Azure Monitor Basic/Auxiliary).
-- **offload**: route the pattern to customer-owned object storage (S3, GCS, Azure Blob) instead of the destination.
+- **offload**: route the pattern to customer-owned object storage (S3 or any S3-compatible store) instead of the destination.
 - **drop**: stop forwarding the pattern.
 
 The Receiver also runs in **read-only** mode (observation): receive events from the forwarder, run aggregators, and publish pattern-identity metrics with the event stream untouched. Use it for visibility into per-pattern volume and cost before any action is applied. **Read-write** mode (default) applies the actions above.

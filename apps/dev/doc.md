@@ -122,7 +122,7 @@ Run the dev app on your log files locally to preview how edge and cloud apps wil
 
     === ":material-package-variant-closed: encoded.log"
 
-        Your original events losslessly compact (typically 50-70% volume reduction).
+        Your original events losslessly compact.
 
         See [reduction ratios](https://doc.log10x.com/apps/dev/#production-use) for sample output.
 

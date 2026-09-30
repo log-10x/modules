@@ -54,13 +54,15 @@ export class MessageTemplate extends TenXTemplate {
         // Every line gets a name (ruled 2026-09-29). When neither the typed
         // selection nor the `any` fallback yields a word, and for the
         // negator-prefixed orphans above, the line is named by its
-        // template: a fixed prefix plus the template hash, which is a
+        // template: a fixed prefix plus the template hash (the same
+        // templateHash the templates file, encoded output and the index
+        // carry, so the name joins back to its template), which is a
         // function of the template's constant structure alone and so the
         // same on every node. Each distinct shape gets its own name, and
         // its own hash below, instead of every such line sharing the hash
         // of the empty string.
         if (TenXString.isEmpty(symbolSequence)) {
-            symbolSequence = "template_" + this.templateId;
+            symbolSequence = "template_" + this.templateHash;
         }
 
             TenXTemplate.setStatic(

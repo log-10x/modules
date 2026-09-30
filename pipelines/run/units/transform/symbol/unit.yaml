@@ -35,7 +35,7 @@ unit:
       doc: | 
         defines a list of terms that to ignore when searching for the symbol tokens constituting an
         TenXTemplate's 'message' portion (i.e., the [symbol](https://doc.log10x.com/run/transform/structure/#symbols) tokens of the origin
-        ranked highest by coverage, meaning the count of distinct library-known tokens it explains; span length is the last tiebreak).
+        ranked highest on the five-key comparator, message-text width first; span length is the last tiebreak).
         For example, for an TenXObject whose text contains: 'connect success = true',
         the value 'true' will not be considered a part of the instance's message,
         as it is mostly likely the result of a variable boolean state.
@@ -139,7 +139,7 @@ unit:
         per symbol token sequence. As a series of tokens within 
         a given template (e.g., 'ERROR', 'could not connect to "{}') may appear 
         in multiple source/binary files within the pipeline's symbol files,
-        the sorting algorithm selects [maxSymbolOrigins](https://doc.log10x.com/run/transform/symbol/#symbolmaxorigins) for comparison. 
+        the first [maxSymbolOrigins](https://doc.log10x.com/run/transform/symbol/#symbolmaxorigins) units in library order are read for comparison. 
       defValue: 64
 
     - names:

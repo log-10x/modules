@@ -10,7 +10,7 @@ logger.error("could not connect to {}", host);
 cerr << "could not connect to" << host << << std::endl;
 ```
 
-The string constants receive a 'log' context, unlike non-logging calls:
+The string constants receive a 'log' context. So does every literal in a method that logs, throws or raises (in Java source, Python and Scala, only those preceding the logging or throwing statement), and any literal carrying a format placeholder. A literal in a method that does neither keeps a 'const' context:
 ``` js
 foo("could not connect to " + host);
 ```

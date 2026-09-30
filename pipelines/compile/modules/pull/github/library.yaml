@@ -250,8 +250,7 @@ githubPull:
       # Container Runtime
       - containerd/containerd              # Image pulls, container lifecycle, snapshots
 
-      # Pinned: in the default symbol library at these commits (owner/repo@sha;
-      # needs an engine that fetches by pin, 1.1.99 or later)
+      # Pinned to the commits the default library is built from (owner/repo@sha)
       - open-telemetry/opentelemetry-demo@6ed3b58564e51416f849d023fe118be33b6c9ddf  # OTel demo services: checkout, cart, payment, fraud detection
       - open-telemetry/opentelemetry-collector@8d9d7947cb36a24d31271ac98eda0aedee327933  # Receivers, processors, exporters, pipeline lifecycle
       - open-telemetry/opentelemetry-collector-contrib@8b96ab8443ccb4221847de4db6227076a6d1b80b  # Contrib receivers and exporters, vendor integrations

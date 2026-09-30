@@ -10,7 +10,7 @@ The message initializer uses symbol libraries to isolate stable [message pattern
 
 ## :material-target: Message Extraction
 
-Every token the symbol library recognizes carries a set of candidate origins: the source unit, a file or a binary, that can emit the token, together with the enclosing scope the library recorded for it. A token emitted by many units resolves to many candidates, so ambiguity is the normal case and resolving it is the selector's job. Candidates are keyed by originating unit plus enclosing scope, so symbols sharing an origin and a scope coalesce into one candidate.
+Every run of adjacent tokens the symbol library recognizes carries a set of candidate origins: the source unit, a file or a binary, that can emit that phrase, together with the enclosing scope the library recorded for it. See [naming](https://doc.log10x.com/compile/naming/) for the end-to-end account. A token emitted by many units resolves to many candidates, so ambiguity is the normal case and resolving it is the selector's job. Candidates are keyed by originating unit plus enclosing method scope, so symbols of one method coalesce into one candidate; class-level and binary symbols form one candidate per matched phrase.
 
 The initializer identifies the core message pattern by ranking those candidates from a [TenXTemplate](https://doc.log10x.com/run/template/ "Import joint JSON schemas files to expand events into typed TenXObjects."), on a five-key comparator, every key descending:
 
@@ -35,10 +35,10 @@ A typed selection ([`symbolContexts`](#symbolcontexts) of `log,exec`) claims an 
 Selection picks the origin. Emission then builds the value in three stages.
 
 - **Anchor**: the winner's widest matched prose field, emitted verbatim. The message region runs forward from the anchor's own start and stops at the first container open, newline, or second timestamp; where that boundary falls inside the anchor field the region collapses back to the field. The anchor is **exempt from reserved filtering**: applying it here renames the statement, turning `no baggage found in context` into `no_found`. Timestamps, variables and repeats are still dropped.
-- **Suffix**: distinct non-reserved tokens from the winner's other matched fields, each token counted once however often it repeats, up to a budget of sixteen.
-- **Padding**: forward and backward from the emitted region while the [`symbolMaxLen`](#symbolmaxlen) budget allows. Reserved filtering governs here and in the suffix, which is where a generic word is genuinely noise. The backward walk stops where the statement starts: at the nearest preceding timestamp, or at a token that closes a container or ends a line. Everything before that point is preamble, the node ids, request ids, thread and logger names a format prints ahead of the message, and it stays out of the pattern.
+- **Suffix**: distinct non-reserved tokens from the winner's other matched fields, each token counted once however often it repeats, until the name holds sixteen distinct words.
+- **Padding**: forward and backward from the emitted region while the [`symbolMaxLen`](#symbolmaxlen) budget allows (0, the option default, disables padding; the shipped configuration sets 120). Reserved filtering governs here and in the suffix, which is where a generic word is genuinely noise. The backward walk stops where the statement starts: at the nearest preceding timestamp, or at a token that closes a container or ends a line. Everything before that point is preamble, the node ids, request ids, thread and logger names a format prints ahead of the message, and it stays out of the pattern.
 
-Every stage, and the `any` fallback below, skips an **identifier fragment**: a library word whose neighbour carries a digit, directly or across a single `-`, `_` or `.`. The `C` in the node id `R21-M0-N4-C:J05-U11` and the `req` in `req-b3e2...` are library words, and skipping them keeps one statement on one identity however its ids are spelled. Detection reads only the line, so the identity stays a function of the line and the library.
+Every stage, and the `any` fallback below, skips an **identifier fragment**: a library word whose neighbour carries a digit, directly or across a single `-`, `_` or `.`. The `C` in the node id `R21-M0-N4-C:J05-U11` and the `req` in `req-b3e2...` are library words, and skipping them keeps one statement on one identity however its ids are spelled. Detection reads only the template's constant tokens, so the identity stays a function of the template and the library.
 
 The [`symbolContexts`](#symbolcontexts) list filters which symbol contexts participate. Contexts are evaluated in a single pass, so list order acts as a filter rather than a precedence chain.
 
@@ -49,17 +49,17 @@ The `inputField` parameter limits searches to specific JSON fields. Setting `inp
 The comparator is deterministic: every key is a content-derived integer. Three details bound that behavior.
 
 - A full five-key tie that the authorship pass also leaves undecided falls back to candidate insertion order, which holds stable for a given engine build and is not a documented ordering.
-- Two truncation caps can hide a true origin: [`symbolMaxOrigins`](https://doc.log10x.com/run/transform/symbol/#symbolmaxorigins) (default 64, the cap that binds at runtime) and [`maxSymbolUnitsPerToken`](https://doc.log10x.com/run/symbol/#maxsymbolunitspertoken) (default 128, approximate, stopping in the low 130s).
-- When the selected sequence comes back as a single token, the module re-runs the selection under the `any` context, which concatenates all symbol tokens in range, minus identifier fragments, and bypasses the comparator.
+- Two truncation caps can hide a true origin: [`symbolMaxOrigins`](https://doc.log10x.com/run/transform/symbol/#symbolmaxorigins) (default 64, the first units in library order, the cap that binds at runtime) and [`maxSymbolUnitsPerToken`](https://doc.log10x.com/run/symbol/#maxsymbolunitspertoken) (default 128, applied when a library is indexed at load or at link).
+- When the selected sequence comes back with fewer than two words, including when no candidate passes the evidence gate, the module re-runs the selection under the `any` context, which concatenates the symbol tokens in range, minus identifier fragments and bracketed key=value runs, stops at the first unquoted `{`, and bypasses the comparator. A line with no symbol token at all is named `template_<templateHash>`.
 
-The claim the engine supports is scoped: the same engine version, the same symbol library, the same configuration and the same event yield the same pattern.
+The claim the engine supports is scoped: the same engine version, the same symbol library and the same configuration yield the same pattern for every event of a template, on every node.
 
 ## :material-fingerprint: Pattern identity: pattern vs template
 
 Four terms are easy to conflate. They are distinct:
 
 - **Pattern** (`symbolMessage`), the selection described above: a **subset** of representing tokens chosen from the template, not the whole line. Short and legible (e.g. `Receive ListRecommendations for product ids`). It is the unit of cost attribution.
-- **`pattern_hash`** (alias: `tenx_hash`), the hash of the `symbolMessage` (the [`symbolMessageHashField`](#symbolmessagehashfield), default `tenx_hash`). This is the **stable, user-facing identity** that tools and metrics key on. It is stable because it keys on the representing **subset**: it stays constant across deploys, restarts, pod renames, and format drift, and many template variants that share the representing tokens collapse to the **same** `pattern_hash`.
+- **`pattern_hash`** (alias: `tenx_hash`), the hash of the `symbolMessage` (the [`symbolMessageHashField`](#symbolmessagehashfield), default `tenx_hash`). This is the **stable, user-facing identity** that tools and metrics key on. It is stable because it keys on the representing **subset**: under one library and configuration it stays constant across restarts, pod renames and format drift, and many template variants that share the representing tokens collapse to the **same** `pattern_hash`. A recompiled library can change it.
 - **Template**, the full `$`-marked structural shape of the line (every token, with variable slots marked `$`). A single pattern sits over a **set** of templates, one per format variant present in the data.
 - **`template_hash`**, the engine-internal fingerprint of a template's field-set. It exists only to join encoded events back to their entry in `templates.json` at decode time. It is **not** the stable identity, it is **many-to-one** with the pattern, and it should never be surfaced to a user or agent as the identifier. Use `pattern_hash` for that.
 

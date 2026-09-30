@@ -145,7 +145,7 @@ report("state: " + state);
 this.key = "key";
 ```
 
-The scanner will capture _price_, _state_, _key_  as a **const** symbol.
+The scanner will capture _price_, _state_, _key_  as a **const** symbol, unless the enclosing method logs or throws, in which case its literals are captured as **log** symbols. Const symbols are not linked into the library by default.
 
 ### **`exec`**
 

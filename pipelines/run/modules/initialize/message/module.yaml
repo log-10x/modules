@@ -106,8 +106,8 @@ module:
         When set, each template also carries a `skeleton`: the message region of the
         log line with `~` standing in for every token that went into the message
         pattern and `$` for every variable. A consumer holding the pattern and the
-        skeleton reconstructs the original line for display — punctuation, spacing
-        and dropped stopwords included — so a readable pattern needs no access to
+        skeleton reconstructs the original line for display, punctuation, spacing
+        and dropped stopwords included, so a readable pattern needs no access to
         the logs themselves. Unset (the default) computes and emits nothing.
 
     - names:
@@ -127,7 +127,7 @@ module:
         as a veto BETWEEN the timestamp and severity checks: a negator-prefixed line cannot be
         promoted to group head by severity inference alone (a token like `info` inside an object
         dump), so continuation fragments weld into their parent instead of minting orphan heads.
-        Both consumers are inert until this list is configured — there is no default.
+        Both consumers are inert until this list is configured; the shipped configuration sets thirteen negators.
 
         - ` ` - any indented line (universal continuation signal).
         - `	` - any tab-prefixed line (Java/Go stack frames etc.).

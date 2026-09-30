@@ -24,17 +24,22 @@ export class MessageTemplate extends TenXTemplate {
 
     constructor() {
 
+        var symbolSequence = "";
+        var skeletonFromAny = false;
 
-        if ((this.groupSize > 1)  || 
+        // A single-line template that starts with a negator and is not a
+        // group head is a continuation shape: it is not named from the
+        // library, but it still gets a name below.
+        var fromLibrary = (this.groupSize > 1)  ||
             GroupTemplate.isGroup ||
-            !TenXString.startsWith(this.get(TenXEnv.get("inputField")), TenXEnv.get("messageNegators"))) {
+            !TenXString.startsWith(this.get(TenXEnv.get("inputField")), TenXEnv.get("messageNegators"));
 
-            var symbolSequence = this.symbolSequence(
+        if (fromLibrary) {
+
+            symbolSequence = this.symbolSequence(
                     TenXEnv.get("symbolContexts", "log,exec"),
                     TenXEnv.get("inputField"),
                     TenXEnv.get("symbolMaxLen", 0));
-
-            var skeletonFromAny = false;
 
             if (!TenXString.includes(symbolSequence, "_")) {
 
@@ -44,6 +49,19 @@ export class MessageTemplate extends TenXTemplate {
                     TenXEnv.get("inputField"),
                     TenXEnv.get("symbolMaxLen", 0));
             }
+        }
+
+        // Every line gets a name (ruled 2026-09-29). When neither the typed
+        // selection nor the `any` fallback yields a word, and for the
+        // negator-prefixed orphans above, the line is named by its
+        // template: a fixed prefix plus the template hash, which is a
+        // function of the template's constant structure alone and so the
+        // same on every node. Each distinct shape gets its own name, and
+        // its own hash below, instead of every such line sharing the hash
+        // of the empty string.
+        if (TenXString.isEmpty(symbolSequence)) {
+            symbolSequence = "template_" + this.templateId;
+        }
 
             TenXTemplate.setStatic(
                 TenXEnv.get("symbolMessageField"), symbolSequence);
@@ -73,7 +91,7 @@ export class MessageTemplate extends TenXTemplate {
             // skeleton of an any-path identity yields two different
             // computations whose tokens do not line up, and the rendered line
             // drifts by a token (measured: 32% of events).
-            if (TenXEnv.get("symbolSkeletonField") && skeletonFromAny) {
+            if (fromLibrary && TenXEnv.get("symbolSkeletonField") && skeletonFromAny) {
                 TenXTemplate.setStatic(
                     TenXEnv.get("symbolSkeletonField"),
                     this.symbolSkeleton("any",
@@ -81,7 +99,7 @@ export class MessageTemplate extends TenXTemplate {
                         TenXEnv.get("symbolMaxLen", 0)));
             }
 
-            if (TenXEnv.get("symbolSkeletonField") && !skeletonFromAny) {
+            if (fromLibrary && TenXEnv.get("symbolSkeletonField") && !skeletonFromAny) {
                 TenXTemplate.setStatic(
                     TenXEnv.get("symbolSkeletonField"),
                     this.symbolSkeleton(
@@ -89,6 +107,5 @@ export class MessageTemplate extends TenXTemplate {
                         TenXEnv.get("inputField"),
                         TenXEnv.get("symbolMaxLen", 0)));
             }
-        }
     }
 }

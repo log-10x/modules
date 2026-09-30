@@ -250,6 +250,15 @@ githubPull:
       # Container Runtime
       - containerd/containerd              # Image pulls, container lifecycle, snapshots
 
+      # Pinned to the commits the default library is built from (owner/repo@sha)
+      - open-telemetry/opentelemetry-demo@6ed3b58564e51416f849d023fe118be33b6c9ddf  # OTel demo services: checkout, cart, payment, fraud detection
+      - open-telemetry/opentelemetry-collector@8d9d7947cb36a24d31271ac98eda0aedee327933  # Receivers, processors, exporters, pipeline lifecycle
+      - open-telemetry/opentelemetry-collector-contrib@8b96ab8443ccb4221847de4db6227076a6d1b80b  # Contrib receivers and exporters, vendor integrations
+      - prometheus-operator/kube-prometheus@be3a410867333faf4de99cb9b2196c0e1a21b9cb  # Prometheus stack manifests, alerting rules
+      - prometheus-community/helm-charts@363617ca114ceaeb45bc00e19d09e99556c87b80  # Prometheus community charts, exporters
+      - kubernetes/ingress-nginx@7877ead6dbf7f039165cad6d6325810b39164f61  # Ingress controller, NGINX reloads, admission webhooks
+      - go-gorm/gorm@0d9141bad9772c6047ecfdb2819d8a52d27ceb65  # Go ORM: queries, migrations, callbacks
+
       # =========================================================================
       # DATABASES
       # =========================================================================

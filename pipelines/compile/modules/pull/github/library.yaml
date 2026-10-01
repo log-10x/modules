@@ -286,8 +286,9 @@ githubPull:
       - pytorch/pytorch                    # Training loops, CUDA operations, autograd
       - huggingface/transformers           # Model loading, tokenization, inference
 
+      # Entries below are pinned to the commits the default library is built from.
       # =========================================================================
-      # AI SERVING AND TOOLING (pinned to the commits the default library is built from)
+      # AI SERVING AND TOOLING
       # =========================================================================
 
       - vllm-project/vllm@ced6857afa0ea7b2e3f0846a62e1394e90f15607  # LLM inference server: engine startup, scheduling, request logs
@@ -305,7 +306,7 @@ githubPull:
       - weaviate/weaviate@8c1bcea5793c5ba695a4e7ab68c46b3ed2b54642  # Vector database: shards, indexing, queries
 
       # =========================================================================
-      # LOG FORWARDERS (pinned to the commits the default library is built from)
+      # LOG FORWARDERS
       # =========================================================================
 
       - fluent/fluent-bit@66910c10a4d7eafa810b84229cf2dcf7b0f26f97  # Inputs, outputs, retries, backpressure
@@ -316,7 +317,7 @@ githubPull:
       - grafana/alloy@95e12cf8961fabc9db6858f7e79bde5c814a07a0  # Collector components, remote write
 
       # =========================================================================
-      # KUBERNETES CORE AND NETWORKING (pinned to the commits the default library is built from)
+      # KUBERNETES CORE AND NETWORKING
       # =========================================================================
 
       - kubernetes/kubernetes@f78e722310e50bcaca9276be22276d9e91d91308  # kubelet, apiserver, scheduler, controllers, kube-proxy
@@ -327,7 +328,7 @@ githubPull:
       - argoproj/argo-workflows@b5b4d665e9be9b87c115f943584c3e0ae96fe073  # Workflow controller, pods, retries
 
       # =========================================================================
-      # PROXIES, GATEWAYS AND DATA (pinned to the commits the default library is built from)
+      # PROXIES, GATEWAYS AND DATA
       # =========================================================================
 
       - nginx/nginx@4556c714d1cfa587f92c7c0365c09209d42d148b  # Error log: upstreams, connections, config

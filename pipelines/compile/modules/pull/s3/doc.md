@@ -1,5 +1,5 @@
 ---
-icon: simple/amazons3
+icon: fontawesome/brands/aws
 ---
 
 Pulls S3 objects to disk for [compile](https://doc.log10x.com/compile/) pipeline [scanning](https://doc.log10x.com/compile/scan/). Objects may be archives and binaries the [archive](https://doc.log10x.com/compile/scanner/archive/) scanner expands, or symbol unit tars from earlier compiles, linked into the library with [mergeExistingUnits](https://doc.log10x.com/compile/link/#mergeexistingunits).

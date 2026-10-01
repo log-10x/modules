@@ -47,3 +47,14 @@ module:
         stopped. The symbols found up to the stop are kept and the unit is marked with an error.
         The count depends on the file and the grammar only, so the same file stops at the same
         point on any machine, unlike 'antlrParseUnitTimeout'. 0 disables the cap.
+
+    - names:
+      - antlrParseUnitSkipPaths
+      description: regex patterns for skipping the parse of matching source files
+      type: list
+      required: false
+      doc: |
+        lists regex patterns matched (find) against a source file's path and name, in the form
+        '/github/owner_repo/dir/file.cpp'. A matching file is not parsed by ANTLR at all: its unit
+        carries the warning 'antlr parse skipped by parseUnitSkipPaths', holds no ANTLR symbols and
+        goes to the fallback scanner, the same way on every run. Repeat the option for each pattern.

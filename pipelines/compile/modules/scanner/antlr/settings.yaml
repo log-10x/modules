@@ -51,3 +51,9 @@ parseUnitTimeout: $?antlrParseUnitTimeout=60s
 #  before it is stopped and marked with an error. The count depends on the input and
 #  the grammar only, so the same file stops at the same point on any machine. 0 disables the cap.
 parseUnitTokenBudget: $?antlrParseUnitTokenBudget=0
+
+# 'parseUnitSkipPaths' lists regex patterns matched (find) against a unit's path and name,
+#  e.g. '/github/mysql_mysql-server/extra/boost/.../preprocessed/make_map10.hpp'. A matching unit
+#  is not parsed; it carries a warning and goes to the fallback scanner with no ANTLR symbols.
+parseUnitSkipPaths:
+  - $?antlrParseUnitSkipPaths

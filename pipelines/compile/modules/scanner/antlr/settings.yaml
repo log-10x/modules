@@ -46,3 +46,8 @@ logMethods: +include compile/modules/scanner/logMethods/settings.yaml
 # 'parseUnitTimeout' defines the timeout interval for parsing and scanning
 #  a single source/binary input file before it is aborted and marked with a timeout error 
 parseUnitTimeout: $?antlrParseUnitTimeout=60s
+
+# 'parseUnitTokenBudget' caps the number of token stream reads a single parse may make
+#  before it is stopped and marked with an error. The count depends on the input and
+#  the grammar only, so the same file stops at the same point on any machine. 0 disables the cap.
+parseUnitTokenBudget: $?antlrParseUnitTokenBudget=0

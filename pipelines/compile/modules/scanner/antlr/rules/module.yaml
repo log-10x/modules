@@ -129,7 +129,7 @@ module:
 
     - names:
       - antlrRuleAnonymous
-      description: opens a scope for a function with no name of its own
+      description: sets whether selected nodes are functions with no name of their own
       type: boolean
       required: false
       category: capture
@@ -146,5 +146,5 @@ module:
       category: capture
       doc: |
         specifies a regex over argument names. A literal that is the value of a named argument (`name: value`) whose name matches
-        is not collected as a symbol. For example, `^target$` keeps the logger name in a Rust `info!(target: "jobs", "...")` call out of the library.
+        is not collected as a symbol. For example, `^target$` skips the logger name in a Rust `info!(target: "jobs", "...")` call.
 

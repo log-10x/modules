@@ -39,6 +39,9 @@
 # Pull Docker image files
 - +include compile/modules/pull/docker/module.yaml
 
+# Pull S3 bucket objects
+- +include compile/modules/pull/s3/module.yaml
+
 # Pull GitHub repos and Docker images from Go .mod files
 #- +include compile/modules/pull/gomod/module.yaml
 

@@ -1,0 +1,9 @@
+#
+# 🔟❎ S3 scanner settings
+
+# 's3Scanners' configures S3 bucket objects to pull to disk
+s3Scanners: 
+  - $?s3 
+
+# 'command' specifies the AWS CLI program the pull runs
+command: $?s3Command=aws

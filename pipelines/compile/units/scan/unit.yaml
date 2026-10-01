@@ -182,9 +182,9 @@ unit:
         log.error("could not connect to {} with status {}", host, status);
         ```
 
-        When an TenXTemplate tokenizer processing an event identifies a format prefix (e.g., `%`)
-        it skips it and appends subsequent symbol tokens (e.g., `with status`)
-        to the symbol sequence preceding them (e.g., `could not connect to`).
+        The scanner splits the literal at each format prefix (e.g., `%`) into sections
+        (`could not connect to`, `with status`) and stores each section; at run time a
+        multi-section format matches only when every section is present on the line.
 
     - names:
       - maxSymbolUnitsPerToken

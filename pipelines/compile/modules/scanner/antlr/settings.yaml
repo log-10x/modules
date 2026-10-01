@@ -46,3 +46,12 @@ logMethods: +include compile/modules/scanner/logMethods/settings.yaml
 # 'parseUnitTimeout' defines the timeout interval for parsing and scanning
 #  a single source/binary input file before it is aborted and marked with a timeout error 
 parseUnitTimeout: $?antlrParseUnitTimeout=60s
+
+# 'parseUnitTokenBudget' caps the token stream reads a single parse may make
+#  before it is stopped and marked with an error; 0 disables the cap
+parseUnitTokenBudget: $?antlrParseUnitTokenBudget=0
+
+# 'parseUnitSkipPaths' lists regex patterns matched (find) against a unit's path and name,
+#  e.g. '/github/owner_repo/dir/file.cpp'. A matching unit goes to the fallback scanner unparsed
+parseUnitSkipPaths:
+  - $?antlrParseUnitSkipPaths

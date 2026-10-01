@@ -16,7 +16,7 @@ module:
   configFolder: compile/scanners/antlr
 
   configSort:
-    antlr: [java, cpp, scala, go, javascript, python, csharp]
+    antlr: [java, cpp, scala, go, javascript, python, csharp, rust]
 
   # 'allowMultiple' is disabled for this module. Pipeline command line arguments and configuration files
   #  can specify a single value at max for each option defined below.

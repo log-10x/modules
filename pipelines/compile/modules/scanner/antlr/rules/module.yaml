@@ -126,3 +126,25 @@ module:
         For example, in the [Python ANTLR rule-set](https://github.com/log-10x/config/blob/main/pipelines/compile/config/scan/antlr/python.yaml), tagging enables a class that has 
         an `Enum` child to select left-side statement expressions 
         (i.e., its enum literals), but skip them for any other non-enum class.
+
+    - names:
+      - antlrRuleAnonymous
+      description: sets whether selected nodes are functions with no name of their own
+      type: boolean
+      required: false
+      category: capture
+      doc: |
+        sets whether nodes selected by this rule are functions with no name of their own, such as arrow functions and function expressions.
+        A selected node opens a scope when entered, named by the `antlrRuleSubRule` of the nearest enclosing `var_assign` rule
+        (the variable or property the function initializes), otherwise `anonymous`. The node's own leaves are not collected as symbols.
+
+    - names:
+      - antlrRuleSkipNamedArgs
+      description: regex of named arguments whose values are not symbols
+      type: string
+      required: false
+      category: capture
+      doc: |
+        specifies a regex over argument names. A literal that is the value of a named argument (`name: value`) whose name matches
+        is not collected as a symbol. For example, `^target$` skips the logger name in a Rust `info!(target: "jobs", "...")` call.
+

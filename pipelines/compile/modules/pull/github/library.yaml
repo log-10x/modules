@@ -286,3 +286,54 @@ githubPull:
       - pytorch/pytorch                    # Training loops, CUDA operations, autograd
       - huggingface/transformers           # Model loading, tokenization, inference
 
+      # Entries below are pinned to the commits the default library is built from.
+      # =========================================================================
+      # AI SERVING AND TOOLING
+      # =========================================================================
+
+      - vllm-project/vllm@ced6857afa0ea7b2e3f0846a62e1394e90f15607  # LLM inference server: engine startup, scheduling, request logs
+      - ollama/ollama@cc4069396f3ad2c370c53eed2e4a42ac13adab84  # Local LLM server: model loads, runner lifecycle
+      - ggml-org/llama.cpp@7fe450e19305b828c199d602c23a8337aaa1f03b  # llama-server: model loading, slots, sampling
+      - sgl-project/sglang@94602c9c2b7cbdb8efd5c52802dac6a1c180089e  # LLM serving runtime: scheduler, cache, requests
+      - triton-inference-server/server@818762530159ad144f7eee99bd264adcd9389e44  # Triton: model repository, inference requests
+      - triton-inference-server/core@b9ef1524379c71466ff66ea0fda4730ddd9eec80  # Triton core: backends, scheduling
+      - BerriAI/litellm@580bde9a2d148714889ec1c04a9872819e78a778  # LLM gateway: routing, retries, budgets
+      - ray-project/ray@01b49e4fa77b30bc28c69ed702dfe523fd6421d8  # Distributed runtime: workers, object store, autoscaling
+      - modelcontextprotocol/python-sdk@8c2fa6eabacde869d75568e33b9d466b58c2f512  # MCP servers: request handling
+      - open-webui/open-webui@8bd8b4fac5e059578ac0c74b3c18d11139f88b7d  # Chat UI for self-hosted models
+      - milvus-io/milvus@3c4448a2aee506ccd14851e742aba85f1c83188a  # Vector database: segments, compaction, queries
+      - qdrant/qdrant@6ab21cac18ebb6f4ae29102c7f8f5cc11affd5de  # Vector database: collections, optimizers
+      - weaviate/weaviate@8c1bcea5793c5ba695a4e7ab68c46b3ed2b54642  # Vector database: shards, indexing, queries
+
+      # =========================================================================
+      # LOG FORWARDERS
+      # =========================================================================
+
+      - fluent/fluent-bit@66910c10a4d7eafa810b84229cf2dcf7b0f26f97  # Inputs, outputs, retries, backpressure
+      - fluent/fluentd@8729f544eebe0e8df6f79764a16a0f3f0c7fc59f  # Buffers, flush retries, plugin errors
+      - elastic/beats@ccdfcad1de773e22e494089f508162c52b027ee2  # Filebeat harvesters, publishing, retries
+      - elastic/logstash@33743ff3beda0c31dd95fd9ef3c1cb3617c37e5c  # Pipelines, plugins, dead-letter queue
+      - vectordotdev/vector@2bcad9bbb84e201dcfd58c22b1f779290101b728  # Sources, sinks, buffering, retries
+      - grafana/alloy@95e12cf8961fabc9db6858f7e79bde5c814a07a0  # Collector components, remote write
+
+      # =========================================================================
+      # KUBERNETES CORE AND NETWORKING
+      # =========================================================================
+
+      - kubernetes/kubernetes@f78e722310e50bcaca9276be22276d9e91d91308  # kubelet, apiserver, scheduler, controllers, kube-proxy
+      - kubernetes/autoscaler@35e8a280425c76a4040f57ae0fa232a952c02024  # cluster-autoscaler: scale up/down decisions
+      - coredns/coredns@427fc80ed9ca47f354585eb30a3f1332950856c4  # DNS plugins, upstream errors
+      - cilium/cilium@e0dc92bd6dac33d7ba3b5eace82a0448bbb13aac  # eBPF datapath, endpoints, policy
+      - projectcalico/calico@db255c554b929afd73552fd3ac81d691107a1607  # Felix, IPAM, BGP
+      - argoproj/argo-workflows@b5b4d665e9be9b87c115f943584c3e0ae96fe073  # Workflow controller, pods, retries
+
+      # =========================================================================
+      # PROXIES, GATEWAYS AND DATA
+      # =========================================================================
+
+      - nginx/nginx@4556c714d1cfa587f92c7c0365c09209d42d148b  # Error log: upstreams, connections, config
+      - haproxy/haproxy@64a335366dc1bb5431e28a75e3a22e4226ac9b8f  # Backends, health checks, sessions
+      - traefik/traefik@fc92cc118a0557a029c7019d5ee06665127b0f13  # Routers, providers, certificates
+      - apache/httpd@736bb657405eb73fd68a64772c3a908807bdb887  # Error log: modules, workers, SSL
+      - pgbouncer/pgbouncer@7d38761c8f6c757238fde9f942cf9fe0cd272ae3  # Pooling, client and server connections
+      - opensearch-project/OpenSearch@4ee42a94e87f66fbf1e62a9871b1b87f91e02472  # Cluster state, shards, indexing

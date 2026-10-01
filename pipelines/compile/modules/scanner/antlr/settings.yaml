@@ -47,13 +47,11 @@ logMethods: +include compile/modules/scanner/logMethods/settings.yaml
 #  a single source/binary input file before it is aborted and marked with a timeout error 
 parseUnitTimeout: $?antlrParseUnitTimeout=60s
 
-# 'parseUnitTokenBudget' caps the number of token stream reads a single parse may make
-#  before it is stopped and marked with an error. The count depends on the input and
-#  the grammar only, so the same file stops at the same point on any machine. 0 disables the cap.
+# 'parseUnitTokenBudget' caps the token stream reads a single parse may make
+#  before it is stopped and marked with an error; 0 disables the cap
 parseUnitTokenBudget: $?antlrParseUnitTokenBudget=0
 
 # 'parseUnitSkipPaths' lists regex patterns matched (find) against a unit's path and name,
-#  e.g. '/github/mysql_mysql-server/extra/boost/.../preprocessed/make_map10.hpp'. A matching unit
-#  is not parsed; it carries a warning and goes to the fallback scanner with no ANTLR symbols.
+#  e.g. '/github/owner_repo/dir/file.cpp'. A matching unit goes to the fallback scanner unparsed
 parseUnitSkipPaths:
   - $?antlrParseUnitSkipPaths

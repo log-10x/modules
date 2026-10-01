@@ -62,7 +62,7 @@ graph LR
 ### :material-source-pull: Pull
 
 [Pull](https://doc.log10x.com/compile/pull/) existing symbol units, source code, and binary input files from [GitHub ](https://doc.log10x.com/compile/pull/github/),
-[Helm](https://doc.log10x.com/compile/pull/helm/), [Docker](https://doc.log10x.com/compile/pull/docker/) and [Artifactory](https://doc.log10x.com/compile/pull/artifactory/) repos.
+[Helm](https://doc.log10x.com/compile/pull/helm/), [Docker](https://doc.log10x.com/compile/pull/docker/), [Artifactory](https://doc.log10x.com/compile/pull/artifactory/) and [S3](https://doc.log10x.com/compile/pull/s3/).
 Pulling symbol units produced by previous invocations of the compile pipeline enables reuse to
 avoid parsing previously processed source code/binary input files whose checksum has not changed. 
 

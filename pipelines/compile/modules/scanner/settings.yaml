@@ -30,6 +30,9 @@ scanners:
   # Pull Docker image files to scan from container repositories
   docker: +include compile/modules/pull/docker/settings.yaml
 
+  # Pull objects to scan from S3 buckets
+  s3: +include compile/modules/pull/s3/settings.yaml
+
   # Pull GitHub repos files to scan from Go mod files 
   # gomod: +include compile/modules/pull/gomod/settings.yaml
 

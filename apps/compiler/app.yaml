@@ -22,6 +22,7 @@ app:
     pull+Docker: compile/pull/docker
     pull+Helm: compile/pull/helm
     pull+Artifactory: compile/pull/artifactory
+    pull+S3: compile/pull/s3
 
     scan: compile/scanners
 

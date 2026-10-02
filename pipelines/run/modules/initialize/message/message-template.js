@@ -52,9 +52,10 @@ export class MessageTemplate extends TenXTemplate {
         }
 
         // A line with no library word, or a negator-prefixed orphan, is named
-        // by its templateHash: the same on every node, and distinct per shape.
+        // by the shape of its input field: constant words, punctuation, one
+        // marker per variable run and per timestamp, whitespace runs as one.
         if (TenXString.isEmpty(symbolSequence)) {
-            symbolSequence = "template_" + this.templateHash;
+            symbolSequence = "template_" + this.templateShape(TenXEnv.get("inputField"));
         }
 
             TenXTemplate.setStatic(

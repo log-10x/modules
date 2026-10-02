@@ -44,6 +44,10 @@ The [`symbolContexts`](#symbolcontexts) list filters which symbol contexts parti
 
 The `inputField` parameter limits searches to specific JSON fields. Setting `inputField: log` searches only within the log field content.
 
+When `inputField` lists several fields, the first field the event carries is the one read. A `log` value with no library word is named by its own shape, as below, so the record's envelope keys (`stream`, `docker`, `kubernetes`) stay out of the name.
+
+A line with no library word is named `template_` followed by 16 hex digits. The digits hash the line's shape within that field: its constant words and punctuation, one marker for each run of variables and for each timestamp whatever its format, and one space for each run of whitespace. A statement keeps one name across padded columns, millisecond widths and repeated values, and the name is a valid metric label. Where a library update turns a value on such a line into a library word, or the reverse, the shape and the name change.
+
 ### Repeatability
 
 The comparator is deterministic: every key is a content-derived integer. Three details bound that behavior.

@@ -28,31 +28,46 @@ One tie-break runs after the ranking rather than as a sixth key. Where the winne
 
 ### Evidence gate
 
-A typed selection ([`symbolContexts`](#symbolcontexts) of `log,exec`) claims an origin: this source statement wrote this line. That claim stands on prose evidence exclusively, and a candidate whose prose score is below two is rejected rather than crowned. **A line with no prose evidence gets no typed origin and keeps its raw fallback identity.** The lone `any` context asserts nothing about provenance and gates at one token instead, so thin fragments still receive an identity.
+A typed selection ([`symbolContexts`](#symbolcontexts) of `log,exec`) claims an origin: this source statement wrote this line. That claim stands on prose evidence exclusively, and a candidate whose prose score is below two is rejected rather than crowned. A library word the emission skips as an identifier fragment is not evidence, and symbols joined only by `/` count as one word: a path is one value, not a phrase. **A line with no prose evidence gets no typed origin and keeps its raw fallback identity.** The lone `any` context asserts nothing about provenance and gates at one token instead, so thin fragments still receive an identity.
 
 ### Emission
 
 Selection picks the origin. Emission then builds the value in three stages.
 
-- **Anchor**: the winner's widest matched prose field, emitted verbatim. The message region runs forward from the anchor's own start and stops at the first container open, newline, or second timestamp; where that boundary falls inside the anchor field the region collapses back to the field. The anchor is **exempt from reserved filtering**: applying it here renames the statement, turning `no baggage found in context` into `no_found`. Timestamps, variables and repeats are still dropped.
+- **Anchor**: the winner's widest matched prose field, emitted verbatim. The message region runs forward from the anchor's own start and stops at the first container open, newline, or second timestamp; where that boundary falls inside the anchor field the region collapses back to the field. Where the anchor follows `:` and whitespace, the statement is quoting text, an exception it reports, and the region past the anchor field takes at most half of the [`symbolMaxLen`](#symbolmaxlen) budget before the backward walk; it resumes afterwards if room is left, so two statements quoting one exception keep their own words. The anchor is **exempt from reserved filtering**: applying it here renames the statement, turning `no baggage found in context` into `no_found`. Timestamps, variables and repeats are still dropped.
 - **Suffix**: distinct non-reserved tokens from the winner's other matched fields, each token counted once however often it repeats, up to a budget of sixteen.
-- **Padding**: forward and backward from the emitted region while the [`symbolMaxLen`](#symbolmaxlen) budget allows. Reserved filtering governs here and in the suffix, which is where a generic word is genuinely noise. The backward walk stops where the statement starts: at the nearest preceding timestamp, or at a token that closes a container or ends a line. Everything before that point is preamble, the node ids, request ids, thread and logger names a format prints ahead of the message, and it stays out of the pattern.
+- **Padding**: forward and backward from the emitted region while the [`symbolMaxLen`](#symbolmaxlen) budget allows. Reserved filtering governs here and in the suffix, which is where a generic word is genuinely noise. The backward walk stops where the statement starts: at the nearest preceding timestamp, at a token that closes a container or ends a line, or at a line break escaped inside a quoted value (`\` followed by `n` or `r`). Everything before that point is preamble, the node ids, request ids, thread and logger names a format prints ahead of the message, and it stays out of the pattern.
 
-Every stage, and the `any` fallback below, skips an **identifier fragment**: a library word whose neighbour carries a digit, directly or across a single `-`, `_` or `.`. The `C` in the node id `R21-M0-N4-C:J05-U11` and the `req` in `req-b3e2...` are library words, and skipping them keeps one statement on one identity however its ids are spelled. Detection reads only the line, so the identity stays a function of the line and the library.
+Every stage, and the `any` fallback below, skips an **identifier fragment**: a library word that is part of a value. Glue is a single `-`, `_`, `.` or `$`, and a chain is the run of tokens joined by glue. A word is a fragment when:
+
+- a token next to it, directly or across one glue, is a variable, numbers included;
+- its chain has two or more pieces and one of them carries a digit;
+- it carries a digit and sits beside a `/` separator, a path segment such as `subdir2`;
+- its chain has a `.`, two or more pieces, and ends in `:` followed by a variable, a `host:port` such as `www.evernote.com:443`;
+- it sits in a path of pieces joined by runs of `/`, `-`, `_` and `.`, with two or more `/` and a variable piece;
+- it is eight or more characters of upper-case letters and digits, both present, a generated id such as `L9ECAV7KIM`.
+
+A variable reaches only its neighbours; a digit-bearing word reaches its whole chain. The `C` in the node id `R21-M0-N4-C:J05-U11` and the `req` in `req-b3e2...` are library words, and skipping them keeps one statement on one identity however its ids are spelled. The rules read only token types, delimiter characters and the word's own text, all constant across a template's lines, so every line of a template gets the same verdict. They have a cost: a dotted metric name whose digit-bearing segment is a library word loses every word, a REST route loses the words after a variable segment (`/v2/<tenant>/servers/detail` loses `servers_detail`), a `file:line` citation (`server.py:127`) loses its words to the `host:port` rule, and an all-caps code such as `AES256GCM` reads as a generated id.
+
+Inside a JSON string a line break or tab arrives as `\` and a letter, and `\` is a delimiter, so the letter opens the next token. A token after an odd run of backslashes that starts with `n`, `r` or `t` contributes its remainder (`\nOrder` gives `Order`), and a token that is only the letter contributes nothing. An even run is an escaped backslash and the word is kept.
 
 The [`symbolContexts`](#symbolcontexts) list filters which symbol contexts participate. Contexts are evaluated in a single pass, so list order acts as a filter rather than a precedence chain.
 
 The `inputField` parameter limits searches to specific JSON fields. Setting `inputField: log` searches only within the log field content.
 
+When `inputField` lists several fields, the first listed field the event carries as a JSON key is the one read, whether or not it yields a word. A listed field parsed out of free text (`org.mortbay.log: jetty-6.1.26`) is read only when it yields a word; otherwise the next field is tried. Name, skeleton and origin read the same field. A `log` value with no library word is named by its own shape, as below, so the record's envelope keys (`stream`, `docker`, `kubernetes`) stay out of the name.
+
+A line with no library word is named `template_` followed by 16 hex digits. The digits hash the normalized shape of the input field: its constant words and punctuation, one marker for each run of variables and for each timestamp whatever its format, and one space for each run of whitespace. A statement keeps one name across padded columns, millisecond widths and repeated values, and the name is a valid metric label. Where a library update turns a value on such a line into a library word, or the reverse, the shape and the name change.
+
 ### Repeatability
 
-The comparator is deterministic: every key is a content-derived integer. Three details bound that behavior.
+The comparator is deterministic: every key is a content-derived integer, and a field's evidence is its own words and the library, so no earlier line in the run changes the verdict. Three details bound that behavior.
 
-- A full five-key tie that the authorship pass also leaves undecided falls back to candidate insertion order, which holds stable for a given engine build and is not a documented ordering.
+- A full five-key tie that the authorship pass also leaves undecided falls back to candidate order. Entries are keyed on content, so that order is the same in every run and on every node.
 - Two truncation caps can hide a true origin: [`symbolMaxOrigins`](https://doc.log10x.com/run/transform/symbol/#symbolmaxorigins) (default 64, the cap that binds at runtime) and [`maxSymbolUnitsPerToken`](https://doc.log10x.com/run/symbol/#maxsymbolunitspertoken) (default 128, approximate, stopping in the low 130s).
 - When the selected sequence comes back as a single token, the module re-runs the selection under the `any` context, which concatenates all symbol tokens in range, minus identifier fragments, and bypasses the comparator.
 
-The claim the engine supports is scoped: the same engine version, the same symbol library, the same configuration and the same event yield the same pattern.
+The claim the engine supports is scoped: the same engine version, the same symbol library and the same configuration give the same pattern for every event of a template, whatever other traffic the run carries and however many times it runs.
 
 ## :material-fingerprint: Pattern identity: pattern vs template
 

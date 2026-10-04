@@ -95,6 +95,11 @@ launchPipelineOptions: +include units/scan/subprocess/settings.yaml
 symbolTypes:
   - $?symbolTypes=[package,class,enum,log,text,exec]
 
+# 'symbolWordTypes' specifies the types whose words the output symbol library index knows
+#  at run time (the same values as 'symbolTypes'). Unset, every type's words are known.
+symbolWordTypes:
+  - $?symbolWordTypes
+
 # 'symbolFileNameFilters' specifies regex patterns to exclude symbol files (e.g., unit tests) from output symbol library
 symbolFileNameFilters:
   - $?symbolFileNameFilters

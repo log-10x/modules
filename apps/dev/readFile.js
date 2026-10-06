@@ -15,9 +15,9 @@ export class ReadFileUnit extends TenXUnit {
 
     close() {
 
-        var configFolder = TenXEnv.get("TENX_HOME") ?
-            TenXEnv.get("TENX_HOME") + "/config" :
-            TenXEnv.get("TENX_CONFIG");
+        var configFolder = TenXEnv.get("TENX_CONFIG") ?
+            TenXEnv.get("TENX_CONFIG") :
+            TenXEnv.get("TENX_HOME") + "/config";
 
         if (!TenXCounter.get("fileObjects")) {
 

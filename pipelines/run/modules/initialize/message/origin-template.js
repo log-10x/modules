@@ -24,5 +24,20 @@ export class OriginTemplate extends TenXTemplate {
                 )
             );
         }
+
+        // A group whose head is all envelope is named from a later member
+        // and takes its origin from that member. When the head leads, this
+        // assigns nothing and the group reads its members' own origins.
+        if (this.groupSize > 1) {
+
+            TenXTemplate.setStatic(
+                TenXEnv.get("symbolOriginField"),
+                this.symbolOrigin(
+                    TenXEnv.get("symbolContexts", "log,exec"),
+                    TenXEnv.get("inputField"),
+                    TenXEnv.get("symbolMaxLen", 0)
+                )
+            );
+        }
     }
 }

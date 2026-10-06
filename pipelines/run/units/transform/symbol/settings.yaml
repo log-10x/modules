@@ -111,6 +111,51 @@ sequenceReserved:
     - "the"
     - "a"
 
+# 'preambleEnclosures' lists the open and close characters whose text before the
+#  message is envelope (e.g., 'main' in '[main] Starting worker').
+preambleEnclosures:
+  - |
+    $?symbolPreambleEnclosures=
+    - "[]"
+    - "()"
+
+# 'preambleAssigners' lists the characters that bind a key to its value when the
+#  key or the value is quoted ('"caller":"server.go:51"', "body: 'Started'").
+preambleAssigners:
+  - |
+    $?symbolPreambleAssigners=
+    - "="
+    - ":"
+
+# 'preambleBareAssigners' lists the assigners that also bind an unquoted key
+#  to an unquoted value ('level=info').
+preambleBareAssigners:
+  - |
+    $?symbolPreambleBareAssigners=
+    - "="
+
+# 'preambleJoiners' lists the separators that chain words into one name
+#  ('org.apache.kafka.log.LocalLog'); a group member whose every word is such a
+#  name or other envelope does not lead the group.
+preambleJoiners:
+  - |
+    $?symbolPreambleJoiners=
+    - "."
+    - "::"
+
+# 'preambleMessageKeys' lists the keys whose bound value holds the message
+#  ('msg=starting').
+preambleMessageKeys:
+  - |
+    $?symbolPreambleMessageKeys=
+    - "msg"
+    - "message"
+    - "body"
+
+# 'groupLead' selects the member of a multi-line group that names it:
+#  'firstWithMessage' or 'head'.
+groupLead: $?symbolGroupLead=firstWithMessage
+
 # ----------------------------- Debug Settings --------------------------------
 
 # 'debugSymbols' outputs information on selecting

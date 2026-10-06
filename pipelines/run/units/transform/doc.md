@@ -331,6 +331,8 @@ This approach mirrors [Protocol Buffers](https://blog.calvinsd.in/data-serializa
 
 In compact form the event's footprint is **36% in volume** (662B vs. 1835B) compared to its raw form with **no loss** of information.
 
+Each timestamp travels as one epoch value, so its instant is always kept. Its text comes back exactly when written in UTC with `Z` or `+0000`, or with no zone; a timestamp with any other offset or zone name (`-0700`, `+05:30`, `PDT`, `GMT`) can come back written in another zone.
+
 Compacting [Grouped instances](https://doc.log10x.com/run/transform/group/) (e.g., stack traces) can reduce transport and storage volume by *more than 90%* compared to serializing each element of the group separately.
 
 ### :material-arrow-expand-all: Expand

@@ -32,6 +32,16 @@ Run the dev app on your log files locally to preview how edge and cloud apps wil
 
 ???+ tenx-analyzerinputs "Step 3: Set Up Input Logs"
 
+    The dev app reads the `.log` files in `$TENX_CONFIG/data/sample/input` and any file named with [inputFilePath](https://doc.log10x.com/run/input/file/#inputfilepath), and nothing else.
+
+    === "Bundled Sample"
+
+        Run on the 500-line OpenTelemetry k8s sample that ships with the configuration:
+
+        ```bash
+        tenx @apps/dev inputFilePath $TENX_CONFIG/data/sample/otel-sample.log
+        ```
+
     === "Sample Otel Logs"
 
         Download [sample logs](https://log10x-public-assets.s3.amazonaws.com/samples/otel-k8s/medium/input/otel-sample.log) (20 MB OpenTelemetry k8s):

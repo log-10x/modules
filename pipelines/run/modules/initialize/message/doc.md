@@ -76,9 +76,9 @@ The claim the engine supports is scoped: the same engine version, the same symbo
 Four terms are easy to conflate. They are distinct:
 
 - **Pattern** (`symbolMessage`), the selection described above: a **subset** of representing tokens chosen from the template, not the whole line. Short and legible (e.g. `Receive ListRecommendations for product ids`). It is the unit of cost attribution.
-- **`pattern_hash`** (alias: `tenx_hash`), the hash of the `symbolMessage` (the [`symbolMessageHashField`](#symbolmessagehashfield), default `tenx_hash`). This is the **stable, user-facing identity** that tools and metrics key on. It is stable because it keys on the representing **subset**: under one library and configuration it stays constant across restarts, pod renames and format drift, and many template variants that share the representing tokens collapse to the **same** `pattern_hash`. A recompiled library can change it.
+- **`pattern_hash`** (alias: `tenx_hash`), the hash of the `symbolMessage` (the [`symbolMessageHashField`](#symbolmessagehashfield), default `tenx_hash`). This is the **stable, user-facing identity** that tools and metrics key on. It is stable because it keys on the representing **subset**: under one engine version, library and configuration it holds across restarts and pod renames, and the template variants of a statement the library names collapse to the **same** `pattern_hash`. A line named by its shape takes a new name when its shape changes. A recompiled library, or an engine upgrade that changes naming rules, renames the affected patterns once.
 - **Template**, the full `$`-marked structural shape of the line (every token, with variable slots marked `$`). A single pattern sits over a **set** of templates, one per format variant present in the data.
-- **`template_hash`**, the engine-internal fingerprint of a template's field-set. It exists only to join encoded events back to their entry in `templates.json` at decode time. It is **not** the stable identity, it is **many-to-one** with the pattern, and it is not the identifier a user or agent keys on. Use `pattern_hash` for that. The one place it appears in a name is the `template_<templateHash>` fallback for a line with no library word, where the template is the only identity the line has.
+- **`template_hash`**, the engine-internal fingerprint of a template's field-set. It exists only to join encoded events back to their entry in `templates.json` at decode time. It is **not** the stable identity, it is **many-to-one** with the pattern, and it is not the identifier a user or agent keys on. Use `pattern_hash` for that. The `template_<hash>` name of a line with no library word hashes the line's shape, not its template.
 
 ### Field names by surface
 
@@ -108,6 +108,8 @@ Building on this process, here's how it applies to real events:
 
     `Receive_ListRecommendations_for_product_ids`
 
+    **Origin:** `recommendation_server.py:ListRecommendations`
+
 === ":material-apache-kafka: Kafka"
 
     **Kafka Controller Event:**
@@ -130,7 +132,9 @@ Building on this process, here's how it applies to real events:
 
     **Extracted Message:**
 
-    `channel_manager_Recorded_new_controller_from_now_on_will_use_node_id_rack`
+    `Recorded_new_controller_now_will_use_node_id_rack_null_kafka_server_NodeToControllerRequestThread`
+
+    **Origin:** `evergreen_resmoke_job_count.py:maybe_override_num_jobs_on_required`, a MongoDB build script
 
 === ":simple-opensearch: OpenSearch"
 
@@ -154,7 +158,9 @@ Building on this process, here's how it applies to real events:
 
     **Extracted Message:**
 
-    `commission_status_local_node_opensearch_shard_indexing_pressure_enabled`
+    `local_node`
+
+    **Origin:** `gcs_xcom_utils.cc:is_parameters_syntax_correct`, a C++ file of another project
 
 === ":material-web: Web"
 
@@ -178,7 +184,20 @@ Building on this process, here's how it applies to real events:
 
     **Extracted Message:**
 
-    `frontend_proxy_Mozilla_X11_Linux_x86_AppleWebKit_KHTML_like_Gecko_Safari`
+    `GET_HTTP_http_frontend_proxy_Mozilla_X_Linux_AppleWebKit_KHTML_like_Gecko_Safari`
+
+    **Origin:** none; no scope explains two words of message text, so the name is the line's library words
+
+The names and origins above come from engine 1.1.133 with the default library:
+
+| Example | Name | Origin the engine states |
+|---|---|---|
+| OTel Demo | `Receive_ListRecommendations_for_product_ids` | `recommendation_server.py`, the demo's own source |
+| Kafka | `Recorded_new_controller_now_will_use_node_id_rack_null_kafka_server_NodeToControllerRequestThread` | `evergreen_resmoke_job_count.py`, a MongoDB build script |
+| OpenSearch | `local_node` | `gcs_xcom_utils.cc`, a C++ file of another project |
+| Web | `GET_HTTP_http_frontend_proxy_Mozilla_X_Linux_AppleWebKit_KHTML_like_Gecko_Safari` | none |
+
+Origin is a ranking, not proof: two of these four resolve to a unit of the wrong project; the name is still a function of the line, the library and the configuration.
 
 
 :material-github: See the [JavaScript implementation](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/initialize/message/message-template.js) of this module on Github.
@@ -187,10 +206,10 @@ Building on this process, here's how it applies to real events:
 
 ## :material-rocket-launch-outline: Applications
 
-💰 **Cost tracking**: Identifies high-volume event types consuming log budgets with the [Dev app](https://doc.log10x.com/apps/dev/) app
+💰 **Cost tracking**: Identifies high-volume event types consuming log budgets with the [Reporter](https://doc.log10x.com/apps/reporter/) app
 
 📈 **Cost control**: Apply intelligent filtering using the [Receiver](https://doc.log10x.com/apps/receiver/) app to prevent over-billing
 
 🤖 **Multi-platform analytics**: Feed patterns into AIOps and monitoring systems via [metric outputs](https://doc.log10x.com/run/output/metric/) for Datadog, CloudWatch, and Prometheus
 
-🔄 **Automatic adaptation**: Updates automatically with code changes using [symbol libraries](https://doc.log10x.com/compile/link/#symbol-library). No manual regex pattern configuration and maintenance
+🔄 **Compiled, not configured**: Names come from [symbol libraries](https://doc.log10x.com/compile/link/#symbol-library) compiled from code. Recompiling after a code change updates them and can rename the affected patterns once. No regex to configure or maintain

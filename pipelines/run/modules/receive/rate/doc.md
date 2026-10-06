@@ -83,7 +83,7 @@ container,action
 - `untilEpochSec` expires the entry, which then self-heals to a no-op.
 - `reason` is free text for audit. Must not contain commas (would break CSV parsing).
 
-The action is keyed by container, not by pattern. Every over-cap pattern in a container takes that container's action. Per-pattern thinning comes from the mute file, not from this file.
+The action is set per service and applies to every pattern over its cap in that service. Here a service is a container. Per-pattern thinning comes from the mute file, not from this file.
 
 The event keeps flowing either way. The action lands on the event as its `routeState`, and the output streams and the forwarder recipe act on that, so `offload` and `tier_down` reach their destinations instead of being discarded at the regulator. The cap stays the backstop that decides how much excess there is; the action only decides where it goes.
 

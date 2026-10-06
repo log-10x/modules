@@ -88,11 +88,7 @@ export class LookupColumnSummary extends TenXSummary {
 
     constructor() {
 
-        // TenXLookup.get(lookup, key, keyColumnName, valueColumnName) -- the
-        // THIRD argument is the KEY column, not the value column. The previous
-        // single-class version passed 'lookupValueColumn' into that slot, so
-        // the value column was used to look the key up and every lookup missed,
-        // silently yielding an empty field.
+        // TenXLookup.get(lookup, key, keyColumnName, valueColumnName)
         this.set(
             TenXEnv.get("lookupValueField"),
             TenXLookup.get(

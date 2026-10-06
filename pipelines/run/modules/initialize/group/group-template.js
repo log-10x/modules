@@ -34,19 +34,12 @@ export class GroupTemplate extends TenXTemplate {
 
             } else if (TenXString.startsWith(event, TenXEnv.get("messageNegators"))) {
 
-                // Continuation-shaped lines are not group heads, whatever
-                // severity-shaped tokens they carry. Evidence ranking:
-                // an own timestamp is near-conclusive head evidence (checked
-                // above), a continuation indent/prefix is near-conclusive
-                // NON-head evidence (checked here), and a severity token in
-                // the text is weak head evidence (checked below) that any
-                // line ABOUT severities defeats — e.g. the object-dump
-                // fragment "  severityText: 'info'," was classified a head
-                // because level inference read 'info' as its severity, which
-                // orphaned every dump line as its own event. With this veto
-                // those lines weld into their parent event instead: on the
-                // otel demo corpus, unpatterned events drop 3,287 -> 517 and
-                // per-line dump fragments consolidate into one event per dump.
+                // a continuation-shaped line is not a group head, whatever
+                // severity-shaped tokens it carries: an own timestamp (above)
+                // is head evidence, a continuation indent or prefix is not,
+                // and a severity word in the text (below) is weak evidence
+                // that a line about severities ("  severityText: 'info',")
+                // defeats, so dump lines weld into their parent event
                 groupHead = false;
 
             } else if (TenXTemplate.getStatic(TenXEnv.get("levelField"))) {

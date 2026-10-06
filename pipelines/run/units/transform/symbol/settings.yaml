@@ -112,7 +112,8 @@ sequenceReserved:
     - "a"
 
 # 'preambleEnclosures' lists the open and close characters whose text before the
-#  message is envelope (e.g., 'main' in '[main] Starting worker').
+#  message is envelope (e.g., 'main' in '[main] Starting worker'); an open with no
+#  close after it in the same field encloses nothing.
 preambleEnclosures:
   - |
     $?symbolPreambleEnclosures=

@@ -21,9 +21,10 @@ export class ReadFileUnit extends TenXUnit {
 
         if (!TenXCounter.get("fileObjects")) {
 
-            TenXConsole.log("⚠️ No events read from input. Place your log files in: " +
-                 configFolder + "/data/sample/input or curl -o " +
-                 configFolder + "/data/sample/input/otel-sample.log https://log10x-public-assets.s3.amazonaws.com/samples/otel-k8s/medium/input/otel-sample.log");
+            TenXConsole.log("⚠️ No events read from input. Place your log files in " +
+                 configFolder + "/data/sample/input, or name one with inputFilePath. " +
+                 "To run on the bundled sample: tenx @apps/dev inputFilePath " +
+                 configFolder + "/data/sample/otel-sample.log");
         }
     }
 }

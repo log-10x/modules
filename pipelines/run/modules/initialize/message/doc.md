@@ -10,7 +10,7 @@ The message initializer uses symbol libraries to isolate stable [message pattern
 
 ## :material-target: Message Extraction
 
-Every run of adjacent tokens the symbol library recognizes carries a set of candidate origins: the source unit, a file or a binary, that can emit that phrase, together with the enclosing scope the library recorded for it. See [naming](https://doc.log10x.com/compile/naming/) for the end-to-end account. A token emitted by many units resolves to many candidates, so ambiguity is the normal case and resolving it is the selector's job. Candidates are keyed by originating unit plus enclosing method scope, so symbols of one method coalesce into one candidate; class-level and binary symbols form one candidate per matched phrase.
+Every run of adjacent tokens the symbol library recognizes carries a set of candidate origins: the source unit, a file or a binary, that can emit that phrase, together with the enclosing scope the library recorded for it. A token emitted by many units resolves to many candidates, so ambiguity is the normal case and resolving it is the selector's job. Candidates are keyed by originating unit plus enclosing method scope, so symbols of one method coalesce into one candidate; class-level and binary symbols form one candidate per matched phrase.
 
 The initializer identifies the core message pattern by ranking those candidates from a [TenXTemplate](https://doc.log10x.com/run/template/ "Import joint JSON schemas files to expand events into typed TenXObjects."), on a five-key comparator, every key descending:
 
@@ -70,6 +70,18 @@ The comparator is deterministic: every key is a content-derived integer, and a f
 - When the selected sequence comes back as a single token, the module re-runs the selection under the `any` context, which takes the symbol tokens in range from the first word of the message, each once, minus identifier fragments, and bypasses the comparator. The words before it are the preamble: [reserved](https://doc.log10x.com/run/transform/symbol/#symbolsequencereserved) words, text inside an [enclosure](https://doc.log10x.com/run/transform/symbol/#symbolpreambleenclosures) that closes within the field, and a reserved key with its value, quoted or not, bound by an [assigner](https://doc.log10x.com/run/transform/symbol/#symbolpreambleassigners). A logger or class name such as `org.apache.kafka.log.LocalLog` stays in the name: it is often the only text that tells two statements apart. A [message key](https://doc.log10x.com/run/transform/symbol/#symbolpreamblemessagekeys) (`msg=starting`, `"msg":"Serving metrics"`, `body: 'Charge request received.'`) is preamble, and when an assigner binds it the message starts inside its value, quoted or not, at the first word none of these describe: `Subchannel` in `"msg":"[core][Channel #1] Subchannel created"`. In a record that opens with `{`, reading starts at the first such key that binds, whatever keys come before it. `:` binds only in record form, a quoted key or a quoted value, so `WARN: GF_INSTALL_PLUGINS is deprecated` and `INFO:root:Starting worker` bind nothing.
 
 The claim the engine supports is scoped: the same engine version, the same symbol library and the same configuration give the same pattern for every event of a template, whatever other traffic the run carries and however many times it runs.
+
+### Bounds
+
+- A value that is not a library word never enters a pattern: PIDs, IPs, IDs, timestamps.
+- A value that is a library word (a username such as `admin`, a service name inside a hostname) can. The set is bounded by the library, in the hundreds, and known before the first line arrives. Where such a value gives one statement a few patterns, a cap on that statement still holds, looser by that small factor: for a line the library names, only a library word can split it, never a number or a high-cardinality value. A line with no library word is named by its shape, and shapes are bounded by the data's structure.
+- Patterns never outnumber templates. Several templates of one statement share one pattern.
+
+### Limits
+
+- The compiler parses Java, Scala, Python, Go, JavaScript, TypeScript, Rust, C#, C and C++ source, and compiled Java classes. Literals in Ruby, Kotlin, PHP, Swift, Lua, Groovy and bash come from quoted-string extraction, with no scope, as do those of the TypeScript and Rust repositories in the default library; compile your own code to get scoped symbols for it.
+- Message text built in a helper method that neither logs nor throws has no origin unless the literal carries a format placeholder; the line is named by its library words.
+- Web access logs are named by referer host and browser family under the default configuration.
 
 ## :material-fingerprint: Pattern identity: pattern vs template
 
@@ -186,9 +198,9 @@ Building on this process, here's how it applies to real events:
 
     `GET_HTTP_http_frontend_proxy_Mozilla_X_Linux_AppleWebKit_KHTML_like_Gecko_Safari`
 
-    **Origin:** none; no scope explains two words of message text, so the name is the line's library words
+    **Origin:** none
 
-The names and origins above come from engine 1.1.133 with the default library:
+With the default library, the four lines above get these names and origins:
 
 | Example | Name | Origin the engine states |
 |---|---|---|

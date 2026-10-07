@@ -32,14 +32,14 @@ Each TenXObject instance contains variables unique to its instance as members an
 Each symbol links to its source code/binary [origin](https://doc.log10x.com/run/transform/symbol/) and its [context](https://doc.log10x.com/run/transform/symbol/#contexts) within the file (e.g., class, field, enum, printout).
 
 ### :material-variable: **`Variables`**
-High-cardinality values specific to the current event. These include:
+Values the symbol library does not hold, and every number or digit-led token. These include:
 - Alphanumeric values (e.g., EDC8116I)  
 - Formatted/epoch timestamps (e.g., 2022-04-29T18:52:58.114201Z, 1719928783) 
 - Host addresses (e.g., 10.10.34.11:9000)
 - Span IDs (e.g., 0x051581bf3cb55c13) 
 
 ### :material-alphabetical-variant: **`Symbols`**
-Low-cardinality values extracted from source code and binary artifacts at compile-time and stored in a target [Symbol library](https://doc.log10x.com/run/symbol). These include:
+Values extracted from source code and binary artifacts at compile-time and stored in a target [Symbol library](https://doc.log10x.com/run/symbol), plus configured literals. Membership in the library is the only test. These include:
 - Class names (e.g., MyClient, MyServer)
 - Function/method names (e.g., info, warn) 
 - Enum literals (e.g., STATUS, ERROR, OK)

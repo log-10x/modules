@@ -10,7 +10,7 @@ The message initializer uses symbol libraries to isolate stable [message pattern
 
 ## :material-target: Message Extraction
 
-Every token the symbol library recognizes carries a set of candidate origins: the source unit, a file or a binary, that can emit the token, together with the enclosing scope the library recorded for it. A token emitted by many units resolves to many candidates, so ambiguity is the normal case and resolving it is the selector's job. Candidates are keyed by originating unit plus enclosing scope, so symbols sharing an origin and a scope coalesce into one candidate.
+Every run of adjacent tokens the symbol library recognizes carries a set of candidate origins: the source unit, a file or a binary, that can emit that phrase, together with the enclosing scope the library recorded for it. A token emitted by many units resolves to many candidates, so ambiguity is the normal case and resolving it is the selector's job. Candidates are keyed by originating unit plus enclosing method scope, so symbols of one method coalesce into one candidate; class-level and binary symbols form one candidate per matched phrase.
 
 The initializer identifies the core message pattern by ranking those candidates from a [TenXTemplate](https://doc.log10x.com/run/template/ "Import joint JSON schemas files to expand events into typed TenXObjects."), on a five-key comparator, every key descending:
 
@@ -71,14 +71,27 @@ The comparator is deterministic: every key is a content-derived integer, and a f
 
 The claim the engine supports is scoped: the same engine version, the same symbol library and the same configuration give the same pattern for every event of a template, whatever other traffic the run carries and however many times it runs.
 
+### Bounds
+
+- A value that is not a library word never enters a pattern: PIDs, IPs, IDs, timestamps.
+- A value that is a library word (a username such as `admin`, a service name inside a hostname) can. The set is bounded by the library, in the hundreds, and known before the first line arrives. Where such a value gives one statement a few patterns, a cap on that statement still holds, looser by that small factor: for a line the library names, only a library word can split it, never a number or a high-cardinality value. A line with no library word is named by its shape, and shapes are bounded by the data's structure.
+- Patterns never outnumber templates. Several templates of one statement share one pattern.
+
+### Limits
+
+- The compiler parses Java, Scala, Python, Go, JavaScript, TypeScript, Rust, C#, C and C++ source, and compiled Java classes. Literals in Ruby, Kotlin, PHP, Swift, Lua, Groovy and bash come from quoted-string extraction, with no scope, as do those of the TypeScript and Rust repositories in the default library; compile your own code to get scoped symbols for it.
+- Message text built in a helper method that neither logs nor throws has no origin unless the literal carries a format placeholder; the line is named by its library words.
+- Origin is a ranking, not a proof of origin: it names the scope that best explains the line's message text.
+- Web access logs are named by referer host and browser family under the default configuration.
+
 ## :material-fingerprint: Pattern identity: pattern vs template
 
 Four terms are easy to conflate. They are distinct:
 
 - **Pattern** (`symbolMessage`), the selection described above: a **subset** of representing tokens chosen from the template, not the whole line. Short and legible (e.g. `Receive ListRecommendations for product ids`). It is the unit of cost attribution.
-- **`pattern_hash`** (alias: `tenx_hash`), the hash of the `symbolMessage` (the [`symbolMessageHashField`](#symbolmessagehashfield), default `tenx_hash`). This is the **stable, user-facing identity** that tools and metrics key on. It is stable because it keys on the representing **subset**: it stays constant across deploys, restarts, pod renames, and format drift, and many template variants that share the representing tokens collapse to the **same** `pattern_hash`.
+- **`pattern_hash`** (alias: `tenx_hash`), the hash of the `symbolMessage` (the [`symbolMessageHashField`](#symbolmessagehashfield), default `tenx_hash`). This is the **stable, user-facing identity** that tools and metrics key on. It is stable because it keys on the representing **subset**: under one engine version, library and configuration it holds across restarts and pod renames, and the template variants of a statement the library names collapse to the **same** `pattern_hash`. A line named by its shape takes a new name when its shape changes. A recompiled library, or an engine upgrade that changes naming rules, renames the affected patterns once.
 - **Template**, the full `$`-marked structural shape of the line (every token, with variable slots marked `$`). A single pattern sits over a **set** of templates, one per format variant present in the data.
-- **`template_hash`**, the engine-internal fingerprint of a template's field-set. It exists only to join encoded events back to their entry in `templates.json` at decode time. It is **not** the stable identity, it is **many-to-one** with the pattern, and it should never be surfaced to a user or agent as the identifier. Use `pattern_hash` for that.
+- **`template_hash`**, the engine-internal fingerprint of a template's field-set. It exists only to join encoded events back to their entry in `templates.json` at decode time. It is **not** the stable identity, it is **many-to-one** with the pattern, and it is not the identifier a user or agent keys on. Use `pattern_hash` for that. The `template_<hash>` name of a line with no library word hashes the line's shape, not its template.
 
 ### Field names by surface
 
@@ -108,53 +121,72 @@ Building on this process, here's how it applies to real events:
 
     `Receive_ListRecommendations_for_product_ids`
 
-=== ":material-apache-kafka: Kafka"
+    **Origin:** `recommendation_server.py:ListRecommendations`
 
-    **Kafka Controller Event:**
+=== ":simple-dotnet: .NET"
+
+    **Cart Service Event**, a header record from the .NET console logger, then the message:
 
     ```json
     {
       "stream": "stdout",
-      "log": "[2025-08-01 22:19:30,905] INFO [controller-1-to-controller-registration-channel-manager]: Recorded new controller, from now on will use node 0.0.0.0:9093 (id: 1 rack: null) (kafka.server.NodeToControllerRequestThread)",
+      "log": "info: cart.cartstore.ValkeyCartStore[0]",
       "docker": {
-        "container_id": "79af0d7ce5f3c159411c6a15ee2d9044f3559bd2fe1630f8a6640d4c2cc87771"
+        "container_id": "f402e61ddbd15cb4cba6284af34073368c29ab31199cf8c4fa0a40e2df82cc0c"
       },
       "kubernetes": {
-        "container_name": "kafka",
+        "container_name": "cart",
         "namespace_name": "default",
-        "pod_name": "kafka-549545757c-2lmxv",
-        "container_image": "ghcr.io/open-telemetry/demo:2.0.2-kafka"
+        "pod_name": "cart-d569d7688-sqrd9",
+        "container_image": "ghcr.io/open-telemetry/demo:2.1.3-cart"
+      }
+    }
+    {
+      "stream": "stdout",
+      "log": "      GetCartAsync called with userId=02fec73e-9f03-11f0-9b9e-a666c4b68b87",
+      "docker": {
+        "container_id": "f402e61ddbd15cb4cba6284af34073368c29ab31199cf8c4fa0a40e2df82cc0c"
+      },
+      "kubernetes": {
+        "container_name": "cart",
+        "namespace_name": "default",
+        "pod_name": "cart-d569d7688-sqrd9",
+        "container_image": "ghcr.io/open-telemetry/demo:2.1.3-cart"
       }
     }
     ```
 
     **Extracted Message:**
 
-    `channel_manager_Recorded_new_controller_from_now_on_will_use_node_id_rack`
+    `GetCartAsync_called_with_userId`
 
-=== ":simple-opensearch: OpenSearch"
+    **Origin:** `ValkeyCartStore.cs:ValkeyCartStore`
 
-    **OpenSearch PeerFinder Event:**
+=== ":fontawesome-brands-java: Java"
+
+    **Ad Service Event:**
 
     ```json
     {
       "stream": "stdout",
-      "log": "[2025-08-01T22:19:24,590][INFO ][o.o.d.PeerFinder         ] [opensearch-0] setting findPeersInterval to [1s] as node commission status = [true] for local node [{opensearch-0}{N_KuFBFGRmSnettsBzOX3Q}{3XUyt5iPRMKvzuHPCaPFyg}{192.168.57.56}{192.168.57.56:9300}{dimr}{shard_indexing_pressure_enabled=true}]",
+      "log": "2025-10-01 20:12:37 - oteldemo.AdService - Targeted ad request received for [accessories] trace_id=262794c5d52cea66092b4d8de7d1c6ed span_id=11dc1636e05888c3 trace_flags=01 ",
       "docker": {
-        "container_id": "b6f244ebdaa72d7565b8944a1aad79cd5ac06ac767e4e603145a5e4bfd121883"
+        "container_id": "65a6a550da49effef7af4426f916a3b16f432db5547229225f0ef4bed7e13138"
       },
       "kubernetes": {
-        "container_name": "opensearch",
+        "container_name": "ad",
         "namespace_name": "default",
-        "pod_name": "opensearch-0",
-        "container_image": "docker.io/opensearchproject/opensearch:2.19.0"
+        "pod_name": "ad-5ff56dbf47-k8tk8",
+        "container_image": "ghcr.io/open-telemetry/demo:2.1.3-ad"
       }
     }
     ```
 
     **Extracted Message:**
 
-    `commission_status_local_node_opensearch_shard_indexing_pressure_enabled`
+    `oteldemo_AdService_Targeted_ad_request_received_for`
+
+    **Origin:** `AdService.java:getAds`
 
 === ":material-web: Web"
 
@@ -178,8 +210,9 @@ Building on this process, here's how it applies to real events:
 
     **Extracted Message:**
 
-    `frontend_proxy_Mozilla_X11_Linux_x86_AppleWebKit_KHTML_like_Gecko_Safari`
+    `GET_HTTP_http_frontend_proxy_Mozilla_X_Linux_AppleWebKit_KHTML_like_Gecko_Safari`
 
+    **Origin:** none
 
 :material-github: See the [JavaScript implementation](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/initialize/message/message-template.js) of this module on Github.
 
@@ -187,10 +220,10 @@ Building on this process, here's how it applies to real events:
 
 ## :material-rocket-launch-outline: Applications
 
-💰 **Cost tracking**: Identifies high-volume event types consuming log budgets with the [Dev app](https://doc.log10x.com/apps/dev/) app
+💰 **Cost tracking**: Identifies high-volume event types consuming log budgets with the [Reporter](https://doc.log10x.com/apps/reporter/) app
 
 📈 **Cost control**: Apply intelligent filtering using the [Receiver](https://doc.log10x.com/apps/receiver/) app to prevent over-billing
 
 🤖 **Multi-platform analytics**: Feed patterns into AIOps and monitoring systems via [metric outputs](https://doc.log10x.com/run/output/metric/) for Datadog, CloudWatch, and Prometheus
 
-🔄 **Automatic adaptation**: Updates automatically with code changes using [symbol libraries](https://doc.log10x.com/compile/link/#symbol-library). No manual regex pattern configuration and maintenance
+🔄 **Compiled, not configured**: Names come from [symbol libraries](https://doc.log10x.com/compile/link/#symbol-library) compiled from code. Recompiling after a code change updates them and can rename the affected patterns once. No regex to configure or maintain

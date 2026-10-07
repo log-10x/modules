@@ -4,7 +4,7 @@ icon: material/cogs
 
 The `AOT compile` pipeline produces [symbol library](https://doc.log10x.com/compile/link/#symbol-library) files that enable the [run](https://doc.log10x.com/run/) stream processor pipeline to transform input events into typed [TenXObjects](https://doc.log10x.com/api/js/#TenXObject). To launch this pipeline use the [compiler app](https://doc.log10x.com/apps/compiler/).
 
-The 10x Engine's [default library](https://doc.log10x.com/compile/pull/#default-symbols) covers 150+ frameworks. Running the compiler on your own environment's repos is **optional** and enables the runtime to increase its level of efficiency in aggregating and reducing event volume.
+The 10x Engine ships a [default library](https://doc.log10x.com/compile/pull/#default-symbols); the manifest inside it lists every repository and container image it was built from. See [naming](https://doc.log10x.com/run/initialize/message/#message-extraction) for how a line gets its pattern name. Running the compiler on your own environment's repos is **optional** and enables the runtime to increase its level of efficiency in aggregating and reducing event volume.
 
 ## :material-cog-transfer-outline: Workflow
 

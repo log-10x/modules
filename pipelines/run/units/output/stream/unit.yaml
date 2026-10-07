@@ -169,7 +169,7 @@ unit:
         | [encode()](https://doc.log10x.com/api/js/#TenXObject+encode)                                | [Losslessly compact](https://doc.log10x.com/run/transform/#compact) the instance. The field name is automatically set to `encode` | Expression |
         | [fullText](https://doc.log10x.com/api/js/#TenXBaseObject+fullText)                          | Full text of the underlying raw/expanded event | Intrinsic |
         | [symbolSequence](https://doc.log10x.com/run/initialize/message/#sequence)                   | Metric-complaint symbol values sequence       | Enriched |
-        | [symbolMessage](https://doc.log10x.com/run/initialize/message/#message)                     | Logical event message symbol values sequence  | Enriched |
+        | [message_pattern](https://doc.log10x.com/run/initialize/message/#message)                   | Logical event message symbol values sequence  | Enriched |
         | [symbolOrigin](https://doc.log10x.com/run/initialize/message/#class)                        | Symbol value with [class context](https://doc.log10x.com/run/transform/symbol/#class) | Enriched 
         | [namespace_name](https://doc.log10x.com/run/initialize/k8s/#k8snamespacenamefield)         | Kubernetes namespace context | Enriched |
         | [container_name](https://doc.log10x.com/run/initialize/k8s/#k8scontainernamefield)         | Kubernetes container context | Enriched |

@@ -30,7 +30,7 @@ module:
         `fullText`. Patterns not listed fall back to `compactReceiverDefault`.
 
         The lookup key is the event fields named by `compactReceiverFieldNames`
-        joined with `_` (defaults to `[symbolMessage]`), matching the same
+        joined with `_` (the shipped configuration keys on `message_pattern`), matching the same
         pattern identity the Reporter attributes cost to.
 
         **File format** (CSV; header row + one comma-separated entry per row):
@@ -41,8 +41,8 @@ module:
         ```
 
         - `fieldSet`, the event fields named by `compactReceiverFieldNames`
-          joined with `_`. With the default `[symbolMessage]` this is the
-          symbolMessage value for the pattern.
+          joined with `_`. With the shipped configuration this is the
+          pattern's `message_pattern` value.
         - `value`, `true` (compact via `encode()`) or `false` (explicitly
           preserve `fullText` for this pattern, beating the default).
         - `untilEpochSec`, optional Unix-epoch (seconds) expiry. Past it the
@@ -89,15 +89,15 @@ module:
         `rateReceiverFieldNames`, so a cap-file entry targets the same pattern
         identity the Reporter attributes cost to.
 
-        **Default**: `[symbolMessage]`, the symbolMessage field, which is the
-        stable pattern identity produced by the engine's classifier.
+        **Default**: `[symbolMessage]`, the message module's default field name.
+        The shipped configuration names the field `message_pattern` and keys on it.
 
         Multi-dimensional compaction (e.g., compact a pattern only for a
         specific tenant):
 
         ```yaml
         compactReceiverFieldNames:
-          - symbolMessage
+          - message_pattern
           - tenantId
         ```
 

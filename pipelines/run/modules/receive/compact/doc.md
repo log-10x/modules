@@ -39,7 +39,7 @@ The engine hot-reloads on in-place file writes (the gitops pattern); Kubernetes 
 `compactReceiverDefault` sets the fallback decision when no cap-file entry matches:
 
 - **`false`** (default), preserve `fullText`. Cap-file entries opt specific patterns *into* compaction. Right when most traffic is already high-signal.
-- **`true`**, compact via `encode()`. Cap-file entries opt specific patterns *out* of compaction (e.g. audit/compliance patterns that must stay verbose). Right when most traffic is low-signal machinery and only a few patterns need full-text fidelity.
+- **`true`**, compact via `encode()`. Cap-file entries opt specific patterns *out* of compaction (e.g. audit/compliance patterns that must stay verbose). Right when most traffic is low-signal machinery and only some patterns need full-text fidelity.
 
 Flipping the default is a policy decision that affects every event and requires a pod rollout. Cap-file edits handle per-pattern exceptions without restart.
 

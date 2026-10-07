@@ -306,7 +306,7 @@ module:
         - **Self-healing**: every entry can carry an explicit expiry, so forgotten caps eventually
           stop filtering instead of silently dropping production data forever.
         - **AI-editable**: an operator can ask an assistant (e.g., Claude Code via the Log10x MCP
-          `configure_regulator` tool) to derive a cap from a monthly dollar budget, append the
+          `configure_engine` tool) to derive a cap from a monthly dollar budget, append the
           entry, and open a PR. The cap file is the interface.
 
         **Severity floor still applies.** Even at a tight cap the regulator's `rateReceiverSeverityFloors`

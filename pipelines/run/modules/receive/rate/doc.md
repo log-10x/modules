@@ -2,7 +2,7 @@
 icon: material/progress-check
 ---
 
-Stop any single log pattern from dominating its container's volume, on the forwarder, before that volume is billed downstream. Errors and warnings keep flowing, and patterns on a protection list are never touched.
+Stop any single log pattern from dominating its container's volume, on the forwarder, before that volume is billed downstream. Errors and warnings keep flowing, and a pattern an operator lists in the mute file follows its own entry instead of the cap.
 
 The rate regulator watches each container's recent volume and acts on any one [pattern](https://doc.log10x.com/run/initialize/message/ "the message symbol sequence that identifies a log type") that spends more bytes than the cap set for that container. That pattern is the same `symbolMessage` value a Reporter attributes cost to, so a top spender maps straight to what gets regulated. No cap ships by default, so nothing is regulated until an operator sets one.
 

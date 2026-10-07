@@ -104,7 +104,7 @@ unit:
       doc: | 
         sets the maximum number of source/binary input files to scan by a single 'compile' sub-process.  
         Set to 0 to unlimited.
-      defValue: 40
+      defValue: 200
       
       
     - names:
@@ -130,7 +130,7 @@ unit:
       doc: |
         sets the timeout interval when scanning a source code /binary input file before dropping it. 
         Set to null to ignore.
-      defValue: 20s
+      defValue: 30s
 
     - names:
       - scanOperationTimeout

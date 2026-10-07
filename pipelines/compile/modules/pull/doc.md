@@ -20,7 +20,7 @@ The library's [manifest](https://doc.log10x.com/compile/link/#file-structure) li
     |------------|------------|
     | [open-telemetry/opentelemetry-demo](https://github.com/open-telemetry/opentelemetry-demo) | Polyglot microservices demo (14 services in Go, Java, Node.js, Python, .NET, Rust, PHP, Ruby, C++) |
     | [ingress-nginx/ingress-nginx](https://github.com/kubernetes/ingress-nginx) | NGINX binary, HTTP error codes, upstream timeouts, load balancer logs |
-    | [prometheus-community/kube-prometheus-stack](https://github.com/prometheus-community/helm-charts) | Prometheus, Alertmanager, Grafana, node-exporter, kube-state-metrics |
+    | [prometheus-community/kube-prometheus-stack](https://github.com/prometheus-community/helm-charts) | Prometheus, Prometheus Operator, node-exporter, kube-state-metrics |
 
 ??? tenx-symbols "Java Frameworks"
 

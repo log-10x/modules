@@ -10,6 +10,8 @@ Pulling [symbol files](https://doc.log10x.com/compile/scanner/symbol/) generated
 
 The 10x runtime comes with a built-in symbol library that includes symbols for industry-standard frameworks and infrastructure components. This pre-compiled symbol library enables immediate log optimization capabilities without requiring users to scan and compile symbols for common technologies and popular open-source projects.
 
+The library's [manifest](https://doc.log10x.com/compile/link/#file-structure) lists each source with the commit or digest it was built from. From container images the library takes the strings in their binaries. Test files, vendored copies and log files inside the repositories are left out. Each project keeps its own license: the library holds hashes of its strings and the names of its files, classes and methods, not its source text.
+
 ??? tenx-symbols "Container Images (Helm Charts)"
 
     Symbols extracted from Docker container images and their source code dependencies via Helm chart scanning.

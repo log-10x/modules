@@ -31,8 +31,9 @@ module:
       required: false
       doc: |
         defines the list of TenXObject field names extracted to identify which rate counter bucket an event belongs to.
-        The list usually contains the pattern field (`message_pattern` in the shipped configuration) from the [message enrichment](https://doc.log10x.com/run/initialize/message/) module
-        but can include additional fields like [GeoIP](https://doc.log10x.com/run/initialize/geoIP/), [HTTP code](https://doc.log10x.com/run/initialize/httpCode/), [k8s container name](https://doc.log10x.com/run/initialize/k8s/), or custom enrichments for multi-dimensional rate tracking.
+        The list usually contains the pattern field the [message enrichment](https://doc.log10x.com/run/initialize/message/) module writes,
+        named by `symbolMessageField`: `message_pattern` in the shipped configuration, `symbolMessage` at that option's default.
+        It can include additional fields like [GeoIP](https://doc.log10x.com/run/initialize/geoIP/), [HTTP code](https://doc.log10x.com/run/initialize/httpCode/), [k8s container name](https://doc.log10x.com/run/initialize/k8s/), or custom enrichments for multi-dimensional rate tracking.
 
         **Common Use Cases:**
 
@@ -306,7 +307,7 @@ module:
         - **Self-healing**: every entry can carry an explicit expiry, so forgotten caps eventually
           stop filtering instead of silently dropping production data forever.
         - **AI-editable**: an operator can ask an assistant (e.g., Claude Code via the Log10x MCP
-          `configure_engine` tool) to derive a cap from a monthly dollar budget, append the
+          `configure_engine` tool) to derive a cap from a target percent or a monthly dollar budget, append the
           entry, and open a PR. The cap file is the interface.
 
         **Severity floor still applies.** Even at a tight cap the regulator's `rateReceiverSeverityFloors`

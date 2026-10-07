@@ -683,7 +683,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
         ```yaml
         rateReceiver:
           fieldNames:
-            - symbolMessage              # the pattern identity
+            - message_pattern            # the pattern identity
           containerField: container      # scopes the cap to one service
           absoluteCap: 10485760          # 10 MB per pattern per container per window
           minSharePercent: 0.05          # leave patterns under 5% of their container alone
@@ -704,7 +704,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
         ```yaml
         rateReceiver:
           fieldNames:
-            - symbolMessage
+            - message_pattern
           containerField: container      # same name across all pod replicas
           absoluteCap: 10485760          # 10 MB per pattern per container per window
         ```
@@ -715,12 +715,12 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
     === ":material-file-document-edit-outline: Mute File (GitOps)"
 
-        Layer a declarative mute file over the rate receiver, pulled from a git repo. Entries are keyed by the same `fieldNames` values the rate receiver uses (e.g. `symbolMessage`), so mutes target the same patterns a Reporter attributes cost to. A listed, active pattern is decided by its entry; every other pattern stays on the cap. Each entry has an explicit sample rate and epoch expiry, so mutes are diff-reviewed, audited, and self-healing.
+        Layer a declarative mute file over the rate receiver, pulled from a git repo. Entries are keyed by the same `fieldNames` values the rate receiver uses (e.g. `message_pattern`), so mutes target the same patterns a Reporter attributes cost to. A listed, active pattern is decided by its entry; every other pattern stays on the cap. Each entry has an explicit sample rate and epoch expiry, so mutes are diff-reviewed, audited, and self-healing.
 
         ```yaml
         rateReceiver:
           fieldNames:
-            - symbolMessage
+            - message_pattern
           lookup:
             file: /etc/log10x/config/data/sample/mutes/mutes.csv
             retain: 300000                 # mark stale after 5 minutes

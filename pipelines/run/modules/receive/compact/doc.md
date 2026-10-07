@@ -4,7 +4,7 @@ icon: material/tune-variant
 
 Compact specific patterns' events into a template+values tuple, without redeploying the engine.
 
-The compact receiver makes a per-event decision whether to emit via `encode()` (the pattern's template hash plus extracted variable values, smaller where the destination supports it) or preserve `fullText`. The decision is keyed by pattern identity (the same symbolMessage the Reporter attributes cost to), so an operator targets compaction at the same patterns surfaced in cost analysis.
+The compact receiver makes a per-event decision whether to emit via `encode()` (the pattern's template hash plus extracted variable values, smaller where the destination supports it) or preserve `fullText`. The decision is keyed by pattern identity (the same `message_pattern` value the Reporter attributes cost to), so an operator targets compaction at the same patterns surfaced in cost analysis.
 
 Entries live in a CSV cap-file, typically committed to a git repo and edited by PR. The file is hot-reloaded on in-place writes; a merged PR takes effect within ~10 seconds, no pod restart.
 
@@ -12,14 +12,14 @@ Entries live in a CSV cap-file, typically committed to a git repo and edited by 
 
 A cap-file declares, for each pattern, whether its events are compacted or preserved. Patterns not listed fall back to `compactReceiverDefault`.
 
-**File format**, CSV with a header row, keyed by the fields named in `compactReceiverFieldNames` joined with `_` (default: `[symbolMessage]`):
+**File format**, CSV with a header row, keyed by the fields named in `compactReceiverFieldNames` joined with `_` (the shipped configuration uses the pattern field, `message_pattern`):
 
 ```csv
 fieldSet,value
 <fieldSet>,<true|false>[:<untilEpochSec>][:<reason>]
 ```
 
-- `fieldSet`, the event fields named by `compactReceiverFieldNames` joined with `_`. With the default `[symbolMessage]` this is the symbolMessage value for the pattern.
+- `fieldSet`, the event fields named by `compactReceiverFieldNames` joined with `_`. With the shipped configuration this is the pattern's `message_pattern` value.
 - `value`, `true` compacts via `encode()`; `false` explicitly preserves `fullText` for this pattern (beats the default).
 - `untilEpochSec`, optional Unix-epoch (seconds) expiry. Past it the entry self-heals and the pattern falls back to `compactReceiverDefault`.
 - `reason`, optional free-text for audit. Must not contain commas (would break CSV parsing).
@@ -47,7 +47,7 @@ Flipping the default is a policy decision that affects every event and requires 
 
 ```yaml
 compactReceiver:
-  fieldNames: [symbolMessage]        # fields joined to form the lookup key
+  fieldNames: [message_pattern]      # fields joined to form the lookup key
   default: false                     # fallback when no entry matches
   lookup:
     file: $=path("data/caps") + "/compact-cap.csv"

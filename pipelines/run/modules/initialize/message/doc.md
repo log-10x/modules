@@ -81,6 +81,7 @@ The claim the engine supports is scoped: the same engine version, the same symbo
 
 - The compiler parses Java, Scala, Python, Go, JavaScript, TypeScript, Rust, C#, C and C++ source, and compiled Java classes. Literals in Ruby, Kotlin, PHP, Swift, Lua, Groovy and bash come from quoted-string extraction, with no scope, as do those of the TypeScript and Rust repositories in the default library; compile your own code to get scoped symbols for it.
 - Message text built in a helper method that neither logs nor throws has no origin unless the literal carries a format placeholder; the line is named by its library words.
+- Origin is a ranking, not a proof of origin: it names the scope that best explains the line's message text.
 - Web access logs are named by referer host and browser family under the default configuration.
 
 ## :material-fingerprint: Pattern identity: pattern vs template
@@ -122,57 +123,70 @@ Building on this process, here's how it applies to real events:
 
     **Origin:** `recommendation_server.py:ListRecommendations`
 
-=== ":material-apache-kafka: Kafka"
+=== ":simple-dotnet: .NET"
 
-    **Kafka Controller Event:**
+    **Cart Service Event**, a header record from the .NET console logger, then the message:
 
     ```json
     {
       "stream": "stdout",
-      "log": "[2025-08-01 22:19:30,905] INFO [controller-1-to-controller-registration-channel-manager]: Recorded new controller, from now on will use node 0.0.0.0:9093 (id: 1 rack: null) (kafka.server.NodeToControllerRequestThread)",
+      "log": "info: cart.cartstore.ValkeyCartStore[0]",
       "docker": {
-        "container_id": "79af0d7ce5f3c159411c6a15ee2d9044f3559bd2fe1630f8a6640d4c2cc87771"
+        "container_id": "f402e61ddbd15cb4cba6284af34073368c29ab31199cf8c4fa0a40e2df82cc0c"
       },
       "kubernetes": {
-        "container_name": "kafka",
+        "container_name": "cart",
         "namespace_name": "default",
-        "pod_name": "kafka-549545757c-2lmxv",
-        "container_image": "ghcr.io/open-telemetry/demo:2.0.2-kafka"
+        "pod_name": "cart-d569d7688-sqrd9",
+        "container_image": "ghcr.io/open-telemetry/demo:2.1.3-cart"
+      }
+    }
+    {
+      "stream": "stdout",
+      "log": "      GetCartAsync called with userId=02fec73e-9f03-11f0-9b9e-a666c4b68b87",
+      "docker": {
+        "container_id": "f402e61ddbd15cb4cba6284af34073368c29ab31199cf8c4fa0a40e2df82cc0c"
+      },
+      "kubernetes": {
+        "container_name": "cart",
+        "namespace_name": "default",
+        "pod_name": "cart-d569d7688-sqrd9",
+        "container_image": "ghcr.io/open-telemetry/demo:2.1.3-cart"
       }
     }
     ```
 
     **Extracted Message:**
 
-    `Recorded_new_controller_now_will_use_node_id_rack_null_kafka_server_NodeToControllerRequestThread`
+    `GetCartAsync_called_with_userId`
 
-    **Origin:** `evergreen_resmoke_job_count.py:maybe_override_num_jobs_on_required`, a MongoDB build script
+    **Origin:** `ValkeyCartStore.cs:ValkeyCartStore`
 
-=== ":simple-opensearch: OpenSearch"
+=== ":fontawesome-brands-java: Java"
 
-    **OpenSearch PeerFinder Event:**
+    **Ad Service Event:**
 
     ```json
     {
       "stream": "stdout",
-      "log": "[2025-08-01T22:19:24,590][INFO ][o.o.d.PeerFinder         ] [opensearch-0] setting findPeersInterval to [1s] as node commission status = [true] for local node [{opensearch-0}{N_KuFBFGRmSnettsBzOX3Q}{3XUyt5iPRMKvzuHPCaPFyg}{192.168.57.56}{192.168.57.56:9300}{dimr}{shard_indexing_pressure_enabled=true}]",
+      "log": "2025-10-01 20:12:37 - oteldemo.AdService - Targeted ad request received for [accessories] trace_id=262794c5d52cea66092b4d8de7d1c6ed span_id=11dc1636e05888c3 trace_flags=01 ",
       "docker": {
-        "container_id": "b6f244ebdaa72d7565b8944a1aad79cd5ac06ac767e4e603145a5e4bfd121883"
+        "container_id": "65a6a550da49effef7af4426f916a3b16f432db5547229225f0ef4bed7e13138"
       },
       "kubernetes": {
-        "container_name": "opensearch",
+        "container_name": "ad",
         "namespace_name": "default",
-        "pod_name": "opensearch-0",
-        "container_image": "docker.io/opensearchproject/opensearch:2.19.0"
+        "pod_name": "ad-5ff56dbf47-k8tk8",
+        "container_image": "ghcr.io/open-telemetry/demo:2.1.3-ad"
       }
     }
     ```
 
     **Extracted Message:**
 
-    `local_node`
+    `oteldemo_AdService_Targeted_ad_request_received_for`
 
-    **Origin:** `gcs_xcom_utils.cc:is_parameters_syntax_correct`, a C++ file of another project
+    **Origin:** `AdService.java:getAds`
 
 === ":material-web: Web"
 
@@ -199,18 +213,6 @@ Building on this process, here's how it applies to real events:
     `GET_HTTP_http_frontend_proxy_Mozilla_X_Linux_AppleWebKit_KHTML_like_Gecko_Safari`
 
     **Origin:** none
-
-With the default library, the four lines above get these names and origins:
-
-| Example | Name | Origin the engine states |
-|---|---|---|
-| OTel Demo | `Receive_ListRecommendations_for_product_ids` | `recommendation_server.py`, the demo's own source |
-| Kafka | `Recorded_new_controller_now_will_use_node_id_rack_null_kafka_server_NodeToControllerRequestThread` | `evergreen_resmoke_job_count.py`, a MongoDB build script |
-| OpenSearch | `local_node` | `gcs_xcom_utils.cc`, a C++ file of another project |
-| Web | `GET_HTTP_http_frontend_proxy_Mozilla_X_Linux_AppleWebKit_KHTML_like_Gecko_Safari` | none |
-
-Origin is a ranking, not proof: two of these four resolve to a unit of the wrong project; the name is still a function of the line, the library and the configuration.
-
 
 :material-github: See the [JavaScript implementation](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/initialize/message/message-template.js) of this module on Github.
 

@@ -39,7 +39,7 @@ Values the symbol library does not hold, and every number or digit-led token. Th
 - Span IDs (e.g., 0x051581bf3cb55c13) 
 
 ### :material-alphabetical-variant: **`Symbols`**
-Values extracted from source code and binary artifacts at compile-time and stored in a target [Symbol library](https://doc.log10x.com/run/symbol), plus configured literals. Membership in the library is the only test. These include:
+Values extracted from source code and binary artifacts at compile-time and stored in a target [Symbol library](https://doc.log10x.com/run/symbol), plus configured literals. A token is a symbol when the library holds it and it is not a number or digit-led; every other token is a variable. These include:
 - Class names (e.g., MyClient, MyServer)
 - Function/method names (e.g., info, warn) 
 - Enum literals (e.g., STATUS, ERROR, OK)

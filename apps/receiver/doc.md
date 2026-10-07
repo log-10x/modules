@@ -715,7 +715,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
     === ":material-file-document-edit-outline: Mute File (GitOps)"
 
-        Layer a declarative mute file over the rate receiver, pulled from a git repo. Entries are keyed by the same `fieldNames` values the rate receiver uses (e.g. `symbolMessage`), so mutes target the same patterns a Reporter attributes cost to. A listed, active pattern is decided by its entry; every other pattern stays on the cap. Each entry has an explicit sample rate and epoch expiry, so mutes are diff-reviewed, audited, and self-healing.
+        Layer a declarative mute file over the rate receiver, pulled from a git repo. Entries are keyed by the same `fieldNames` values the rate receiver uses (e.g. `message_pattern`), so mutes target the same patterns a Reporter attributes cost to. A listed, active pattern is decided by its entry; every other pattern stays on the cap. Each entry has an explicit sample rate and epoch expiry, so mutes are diff-reviewed, audited, and self-healing.
 
         ```yaml
         rateReceiver:

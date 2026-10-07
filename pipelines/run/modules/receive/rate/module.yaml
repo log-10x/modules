@@ -31,21 +31,22 @@ module:
       required: false
       doc: |
         defines the list of TenXObject field names extracted to identify which rate counter bucket an event belongs to.
-        The list usually contains the `symbolMessage` field from the [message enrichment](https://doc.log10x.com/run/initialize/message/) module
-        but can include additional fields like [GeoIP](https://doc.log10x.com/run/initialize/geoIP/), [HTTP code](https://doc.log10x.com/run/initialize/httpCode/), [k8s container name](https://doc.log10x.com/run/initialize/k8s/), or custom enrichments for multi-dimensional rate tracking.
+        The list usually contains the pattern field the [message enrichment](https://doc.log10x.com/run/initialize/message/) module writes,
+        named by `symbolMessageField`: `message_pattern` in the shipped configuration, `symbolMessage` at that option's default.
+        It can include additional fields like [GeoIP](https://doc.log10x.com/run/initialize/geoIP/), [HTTP code](https://doc.log10x.com/run/initialize/httpCode/), [k8s container name](https://doc.log10x.com/run/initialize/k8s/), or custom enrichments for multi-dimensional rate tracking.
 
         **Common Use Cases:**
 
         **Single-app receiving (per event type):**
         ```yaml
         rateReceiverFieldNames:
-          - symbolMessage
+          - message_pattern
         ```
 
         **Multi-dimensional tracking (event type + geography + HTTP status):**
         ```yaml
         rateReceiverFieldNames:
-          - symbolMessage
+          - message_pattern
           - country
           - httpCode
         ```
@@ -62,7 +63,7 @@ module:
         *Option B: Cap spend per event type per app:*
         ```yaml
         rateReceiverFieldNames:
-          - symbolMessage  # Event type
+          - message_pattern  # Event type
           - container      # App identifier (same across all pods)
         ```
         Each (event type × app) combo gets its own cap. Provides fairness within apps but allows apps with many event types to potentially exceed one total cap.
@@ -155,7 +156,7 @@ module:
       required: false
       doc: |
         defines the path to a declarative **mute file** that caps specific log patterns by
-        the joined field-set defined in `rateReceiverFieldNames` (e.g. `symbolMessage`,
+        the joined field-set defined in `rateReceiverFieldNames` (e.g. `message_pattern`,
         `container`, `httpCode`). The key format is the same one the local receiver uses
         for per-node counters.
 
@@ -172,9 +173,9 @@ module:
         ```
 
         - `fieldSetKey`, the joined values of the fields named in `rateReceiverFieldNames`,
-          separated by `_`. With `rateReceiverFieldNames: [symbolMessage]` the key is just
-          the symbolMessage (e.g. `Error_syncing_pod`). With `[symbolMessage, container]`
-          the key is `symbolMessage_container` (e.g. `heartbeat_debug_frontend`).
+          separated by `_`. With `rateReceiverFieldNames: [message_pattern]` the key is just
+          the pattern (e.g. `Error_syncing_pod`). With `[message_pattern, container]`
+          the key is `message_pattern_container` (e.g. `heartbeat_debug_frontend`).
         - `sampleRate`, probability in `[0, 1.0]` that a matching event is retained.
           `0` = full mute; `0.1` = keep 10%; `1.0` = no-op.
         - `untilEpochSec`, mute expires at this Unix epoch (seconds). Past that, the
@@ -182,7 +183,7 @@ module:
         - `reason`, optional free-text string for audit. Not used at runtime. Must not
           contain commas (would break CSV parsing).
 
-        **Example** (with `rateReceiverFieldNames: [symbolMessage]`):
+        **Example** (with `rateReceiverFieldNames: [message_pattern]`):
 
         ```
         fieldSet,value
@@ -306,7 +307,7 @@ module:
         - **Self-healing**: every entry can carry an explicit expiry, so forgotten caps eventually
           stop filtering instead of silently dropping production data forever.
         - **AI-editable**: an operator can ask an assistant (e.g., Claude Code via the Log10x MCP
-          `configure_regulator` tool) to derive a cap from a monthly dollar budget, append the
+          `configure_engine` tool) to derive a cap from a target percent or a monthly dollar budget, append the
           entry, and open a PR. The cap file is the interface.
 
         **Severity floor still applies.** Even at a tight cap the regulator's `rateReceiverSeverityFloors`

@@ -4,7 +4,7 @@ icon: material/progress-check
 
 Stop any single log pattern from dominating its container's volume, on the forwarder, before that volume is billed downstream. Errors and warnings keep flowing, and a pattern an operator lists in the mute file follows its own entry instead of the cap.
 
-The rate regulator watches each container's recent volume and acts on any one [pattern](https://doc.log10x.com/run/initialize/message/ "the message symbol sequence that identifies a log type") that spends more bytes than the cap set for that container. That pattern is the same `symbolMessage` value a Reporter attributes cost to, so a top spender maps straight to what gets regulated. No cap ships by default, so nothing is regulated until an operator sets one.
+The rate regulator watches each container's recent volume and acts on any one [pattern](https://doc.log10x.com/run/initialize/message/ "the message symbol sequence that identifies a log type") that spends more bytes than the cap set for that container. That pattern is the same `message_pattern` value a Reporter attributes cost to, so a top spender maps straight to what gets regulated. No cap ships by default, so nothing is regulated until an operator sets one.
 
 ## :material-percent-outline: The cap
 
@@ -64,7 +64,7 @@ container,cap
 - `untilEpochSec` expires the entry, which then self-heals to a no-op.
 - `reason` is free text for audit. Must not contain commas (would break CSV parsing).
 
-The cap value changes; the share guard and severity floor still apply. Intended use is via the `log10x_configure_regulator` MCP tool, which derives per-container caps from a monthly dollar budget and opens a PR against the file.
+The cap value changes; the share guard and severity floor still apply. Intended use is via the MCP's `configure_engine` tool, which derives per-container caps from a target percent or a monthly dollar budget and opens a PR against the file.
 
 Same hot-reload rule as the mute file: both launch-macro lanes reload, a plain volume-mounted `ConfigMap` does not.
 
@@ -110,7 +110,7 @@ It is opt-in and decoupled from caps: unset by default, so a regulator managed b
 ```yaml
 rateReceiver:
   fieldNames:
-    - symbolMessage          # the pattern identity
+    - message_pattern        # the pattern identity
   containerField: container  # scopes the cap denominator
   absoluteCap: 10485760      # 10 MB per pattern per container per window (optional; 0 = no fleet-wide cap)
   minSharePercent: 0.05      # share guard (sanity)

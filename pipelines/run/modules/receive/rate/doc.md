@@ -64,7 +64,7 @@ container,cap
 - `untilEpochSec` expires the entry, which then self-heals to a no-op.
 - `reason` is free text for audit. Must not contain commas (would break CSV parsing).
 
-The cap value changes; the share guard and severity floor still apply. Intended use is via the `log10x_configure_engine` MCP tool, which derives per-container caps from a monthly dollar budget and opens a PR against the file.
+The cap value changes; the share guard and severity floor still apply. Intended use is via the `log10x_configure_engine` MCP tool, which derives per-container caps from a target percent or a monthly dollar budget and opens a PR against the file.
 
 Same hot-reload rule as the mute file: both launch-macro lanes reload, a plain volume-mounted `ConfigMap` does not.
 

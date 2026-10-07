@@ -43,7 +43,7 @@ module:
       description: max number of output chars 
       type: number
       required: false
-      defValue: 0
+      defValue: 120
       doc: |
         Specifies the max number of chars of the [symbolMessageField](https://doc.log10x.com/run/initialize/message/#symbolmessagefield). 
         Set 0 to unlimited.

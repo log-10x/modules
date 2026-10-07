@@ -20,5 +20,5 @@ Operating on typed TenXObjects enables direct access to [symbol](https://doc.log
 
 Each symbol library `.10x.tar` archive file contains:
 - A `.10x.json` file combining the symbol unit files generated during the [scan](https://doc.log10x.com/compile/scan/) phase.
-- A `manifest.10x.json` file listing each source with the commit or digest it was built from.
+- A manifest `.10x.json` file listing each source with the commit or digest it was built from.
 - A `.10x.pb` Protocol Buffer file which provides a reverse in-mem index of the symbols values contained within the JSON for fast loading and random access. To learn more see the [.proto IDL](https://github.com/log-10x/pipeline-extensions/blob/main/api-extensions/src/main/proto/FsSymbolUnitsIndex.proto).

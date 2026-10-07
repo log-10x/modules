@@ -103,7 +103,7 @@ unit:
       category: subprocess
       doc: | 
         sets the maximum number of source/binary input files to scan by a single 'compile' sub-process.  
-        Set to 0 to unlimited.
+        Set to 0 to unlimited. The shipped configuration sets 200.
       defValue: 40
       
       
@@ -129,7 +129,7 @@ unit:
       category: parallel      
       doc: |
         sets the timeout interval when scanning a source code /binary input file before dropping it. 
-        Set to null to ignore.
+        Set to null to ignore. The shipped configuration sets 30s.
       defValue: 20s
 
     - names:

@@ -76,7 +76,7 @@ What else changes between in and out depends on the Receiver app mode:
 |------|------------------------------------------------|
 | Receive (default) | No field added, none removed, no value changed. Every attribute returns as a log-record attribute, as described above. |
 | Receive + `symbolMessageHashField <name>` | As above, plus one new field named `<name>` carrying the symbol-pattern hash (a stable identifier for the message pattern, usable as a dedup key, metric dimension, or correlation ID). |
-| `receiverOptimize true` | The value of the field captured by `otelCollectorInputMessageField` (default `body`) is replaced with a compact encoded form. A separate `tenx-template` event is emitted with the template needed to decode it. All other fields stay verbatim. |
+| `receiverOptimize true` | The value of the field captured by `otelCollectorInputMessageField` (default `body`) is replaced with a compact encoded form. Each new template is sent once as its own LogRecord, with no body and the attributes `templateHash`, `template` and `tenx_tag` = `tenx-template`; route on `tenx_tag` to send templates to their own destination. All other fields stay verbatim. |
 | `receiverOptimize true` + `symbolMessageHashField <name>` | Both of the above. |
 
 `symbolMessageHashField` is unset by default, which is what makes the first row true: the receive path adds nothing of its own to the record. The pattern hash is still computed and still rides the event inside the engine as `tenx_hash` for metrics and aggregation, it just does not reach the wire. Naming a field opts in, either as a launch argument (`tenx @run/input/forwarder/otel-collector @apps/receiver symbolMessageHashField my_custom_hash`) or as an environment variable of the same name.
@@ -120,6 +120,10 @@ exporters:
     endpoint: 127.0.0.1:4317
     tls:
       insecure: true
+    # One sender keeps records in the order they were read; the engine
+    # groups multi-line events from consecutive records.
+    sending_queue:
+      num_consumers: 1
 
   debug:
     verbosity: detailed

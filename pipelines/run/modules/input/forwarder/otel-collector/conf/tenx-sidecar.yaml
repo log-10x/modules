@@ -82,6 +82,10 @@ exporters:
     endpoint: 127.0.0.1:4317
     tls:
       insecure: true
+    # One sender keeps records in the order they were read; the engine
+    # groups multi-line events from consecutive records.
+    sending_queue:
+      num_consumers: 1
 
   # `debug` is the terminal exporter for this recipe, replace it with your
   # real destinations (`elasticsearch`, `splunk_hec`, `kafka`, `awss3`, …).

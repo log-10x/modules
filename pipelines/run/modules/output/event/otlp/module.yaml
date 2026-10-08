@@ -135,9 +135,14 @@ module:
       defValue: false
       doc: |
         Controls whether template values for TenXObjects passed to this output
-        are written. Each new template is emitted at most once. Enable this
-        alongside `receiverOptimize true` so the destination Collector can
-        decode the compact body using the matching template.
+        are written. Each new template is emitted at most once, as its own
+        LogRecord with no body and the attributes `templateHash`, `template`
+        and `tenx_tag` = `tenx-template`; route on `tenx_tag` to send templates
+        and compact events to different destinations.
+        The OpenTelemetry Collector forwarder input sets this on its own output
+        whenever `receiverOptimize` is on. Passing `outputOtlpWriteTemplates` on
+        the command line adds a second OTLP output at the default host and port
+        (127.0.0.1:4317), which is the Receiver's own input on that path.
 
     - names:
         - outputOtlpFilter

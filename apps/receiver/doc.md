@@ -579,6 +579,10 @@ Follow the steps below. Steps that require customization link to the relevant [C
             endpoint: 127.0.0.1:4317
             tls:
               insecure: true
+            # One sender keeps records in the order they were read; the engine
+            # groups multi-line events from consecutive records.
+            sending_queue:
+              num_consumers: 1
 
         service:
           pipelines:

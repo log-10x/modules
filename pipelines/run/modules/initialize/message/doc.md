@@ -2,228 +2,209 @@
 icon: material/origin
 ---
 
-Extracts consistent message identifiers from log events for accurate log-to-metrics conversion and cost control.
+Names each event by the source-code statement that wrote it. The name (`symbolMessage`, such as `Receive_ListRecommendations_for_product_ids`) and its hash (`tenx_hash`) stay the same across the IDs, timestamps and hosts of one statement's events, so cost, rate and metric reporting groups by log statement.
 
-Raw log events contain high-cardinality [variable](https://doc.log10x.com/run/transform/structure/#variables) data (timestamps, IDs, values) mixed with constant, low-cardinality [symbols](https://doc.log10x.com/run/transform/structure/#symbols).
-
-The message initializer uses symbol libraries to isolate stable [message patterns](https://doc.log10x.com/run/transform/symbol/) from each event, enabling accurate classification of event instances by their logical type.
+Raw events mix high-cardinality [variables](https://doc.log10x.com/run/transform/structure/#variables) (timestamps, IDs, values) with constant [symbols](https://doc.log10x.com/run/transform/structure/#symbols). The module reads the symbols against a [symbol library](https://doc.log10x.com/compile/link/#symbol-library), the words and source locations compiled from code, to find the statement behind each line.
 
 ## :material-target: Message Extraction
 
-Every run of adjacent tokens the symbol library recognizes carries a set of candidate origins: the source unit, a file or a binary, that can emit that phrase, together with the enclosing scope the library recorded for it. A token emitted by many units resolves to many candidates, so ambiguity is the normal case and resolving it is the selector's job. Candidates are keyed by originating unit plus enclosing method scope, so symbols of one method coalesce into one candidate; class-level and binary symbols form one candidate per matched phrase.
+Every run of library words on a line points to candidate origins: the source files or binaries that can emit that phrase, together with the method around it. The module then:
 
-The initializer identifies the core message pattern by ranking those candidates from a [TenXTemplate](https://doc.log10x.com/run/template/ "Import joint JSON schemas files to expand events into typed TenXObjects."), on a five-key comparator, every key descending:
+1. **Ranks** the candidates and picks the origin whose words best explain the line.
+2. **Gates** the pick: claiming an origin requires prose evidence.
+3. **Emits** the name from the winner's words, leaving out every value.
 
-1. **Prose evidence**: the width of the candidate's widest matched field that is **not inside a container**. Container depth is counted from the opens and closes preceding the field, so a JSON attribute value that quotes another component's message is excluded here even though it is prose-shaped. This key decides first.
-2. **Widest matched phrase**: a per-field maximum, rather than a sum, over library-matched, multi-character tokens that are not [reserved](https://doc.log10x.com/run/transform/symbol/#symbolsequencereserved). This is the widest single library-matched phrase the origin accounts for.
-3. **Distinct known tokens**: the count of distinct library-known tokens anywhere on the line that the origin explains. This is the coverage term.
-4. **Character total**: the combined character length of those distinct tokens.
-5. **Span length**: the run length of the selected span. This is the only run-length key, it sits last, and the comparator reaches it only when the first four keys all tie.
+??? tenx-symbolinitializer "Ranking"
 
-Prose ranks ahead of bulk because text inside a container is citation, not authorship. A twenty-token error value carried as an attribute does not outrank the two-token statement it is attached to.
+    Candidates are keyed by source unit plus enclosing method, so the symbols of one method form one candidate. Five keys decide in order, each descending:
 
-Coverage ranks ahead of length because the more places a word appears across a code base, the less that word says about where a line came from. A word appearing in one file identifies that file; a word appearing in hundreds identifies nothing. Ranking by how many distinct known words an origin explains picks the origin that best accounts for the line.
+    1. **Prose evidence**: the width of the candidate's widest matched field outside any container. Container depth counts the opens and closes before the field, so a JSON value quoting another component's message does not count.
+    2. **Widest phrase**: the widest single library-matched phrase, excluding [reserved](https://doc.log10x.com/run/transform/symbol/#symbolsequencereserved) words.
+    3. **Distinct words**: how many distinct library words on the line the origin explains.
+    4. **Character total**: the combined length of those words.
+    5. **Span length**: the run length of the selected span, reached only on a four-key tie.
 
-One tie-break runs after the ranking rather than as a sixth key. Where the winner ties its nearest rival on all five, the tied group yields to a candidate whose unit the line's own authorship region names.
+    Prose ranks ahead of bulk because text inside a container is citation: a twenty-token error value carried as an attribute stays behind the two-token statement it belongs to. Coverage ranks ahead of length because a word found in hundreds of files says little about where a line came from. A tie on all five keys goes to the candidate whose unit the line's own authorship region names.
 
-### Evidence gate
+??? tenx-safety "Evidence gate"
 
-A typed selection ([`symbolContexts`](#symbolcontexts) of `log,exec`) claims an origin: this source statement wrote this line. That claim stands on prose evidence exclusively, and a candidate whose prose score is below two is rejected rather than crowned. A library word the emission skips as an identifier fragment is not evidence, and symbols joined only by `/` count as one word: a path is one value, not a phrase. **A line with no prose evidence gets no typed origin and keeps its raw fallback identity.** The lone `any` context asserts nothing about provenance and gates at one token instead, so thin fragments still receive an identity.
+    A typed selection ([`symbolContexts`](#symbolcontexts) of `log,exec`) claims that one source statement wrote the line, so it requires prose evidence of at least two words. A line without that evidence gets no typed origin and keeps its fallback identity. Identifier fragments are not evidence, and words joined only by `/` count as one word, since a path is one value. The `any` context claims no origin and accepts a single word, so thin fragments still receive an identity.
 
-### Emission
+??? tenx-text "Name construction"
 
-Selection picks the origin. Emission then builds the value in three stages.
+    - **Anchor**: the winner's widest prose field, kept verbatim. The region runs forward to the first container open, newline or second timestamp. After `:` and whitespace the statement is quoting text, such as an exception, so the region past the anchor takes at most half of the [`symbolMaxLen`](#symbolmaxlen) budget; two statements quoting one exception keep their own words. Reserved filtering skips the anchor, which keeps `no baggage found in context` whole.
+    - **Suffix**: up to sixteen distinct non-reserved words from the winner's other matched fields.
+    - **Padding**: words before and after the region while the [`symbolMaxLen`](#symbolmaxlen) budget allows, with reserved words and message keys left out. The backward walk stops at the nearest timestamp, a closing bracket, a line end or an escaped line break (`\n`, `\r`). Text before that point is preamble, such as the node, request and thread ids a format prints in brackets. A logger or class name between the timestamp and the message stays in the name, as in `oteldemo_AdService_...` below.
 
-- **Anchor**: the winner's widest matched prose field, emitted verbatim. The message region runs forward from the anchor's own start and stops at the first container open, newline, or second timestamp; where that boundary falls inside the anchor field the region collapses back to the field. Where the anchor follows `:` and whitespace, the statement is quoting text, an exception it reports, and the region past the anchor field takes at most half of the [`symbolMaxLen`](#symbolmaxlen) budget before the backward walk; it resumes afterwards if room is left, so two statements quoting one exception keep their own words. The anchor is **exempt from reserved filtering**: applying it here renames the statement, turning `no baggage found in context` into `no_found`. Timestamps, variables and repeats are still dropped.
-- **Suffix**: distinct non-reserved tokens from the winner's other matched fields, each token counted once however often it repeats, up to a budget of sixteen.
-- **Padding**: forward and backward from the emitted region while the [`symbolMaxLen`](#symbolmaxlen) budget allows. Reserved filtering governs here and in the suffix, which is where a generic word is genuinely noise. Message keys are left out here as reserved words are. The backward walk stops where the statement starts: at the nearest preceding timestamp, at a token that closes a container or ends a line, or at a line break escaped inside a quoted value (`\` followed by `n` or `r`). Everything before that point is preamble and stays out of the pattern: the node ids, request ids and thread names a format prints in brackets ahead of the message. A logger or class name printed between the timestamp and the message, outside any enclosure, is not preamble and can be part of the pattern, as in `oteldemo_AdService_...` below.
+    Timestamps, variables and repeated words never enter the name.
 
-Every stage, and the `any` fallback below, skips an **identifier fragment**: a library word that is part of a value. Glue is a single `-`, `_`, `.` or `$`, and a chain is the run of tokens joined by glue. A word is a fragment when:
+??? tenx-advanced "Identifier fragments"
 
-- a token next to it, directly or across one glue, is a variable, numbers included;
-- its chain has two or more pieces and one of them carries a digit;
-- it carries a digit and sits beside a `/` separator, a path segment such as `subdir2`;
-- its chain has a `.`, two or more pieces, and ends in `:` followed by a variable, a `host:port` such as `www.evernote.com:443`;
-- it sits in a path of pieces joined by runs of `/`, `-`, `_` and `.`, with two or more `/` and a variable piece;
-- it is eight or more characters of upper-case letters and digits, both present, a generated id such as `L9ECAV7KIM`.
+    Every stage skips a library word that is part of a value. Glue is one `-`, `_`, `.` or `$`, and a chain is a run of tokens joined by glue. A word is a fragment when:
 
-A variable reaches only its neighbours; a digit-bearing word reaches its whole chain. The `C` in the node id `R21-M0-N4-C:J05-U11` and the `req` in `req-b3e2...` are library words, and skipping them keeps one statement on one identity however its ids are spelled. The rules read only token types, delimiter characters and the word's own text, all constant across a template's lines, so every line of a template gets the same verdict. They have a cost: a dotted metric name whose digit-bearing segment is a library word loses every word, a REST route loses the words after a variable segment (`/v2/<tenant>/servers/detail` loses `servers_detail`), a `file:line` citation (`server.py:127`) loses its words to the `host:port` rule, and an all-caps code such as `AES256GCM` reads as a generated id.
+    - a neighbour, directly or across one glue, is a variable, numbers included;
+    - its chain has two or more pieces and one of them carries a digit;
+    - it carries a digit next to a `/`, such as `subdir2`;
+    - its chain has a `.`, two or more pieces, and ends in `:` and a variable, such as `www.evernote.com:443`;
+    - it sits in a path with two or more `/` and a variable piece;
+    - it is eight or more upper-case letters and digits, both present, such as `L9ECAV7KIM`.
 
-Inside a JSON string a line break or tab arrives as `\` and a letter, and `\` is a delimiter, so the letter opens the next token. A token after an odd run of backslashes that starts with `n`, `r` or `t` contributes its remainder (`\nOrder` gives `Order`), and a token that is only the letter contributes nothing. An even run is an escaped backslash and the word is kept.
+    The rules read only token types, delimiters and the word itself, so every line of a template gets the same verdict, and one statement keeps one name however its ids are spelled (`R21-M0-N4-C:J05-U11`, `req-b3e2...`). The trade-off: a dotted metric name loses a library word in its digit-bearing segment, a REST route loses the words after a variable segment (`/v2/<tenant>/servers/detail`), a `file:line` citation such as `server.py:127` matches the `host:port` rule, and an all-caps code such as `AES256GCM` reads as an id.
 
-The [`symbolContexts`](#symbolcontexts) list filters which symbol contexts participate. Contexts are evaluated in a single pass, so list order acts as a filter rather than a precedence chain.
+    Inside a JSON string a line break or tab arrives as `\` and a letter. After an odd run of backslashes, a token starting with `n`, `r` or `t` keeps only its remainder (`\nOrder` gives `Order`); an even run is an escaped backslash and keeps the word.
 
-The `inputField` parameter limits searches to specific JSON fields. Setting `inputField: log` searches only within the log field content.
+??? tenx-extractors "Input field"
 
-When `inputField` lists several fields, the first listed field the event carries as a JSON key is the one read, whether or not it yields a word. A listed field parsed out of free text (`org.mortbay.log: jetty-6.1.26`) is read only when it yields a word; otherwise the next field is tried. Name, skeleton and origin read the same field. A `log` value with no library word is named by its own shape, as below, so the record's envelope keys (`stream`, `docker`, `kubernetes`) stay out of the name.
+    `inputField` limits the search to named JSON fields: `inputField: log` reads only the `log` value. With several fields, the first one the event carries as a JSON key is read, whether or not it yields a word. A field parsed out of free text (`org.mortbay.log: jetty-6.1.26`) is read only when it yields a word; otherwise the next field is tried. Name, skeleton and origin read the same field, so envelope keys such as `stream`, `docker` and `kubernetes` stay out of the name.
 
-A multi-line event is named from one member, its lead. With [`symbolGroupLead`](https://doc.log10x.com/run/transform/symbol/#symbolgrouplead) set to `firstWithMessage`, the lead is the first member whose input field has a word past the preamble, a name of words chained by a [joiner](https://doc.log10x.com/run/transform/symbol/#symbolpreamblejoiners) (`cart.cartstore.ValkeyCartStore`) counting as preamble here. The .NET console logger writes `info: cart.cartstore.ValkeyCartStore[0]` and the message `GetCartAsync called with userId=...` as two records; the name, skeleton and origin come from the second. A head that holds a message, such as the exception line of a stack trace, is the lead, as is the head of an event whose every member is preamble.
+    [`symbolContexts`](#symbolcontexts) filters which symbol contexts take part. Contexts are evaluated in one pass, so list order filters and does not rank.
 
-A line with no library word is named `template_` followed by 16 hex digits. The digits hash the normalized shape of the input field: its constant words and punctuation, one marker for each run of variables and for each timestamp whatever its format, and one space for each run of whitespace. A statement keeps one name across padded columns, millisecond widths and repeated values, and the name is a valid metric label. Where a library update turns a value on such a line into a library word, or the reverse, the shape and the name change.
+??? tenx-group "Multi-line events"
 
-### Repeatability
+    A multi-line event is named from one member, its lead. With [`symbolGroupLead`](https://doc.log10x.com/run/transform/symbol/#symbolgrouplead) set to `firstWithMessage`, the lead is the first member with a word past the preamble; a name chained by a [joiner](https://doc.log10x.com/run/transform/symbol/#symbolpreamblejoiners), such as `cart.cartstore.ValkeyCartStore`, counts as preamble. The .NET console logger writes `info: cart.cartstore.ValkeyCartStore[0]` and `GetCartAsync called with userId=...` as two records, and the name, skeleton and origin come from the second. A head that holds a message, such as a stack trace's exception line, is the lead, as is the head of an event whose members are all preamble.
 
-The comparator is deterministic: every key is a content-derived integer, and a field's evidence is its own words and the library, so no earlier line in the run changes the verdict. Three details bound that behavior.
+??? tenx-template "Shape names"
 
-- A full five-key tie that the authorship pass also leaves undecided falls back to candidate order. Entries are keyed on content, so that order is the same in every run and on every node.
-- Two truncation caps can hide a true origin: [`symbolMaxOrigins`](https://doc.log10x.com/run/transform/symbol/#symbolmaxorigins) (default 64, the cap that binds at runtime) and [`maxSymbolUnitsPerToken`](https://doc.log10x.com/run/symbol/#maxsymbolunitspertoken) (default 128, approximate, stopping in the low 130s).
-- When the selected sequence comes back as a single token, the module re-runs the selection under the `any` context, which takes the symbol tokens in range from the first word of the message, each once, minus identifier fragments, and bypasses the comparator. The words before it are the preamble: [reserved](https://doc.log10x.com/run/transform/symbol/#symbolsequencereserved) words, text inside an [enclosure](https://doc.log10x.com/run/transform/symbol/#symbolpreambleenclosures) that closes within the field, and a reserved key with its value, quoted or not, bound by an [assigner](https://doc.log10x.com/run/transform/symbol/#symbolpreambleassigners). A logger or class name such as `org.apache.kafka.log.LocalLog` stays in the name: it is often the only text that tells two statements apart. A [message key](https://doc.log10x.com/run/transform/symbol/#symbolpreamblemessagekeys) (`msg=starting`, `"msg":"Serving metrics"`, `body: 'Charge request received.'`) is preamble, and when an assigner binds it the message starts inside its value, quoted or not, at the first word none of these describe: `Subchannel` in `"msg":"[core][Channel #1] Subchannel created"`. In a record that opens with `{`, reading starts at the first such key that binds, whatever keys come before it. `:` binds only in record form, a quoted key or a quoted value, so `WARN: GF_INSTALL_PLUGINS is deprecated` and `INFO:root:Starting worker` bind nothing.
+    A line with no library word is named `template_` and 16 hex digits: a hash of the field's normalized shape, meaning its constant words and punctuation, one marker per run of variables, one per timestamp in any format, and one space per run of whitespace. One statement keeps one name across padded columns, millisecond widths and repeated values, and the name is a valid metric label. A library update that turns a value on the line into a library word, or the reverse, changes the shape and the name.
 
-The claim the engine supports is scoped: the same engine version, the same symbol library and the same configuration give the same pattern for every event of a template, whatever other traffic the run carries and however many times it runs.
+??? tenx-default "Single-word fallback"
 
-### Bounds
+    When the selected sequence is a single token, the module re-runs the selection under the `any` context: the library words from the first word of the message, each once, minus identifier fragments, without ranking. The words before the message are preamble: [reserved](https://doc.log10x.com/run/transform/symbol/#symbolsequencereserved) words, text inside an [enclosure](https://doc.log10x.com/run/transform/symbol/#symbolpreambleenclosures) that closes within the field, and a reserved key with its value bound by an [assigner](https://doc.log10x.com/run/transform/symbol/#symbolpreambleassigners).
 
-- A value that is not a library word never enters a pattern: PIDs, IPs, IDs, timestamps.
-- A value that is a library word (a username such as `admin`, a service name inside a hostname, a migration name) can. No number, ID or word outside the library ever enters a pattern, so the patterns of one statement are bounded by the library words that can stand in its value positions: one Grafana migration statement yields 666 patterns, one per migration name. A cap applies per pattern, so the one noisy migration is capped and its quiet siblings are not. A line with no library word is named by its shape, and shapes are bounded by the data's structure.
-- Patterns never outnumber templates. Several templates of one statement share one pattern.
+    A logger or class name such as `org.apache.kafka.log.LocalLog` stays in the name, since it is often the only text that tells two statements apart. A [message key](https://doc.log10x.com/run/transform/symbol/#symbolpreamblemessagekeys) (`msg=starting`, `"msg":"Serving metrics"`, `body: 'Charge request received.'`) is preamble; when an assigner binds it, the message starts inside its value at the first word none of these rules describe, `Subchannel` in `"msg":"[core][Channel #1] Subchannel created"`. In a record that opens with `{`, reading starts at the first such key that binds. `:` binds only in record form, a quoted key or a quoted value, so `WARN: GF_INSTALL_PLUGINS is deprecated` and `INFO:root:Starting worker` bind nothing.
 
-### Limits
+:material-github: See the [JavaScript implementation](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/initialize/message/message-template.js) of this module on Github.
 
-- The compiler parses Java, Scala, Python, Go, JavaScript, TypeScript, Rust, C#, C and C++ source, and compiled Java classes. Literals in Ruby, Kotlin, PHP, Swift, Lua, Groovy and bash come from quoted-string extraction, with no scope, as do those of the TypeScript and Rust repositories in the default library; compile your own code to get scoped symbols for it.
-- Message text built in a helper method that neither logs nor throws has no origin unless the literal carries a format placeholder; the line is named by its library words.
-- Origin is a ranking, not a proof of origin: it names the scope that best explains the line's message text.
-- Web access logs are named by referer host and browser family under the default configuration.
+## :material-shield-check-outline: Stability
 
-## :material-fingerprint: Pattern identity: pattern vs template
+The same engine version, symbol library and configuration give the same name to every event of a template, whatever other traffic the run carries and however many times it runs.
 
-Four terms are easy to conflate. They are distinct:
+??? tenx-checklist "Repeatability"
 
-- **Pattern** (`symbolMessage`), the selection described above: a **subset** of representing tokens chosen from the template, not the whole line. Short and legible (e.g. `Receive ListRecommendations for product ids`). It is the unit of cost attribution.
-- **`pattern_hash`** (alias: `tenx_hash`), the hash of the `symbolMessage` (the [`symbolMessageHashField`](#symbolmessagehashfield), default `tenx_hash`). This is the **stable, user-facing identity** that tools and metrics key on. It is stable because it keys on the representing **subset**: under one engine version, library and configuration it holds across restarts and pod renames, and, for a statement the library names, template variants that differ only in values outside the library collapse to the **same** `pattern_hash`. A line named by its shape takes a new name when its shape changes. A recompiled library, or an engine upgrade that changes naming rules, renames the affected patterns once.
-- **Template**, the full `$`-marked structural shape of the line (every token, with variable slots marked `$`). A single pattern sits over a **set** of templates, one per format variant present in the data.
-- **`template_hash`**, the engine-internal fingerprint of a template's field-set. It exists only to join encoded events back to their entry in `templates.json` at decode time. It is **not** the stable identity, it is **many-to-one** with the pattern, and it is not the identifier a user or agent keys on. Use `pattern_hash` for that. The `template_<hash>` name of a line with no library word hashes the line's shape, not its template.
+    Every ranking key is an integer derived from the line's content and the library, so no earlier line in the run changes the verdict. A tie that the authorship check also leaves open falls back to candidate order, which is keyed on content and so identical in every run and on every node. Two caps can hide a true origin: [`symbolMaxOrigins`](https://doc.log10x.com/run/transform/symbol/#symbolmaxorigins) (default 64, the cap that binds at runtime) and [`maxSymbolUnitsPerToken`](https://doc.log10x.com/run/symbol/#maxsymbolunitspertoken) (default 128, approximate, stopping in the low 130s).
 
-### Field names by surface
+??? tenx-scale "Cardinality bounds"
 
-An encoded event opens with a leading segment, and that segment always carries the template join key, the value a decoder uses to rebuild the original line from its `templates.json` entry. Each integration handles that field to suit its own schema: the Splunk app extracts it as `tenx_hash`, and the Elasticsearch plugin looks the key up in its `l1es_dml` template index. The pattern-level identity is a separate value, the hash of the selected pattern, written to the field named by [`symbolMessageHashField`](#symbolmessagehashfield) and also defaulting to `tenx_hash`. The name therefore appears on more than one surface, carrying the join key on an encoded event in Splunk and the pattern hash on an enriched event out of the engine. The two values answer different questions: the join key says which template rebuilds this line, and the pattern hash says which pattern this line belongs to.
+    - A value outside the library never enters a name: PIDs, IPs, IDs and timestamps.
+    - A value that is a library word can, such as a username like `admin`, a service name inside a hostname, or a migration name. One Grafana migration statement yields 666 patterns, one per migration name. A cap applies per pattern, so the noisy migration is capped and its quiet siblings are not.
+    - Shape names are bounded by the data's structure.
+    - Patterns never outnumber templates; several templates of one statement share one pattern.
 
-Building on this process, here's how it applies to real events:
+??? tenx-failuremode "Limits"
+
+    - The compiler parses Java, Scala, Python, Go, JavaScript, TypeScript, Rust, C#, C and C++ source, and compiled Java classes. Ruby, Kotlin, PHP, Swift, Lua, Groovy and bash literals, and those of the TypeScript and Rust repositories in the default library, come from quoted-string extraction with no scope; compiling the code gives scoped symbols.
+    - Message text built in a helper method that neither logs nor throws has no origin unless the literal carries a format placeholder; the line is named by its library words.
+    - Origin is a ranking: it names the scope that best explains the line's message text.
+    - Web access logs are named by referer host and browser family under the default configuration.
+
+## :material-fingerprint: Pattern Identity { #pattern-identity-pattern-vs-template }
+
+The pattern is the unit of cost attribution, and its hash is the identity tools and metrics key on.
+
+| Term | What it is | Used for |
+|---|---|---|
+| **Pattern** (`symbolMessage`) | The selected subset of the line's words, such as `Receive ListRecommendations for product ids` | Cost attribution |
+| **`pattern_hash`** (`tenx_hash`) | The hash of the pattern, written to [`symbolMessageHashField`](#symbolmessagehashfield). Holds across restarts and pod renames, and value-only variants of one statement share it | Stable identity for tools and metrics |
+| **Template** | The full shape of the line, every token kept and each variable slot marked `$`. One pattern spans one template per format variant | Compact form |
+| **`template_hash`** | The key from a compact event to its `templates.json` entry, used when the event is expanded; many templates map to one pattern | Expansion |
+
+A recompiled library, or an engine upgrade that changes naming rules, renames the affected patterns once. A shape name changes when its shape does.
+
+??? tenx-info "Field names by surface"
+
+    A compact event's leading segment carries the template join key, which expansion uses to rebuild the line from `templates.json`. The Splunk app extracts it as `tenx_hash`, and the Elasticsearch plugin looks it up in its `l1es_dml` index. The pattern hash is a separate value, written to [`symbolMessageHashField`](#symbolmessagehashfield), which also defaults to `tenx_hash`. So `tenx_hash` holds the join key on a compact event in Splunk and the pattern hash on an enriched event out of the engine: the first says which template rebuilds the line, the second which pattern the line belongs to.
+
+## :material-file-document-outline: Examples
 
 === ":simple-opentelemetry: OTel Demo"
-
-    **Kubernetes Example:**
 
     ```json
     {
       "stream": "stderr",
       "log": "2025-04-17 14:32:40,287 INFO [main] [recommendation_server.py:47] - Receive ListRecommendations for product ids:['L9ECAV7KIM', '0PUK6V6EV0']",
-      "docker": {
-        "container_id": "9c04355088aa168abb1a074b696ad15366c254602be8cbb69299e1e87d3bcffb"
-      },
-      "kubernetes": {
-        "container_name": "recommendationservice",
-        "namespace_name": "default"
-      }
+      "kubernetes": { "container_name": "recommendationservice", "namespace_name": "default" }
     }
     ```
 
-    **Extracted Message:**
-
-    `Receive_ListRecommendations_for_product_ids`
+    **Pattern:** `Receive_ListRecommendations_for_product_ids`
 
     **Origin:** `recommendation_server.py:ListRecommendations`
 
 === ":simple-dotnet: .NET"
 
-    **Cart Service Event**, a header record from the .NET console logger, then the message:
+    A header record from the .NET console logger, then the message:
 
     ```json
-    {
-      "stream": "stdout",
-      "log": "info: cart.cartstore.ValkeyCartStore[0]",
-      "docker": {
-        "container_id": "f402e61ddbd15cb4cba6284af34073368c29ab31199cf8c4fa0a40e2df82cc0c"
-      },
-      "kubernetes": {
-        "container_name": "cart",
-        "namespace_name": "default",
-        "pod_name": "cart-d569d7688-sqrd9",
-        "container_image": "ghcr.io/open-telemetry/demo:2.1.3-cart"
-      }
-    }
-    {
-      "stream": "stdout",
-      "log": "      GetCartAsync called with userId=02fec73e-9f03-11f0-9b9e-a666c4b68b87",
-      "docker": {
-        "container_id": "f402e61ddbd15cb4cba6284af34073368c29ab31199cf8c4fa0a40e2df82cc0c"
-      },
-      "kubernetes": {
-        "container_name": "cart",
-        "namespace_name": "default",
-        "pod_name": "cart-d569d7688-sqrd9",
-        "container_image": "ghcr.io/open-telemetry/demo:2.1.3-cart"
-      }
-    }
+    { "stream": "stdout", "log": "info: cart.cartstore.ValkeyCartStore[0]", "kubernetes": { "container_name": "cart" } }
+    { "stream": "stdout", "log": "      GetCartAsync called with userId=02fec73e-9f03-11f0-9b9e-a666c4b68b87", "kubernetes": { "container_name": "cart" } }
     ```
 
-    **Extracted Message:**
-
-    `GetCartAsync_called_with_userId`
+    **Pattern:** `GetCartAsync_called_with_userId`
 
     **Origin:** `ValkeyCartStore.cs:ValkeyCartStore`
 
 === ":fontawesome-brands-java: Java"
 
-    **Ad Service Event:**
-
     ```json
     {
       "stream": "stdout",
       "log": "2025-10-01 20:12:37 - oteldemo.AdService - Targeted ad request received for [accessories] trace_id=262794c5d52cea66092b4d8de7d1c6ed span_id=11dc1636e05888c3 trace_flags=01 ",
-      "docker": {
-        "container_id": "65a6a550da49effef7af4426f916a3b16f432db5547229225f0ef4bed7e13138"
-      },
-      "kubernetes": {
-        "container_name": "ad",
-        "namespace_name": "default",
-        "pod_name": "ad-5ff56dbf47-k8tk8",
-        "container_image": "ghcr.io/open-telemetry/demo:2.1.3-ad"
-      }
+      "kubernetes": { "container_name": "ad", "namespace_name": "default" }
     }
     ```
 
-    **Extracted Message:**
-
-    `oteldemo_AdService_Targeted_ad_request_received_for`
+    **Pattern:** `oteldemo_AdService_Targeted_ad_request_received_for`
 
     **Origin:** `AdService.java:getAds`
 
 === ":material-web: Web"
 
-    **HTTP Access Log Event:**
-
     ```json
     {
       "stream": "stdout",
       "log": "192.168.43.96 - - [01/Aug/2025:22:21:50 +0000] \"GET /products/LensCleaningKit.jpg HTTP/1.1\" 200 101928 \"http://frontend-proxy:8080/\" \"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/133.0.0.0 Safari/537.36\"",
-      "docker": {
-        "container_id": "ac37d50d39857193f5d2ff92872f1c022d3b746fa721233eccd1b4aae7d26a8b"
-      },
-      "kubernetes": {
-        "container_name": "image-provider",
-        "namespace_name": "default",
-        "pod_name": "image-provider-58c6f8444-q4c8p",
-        "container_image": "ghcr.io/open-telemetry/demo:2.0.2-image-provider"
-      }
+      "kubernetes": { "container_name": "image-provider", "namespace_name": "default" }
     }
     ```
 
-    **Extracted Message:**
-
-    `GET_HTTP_http_frontend_proxy_Mozilla_X_Linux_AppleWebKit_KHTML_like_Gecko_Safari`
+    **Pattern:** `GET_HTTP_http_frontend_proxy_Mozilla_X_Linux_AppleWebKit_KHTML_like_Gecko_Safari`
 
     **Origin:** none
 
-:material-github: See the [JavaScript implementation](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/initialize/message/message-template.js) of this module on Github.
-
----
-
 ## :material-rocket-launch-outline: Applications
 
-💰 **Cost tracking**: Identifies high-volume event types consuming log budgets with the [Reporter](https://doc.log10x.com/apps/reporter/) app
+<div class="grid cards" markdown>
 
-📈 **Cost control**: Apply intelligent filtering using the [Receiver](https://doc.log10x.com/apps/receiver/) app to prevent over-billing
+-   :material-chart-bar:{ .lg .middle } **Cost tracking**
 
-🤖 **Multi-platform analytics**: Feed patterns into AIOps and monitoring systems via [metric outputs](https://doc.log10x.com/run/output/metric/) for Datadog, CloudWatch, and Prometheus
+    ___
 
-🔄 **Compiled, not configured**: Names come from [symbol libraries](https://doc.log10x.com/compile/link/#symbol-library) compiled from code. Recompiling after a code change updates them and can rename the affected patterns once. No regex to configure or maintain
+    Rank event types by volume and cost, per pattern.
+
+    [:octicons-arrow-right-24: Reporter](https://doc.log10x.com/apps/reporter/)
+
+-   :material-tune-variant:{ .lg .middle } **Cost control**
+
+    ___
+
+    Sample, mute or compact each pattern before it is billed.
+
+    [:octicons-arrow-right-24: Receiver](https://doc.log10x.com/apps/receiver/)
+
+-   :material-chart-timeline-variant:{ .lg .middle } **Metrics**
+
+    ___
+
+    Publish per-pattern metrics to Datadog, CloudWatch and Prometheus.
+
+    [:octicons-arrow-right-24: Metric outputs](https://doc.log10x.com/run/output/metric/)
+
+-   :material-code-braces:{ .lg .middle } **Compiled from code**
+
+    ___
+
+    Names come from symbol libraries compiled from source; recompiling after a code change updates them, with no regex to maintain.
+
+    [:octicons-arrow-right-24: Symbol library](https://doc.log10x.com/compile/link/#symbol-library)
+
+</div>

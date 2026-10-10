@@ -2,7 +2,7 @@
 icon: material/origin
 ---
 
-Adds a name to every event that identifies the line of code that wrote it, such as `Receive_ListRecommendations_for_product_ids`. Every event from that line gets the same name, whatever IDs, timestamps or hosts it carries, so volume, cost and metrics can be counted per log statement. The [Reporter](https://doc.log10x.com/apps/reporter/) reports cost by this name, the [Receiver](https://doc.log10x.com/apps/receiver/) samples or mutes by it, and [metric outputs](https://doc.log10x.com/run/output/metric/) publish counts per name.
+Adds a name to every event, made of the known words of the log statement that most likely wrote it, such as `Receive_ListRecommendations_for_product_ids`. Events from one statement share that name whatever IDs or timestamps they carry, unless a value that is itself a known word splits them. The [Reporter](https://doc.log10x.com/apps/reporter/) reports cost by this name, the [Receiver](https://doc.log10x.com/apps/receiver/) samples or mutes by it, and [metric outputs](https://doc.log10x.com/run/output/metric/) publish counts per name.
 
 ## :material-tag-outline: Fields { #pattern-identity-pattern-vs-template }
 
@@ -50,9 +50,9 @@ The module names each event in five steps, run in this order:
     - The name stops at a timestamp, a bracket or the end of the line, so request IDs, thread names and node IDs printed before the message stay out.
     - A logger or class name printed between the timestamp and the message stays in, as in `oteldemo_AdService_Targeted_ad_request_received_for`.
     - When the message quotes an exception after `:`, at most half the length goes to the quoted text, so two statements quoting the same exception keep different names.
-    - Numbers, IDs, timestamps and repeated words never enter the name.
+    - Numbers, IDs, timestamps, repeated words and any word outside the symbol library never enter the name. A value that is itself a known word can, as the browser names do in the Web example below.
 
-    A known word that is part of a value is skipped, so one statement keeps one name however its IDs look:
+    A known word that is part of a value is skipped, so lines from `opensearch-0` and `opensearch-1` share one name:
 
     - a word joined by `-`, `_`, `.` or `$` to a number or another value, as in `req-b3e2` or `subdir2`;
     - a word inside a `host:port` such as `www.evernote.com:443`, or inside a path that has a value in it;
@@ -69,7 +69,7 @@ The brackets, `key=value` separators, message keys and reserved words these step
 
 ## :material-swap-horizontal: When Names Change
 
-A name stays the same across IDs, timestamps, hosts, restarts, pod renames and the order events arrive in. The same engine version, symbol library and configuration always give the same name. A name changes when:
+A name stays the same across IDs, timestamps, nodes, restarts, pod renames and the order events arrive in. The same engine version, symbol library and configuration always give the same name. A name changes when:
 
 - the statement's text changes in code;
 - the symbol library is recompiled and a word on the line changes between value and known word;

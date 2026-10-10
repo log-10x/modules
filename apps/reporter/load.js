@@ -10,6 +10,6 @@ export class ConfigLoadUnit extends TenXUnit {
     }
 
     constructor() { 
-        TenXConsole.log("🚀 Launching 10x Engine: Edge reporter app");
+        TenXConsole.log("🚀 Launching 10x Engine: Reporter app");
     }
 }

@@ -9,15 +9,17 @@ Time-series outputs provide an extensible method for publishing [TenXSummary](ht
 Pick one. No metric output is active until a pipeline names it, and every
 destination below is one you own.
 
-| Output | Writes to | Module |
-|---|---|---|
-| Prometheus remote write | Prometheus, Grafana Cloud, Mimir, Thanos, VictoriaMetrics, Cortex | [remote-write](https://doc.log10x.com/run/output/metric/prometheus/remote-write/) |
-| Prometheus scrape | any Prometheus that scrapes targets | [scrape](https://doc.log10x.com/run/output/metric/prometheus/scrape/) |
-| Prometheus Push Gateway | batch and short-lived jobs | [push-gateway](https://doc.log10x.com/run/output/metric/prometheus/push-gateway/) |
-| Datadog | a Datadog account, by API key | [datadog](https://doc.log10x.com/run/output/metric/datadog/) |
-| Elastic | Elasticsearch or OpenSearch | [elastic](https://doc.log10x.com/run/output/metric/elastic/) |
-| AWS CloudWatch | CloudWatch metrics, by IAM role | [cloudwatch](https://doc.log10x.com/run/output/metric/cloudwatch/) |
-| Log4j2 | a local appender, no time-series database needed | [log](https://doc.log10x.com/run/output/metric/log/) |
+| Output | Writes to | Module | `topSeries` |
+|---|---|---|---:|
+| Prometheus remote write | Prometheus, Grafana Cloud, Mimir, Thanos, VictoriaMetrics, Cortex | [remote-write](https://doc.log10x.com/run/output/metric/prometheus/remote-write/) | 0 |
+| Prometheus scrape | any Prometheus that scrapes targets | [scrape](https://doc.log10x.com/run/output/metric/prometheus/scrape/) | 0 |
+| Prometheus Push Gateway | batch and short-lived jobs | [push-gateway](https://doc.log10x.com/run/output/metric/prometheus/push-gateway/) | 0 |
+| Datadog | a Datadog account, by API key | [datadog](https://doc.log10x.com/run/output/metric/datadog/) | 200 |
+| Elastic | Elasticsearch or OpenSearch | [elastic](https://doc.log10x.com/run/output/metric/elastic/) | 0 |
+| AWS CloudWatch | CloudWatch metrics, by IAM role | [cloudwatch](https://doc.log10x.com/run/output/metric/cloudwatch/) | 0 |
+| Log4j2 | a local appender, no time-series database needed | [log](https://doc.log10x.com/run/output/metric/log/) | 0 |
+
+Each output publishes one series per metric name and tag set. `topSeries` keeps an output to the tag sets with the most bytes, ranked on `summaryBytes` as the series accumulate; an admitted tag set publishes from every aggregator, and one outside the top is published once it has cost more than the smallest one inside. `0` publishes every tag set. The column gives the shipped value; the Datadog output sets 200 because Datadog bills each distinct tag set as a custom metric.
 
 ### :material-robot-happy-outline: Logs to Metrics
 

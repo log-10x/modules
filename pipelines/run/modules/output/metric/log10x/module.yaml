@@ -102,3 +102,16 @@ module:
         ```   
        
         To learn more see [inputName](https://doc.log10x.com/api/js/#TenXBaseObject+inputName).
+
+    - names:
+      - log10xMetricsTopSeries
+      description: number of tag sets with the most bytes to publish
+      type: number
+      required: false
+      category: counter
+      doc: |
+        keeps the output to the tag sets with the most bytes, ranked on the `summaryBytes` counter as
+        the series accumulate. An admitted tag set publishes from every aggregator; one outside the top
+        keeps accumulating and is published once it has cost more than the smallest one inside, which
+        stops. `0` publishes every tag set.
+      defValue: 0

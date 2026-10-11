@@ -17,7 +17,7 @@ The module writes these fields on each event:
 
 A template is the exact shape of one line format, which [compact](https://doc.log10x.com/run/transform/#compact) uses to store events. One log statement can produce several templates, for example when a field is optional, and all of them share one name.
 
-In Splunk, the app's `tenx_hash` field on a compact event holds that event's template key, which differs from the pattern hash.
+In the engine's metrics, `tenx_hash` is the pattern hash. On a Splunk compact event, the field of that name holds the template hash.
 
 ## :material-target: Message Extraction
 

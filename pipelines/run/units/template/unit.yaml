@@ -106,4 +106,4 @@ unit:
         temporary file on disk. Pruned templates are automatically reloaded from disk when
         accessed again.
 
-        Set to 0 to disable pruning and keep all templates in memory.
+        Set to 0 to disable pruning and keep all templates in memory. The shipped configuration file sets it to 10MB.

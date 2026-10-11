@@ -68,6 +68,13 @@ module:
         Tags are dimensions that enable slicing a particular named metric to drill down to reason about its value.
         To learn more see [micrometer tags](https://www.baeldung.com/micrometer#1-tags)
 
+        Datadog counts one custom metric per distinct tag set, so the shipped list names the pattern
+        and where it ran, and nothing that names one node or one process: `message_pattern`,
+        `tenx_hash`, `tenx_user_service`, `severity_level`, `routeState`, `k8s_container` and
+        `k8s_namespace`. The same set comes from every node, so the count does not grow with the
+        fleet or with restarts. To tag the host as well, add it as a
+        [runtime attribute](https://doc.log10x.com/run/bootstrap/#runtimeattributes), `host_name:<host>`.
+
     - names:
         - datadogTagFieldNames
       description: list of custom names to use for TenXSummary fields.
@@ -113,6 +120,22 @@ module:
         sets the maximum number of unique metric combinations (cardinality) allowed for this output.
         When exceeded, metrics will be dropped to prevent excessive cardinality.
       defValue: 500
+
+    - names:
+      - datadogTopSeries
+      description: number of tag sets with the most bytes to publish
+      type: number
+      required: false
+      category: counter
+      doc: |
+        keeps the output to the tag sets with the most bytes, ranked on the `summaryBytes` counter as
+        the series accumulate. A tag set outside the top keeps accumulating and is published once it
+        has cost more than the smallest one inside, which stops. `0` publishes every tag set.
+
+        With the two shipped aggregators and two counters each, 200 tag sets are 800 custom metrics,
+        inside a Pro plan's allotment of 100 per host from ten hosts up; the top 200 patterns carried
+        98.8% of the bytes on the OpenTelemetry demo capture.
+      defValue: 200
 
     - names:
       - datadogDescriptions

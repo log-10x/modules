@@ -238,12 +238,13 @@ module:
       required: false
       doc: |
         Defines the path to a declarative **per-service action file** (sibling to the cap file).
-        Each entry assigns the disposition of a service's regulator-identified excess: `drop`
+        Each entry assigns the disposition of a service's regulator-identified excess: `pass`
         (default), `offload` (to customer S3), `tier_down` (analyzer cheap tier), `compact` (lossless
-        encode), `sample`, or `pass`. The byte cap (`rateReceiverCapLookupFile`) still decides where the
-        excess starts; the action only decides what happens to it. Unlisted services default to `drop`
-        (the original regulator behavior). Read by the cap-variant regulator classes, which call
-        `route(action)` at the over-budget decision point instead of a hardcoded drop.
+        encode), `sample`, or `drop`. The byte cap (`rateReceiverCapLookupFile`) still decides where the
+        excess starts; the action only decides what happens to it. A capped service with no row
+        passes, and a cap file with no actions file loads an empty table: a cap alone never loses a
+        line. Read by the cap-variant regulator classes, which call `route(action)` at the
+        over-budget decision point.
 
         **File format** (CSV; header row + one comma-separated entry per row):
 

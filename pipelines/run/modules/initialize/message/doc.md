@@ -15,7 +15,7 @@ The module writes these fields on each event:
 | Origin | `recommendation_server.py:ListRecommendations` | [`symbolOriginField`](#symboloriginfield), off by default |
 | Skeleton | The message with `~` for each word of the name and `$` for each value | [`symbolSkeletonField`](#symbolskeletonfield), off by default |
 
-A template is the exact shape of one line format, which [compact](https://doc.log10x.com/run/transform/#compact) uses to store events. One log statement can produce several templates, for example when a field is optional, and all of them share one name.
+A template is the exact shape of one line format, which [compact](https://doc.log10x.com/run/transform/#compact) uses to store events. One log statement can produce several templates. Templates of one statement that differ only in values outside the library, such as timestamps and numbers, share one name; a value made of library words is read as part of the name, as the browser names are in the Web example below.
 
 In the engine's metrics, `tenx_hash` is the pattern hash. On a Splunk compact event, the field of that name holds the template hash.
 

@@ -20,10 +20,10 @@ This is especially valuable when storing stack traces than span 100s of lines an
 
 tenXObjects which evaluate as truthy against [groupExpressions](https://doc.log10x.com/run/transform/group/#groupexpressions) are marked as starting of a new group (i.e. a _group head_). 
 
-All subsequent TenXObjects read from the same input will join the current group until either:
+All subsequent TenXObjects read from the same source will join the current group until either:
 - Another group is started marked by a subsequent instance which evaluates as truthy against `groupExpressions`.
 - The number of TenXObjects in the current group exceeds [groupMaxSize](#groupmaxsize).
-- The [groupFlushTimeout](#groupflushtimeout) elapses. 
+- The [groupFlushTimeout](#groupflushtimeout) elapses. The interval counts from the last event read from the input as a whole, not per source. On an input that carries many sources, such as a forwarder connection, a steady source keeps it from expiring, so a source's last event, and any group it heads, waits for that source's next head.
 
 At that point the group is sealed as new composite TenXObject and flushed forward for aggregation and output.
 Each composite TenXObject returns the number of instances grouped within it via the [groupSize](https://doc.log10x.com/api/js/#TenXObject+groupSize) member.

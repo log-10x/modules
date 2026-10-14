@@ -53,6 +53,8 @@ unit:
         sets the max interval after which to flush pending TenXObjects into the pipeline. 
         This option provides a timeout period to flush the current group head and composed 
         TenXObjects into the pipeline for aggregation, filtering, and encoding to output.
+
+        The interval counts from the last event read from the input as a whole, not per source. On an input that carries many sources, such as a forwarder connection, a steady source keeps it from expiring, so a source's last event, and any group it heads, waits for that source's next head.
       defValue: 5sec
 
     - names:

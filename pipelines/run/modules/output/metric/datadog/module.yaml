@@ -71,8 +71,9 @@ module:
         Datadog counts one custom metric per distinct tag set, so the shipped list names the pattern
         and where it ran, and nothing that names one node or one process: `message_pattern`,
         `tenx_hash`, `tenx_user_service`, `severity_level`, `routeState`, `k8s_container` and
-        `k8s_namespace`. The same set comes from every node, so the count does not grow with the
-        fleet or with restarts. To tag the host as well, add it as a
+        `k8s_namespace`, plus `tenx_team` when `k8sTeamLabel` names a pod label. The same set comes
+        from every node, so the count does not grow with the fleet or with restarts. To tag the host
+        as well, add it as a
         [runtime attribute](https://doc.log10x.com/run/bootstrap/#runtimeattributes), `host_name:<host>`.
 
     - names:

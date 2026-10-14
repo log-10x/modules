@@ -20,8 +20,8 @@ export class K8sFluentObject extends TenXObject {
         return TenXEnv.get("k8sExtractorName") == "fluentK8s";
     }
 
-    // Assigns namespace + container + user-service enrichments. Always runs when
-    // the fluentK8s extractor is enabled.
+    // Assigns namespace + container + user-service enrichments, and the team when
+    // k8sTeamLabel names a label. Always runs when the fluentK8s extractor is enabled.
     constructor() {
 
         var namespace_name = this.namespace_name;
@@ -33,6 +33,12 @@ export class K8sFluentObject extends TenXObject {
         if (container_name) {
             this.set(TenXEnv.get("k8sContainerNameField"), container_name);
             this.tenx_user_service = container_name;
+        }
+
+        // The team that owns the container, read from the k8sTeamLabel pod label.
+        var team_label = this.team_label;
+        if (team_label && TenXEnv.get("k8sTeamLabel")) {
+            this.set(TenXEnv.get("k8sTeamField", "tenx_team"), team_label);
         }
     }
 }

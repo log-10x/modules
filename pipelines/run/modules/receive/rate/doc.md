@@ -70,7 +70,7 @@ Same hot-reload rule as the mute file: both launch-macro lanes reload, a plain v
 
 ## :material-arrow-decision: Actions
 
-An optional action file decides what happens to the events a pattern spends above its cap. Without it, or for a container with no row, the excess passes: a cap alone never loses a line.
+An optional action file decides what happens to the events a pattern spends above its cap. Without it, or for a container with no row, the excess takes `rateReceiverDefaultAction`, `pass` unless set.
 
 **File format**, CSV with a header row, keyed by the same `containerField` value as the cap file:
 
@@ -79,7 +79,7 @@ container,action
 <container>,<action>[:<untilEpochSec>][:<reason>]
 ```
 
-- `action` is one of `pass`, `offload`, `tier_down`, `compact`, `sample`, or `drop`. Unlisted containers get `pass`.
+- `action` is one of `pass`, `offload`, `tier_down`, `compact`, `sample`, or `drop`. Unlisted containers take `rateReceiverDefaultAction`, `pass` unless set.
 - `untilEpochSec` expires the entry, which then self-heals to a no-op.
 - `reason` is free text for audit. Must not contain commas (would break CSV parsing).
 

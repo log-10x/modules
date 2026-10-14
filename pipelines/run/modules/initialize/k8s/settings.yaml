@@ -24,6 +24,10 @@ extractor:
       - captureField:kubernetes.namespace_name:namespace_name
       - captureField:kubernetes.container_name:container_name
       - captureField:kubernetes.pod_name:pod_name
+      # The pod label k8sTeamLabel names, or 'team' when it is empty, since an actions list
+      # cannot hold an empty entry. K8sFluentObject assigns the team only when k8sTeamLabel
+      # is set. Outer quotes keep the ternary a plain scalar.
+      - '$=yield "captureField:kubernetes.labels." + (TenXEnv.get("k8sTeamLabel") ? TenXEnv.get("k8sTeamLabel") : "team") + ":team_label"'
 
   - name: filebeatK8s
     type: json
@@ -35,6 +39,9 @@ extractor:
       - $="captureField:kubernetes.namespace:" + TenXEnv.get("k8sNamespaceNameField", "namespace")
       - $="captureField:kubernetes.container.name:" + TenXEnv.get("k8sContainerNameField", "container")
       - $="captureField:kubernetes.pod.name:" + TenXEnv.get("k8sPodNameField", "pod")
+      # The k8sTeamLabel pod label straight into the team field; when it is empty, the 'team'
+      # label into a field nothing reads.
+      - '$=yield "captureField:kubernetes.labels." + (TenXEnv.get("k8sTeamLabel") ? TenXEnv.get("k8sTeamLabel") + ":" + TenXEnv.get("k8sTeamField", "tenx_team") : "team:team_label")'
 
 # ============================ Aggregation Settings ===========================
 
@@ -63,3 +70,6 @@ enrichmentFields:
   # pod resolution is explicitly enabled (k8sPodNameField non-empty); otherwise this label
   # would carry the same deploy-churn cost we just stripped from k8sPodNameField.
   - $=yield TenXEnv.get("k8sExtractorName") && TenXEnv.get("k8sPodNameField") ? "tenx_user_process":""
+  # The team that owns the container, when k8sTeamLabel names a pod label. It adds series only
+  # where one container name runs in several teams' pods.
+  - $=yield TenXEnv.get("k8sExtractorName") && TenXEnv.get("k8sTeamLabel") ? TenXEnv.get("k8sTeamField"):""

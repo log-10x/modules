@@ -242,9 +242,9 @@ module:
         (default), `offload` (to customer S3), `tier_down` (analyzer cheap tier), `compact` (lossless
         encode), `sample`, or `drop`. The byte cap (`rateReceiverCapLookupFile`) still decides where the
         excess starts; the action only decides what happens to it. A capped service with no row
-        passes, and a cap file with no actions file loads an empty table: a cap alone never loses a
-        line. Read by the cap-variant regulator classes, which call `route(action)` at the
-        over-budget decision point.
+        takes `rateReceiverDefaultAction` (`pass` unless set), and a cap file with no actions file
+        loads an empty table. Read by the cap-variant regulator classes, which call `route(action)`
+        at the over-budget decision point.
 
         **File format** (CSV; header row + one comma-separated entry per row):
 
@@ -260,6 +260,22 @@ module:
 
         Intended to be managed via GitOps + the `log10x_configure_engine` MCP tool, which derives
         per-service actions from the per-pattern action plan it already computes.
+
+    - names:
+      - rateReceiverDefaultAction
+      description: the action a container with no `rateReceiverActionLookupFile` row takes for its over-cap excess
+      type: string
+      required: false
+      doc: |
+        Defines what the over-cap excess of a container with no row in `rateReceiverActionLookupFile`
+        does: one of `pass`, `offload`, `tier_down`, `compact`, `sample` or `drop`. `pass` leaves the
+        excess where it was, so only the containers the actions file lists act on theirs. An explicit
+        row still wins.
+
+        Set it beside `rateReceiverAbsoluteCap` so the fleet-wide cap acts on services nobody listed.
+        Read by the cap-file regulator classes, the ones that consult the actions file. A value
+        outside the six logs a warning at load and the regulator uses `pass`.
+      defValue: pass
 
     - names:
       - rateReceiverCapLookupFile

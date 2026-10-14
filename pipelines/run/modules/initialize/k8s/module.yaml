@@ -61,3 +61,21 @@ module:
       doc: |
         specify the field name to assign with the extracted k8s [pod name](https://kubernetes.io/docs/concepts/workloads/pods/)
       defValue: pod
+
+    - names:
+      - k8sTeamLabel
+      description: pod label key whose value names the team that owns the container
+      type: string
+      required: false
+      doc: |
+        specify the pod [label](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/) key whose value names the team that owns an event's container, for example `team` or `app.kubernetes.io/part-of`. The value is assigned to the field `k8sTeamField` names and joins the metric labels. A container name that runs in one team's pods adds no series; a name shared by several teams' pods, such as a common init container, adds one per team. Empty reads no label.
+      defValue: ""
+
+    - names:
+      - k8sTeamField
+      description: K8s team target field name
+      type: string
+      required: false
+      doc: |
+        specify the field name to assign with the value of the `k8sTeamLabel` pod label. An event whose pod carries no such label gets no field, and its Datadog series carry the tag with an empty value.
+      defValue: tenx_team

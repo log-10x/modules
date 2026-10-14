@@ -46,7 +46,7 @@ Subsequent TenXObjects attach to the active group until encountering another hea
 
 ### Default Configuration
 
-Default [groupIndicators](#groupindicators) encompass patterns like private IP addresses (e.g., '192.', '10.'), HTTP methods (e.g., 'GET ', 'POST '), system logs (e.g., 'kernel:', 'sshd['), and stack trace starters (e.g., 'Traceback ', 'Exception in thread ').
+Default [groupIndicators](#groupindicators) encompass patterns like private IP addresses (e.g., '192.', '10.'), HTTP methods (e.g., 'GET ', 'POST '), system logs (e.g., 'kernel:', 'sshd['), stack trace starters (e.g., 'Traceback ', 'Exception in thread '), and the ANSI dim code (`\x1b[2m`) that opens a coloured line from Rust tracing, whose timestamp the escape code hides.
 
 
 Users can customize these patterns in their configuration to suit specific log formats.

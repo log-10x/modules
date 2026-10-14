@@ -37,5 +37,6 @@ unit:
         - `192.` - Indicates a private IP address, common in web server logs (e.g., "192.168.1.1 - - [...]").
         - `10.` - Indicates a private IP range, often in Kubernetes or internal network logs (e.g., "10.244.0.125 - - [...]").
         - `GET ` - Indicates an HTTP GET request, marking the start of a web transaction log (e.g., "GET /index.html HTTP/1.1").
+        - `\x1b[2m` - Indicates a line that opens in ANSI dim, the way Rust tracing prints the timestamp of a coloured line. The escape code is glued to the year, so the timestamp is not recognised and the line needs this indicator to head its own event.
         - `at ` - Indicates a Java/C# stack trace continuation.
 

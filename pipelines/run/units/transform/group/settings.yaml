@@ -32,6 +32,10 @@ groupMaxSize: $?groupMaxSize=20000
 #  pending TenXObjects group into the pipeline.
 #  This mechanism is designed to avoid latencies in dispatching pending event
 #  groups to output destinations.
+#  The interval counts from the last event read from the input as a whole, not
+#  per source: on a forwarder connection that carries many sources, a steady
+#  source keeps it from expiring, so a source's last event, and any group it
+#  heads, waits for that source's next head.
 groupFlushTimeout: $?groupFlushTimeout=5000
 
 # 'groupAsync' specifies whether to sequence and group TenXObjects in a dedicated thread

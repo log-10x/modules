@@ -23,7 +23,7 @@ tenXObjects which evaluate as truthy against [groupExpressions](https://doc.log1
 All subsequent TenXObjects read from the same source will join the current group until either:
 - Another group is started marked by a subsequent instance which evaluates as truthy against `groupExpressions`.
 - The number of TenXObjects in the current group exceeds [groupMaxSize](#groupmaxsize).
-- The [groupFlushTimeout](#groupflushtimeout) elapses. The interval counts from the last event read from the input as a whole, not per source. On an input that carries many sources, such as a forwarder connection, a steady source keeps it from expiring, so a source's last event, and any group it heads, waits for that source's next head.
+- The [groupFlushTimeout](#groupflushtimeout) elapses. The interval counts per source, from the batch that carried the source's last line. On a forwarder input that batch reaches the group step up to about 2 s after the line (`parallelEventFlushInterval`), so at the 5 s default a quiet source's lines leave 5 to 7 s after its last line, however busy the other sources on the connection are. A pause of about 3 s or more in a source's own lines can seal its open group.
 
 At that point the group is sealed as new composite TenXObject and flushed forward for aggregation and output.
 Each composite TenXObject returns the number of instances grouped within it via the [groupSize](https://doc.log10x.com/api/js/#TenXObject+groupSize) member.

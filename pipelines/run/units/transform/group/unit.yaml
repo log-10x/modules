@@ -54,7 +54,7 @@ unit:
         This option provides a timeout period to flush the current group head and composed 
         TenXObjects into the pipeline for aggregation, filtering, and encoding to output.
 
-        The interval counts from the last event read from the input as a whole, not per source. On an input that carries many sources, such as a forwarder connection, a steady source keeps it from expiring, so a source's last event, and any group it heads, waits for that source's next head.
+        The interval counts per source, from the batch that carried the source's last line. On a forwarder input that batch reaches the group step up to about 2 s after the line (`parallelEventFlushInterval`), so at the 5 s default a quiet source's lines leave 5 to 7 s after its last line, however busy the other sources on the connection are. A pause of about 3 s or more in a source's own lines can seal its open group.
       defValue: 5sec
 
     - names:

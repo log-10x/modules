@@ -75,6 +75,8 @@ A name stays the same across IDs, timestamps, nodes, restarts, pod renames and t
 - the symbol library is recompiled and a word on the line changes between value and known word;
 - an engine upgrade changes the naming rules.
 
+Every release that changes the naming rules or the default symbol library says so in its release notes; across releases that change neither, names stay the same (no pattern renamed from 1.1.140 to 1.1.142 on two public captures, [benchmarks/naming-stability](https://github.com/log-10x/benchmarks/tree/main/naming-stability)).
+
 ## :material-file-document-outline: Examples
 
 === ":simple-opentelemetry: OTel Demo"

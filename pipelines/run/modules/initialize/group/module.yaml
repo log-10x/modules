@@ -40,3 +40,17 @@ unit:
         - `\x1b[2m` - Indicates a line that opens in ANSI dim, the way Rust tracing prints the timestamp of a coloured line. The escape code is glued to the year, so the timestamp is not recognised and the line needs this indicator to head its own event.
         - `at ` - Indicates a Java/C# stack trace continuation.
 
+    - names:
+        - groupChildLabels
+      description: labels that mark a line as a child of the event above it, even when the line has its own timestamp.
+      type: list
+      required: false
+      doc: |
+        A list of labels that mark a line as a child of the event above it in the same stream, even when the line has its own timestamp. Empty by default.
+
+        A line's label is the word before its first colon followed by two spaces, where that word starts the line or follows a space, a colon or a closing bracket. PostgreSQL writes its log prefix and then a label such as `ERROR:  ` or `DETAIL:  ` on each line of one error, so the `ERROR` line heads the event and the lines below it join that event. The shipped configuration lists:
+
+        - `DETAIL`, `HINT`, `CONTEXT` and `STATEMENT`: PostgreSQL lines that add to the error or message above them.
+        - `QUERY` and `LOCATION`: PostgreSQL lines that give the internal query and the source location of the error above them.
+
+        The rule reads the line's own text, once per template, so a line's place in its event holds across restarts and nodes.

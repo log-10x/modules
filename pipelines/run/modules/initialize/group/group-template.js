@@ -27,9 +27,25 @@ export class GroupTemplate extends TenXTemplate {
             var event = this.get(TenXEnv.get("inputField"));
             var groupHead = false;
 
-            // timestamped templates are assumed to be a group head
-            if (this.timestamped) {
+            // a line whose first label (the word before its first ":  ") is a child
+            // label continues the event above it, timestamp or not (PostgreSQL DETAIL:)
+            var childLabel = false;
+            var labelEnd = TenXString.indexOf(event, ":  ", 0);
+            if (labelEnd > 0) {
+                var label = TenXString.endsWith(TenXString.substring(event, 0, labelEnd), TenXEnv.get("groupChildLabels"));
+                if (label) {
+                    var labelStart = labelEnd - TenXString.length(label);
+                    childLabel = (labelStart == 0) || TenXString.includes(" :]", TenXString.substring(event, labelStart - 1, labelStart));
+                }
+            }
 
+            if (childLabel) {
+
+                groupHead = false;
+
+            } else if (this.timestamped) {
+
+                // timestamped templates are assumed to be a group head
                 groupHead = true;
 
             } else if (TenXString.startsWith(event, TenXEnv.get("messageNegators"))) {

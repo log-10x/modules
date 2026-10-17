@@ -133,10 +133,38 @@ module:
         the series accumulate. A tag set outside the top keeps accumulating and is published once it
         has cost more than the smallest one inside, which stops. `0` publishes every tag set.
 
-        With the two shipped aggregators and two counters each, 200 tag sets are 800 custom metrics,
-        inside a Pro plan's allotment of 100 per host from ten hosts up; the top 200 patterns carried
-        98.8% of the bytes on the OpenTelemetry demo capture.
+        With the two shipped aggregators and two counters each, 200 tag sets are 800 distributions,
+        which Datadog bills as 4,000 custom metrics on any number of nodes, inside a Pro plan's
+        allotment of 100 per host from 40 hosts up; the top 200 patterns carried 98.8% of the bytes
+        on the OpenTelemetry demo capture.
       defValue: 200
+
+    - names:
+      - datadogMetricType
+      description: how counters are published to Datadog, as distribution points or count series
+      type: string
+      required: false
+      category: counter
+      doc: |
+        sets how counters reach Datadog. `distribution` posts each step's value as a
+        [distribution](https://docs.datadoghq.com/metrics/distributions/) point; Datadog merges
+        the points from every node that sends the same tag set, so the series carry no host tag
+        and the total is exact on any number of nodes. `count` posts count series, which Datadog
+        keeps one per second per tag set: nodes sharing a tag set overwrite each other's points,
+        so use `count` only with a per-node tag such as `hostTag`.
+      defValue: distribution
+
+    - names:
+      - datadogMetricPrefix
+      description: prefix prepended to each distribution's metric name
+      type: string
+      required: false
+      category: counter
+      doc: |
+        is prepended to every distribution's name, for example `log10x.emitted_events_summaryBytes`.
+        Datadog does not accept a name already used by another metric type, so the prefix keeps
+        the distributions apart from count series posted under the bare names.
+      defValue: log10x.
 
     - names:
       - datadogDescriptions
@@ -176,7 +204,8 @@ module:
       required: false
       category: authentication
       doc: |
-        sets the Datadog [app Key](https://docs.datadoghq.com/account_management/api-app-keys/)
+        sets the Datadog [app Key](https://docs.datadoghq.com/account_management/api-app-keys/).
+        Not needed to publish; with `count` series it lets the output set each metric's unit.
 
     - names:
       - datadogHostTag

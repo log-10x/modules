@@ -74,3 +74,14 @@ enrichmentFields:
   # loop, and a bare local 'run' (option unset) carries it nowhere. Outer quotes
   # required (the ternary's inner `: "..."` is YAML mapping syntax otherwise).
   - '$=yield TenXEnv.get("rateReceiverConfigGenerationFile") ? "tenx_config_version" : ""'
+
+# ============================== Keep counts ==================================
+#
+# The keep counts every regulator variant reads (TenXMap.fromEntries rejects an
+# empty value at launch, so a config without 'keepCounts' would not start). The
+# config's 'keepCounts' list and any command-line entries come after these, and
+# the last entry for a level wins.
+rateReceiverKeepCounts:
+  - ERROR=50
+  - CRITICAL=50
+  - FATAL=50

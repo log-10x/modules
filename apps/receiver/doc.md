@@ -682,7 +682,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
     === ":material-percent: Per-Pattern Cap"
 
-        Set a 10 MB budget for any single log pattern per container per window. No cap is set by default, so this block is what turns the regulator on. The [Level Classifier](https://doc.log10x.com/run/initialize/level/) enriches events with severity, so the floor keeps ERROR events flowing even when a pattern is over its cap.
+        Set a 10 MB budget for any single log pattern per container per window. No cap is set by default, so this block is what turns the regulator on. The [Level Classifier](https://doc.log10x.com/run/initialize/level/) enriches events with severity, so error-class lines keep their count even when a pattern is over its cap.
 
         ```yaml
         rateReceiver:
@@ -690,16 +690,13 @@ Follow the steps below. Steps that require customization link to the relevant [C
             - message_pattern            # the pattern identity
           containerField: container      # scopes the cap to one service
           absoluteCap: 10485760          # 10 MB per pattern per container per window
-          minSharePercent: 0.05          # leave patterns under 5% of their container alone
-          severityFloors:
-            - INFO=0.1
-            - WARN=0.3
-            - ERROR=0.5
+          keepCounts:                    # error-class lines kept per pattern per window
+            - ERROR=50
+            - CRITICAL=50
+            - FATAL=50
         ```
 
-        The floor beats the cap: a pattern over 10 MB still keeps Error 50%, Warn 30%, Info 10%. At or below the cap every event passes through untouched. Whatever the floor does not keep is dropped, unless an action file gives that container a different action.
-
-        The cap is therefore not a hard bound. The floor check runs after the cap check, so above the cap a flood still passes at the floor rate, and the worst case for one pattern in one container per window is the cap plus the floor share of everything above it.
+        At or below the cap every event passes through untouched. Above it, a pattern keeps its first 5 lines per window, plus 50 lines of each error-class level, and the rest take the container's action (`pass` unless an action file or `defaultAction` sets one). The most one pattern in one container passes per window is therefore the cap plus those lines.
 
     === ":material-kubernetes: Multi-App Kubernetes"
 
@@ -715,7 +712,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
         Each (pattern, container) pair gets its own 10 MB cap. Scaling from 1 to 10 pods does not bypass it because the container name is stable across replicas. To give one app a different cap, list it in a cap file, which wins over `absoluteCap` for that container.
 
-        The severity floors apply here too, so the cap is where the regulator engages rather than a bound on what a pattern can spend.
+        The keep counts apply here too. To bound a whole service rather than each pattern, add a total file (`totalLookupFile`): once the service has seen more than its total in a window its largest patterns are held first, and once it has passed its total every further line takes its action.
 
     === ":material-file-document-edit-outline: Mute File (GitOps)"
 

@@ -2,35 +2,55 @@
 icon: material/progress-check
 ---
 
-Stop any single log pattern from dominating its container's volume, on the forwarder, before that volume is billed downstream. Errors and warnings keep flowing, and a pattern an operator lists in the mute file follows its own entry instead of the cap.
+Hold each log pattern, and each service, to a budget per window, on the forwarder, before that volume is billed downstream. Lines over a budget take the service's action; error-class lines keep a fixed count per pattern, and a pattern an operator lists in the mute file follows its own entry instead of the cap.
 
-The rate regulator watches each container's recent volume and acts on any one [pattern](https://doc.log10x.com/run/initialize/message/ "the message symbol sequence that identifies a log type") that spends more bytes than the cap set for that container. That pattern is the same value, in the field `symbolMessageField` names (`message_pattern` in the shipped configuration), that a Reporter attributes cost to, so a top spender maps straight to what gets regulated. No cap ships by default, so nothing is regulated until an operator sets one.
+The rate regulator watches each container's recent volume and acts on any one [pattern](https://doc.log10x.com/run/initialize/message/ "the message symbol sequence that identifies a log type") that spends more than the cap set for that container. That pattern is the same value, in the field `symbolMessageField` names (`message_pattern` in the shipped configuration), that a Reporter attributes cost to, so a top spender maps straight to what gets regulated. No cap ships by default, so nothing is regulated until an operator sets one.
 
 ## :material-percent-outline: The cap
 
-The cap is a byte budget for one pattern in one container over one window. It resolves per event: the container's row in the cap file first, then the fleet-wide `absoluteCap`. Both default to none, and a resolved cap of `0` means keep everything, so protection is opt-in. Set `absoluteCap`, a cap file, or both.
+The cap is a budget for one pattern in one container over one window (`resetIntervalMs`, default 4 minutes). The regulator counts it in `unit`: `bytes`, each line's UTF-8 size, or `events`, one per line, for analyzers that bill per event such as Datadog. The cap and total files are written in the same unit. The cap resolves per event: the container's row in the cap file, then the file's `*` row, then the fleet-wide `absoluteCap`. All three default to none, and a resolved cap of `0` means keep everything, so protection is opt-in.
 
-At or below the cap every event is kept. Above it the regulator engages, and the event takes one of three exits, in this order: kept by the share guard, kept by the severity floor, or routed by the container's action.
+At or below the cap every line is kept. Above it a line is held and takes the container's action, with three exceptions: the first `baselineCount` lines of every pattern each window (default 5), the error-class lines in `keepCounts`, and the optional share guard.
 
-The share guard is a sanity check on the cap. A pattern over its cap but below `minSharePercent` (default 5%) of its container's volume is left alone, so a busy container whose traffic is spread thin does not trip the regulator. Share is measured per container over a rolling window (`resetIntervalMs`, default 4 minutes): `(pattern bytes + event) / (container bytes + event)`. The window is recent rather than all-time, so a pattern that spikes during a deploy and then goes quiet stops being trimmed on its own.
+With the shipped settings, the most one pattern in one container passes per window is its cap plus the 5-line sample, plus 50 lines for an error-class pattern. The window is recent rather than all-time, so a pattern that spikes during a deploy and then goes quiet stops being held on its own.
 
-Nothing targets the excess back down to the cap line. The cap decides when the regulator engages, the floor decides what fraction of the excess survives, and the action decides what happens to the rest.
+The share guard is off by default (`minSharePercent: 0`). Set above 0, it keeps a pattern over its cap while the pattern is below that share of its container's volume, `(pattern units + event) / (container units + event)` over the window.
 
-The cap is not a hard bound. The floor check runs after the cap check, so above the cap a flood still passes at the floor rate, and the worst case for one pattern in one container per window is the cap plus the floor share of everything above it.
+## :material-sigma: Service totals
 
-## :material-shield-alert-outline: Severity floors
+An optional total file bounds what each service passes per window on this node, across all its patterns. New patterns from a deploy each bring a full per-pattern cap, so a service without a total can send many times its budget until its caps are rewritten. Two rules apply once a service has a total:
 
-The cap never silences high-severity logs. `severityFloors` sets a minimum retention per level that beats the cap: even a pattern over its cap keeps at least Error 50%, Warn 30%, Info 10%. Critical and Fatal sit with Error, and any level with no entry of its own falls to `minRetentionThreshold` (10%). That floor share of the excess is what makes the cap a trigger rather than a bound. The floor reads the [severity](https://doc.log10x.com/run/initialize/level/) the level enrichment produced, so it applies whatever field the original log used.
+- **Largest first.** Once the service has seen more than its total in the window, every pattern's cap scales by total / service volume. The service's largest patterns reach the scaled cap first and are held, and its small ones keep passing.
+- **Hard bound.** Once the lines the service passed reach its total, every further line takes the service's action.
+
+The baseline sample and the error-class lines in `keepCounts` always pass and count toward the total, so an error storm can exceed the total by the keep count per storming pattern. Each regulator instance holds its own total; the writer of the file divides a fleet budget across instances, and a node added between writes enforces its own total until the next write.
+
+**File format**, CSV with a header row, keyed by the `containerField` value, read through `totalLookupFile` (`TOTAL_LOOKUP_FILE`):
+
+```
+container,total
+<container>,<total>[:<untilEpochSec>][:<reason>]
+*,<total>[:<untilEpochSec>][:<reason>]
+```
+
+- `total` is the service's total per window on this instance, in `unit`. `0` exempts the service.
+- `*` sets the total for every service without a row of its own.
+- `untilEpochSec` expires the entry, which then self-heals to a no-op.
+- `reason` is free text for audit. Must not contain commas (would break CSV parsing).
+
+A missing total file loads as an empty table, so no service has a total until a row names it. Totals apply to containers with a cap, in the regulators that read the cap file.
+
+## :material-shield-alert-outline: Error-class lines
+
+Error-class lines are never held to zero. `keepCounts` passes a fixed number of lines per pattern per window for each listed level, once the pattern is over its cap or its service is over its total, and under an active mute entry. The shipped list is `ERROR=50`, `CRITICAL=50` and `FATAL=50`; the lines past the count take the container's action. The count is per pattern, per container, per node, per window, so it bounds what an error storm adds to the bill.
+
+Levels not in `keepCounts` follow `severityFloors`, the fraction of a held pattern's lines kept at random. The shipped floors are `0` for every level, and any level with no floor of its own takes `minRetentionThreshold` (`0`). Both lists read the [severity](https://doc.log10x.com/run/initialize/level/) the level enrichment produced, so they apply whatever field the original log used. Each list must hold at least one entry: an empty or missing list stops the launch.
 
 ## :material-timer-sand: Warmup
 
-A container is left unregulated for `warmupMs` (default 5 minutes) after this regulator instance first sees its events. Lower for fast-starting apps that should be capped sooner after a restart, raise for slow-ramping JVMs or workloads with long init phases.
+An optional `warmupMs` leaves a container unregulated for that long after this regulator instance first sees its events. The default is `0`, so a container is capped from its first line. Set it for slow-ramping JVMs or workloads with long init phases whose first minutes should not be capped.
 
-The warmup exists because the regulator's per-pattern sample counts start empty. Without a few minutes of accumulation, a low-volume pattern can look dominant purely because of ordering. Five minutes gives enough samples for typical Kubernetes traffic to tell a noisy pattern from a quiet one.
-
-"First sees" is per regulator instance, not per container birth. A container that has been running for hours but whose events have only just started flowing through this regulator, after a regulator restart or a forwarder reconnect, restarts the warmup window. On a daemonset rolling restart the cap is therefore disabled for `warmupMs` per node as it cycles.
-
-The first `baselineCount` events (default 5) of every pattern are also kept each window, so even a heavily-trimmed pattern leaves a sample to inspect.
+"First sees" is per regulator instance, not per container birth. A container that has been running for hours but whose events have only just started flowing through this regulator, after a regulator restart or a forwarder reconnect, restarts the warmup window. With a warmup set, a daemonset rolling restart therefore disables the cap for `warmupMs` per node as it cycles.
 
 ## :material-file-document-edit-outline: Protection list
 
@@ -47,47 +67,50 @@ fieldSet,value
 - `untilEpochSec` expires the entry, which then self-heals to a no-op.
 - `reason` is free text for audit.
 
-The severity floor still applies, so a `0` mute never silences ERROR or FATAL. The file is typically committed to a repo and pulled via [gitops](https://doc.log10x.com/config/github/#config), or read directly from a Kubernetes ConfigMap via the [`@kubernetes` launch macro](https://doc.log10x.com/config/k8s/), so each change carries a diff, a review, and a merge. Both lanes hot-reload via atomic rename; a plain volume-mounted `ConfigMap` does not, because the swap is a symlink rename.
+The error-class levels in `keepCounts` still pass their count per pattern per window before the sample rate applies, so a `0` mute never silences ERROR, CRITICAL or FATAL. The file is typically committed to a repo and pulled via [gitops](https://doc.log10x.com/config/github/#config), or read directly from a Kubernetes ConfigMap via the [`@kubernetes` launch macro](https://doc.log10x.com/config/k8s/), so each change carries a diff, a review, and a merge. Both lanes hot-reload via atomic rename; a plain volume-mounted `ConfigMap` does not, because the swap is a symlink rename.
 
 ## :material-clipboard-list-outline: Per-container caps
 
-An optional cap file sets a byte cap for a specific container in priority over the fleet-wide `absoluteCap`. Listed containers get the file's cap; unlisted containers fall back to `absoluteCap` (or to no cap, when `absoluteCap` is 0).
+An optional cap file sets a cap for a specific container in priority over the fleet-wide `absoluteCap`. Listed containers get their own row; unlisted containers get the `*` row, and with no `*` row they fall back to `absoluteCap` (or to no cap, when `absoluteCap` is 0).
 
 **File format**, CSV with a header row, keyed by the `containerField` value (k8s container name by default):
 
 ```
 container,cap
-<container>,<bytes>[:<untilEpochSec>][:<reason>]
+<container>,<cap>[:<untilEpochSec>][:<reason>]
+*,<cap>[:<untilEpochSec>][:<reason>]
 ```
 
-- `bytes` is the per-pattern per-window cap for the container. `0` exempts the container from the absolute cap.
+- `cap` is the per-pattern per-window cap for the container, in `unit`. `0` exempts the container from every cap, the `*` row and `absoluteCap` included.
+- `*` sets the cap for every container without a row of its own.
 - `untilEpochSec` expires the entry, which then self-heals to a no-op.
 - `reason` is free text for audit. Must not contain commas (would break CSV parsing).
 
-The cap value changes; the share guard and severity floor still apply. Intended use is via the `log10x_configure_engine` MCP tool, which derives per-container caps from a target percent or a monthly dollar budget and opens a PR against the file.
+The cap value changes; the baseline sample, the keep counts and the service total still apply. Intended use is via the `log10x_configure_engine` MCP tool, which derives per-container caps from a target percent or a monthly dollar budget and opens a PR against the file.
 
 Same hot-reload rule as the mute file: both launch-macro lanes reload, a plain volume-mounted `ConfigMap` does not.
 
 ## :material-arrow-decision: Actions
 
-An optional action file decides what happens to the events a pattern spends above its cap. Without it, or for a container with no row, the excess takes `rateReceiverDefaultAction`, `pass` unless set.
+An optional action file decides what happens to the lines the cap or the service total holds. Without it, or for a container with neither its own row nor a `*` row, the held lines take `rateReceiverDefaultAction`, `pass` unless set.
 
 **File format**, CSV with a header row, keyed by the same `containerField` value as the cap file:
 
 ```
 container,action
 <container>,<action>[:<untilEpochSec>][:<reason>]
+*,<action>[:<untilEpochSec>][:<reason>]
 ```
 
-- `action` is one of `pass`, `offload`, `tier_down`, `compact`, `sample`, or `drop`. Unlisted containers take `rateReceiverDefaultAction`, `pass` unless set.
+- `action` is one of `pass`, `offload`, `tier_down`, `compact`, `sample`, or `drop`. `*` sets the action for every container without a row of its own; a container with neither takes `rateReceiverDefaultAction`, `pass` unless set.
 - `untilEpochSec` expires the entry, which then self-heals to a no-op.
 - `reason` is free text for audit. Must not contain commas (would break CSV parsing).
 
-The action is set per service and applies to every pattern over its cap in that service. Here a service is a container. Per-pattern thinning comes from the mute file, not from this file.
+The action is set per service and applies to every held line in that service. Here a service is a container. Per-pattern thinning comes from the mute file, not from this file.
 
-The event keeps flowing either way. The action lands on the event as its `routeState`, and the output streams and the forwarder recipe act on that, so `offload` and `tier_down` reach their destinations instead of being discarded at the regulator. The cap stays the backstop that decides how much excess there is; the action only decides where it goes.
+The event keeps flowing either way. The action lands on the event as its `routeState`, and the output streams and the forwarder recipe act on that, so `offload` and `tier_down` reach their destinations instead of being discarded at the regulator. The cap and the total decide which lines are held; the action only decides where they go.
 
-The action file is a sibling of the cap file in the same ConfigMap, and hot-reloads on the same rule.
+The action and total files are siblings of the cap file in the same ConfigMap, and hot-reload on the same rule.
 
 ## :material-kubernetes: Containers
 
@@ -97,7 +120,7 @@ Outside Kubernetes, or when no container field is present, the regulator falls b
 
 ## :material-cash-multiple: Savings
 
-Drops are measured, not estimated. The receive-stage aggregators tally every event by pattern and container both before and after regulation, so the saving for a pattern is the volume seen minus the volume emitted. A dropped event still counts as seen, so the figure reflects exactly what the regulator removed.
+Held lines are measured, not estimated. The receive-stage aggregators tally every event by pattern and container both before and after regulation, so the saving for a pattern is the volume seen minus the volume emitted. A dropped event still counts as seen, so the figure reflects exactly what the regulator removed.
 
 ## :material-tag-check-outline: Config-version stamp
 
@@ -112,19 +135,28 @@ rateReceiver:
   fieldNames:
     - message_pattern        # the pattern identity, the field symbolMessageField names
   containerField: container  # scopes the cap denominator
+  unit: bytes                # or events, for analyzers that bill per event
   absoluteCap: 10485760      # 10 MB per pattern per container per window (optional; 0 = no fleet-wide cap)
-  minSharePercent: 0.05      # share guard (sanity)
-  severityFloors:
-    - INFO=0.1
-    - WARN=0.3
-    - ERROR=0.5
-  warmupMs: 300000           # 5m per-instance grace; raise for slow-ramping apps
+  minSharePercent: 0         # share guard, off
+  keepCounts:                # error-class lines kept per pattern per window once held
+    - ERROR=50
+    - CRITICAL=50
+    - FATAL=50
+  severityFloors:            # random share kept for the other levels once held
+    - TRACE=0
+    - DEBUG=0
+    - INFO=0
+    - WARN=0
+    - ERROR=0
+    - CRITICAL=0
+    - FATAL=0
+  warmupMs: 0                # per-instance grace before capping; 0 caps from the first line
   baselineCount: 5
   capLookup:
-    # file: $=path("data/caps") + "/caps.csv"   # optional per-container overrides
+    # file: $=path("data/caps") + "/caps.csv"   # optional per-container caps, with a * row
     retain: $=parseDuration("10m")
-  actionLookup:
-    # file: $=path("data/caps") + "/actions.csv"  # optional per-container action for the excess; default pass
+  # actionLookupFile: $=path("data/caps") + "/actions.csv"  # optional per-container action for held lines; default pass
+  # totalLookupFile: $=path("data/caps") + "/totals.csv"    # optional per-service total per window
   configGeneration:
     # file: $=TenXEnv.get("CONFIG_GENERATION_FILE", "")   # MCP config-version stamp; opt-in, sibling of caps.csv
 ```

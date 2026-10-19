@@ -109,30 +109,45 @@ module:
       defValue: 240000
 
     - names:
+      - rateReceiverUnit
+      description: what the caps, the totals and the share guard count, `bytes` or `events`
+      type: string
+      required: false
+      doc: |
+        defines what the regulator counts against `rateReceiverAbsoluteCap`, the cap file
+        (`rateReceiverCapLookupFile`), the total file (`rateReceiverTotalLookupFile`) and the
+        share guard: `bytes` counts each line's UTF-8 size, `events` counts each line as 1.
+
+        Use `events` where the analyzer bills per event (Datadog indexes logs per event) and
+        `bytes` where it bills per GB. Write the cap and total files in the same unit.
+
+        **Validation:** must be `bytes` or `events`; any other value stops the launch.
+      defValue: bytes
+
+    - names:
       - rateReceiverMinRetentionThreshold
       description: default retention floor for severity levels not listed in severityFloors
       type: number
       required: false
       doc: |
         defines the retention floor (0.0 to 1.0) used for any severity level not present in
-        `rateReceiverSeverityFloors`. Ensures a pattern over its cap still retains at least this
-        fraction of events whose level has no explicit floor, preventing complete data loss.
-
-        **Validation:** Must be greater than 0.01.
-      defValue: 0.1
+        `rateReceiverSeverityFloors`: the fraction of a held pattern's lines of that level kept at
+        random. `0` keeps none, so the cap holds.
+      defValue: 0
 
     - names:
       - rateReceiverSeverityFloors
-      description: minimum retention per severity level, applied as an absolute floor
+      description: fraction of each severity level kept at random once a pattern is held
       type: list
       required: false
       doc: |
-        defines a map of [severity levels](https://doc.log10x.com/run/initialize/level/) to a minimum
-        retention fraction. The floor is **absolute** (not a multiplier) and **beats the share cap**:
-        even a pattern over its cap keeps at least this fraction of each level, so high-severity
-        events are never fully suppressed.
+        defines a map of [severity levels](https://doc.log10x.com/run/initialize/level/) to the
+        fraction (0.0 to 1.0) of a held pattern's lines kept at random, for levels not listed in
+        `rateReceiverKeepCounts`. The shipped configuration sets every level to `0`, so a cap holds
+        and error-class levels pass by count instead.
 
-        The floor also applies under a mute-file entry, so a `0.0` mute never silences ERROR/FATAL.
+        The floor also applies under a mute-file entry: an active entry keeps the larger of its
+        sample rate and the floor.
 
         Floor-map keys must match the level vocabulary emitted by the level enrichment. Any level not
         listed uses `rateReceiverMinRetentionThreshold`.
@@ -141,12 +156,42 @@ module:
 
         ``` yaml
         severityFloors:
-          - TRACE=0.1
-          - DEBUG=0.1
-          - INFO=0.1
-          - WARN=0.3
-          - ERROR=0.5
-          - FATAL=0.5
+          - TRACE=0
+          - DEBUG=0
+          - INFO=0
+          - WARN=0
+          - ERROR=0
+          - CRITICAL=0
+          - FATAL=0
+        ```
+
+    - names:
+      - rateReceiverKeepCounts
+      description: lines per pattern per window that pass for a level once the pattern is held
+      type: list
+      required: false
+      doc: |
+        defines a map of [severity levels](https://doc.log10x.com/run/initialize/level/) to a count:
+        the number of lines of each pattern of that level that pass per window once the pattern is
+        over its cap or its container is over its total (`rateReceiverTotalLookupFile`), and under an
+        active mute-file entry. Lines past the count take the container's action, or the mute's
+        sample rate under a mute. A listed level skips its `rateReceiverSeverityFloors` draw.
+
+        The count is per pattern, per container, per regulator instance (one per node), per window
+        (`rateReceiverResetIntervalMs`). The lines it passes count toward the container's total, so
+        an error storm can exceed the total by the count times the storming patterns.
+
+        Keys must match the level vocabulary emitted by the level enrichment. A level not listed
+        follows its floor. The list must hold at least one entry: like `rateReceiverSeverityFloors`,
+        an empty or missing list stops the launch (`could not parse function: 'TenXMap_fromEntries'`).
+
+        For example:
+
+        ``` yaml
+        keepCounts:
+          - ERROR=50
+          - CRITICAL=50
+          - FATAL=50
         ```
 
     - names:
@@ -210,9 +255,9 @@ module:
           reads the Reporter's cost attribution, appends the entry, and opens a PR. The
           mute file is the interface.
 
-        **Severity floor still applies.** Even a `0.0` mute will retain high-severity
-        events at their `rateReceiverSeverityFloors` fraction. This prevents a poorly-scoped
-        mute from silencing ERROR/FATAL traffic.
+        **Error-class lines still pass by count.** Under an active entry, the levels in
+        `rateReceiverKeepCounts` pass their first lines per pattern per window before the
+        sample rate applies, so a `0.0` mute never silences ERROR/CRITICAL/FATAL traffic.
 
         When `rateReceiverLookupFile` is **unset**, the regulator runs alone on every pattern.
       defValue: ""
@@ -238,22 +283,25 @@ module:
       required: false
       doc: |
         Defines the path to a declarative **per-service action file** (sibling to the cap file).
-        Each entry assigns the disposition of a service's regulator-identified excess: `pass`
-        (default), `offload` (to customer S3), `tier_down` (analyzer cheap tier), `compact` (lossless
-        encode), `sample`, or `drop`. The byte cap (`rateReceiverCapLookupFile`) still decides where the
-        excess starts; the action only decides what happens to it. A capped service with no row
-        takes `rateReceiverDefaultAction` (`pass` unless set), and a cap file with no actions file
-        loads an empty table. Read by the cap-variant regulator classes, which call `route(action)`
-        at the over-budget decision point.
+        Each entry assigns the disposition of a service's held lines: `pass` (default), `offload`
+        (to customer S3), `tier_down` (analyzer cheap tier), `compact` (lossless encode), `sample`,
+        or `drop`. The cap (`rateReceiverCapLookupFile`) and the total (`rateReceiverTotalLookupFile`)
+        decide which lines are held; the action only decides what happens to them. A row keyed `*`
+        applies to every service without a row of its own; a service with neither takes
+        `rateReceiverDefaultAction` (`pass` unless set), and a cap file with no actions file loads an
+        empty table. Read by the cap-variant regulator classes, which call `route(action)` at the
+        over-budget decision point.
 
         **File format** (CSV; header row + one comma-separated entry per row):
 
         ```
         container,action
         <container>,<action>[:<untilEpochSec>][:<reason>]
+        *,<action>[:<untilEpochSec>][:<reason>]
         ```
 
-        - `container`, value of `rateReceiverContainerField` (the k8s container = the service).
+        - `container`, value of `rateReceiverContainerField` (the k8s container = the service), or
+          `*` for every service without a row of its own.
         - `action`, one of `drop` / `offload` / `tier_down` / `compact` / `sample` / `pass`.
         - `untilEpochSec`, optional Unix-epoch (seconds) expiry; past it the entry is a no-op.
         - `reason`, optional free-text for audit. Must not contain commas (would break CSV parsing).
@@ -267,10 +315,10 @@ module:
       type: string
       required: false
       doc: |
-        Defines what the over-cap excess of a container with no row in `rateReceiverActionLookupFile`
-        does: one of `pass`, `offload`, `tier_down`, `compact`, `sample` or `drop`. `pass` leaves the
-        excess where it was, so only the containers the actions file lists act on theirs. An explicit
-        row still wins.
+        Defines what the held lines of a container with neither its own row nor a `*` row in
+        `rateReceiverActionLookupFile` do: one of `pass`, `offload`, `tier_down`, `compact`, `sample`
+        or `drop`. `pass` leaves them where they were, so only the containers the actions file covers
+        act on theirs. An explicit row, and then the `*` row, still win.
 
         Set it beside `rateReceiverAbsoluteCap` so the fleet-wide cap acts on services nobody listed.
         Read by the cap-file regulator classes, the ones that consult the actions file. A value
@@ -279,27 +327,31 @@ module:
 
     - names:
       - rateReceiverCapLookupFile
-      description: declarative per-container byte cap file, keyed by the `rateReceiverContainerField` value
+      description: declarative per-container cap file, keyed by the `rateReceiverContainerField` value
       type: string
       required: false
       doc: |
-        defines the path to a declarative **per-container cap file**. Each entry assigns a byte cap
-        to a specific container (the value of `rateReceiverContainerField`, which defaults to the k8s
-        container name). The file's cap wins per-event over `rateReceiverAbsoluteCap`: listed
-        containers get the file's cap, unlisted containers fall back to the fleet-wide cap (or to
-        no cap, if `rateReceiverAbsoluteCap` is `0`).
+        defines the path to a declarative **per-container cap file**. Each entry assigns a cap, in
+        `rateReceiverUnit`, to a specific container (the value of `rateReceiverContainerField`, which
+        defaults to the k8s container name). The file's cap wins per-event over
+        `rateReceiverAbsoluteCap`: a listed container gets its own row, an unlisted one gets the row
+        keyed `*`, and a container with neither falls back to the fleet-wide cap (or to no cap, if
+        `rateReceiverAbsoluteCap` is `0`).
 
         **File format** (CSV; header row + one comma-separated entry per row):
 
         ```
         container,cap
-        <container>,<bytes>[:<untilEpochSec>][:<reason>]
+        <container>,<cap>[:<untilEpochSec>][:<reason>]
+        *,<cap>[:<untilEpochSec>][:<reason>]
         ```
 
         - `container`, value of `rateReceiverContainerField` for the events to cap. In k8s this is
-          the k8s container name, stable across pod replicas.
-        - `bytes`, integer byte cap per pattern per container per window. `0` exempts the
-          container from the absolute cap entirely (the over-cap branch is skipped for it).
+          the k8s container name, stable across pod replicas. `*` caps every container without a
+          row of its own.
+        - `cap`, the cap per pattern per container per window, in `rateReceiverUnit`. `0` exempts
+          the container from every cap, the `*` row and `rateReceiverAbsoluteCap` included (the
+          over-cap branch is skipped for it).
         - `untilEpochSec`, optional Unix-epoch (seconds) expiry. Past that, the entry becomes a
           no-op and the fallback cap applies.
         - `reason`, optional free-text string for audit. Not used at runtime. Must not contain
@@ -327,9 +379,9 @@ module:
           `configure_engine` tool) to derive a cap from a target percent or a monthly dollar budget, append the
           entry, and open a PR. The cap file is the interface.
 
-        **Severity floor still applies.** Even at a tight cap the regulator's `rateReceiverSeverityFloors`
-        retain ERROR/CRITICAL events at their floor fraction, so a tight cap never fully silences
-        high-severity traffic.
+        **Error-class lines still pass by count.** Past the cap, the levels in
+        `rateReceiverKeepCounts` pass that many lines per pattern per window, so a tight cap never
+        fully silences ERROR/CRITICAL traffic.
 
         When `rateReceiverCapLookupFile` is **unset**, every container falls back to
         `rateReceiverAbsoluteCap` (which itself defaults to `0` = disabled).
@@ -352,6 +404,48 @@ module:
 
         **Validation:** Must be greater than 60000 milliseconds.
       defValue: 300000
+
+    - names:
+      - rateReceiverTotalLookupFile
+      description: declarative per-service total file, keyed by the `rateReceiverContainerField` value; bounds what each capped service passes per window
+      type: string
+      required: false
+      doc: |
+        defines the path to a declarative **per-service total file** (sibling to the cap file). Each
+        entry bounds what a service passes per window (`rateReceiverResetIntervalMs`) on this
+        regulator instance, in `rateReceiverUnit`. Read by the cap-file regulator classes, for
+        containers with a resolved cap.
+
+        Two rules apply once a service has a total, both within the window:
+
+        - **Largest first.** Once the service has seen more than its total, every pattern's cap
+          scales by total / service volume, so the service's largest patterns are held first and its
+          small ones keep passing.
+        - **Hard bound.** Once the lines the service passed reach its total, every further line takes
+          the service's action (`rateReceiverActionLookupFile`).
+
+        The `rateReceiverBaselineCount` sample and the `rateReceiverKeepCounts` lines always pass and
+        count toward the total, so an error storm can exceed it by that much.
+
+        **File format** (CSV; header row + one comma-separated entry per row):
+
+        ```
+        container,total
+        <container>,<total>[:<untilEpochSec>][:<reason>]
+        *,<total>[:<untilEpochSec>][:<reason>]
+        ```
+
+        - `container`, value of `rateReceiverContainerField` (the k8s container = the service), or
+          `*` for every service without a row of its own.
+        - `total`, the service's total per window on this instance, in `rateReceiverUnit`. `0`
+          exempts the service.
+        - `untilEpochSec`, optional Unix-epoch (seconds) expiry; past it the entry is a no-op.
+        - `reason`, optional free-text for audit. Must not contain commas (would break CSV parsing).
+
+        A missing file loads as an empty table, so no service has a total until a row names it. Each
+        regulator instance holds its own total; a fleet total is divided across instances by the
+        writer of the file (the `log10x_configure_engine` MCP tool).
+      defValue: ""
 
     - names:
       - rateReceiverConfigGenerationFile
@@ -393,24 +487,23 @@ module:
       type: number
       required: false
       doc: |
-        defines a per-container grace period in milliseconds. A container is left unregulated for this
-        long after this regulator instance first sees its events. The default is 5 minutes.
+        defines an optional per-container grace period in milliseconds. A container is left
+        unregulated for this long after this regulator instance first sees its events. The default is
+        `0`: a container is capped from its first line, which is what a cap meant as a budget needs.
 
-        Why it exists: the regulator's per-pattern sample counts start empty. Without a few minutes of
-        accumulation, a low-volume pattern can look like the dominant one purely because of ordering.
-        The warmup defers cap decisions until there are enough samples to tell a noisy pattern from a
-        quiet one with confidence. This is a **delay only**; no learned baseline is built, and the
-        only state that survives is the container's first-seen timestamp.
+        A positive value defers cap decisions while the per-pattern counts fill. This is a **delay
+        only**; no learned baseline is built, and the only state that survives is the container's
+        first-seen timestamp.
 
         "First sees" is per regulator instance, not per container birth. A container that has been
         running for hours but whose events have only just started flowing through this regulator
         (e.g. after a regulator restart or forwarder reconnect) restarts the warmup window. On a
         daemonset rolling restart the cap is therefore disabled for `warmupMs` per node as it cycles.
 
-        Lower the value for fast-starting apps that should be capped sooner after a restart. Raise it
-        for slow-ramping JVMs or workloads with long init phases. Patterns that are legitimately
-        dominant in steady state belong on the mute file, not in a longer warmup.
-      defValue: 300000
+        Set it for slow-ramping JVMs or workloads with long init phases whose first minutes should not
+        be capped. Patterns that are legitimately dominant in steady state belong on the mute file, not
+        in a warmup.
+      defValue: 0
 
     - names:
       - rateReceiverBaselineCount
@@ -425,19 +518,21 @@ module:
 
     - names:
       - rateReceiverAbsoluteCap
-      description: fleet-wide byte cap per pattern per container per window; `0` (default) disables the cap unless overridden per-container via `rateReceiverCapLookupFile`
+      description: fleet-wide cap per pattern per container per window; `0` (default) disables the cap unless overridden per-container via `rateReceiverCapLookupFile`
       type: number
       required: false
       doc: |
-        defines a **fleet-wide** byte cap: the byte budget for a single pattern (a unique combination
-        of `rateReceiverFieldNames` values) per container within the current window
-        (`rateReceiverResetIntervalMs`), past which the regulator engages. Applies to every container
-        the regulator sees, unless that container has its own entry in `rateReceiverCapLookupFile`,
-        which wins per-event.
+        defines a **fleet-wide** cap, in `rateReceiverUnit`: the budget for a single pattern (a unique
+        combination of `rateReceiverFieldNames` values) per container within the current window
+        (`rateReceiverResetIntervalMs`). Applies to every container the regulator sees, unless that
+        container has its own entry, or the `*` entry, in `rateReceiverCapLookupFile`, which wins
+        per-event.
 
-        At or below the resolved cap the pattern is kept untouched. Above it, the regulator engages:
-        if the pattern is also above `rateReceiverMinSharePercent` (the sanity guard), the event is
-        sampled at the severity floor probability.
+        At or below the resolved cap the pattern is kept untouched. Above it, a line takes the
+        container's action, except the `rateReceiverBaselineCount` sample, the levels in
+        `rateReceiverKeepCounts` (that many lines per pattern per window), a pattern below
+        `rateReceiverMinSharePercent` of its container, and the `rateReceiverSeverityFloors` share of
+        the other levels.
 
         **`0` (the default) disables the fleet-wide cap.** With no fleet-wide cap and no per-container
         entry in `rateReceiverCapLookupFile`, the regulator's over-cap branch never engages for that
@@ -450,13 +545,12 @@ module:
         - **Both**: per-container entries override the fleet-wide cap; unlisted containers fall back
           to the fleet-wide cap (safety floor).
 
-        **Example:** 10485760 (10 MB) means the regulator engages for a pattern once it has spent
-        10 MB in a container within the 5-minute window.
+        **Example:** 10485760 (10 MB, with `rateReceiverUnit` `bytes`) means a pattern is held once it
+        has spent 10 MB in a container within the window.
 
-        **The cap is not a hard bound.** The severity floor check runs after the cap check, so above
-        the cap a flood still passes at the floor rate (ERROR and CRITICAL half, WARN three tenths,
-        everything else a tenth). The worst case for one pattern in one container per window is the
-        cap plus the floor share of everything above it.
+        With the shipped floors at `0` and the share guard off, the most one pattern in one container
+        passes per window is the cap plus the baseline sample, plus the keep count for an error-class
+        pattern.
       defValue: 0
 
     - names:
@@ -465,17 +559,16 @@ module:
       type: number
       required: false
       doc: |
-        defines the share-of-container sanity guard (0.0 to 1.0): if a pattern is above the absolute
-        cap BUT below this share of its container's total volume, the regulator skips it. The pattern
-        is part of a legitimately high-volume container (busy API gateway, access log workload), not
-        a noisy outlier.
+        defines an optional share-of-container guard (0.0 to 1.0): if a pattern is above its cap BUT
+        below this share of its container's volume, the regulator keeps it. The default is `0`, which
+        turns the guard off, so a cap holds every pattern it is set for.
 
-        Share is `(pattern bytes + event) / (container bytes + event)` over the current window.
+        Share is `(pattern units + event) / (container units + event)` over the current window, in
+        `rateReceiverUnit`.
 
-        **Example:** 0.05 means a pattern above the absolute cap is still retained if it represents
-        less than 5% of its container's total volume. Prevents false positives on naturally chatty
-        containers.
-      defValue: 0.05
+        **Example:** 0.05 keeps a pattern above its cap while it represents less than 5% of its
+        container's volume, for containers whose traffic is spread across many patterns.
+      defValue: 0
 
     - names:
       - rateReceiverIngestionCostPerGB

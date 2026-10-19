@@ -443,10 +443,13 @@ module:
         Two rules apply once a service has a total:
 
         - **Largest first.** When the service's caps alone let more than its total through in the
-          previous window, every pattern's cap scales by total / that amount (or by what they let
-          through so far this window, once larger), so the service's largest patterns are held
-          first and its small ones keep passing. A service whose first lines of this window and of
-          the last window it sent in are two window lengths or more apart scales by total / its
+          previous window, every pattern's cap scales by total / that amount for the whole window,
+          or by what they let through so far this window once that is larger, so the service's
+          largest patterns are held first and its small ones keep passing. The scale follows the
+          previous window, so the window after a storm is scaled by the storm for its whole length
+          and recovers the window after. The first window after a quiet one fills its total in
+          arrival order before the scale applies. A service whose first lines of this window and
+          of the last window it sent in are two window lengths or more apart scales by total / its
           units so far this window instead.
         - **Hard bound.** Once the lines the service passed reach its total, every further line takes
           the service's action (`rateReceiverActionLookupFile`).

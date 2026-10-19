@@ -315,6 +315,11 @@ module:
         Intended to be managed via GitOps + the `log10x_configure_engine` MCP tool, which derives
         per-service actions from the per-pattern action plan it already computes.
 
+        **From a policy repo.** With `GH_ENABLED=true`, the default is the GitHub policy lane's
+        mirrored copy of the repo's `log10x/policy/actions.csv`: `${GH_DEST}/log10x/policy/actions.csv`, with
+        `GH_DEST` defaulting to `${java.io.tmpdir}/tenx/github` (`pipelines/gitops/config.yaml`).
+        Each sync rewrites the copy in place, so the lookup hot-reloads.
+
     - names:
       - rateReceiverDefaultAction
       description: the action a container with no `rateReceiverActionLookupFile` row takes for its over-cap excess
@@ -393,6 +398,12 @@ module:
         When `rateReceiverCapLookupFile` is **unset**, every container falls back to
         `rateReceiverAbsoluteCap` (which itself defaults to `0` = disabled).
 
+        **From a policy repo.** With `GH_ENABLED=true`, the default is the GitHub policy lane's
+        mirrored copy of the repo's `log10x/policy/caps.csv`: `${GH_DEST}/log10x/policy/caps.csv`, with
+        `GH_DEST` defaulting to `${java.io.tmpdir}/tenx/github` (`pipelines/gitops/config.yaml`).
+        Each sync rewrites the copy in place, so the lookup hot-reloads. The policy folder must hold `caps.csv`
+        when the engine starts.
+
         The file is hot-reloaded on in-place writes (the gitops pattern); a Kubernetes
         `ConfigMap` mount won't reload because the CM swap is a symlink rename, not an
         in-place write.
@@ -454,6 +465,11 @@ module:
         A missing file loads as an empty table, so no service has a total until a row names it. Each
         regulator instance holds its own total; a fleet total is divided across instances by the
         writer of the file (the `log10x_configure_engine` MCP tool).
+
+        **From a policy repo.** With `GH_ENABLED=true`, the default is the GitHub policy lane's
+        mirrored copy of the repo's `log10x/policy/totals.csv`: `${GH_DEST}/log10x/policy/totals.csv`, with
+        `GH_DEST` defaulting to `${java.io.tmpdir}/tenx/github` (`pipelines/gitops/config.yaml`).
+        Each sync rewrites the copy in place, so the lookup hot-reloads.
       defValue: ""
 
     - names:
@@ -488,6 +504,11 @@ module:
         Hot-reloaded like the cap file, so a new generation written by `configure_engine` goes live
         without an engine restart. This is exactly what the verifier observes as the stale -> live
         transition.
+
+        **From a policy repo.** With `GH_ENABLED=true`, the default is the GitHub policy lane's
+        mirrored copy of the repo's `log10x/policy/config-generation.csv`: `${GH_DEST}/log10x/policy/config-generation.csv`, with
+        `GH_DEST` defaulting to `${java.io.tmpdir}/tenx/github` (`pipelines/gitops/config.yaml`).
+        Each sync rewrites the copy in place, so the lookup hot-reloads.
       defValue: ""
 
     - names:

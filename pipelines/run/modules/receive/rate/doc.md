@@ -90,6 +90,8 @@ The cap value changes; the baseline sample, the keep counts and the service tota
 
 Same hot-reload rule as the mute file: both launch-macro lanes reload, a plain volume-mounted `ConfigMap` does not.
 
+From a policy repo, the GitHub lane in `pipelines/gitops/config.yaml` pulls `log10x/policy/*.csv` and mirrors it into `${GH_DEST}` (default `${java.io.tmpdir}/tenx/github`). With `GH_ENABLED=true`, `GH_REPO`, `GH_BRANCH` and `GH_TOKEN` set, the cap, action, total and config-generation files default to those copies, and each sync rewrites them in place. The folder must exist in the repo and hold `caps.csv` when the engine starts, and a sync refreshes only the files the first pull found.
+
 ## :material-arrow-decision: Actions
 
 An optional action file decides what happens to the lines the cap or the service total holds. Without it, or for a container with neither its own row nor a `*` row, the held lines take `rateReceiverDefaultAction`, `pass` unless set.

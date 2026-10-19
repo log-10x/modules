@@ -182,8 +182,9 @@ module:
         an error storm can exceed the total by the count times the storming patterns.
 
         Keys must match the level vocabulary emitted by the level enrichment. A level not listed
-        follows its floor. The list must hold at least one entry: like `rateReceiverSeverityFloors`,
-        an empty or missing list stops the launch (`could not parse function: 'TenXMap_fromEntries'`).
+        follows its floor, and so does a level set to `-1`. The module's settings set `ERROR=50`,
+        `CRITICAL=50` and `FATAL=50`; an entry for a level in the config or on the command line
+        comes later and wins.
 
         For example:
 
@@ -258,6 +259,10 @@ module:
         **Error-class lines still pass by count.** Under an active entry, the levels in
         `rateReceiverKeepCounts` pass their first lines per pattern per window before the
         sample rate applies, so a `0.0` mute never silences ERROR/CRITICAL/FATAL traffic.
+
+        **Lines a mute passes still count.** In a container with a cap file row, the lines an
+        active entry passes count toward the service's total (`rateReceiverTotalLookupFile`), so
+        the service's other patterns are held first once the total is reached.
 
         When `rateReceiverLookupFile` is **unset**, the regulator runs alone on every pattern.
       defValue: ""
@@ -351,7 +356,8 @@ module:
           row of its own.
         - `cap`, the cap per pattern per container per window, in `rateReceiverUnit`. `0` exempts
           the container from every cap, the `*` row and `rateReceiverAbsoluteCap` included (the
-          over-cap branch is skipped for it).
+          over-cap branch is skipped for it). A `*` row of `0` exempts every container without a
+          row of its own, so `rateReceiverAbsoluteCap` then applies to none of them.
         - `untilEpochSec`, optional Unix-epoch (seconds) expiry. Past that, the entry becomes a
           no-op and the fallback cap applies.
         - `reason`, optional free-text string for audit. Not used at runtime. Must not contain
@@ -424,8 +430,9 @@ module:
         - **Hard bound.** Once the lines the service passed reach its total, every further line takes
           the service's action (`rateReceiverActionLookupFile`).
 
-        The `rateReceiverBaselineCount` sample and the `rateReceiverKeepCounts` lines always pass and
-        count toward the total, so an error storm can exceed it by that much.
+        The `rateReceiverBaselineCount` sample, the `rateReceiverKeepCounts` lines and the lines an
+        active mute entry passes always pass and count toward the total, so an error storm or a
+        muted pattern can exceed it by that much.
 
         **File format** (CSV; header row + one comma-separated entry per row):
 
@@ -438,7 +445,8 @@ module:
         - `container`, value of `rateReceiverContainerField` (the k8s container = the service), or
           `*` for every service without a row of its own.
         - `total`, the service's total per window on this instance, in `rateReceiverUnit`. `0`
-          exempts the service.
+          exempts the service; a `*` row of `0` gives every service without a row of its own no
+          total.
         - `untilEpochSec`, optional Unix-epoch (seconds) expiry; past it the entry is a no-op.
         - `reason`, optional free-text for audit. Must not contain commas (would break CSV parsing).
 

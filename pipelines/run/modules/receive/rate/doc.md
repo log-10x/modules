@@ -23,7 +23,7 @@ An optional total file bounds what each service passes per window on this node, 
 - **Largest first.** Once the service has seen more than its total in the window, every pattern's cap scales by total / service volume. The service's largest patterns reach the scaled cap first and are held, and its small ones keep passing.
 - **Hard bound.** Once the lines the service passed reach its total, every further line takes the service's action.
 
-The baseline sample and the error-class lines in `keepCounts` always pass and count toward the total, so an error storm can exceed the total by the keep count per storming pattern. Each regulator instance holds its own total; the writer of the file divides a fleet budget across instances, and a node added between writes enforces its own total until the next write.
+The baseline sample, the error-class lines in `keepCounts` and the lines a mute entry passes always pass and count toward the total, so the service's other patterns give way first; an error storm can exceed the total by the keep count per storming pattern. Each regulator instance holds its own total; the writer of the file divides a fleet budget across instances, and a node added between writes enforces its own total until the next write.
 
 **File format**, CSV with a header row, keyed by the `containerField` value, read through `totalLookupFile` (`TOTAL_LOOKUP_FILE`):
 
@@ -34,7 +34,7 @@ container,total
 ```
 
 - `total` is the service's total per window on this instance, in `unit`. `0` exempts the service.
-- `*` sets the total for every service without a row of its own.
+- `*` sets the total for every service without a row of its own; a `*` row of `0` gives them none.
 - `untilEpochSec` expires the entry, which then self-heals to a no-op.
 - `reason` is free text for audit. Must not contain commas (would break CSV parsing).
 
@@ -44,7 +44,7 @@ A missing total file loads as an empty table, so no service has a total until a 
 
 Error-class lines are never held to zero. `keepCounts` passes a fixed number of lines per pattern per window for each listed level, once the pattern is over its cap or its service is over its total, and under an active mute entry. The shipped list is `ERROR=50`, `CRITICAL=50` and `FATAL=50`; the lines past the count take the container's action. The count is per pattern, per container, per node, per window, so it bounds what an error storm adds to the bill.
 
-Levels not in `keepCounts` follow `severityFloors`, the fraction of a held pattern's lines kept at random. The shipped floors are `0` for every level, and any level with no floor of its own takes `minRetentionThreshold` (`0`). Both lists read the [severity](https://doc.log10x.com/run/initialize/level/) the level enrichment produced, so they apply whatever field the original log used. Each list must hold at least one entry: an empty or missing list stops the launch.
+Levels not in `keepCounts`, and levels set to `-1` there, follow `severityFloors`, the fraction of a held pattern's lines kept at random. The shipped floors are `0` for every level, and any level with no floor of its own takes `minRetentionThreshold` (`0`). Both lists read the [severity](https://doc.log10x.com/run/initialize/level/) the level enrichment produced, so they apply whatever field the original log used. The module sets the three keep counts itself, so a config without `keepCounts` still keeps them; `severityFloors` must stay set, since an empty or missing list stops the launch.
 
 ## :material-timer-sand: Warmup
 
@@ -82,7 +82,7 @@ container,cap
 ```
 
 - `cap` is the per-pattern per-window cap for the container, in `unit`. `0` exempts the container from every cap, the `*` row and `absoluteCap` included.
-- `*` sets the cap for every container without a row of its own.
+- `*` sets the cap for every container without a row of its own; a `*` row of `0` exempts them all, `absoluteCap` included.
 - `untilEpochSec` expires the entry, which then self-heals to a no-op.
 - `reason` is free text for audit. Must not contain commas (would break CSV parsing).
 

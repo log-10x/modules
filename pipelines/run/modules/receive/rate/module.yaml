@@ -181,10 +181,11 @@ module:
         (`rateReceiverResetIntervalMs`). The lines it passes count toward the container's total, so
         an error storm can exceed the total by the count times the storming patterns.
 
-        Keys must match the level vocabulary emitted by the level enrichment. A level not listed
-        follows its floor, and so does a level set to `-1`. The module's settings set `ERROR=50`,
-        `CRITICAL=50` and `FATAL=50`; an entry for a level in the config or on the command line
-        comes later and wins.
+        Keys must match the level vocabulary emitted by the level enrichment. The module's settings
+        set `ERROR=50`, `CRITICAL=50` and `FATAL=50`, and entries merge by level, so those three
+        levels always keep a count (50 unless set); an entry for one of them in the config or on the
+        command line comes later and wins, and `-1` gives it its floor instead. Any other level not
+        listed follows its floor.
 
         For example:
 

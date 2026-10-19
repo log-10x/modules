@@ -318,7 +318,9 @@ module:
         **From a policy repo.** With `GH_ENABLED=true`, the default is the GitHub policy lane's
         mirrored copy of the repo's `log10x/policy/actions.csv`: `${GH_DEST}/log10x/policy/actions.csv`, with
         `GH_DEST` defaulting to `${java.io.tmpdir}/tenx/github` (`pipelines/gitops/config.yaml`).
-        Each sync rewrites the copy in place, so the lookup hot-reloads.
+        Each sync rewrites the copy in place, so the lookup hot-reloads. `GH_ENABLED` turns on
+        with `true`, `True` or `TRUE`, as the lane reads it, and with the Kubernetes ConfigMap lane
+        also on the GitHub copy wins: enable one lane.
 
     - names:
       - rateReceiverDefaultAction
@@ -401,7 +403,9 @@ module:
         **From a policy repo.** With `GH_ENABLED=true`, the default is the GitHub policy lane's
         mirrored copy of the repo's `log10x/policy/caps.csv`: `${GH_DEST}/log10x/policy/caps.csv`, with
         `GH_DEST` defaulting to `${java.io.tmpdir}/tenx/github` (`pipelines/gitops/config.yaml`).
-        Each sync rewrites the copy in place, so the lookup hot-reloads. The policy folder must hold `caps.csv`
+        Each sync rewrites the copy in place, so the lookup hot-reloads. `GH_ENABLED` turns on
+        with `true`, `True` or `TRUE`, as the lane reads it, and with the Kubernetes ConfigMap lane
+        also on the GitHub copy wins: enable one lane. The policy folder must hold `caps.csv`
         when the engine starts.
 
         The file is hot-reloaded on in-place writes (the gitops pattern); a Kubernetes
@@ -469,7 +473,9 @@ module:
         **From a policy repo.** With `GH_ENABLED=true`, the default is the GitHub policy lane's
         mirrored copy of the repo's `log10x/policy/totals.csv`: `${GH_DEST}/log10x/policy/totals.csv`, with
         `GH_DEST` defaulting to `${java.io.tmpdir}/tenx/github` (`pipelines/gitops/config.yaml`).
-        Each sync rewrites the copy in place, so the lookup hot-reloads.
+        Each sync rewrites the copy in place, so the lookup hot-reloads. `GH_ENABLED` turns on
+        with `true`, `True` or `TRUE`, as the lane reads it, and with the Kubernetes ConfigMap lane
+        also on the GitHub copy wins: enable one lane.
       defValue: ""
 
     - names:
@@ -508,7 +514,9 @@ module:
         **From a policy repo.** With `GH_ENABLED=true`, the default is the GitHub policy lane's
         mirrored copy of the repo's `log10x/policy/config-generation.csv`: `${GH_DEST}/log10x/policy/config-generation.csv`, with
         `GH_DEST` defaulting to `${java.io.tmpdir}/tenx/github` (`pipelines/gitops/config.yaml`).
-        Each sync rewrites the copy in place, so the lookup hot-reloads.
+        Each sync rewrites the copy in place, so the lookup hot-reloads. `GH_ENABLED` turns on
+        with `true`, `True` or `TRUE`, as the lane reads it, and with the Kubernetes ConfigMap lane
+        also on the GitHub copy wins: enable one lane.
       defValue: ""
 
     - names:

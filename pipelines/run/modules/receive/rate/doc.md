@@ -20,7 +20,7 @@ The share guard is off by default (`minSharePercent: 0`). Set above 0, it keeps 
 
 An optional total file bounds what each service passes per window on this node, across all its patterns. New patterns from a deploy each bring a full per-pattern cap, so a service without a total can send many times its budget until its caps are rewritten. Two rules apply once a service has a total:
 
-- **Largest first.** When the service's caps alone let more than its total through in the previous window, every pattern's cap scales by total / that amount for the whole window. The service's largest patterns reach the scaled cap first and are held, and its small ones keep passing. A service with no line in the previous window scales by total / its units so far this window.
+- **Largest first.** When the service's caps alone let more than its total through in the previous window, every pattern's cap scales by total / that amount, or by what they let through so far this window once that is larger. The service's largest patterns reach the scaled cap first and are held, and its small ones keep passing. A service whose first lines of this window and of the last window it sent in are two window lengths or more apart scales by total / its units so far this window instead.
 - **Hard bound.** Once the lines the service passed reach its total, every further line takes the service's action.
 
 The baseline sample, the error-class lines in `keepCounts` and the lines a mute entry passes always pass and count toward the total, so the service's other patterns give way first; an error storm can exceed the total by the keep count per storming pattern. Each regulator instance holds its own total; the MCP's budget run (`log10x_setup_recurring`) divides a fleet budget across instances, and a node added between runs enforces its own total until the next run.
@@ -86,7 +86,7 @@ container,cap
 - `untilEpochSec` expires the entry, which then self-heals to a no-op.
 - `reason` is free text for audit. Must not contain commas (would break CSV parsing).
 
-The cap value changes; the baseline sample, the keep counts and the service total still apply. The Log10x MCP writes the file: its budget run (`log10x_setup_recurring`) writes it to the policy ConfigMap or commits it to the policy branch, and a `log10x_configure_engine` call derives caps from a target percent or a monthly dollar budget and opens a PR against it.
+The cap value changes; the baseline sample, the keep counts and the service total still apply. The Log10x MCP writes the file: its budget run (`log10x_setup_recurring`) writes it to the policy ConfigMap or commits it to the policy branch, and a `log10x_configure_engine` call derives caps from a target percent or a monthly dollar budget and delivers them as its `delivery` says: a PR against the gitops repo, a write to the policy ConfigMap, or no write (`stdout_only`).
 
 Same hot-reload rule as the mute file: both launch-macro lanes reload, a plain volume-mounted `ConfigMap` does not.
 

@@ -390,9 +390,10 @@ module:
         - **Self-healing**: every entry can carry an explicit expiry, so forgotten caps eventually
           stop filtering instead of silently dropping production data forever.
         - **AI-editable**: the Log10x MCP writes it. Its budget run (`log10x_setup_recurring`)
-          writes the file to the policy ConfigMap or commits it to the policy branch, and a
+          writes the file to the policy ConfigMap or commits it to the policy branch. A
           `log10x_configure_engine` call derives caps from a target percent or a monthly dollar
-          budget and opens a PR against it. The cap file is the interface.
+          budget and delivers them as its `delivery` says: a PR against the gitops repo, a write
+          to the policy ConfigMap, or no write (`stdout_only`). The cap file is the interface.
 
         **Error-class lines still pass by count.** Past the cap, the levels in
         `rateReceiverKeepCounts` pass that many lines per pattern per window, so a tight cap never
@@ -442,10 +443,11 @@ module:
         Two rules apply once a service has a total:
 
         - **Largest first.** When the service's caps alone let more than its total through in the
-          previous window, every pattern's cap scales by total / that amount for the whole window,
-          so the service's largest patterns are held first and its small ones keep passing. A
-          service with no line in the previous window scales by total / its units so far this
-          window.
+          previous window, every pattern's cap scales by total / that amount (or by what they let
+          through so far this window, once larger), so the service's largest patterns are held
+          first and its small ones keep passing. A service whose first lines of this window and of
+          the last window it sent in are two window lengths or more apart scales by total / its
+          units so far this window instead.
         - **Hard bound.** Once the lines the service passed reach its total, every further line takes
           the service's action (`rateReceiverActionLookupFile`).
 

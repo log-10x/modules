@@ -254,8 +254,8 @@ module:
           eventually stop filtering instead of silently dropping production data forever.
         - **AI-editable**: an operator can ask an assistant (e.g., Claude Code via the
           Log10x MCP) to "mute `Error_syncing_pod` for 24 hours at 10%", the assistant
-          reads the Reporter's cost attribution, appends the entry, and opens a PR. The
-          mute file is the interface.
+          reads the Reporter's cost attribution, appends the entry, and opens a PR or
+          pushes the change, as the repo is set up. The mute file is the interface.
 
         **Error-class lines still pass by count.** Under an active entry, the levels in
         `rateReceiverKeepCounts` pass their first lines per pattern per window before the
@@ -389,9 +389,10 @@ module:
           PR, `git blame`-d for who/why.
         - **Self-healing**: every entry can carry an explicit expiry, so forgotten caps eventually
           stop filtering instead of silently dropping production data forever.
-        - **AI-editable**: an operator can ask an assistant (e.g., Claude Code via the Log10x MCP
-          `configure_engine` tool) to derive a cap from a target percent or a monthly dollar budget, append the
-          entry, and open a PR. The cap file is the interface.
+        - **AI-editable**: the Log10x MCP writes it. Its budget run (`log10x_setup_recurring`)
+          writes the file to the policy ConfigMap or commits it to the policy branch, and a
+          `log10x_configure_engine` call derives caps from a target percent or a monthly dollar
+          budget and opens a PR against it. The cap file is the interface.
 
         **Error-class lines still pass by count.** Past the cap, the levels in
         `rateReceiverKeepCounts` pass that many lines per pattern per window, so a tight cap never
@@ -438,11 +439,13 @@ module:
         regulator instance, in `rateReceiverUnit`. Read by the cap-file regulator classes, for
         containers with a resolved cap.
 
-        Two rules apply once a service has a total, both within the window:
+        Two rules apply once a service has a total:
 
-        - **Largest first.** Once the service has seen more than its total, every pattern's cap
-          scales by total / service volume, so the service's largest patterns are held first and its
-          small ones keep passing.
+        - **Largest first.** When the service's caps alone let more than its total through in the
+          previous window, every pattern's cap scales by total / that amount for the whole window,
+          so the service's largest patterns are held first and its small ones keep passing. A
+          service with no line in the previous window scales by total / its units so far this
+          window.
         - **Hard bound.** Once the lines the service passed reach its total, every further line takes
           the service's action (`rateReceiverActionLookupFile`).
 
@@ -467,8 +470,8 @@ module:
         - `reason`, optional free-text for audit. Must not contain commas (would break CSV parsing).
 
         A missing file loads as an empty table, so no service has a total until a row names it. Each
-        regulator instance holds its own total; a fleet total is divided across instances by the
-        writer of the file (the `log10x_configure_engine` MCP tool).
+        regulator instance holds its own total; the MCP's budget run (`log10x_setup_recurring`)
+        divides a fleet total across instances.
 
         **From a policy repo.** With `GH_ENABLED=true`, the default is the GitHub policy lane's
         mirrored copy of the repo's `log10x/policy/totals.csv`: `${GH_DEST}/log10x/policy/totals.csv`, with

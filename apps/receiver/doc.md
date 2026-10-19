@@ -712,7 +712,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
         Each (pattern, container) pair gets its own 10 MB cap. Scaling from 1 to 10 pods does not bypass it because the container name is stable across replicas. To give one app a different cap, list it in a cap file, which wins over `absoluteCap` for that container.
 
-        The keep counts apply here too. To bound a whole service rather than each pattern, add a total file (`totalLookupFile`): once the service has seen more than its total in a window its largest patterns are held first, and once it has passed its total every further line takes its action.
+        The keep counts apply here too. To bound a whole service rather than each pattern, add a total file (`totalLookupFile`): when its caps alone let more than its total through in the previous window its largest patterns are held first, and once it has passed its total every further line takes its action.
 
     === ":material-file-document-edit-outline: Mute File (GitOps)"
 

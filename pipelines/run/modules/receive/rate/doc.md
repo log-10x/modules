@@ -12,7 +12,7 @@ The cap is a budget for one pattern in one container over one window (`resetInte
 
 At or below the cap every line is kept. Above it a line is held and takes the container's action, with three exceptions: the first `baselineCount` lines of every pattern each window (default 5), the error-class lines in `keepCounts`, and the optional share guard.
 
-With the shipped settings, the most one pattern in one container passes per window is its cap plus the 5-line sample, plus 50 lines for an error-class pattern. The window is recent rather than all-time, so a pattern that spikes during a deploy and then goes quiet stops being held on its own.
+With the shipped settings, the most one pattern in one container passes per window is the larger of its cap and the 5-line sample, plus 50 lines for an error-class pattern. The window is recent rather than all-time, so a pattern that spikes during a deploy and then goes quiet stops being held on its own.
 
 The share guard is off by default (`minSharePercent: 0`). Set above 0, it keeps a pattern over its cap while the pattern is below that share of its container's volume, `(pattern units + event) / (container units + event)` over the window.
 

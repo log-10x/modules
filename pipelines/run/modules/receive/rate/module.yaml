@@ -595,8 +595,8 @@ module:
         has spent 10 MB in a container within the window.
 
         With the shipped floors at `0` and the share guard off, the most one pattern in one container
-        passes per window is the cap plus the baseline sample, plus the keep count for an error-class
-        pattern.
+        passes per window is the larger of the cap and the baseline sample, plus the keep count for an
+        error-class pattern.
       defValue: 0
 
     - names:

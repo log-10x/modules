@@ -65,7 +65,7 @@ unit:
         Path to a file containing the signed 10x license JWT.
         Preferred over `licenseKey` for production: the token is not visible in `ps` output and is easy to rotate by replacing the file.
 
-        Without a license the engine runs on the built-in 30-day evaluation license.
+        Without a license the engine runs on the built-in Free tier: up to 10 nodes, no expiry.
         See [licensing](https://doc.log10x.com/manage/license/) for production licenses.
 
         If both `licenseFile` and `licenseKey` are provided, the file wins.
@@ -80,7 +80,7 @@ unit:
         The signed 10x license JWT, passed inline.
         Discouraged on the command line because the value is visible in `ps` output; prefer `licenseFile` in production.
 
-        Without a license the engine runs on the built-in 30-day evaluation license.
+        Without a license the engine runs on the built-in Free tier: up to 10 nodes, no expiry.
         See [licensing](https://doc.log10x.com/manage/license/) for production licenses.
 
     - names:

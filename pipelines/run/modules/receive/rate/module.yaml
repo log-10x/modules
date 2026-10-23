@@ -117,7 +117,7 @@ module:
       doc: |
         defines what the regulator counts against `rateReceiverAbsoluteCap`, the cap file
         (`rateReceiverCapLookupFile`), the total file (`rateReceiverTotalLookupFile`) and the
-        share guard: `bytes` counts each line's UTF-8 size, `events` counts each line as 1.
+        share guard: `bytes` counts the UTF-8 size of each event as the forwarder sends it, the whole record and not only the message, `events` counts each line as 1.
 
         Use `events` where the analyzer bills per event (Datadog indexes logs per event) and
         `bytes` where it bills per GB. Write the cap and total files in the same unit.

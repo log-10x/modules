@@ -8,7 +8,7 @@ The rate regulator watches each container's recent volume and acts on any one [p
 
 ## :material-percent-outline: The cap
 
-The cap is a budget for one pattern in one container over one window (`resetIntervalMs`, default 4 minutes). The regulator counts it in `unit`: `bytes`, each line's UTF-8 size, or `events`, one per line, for analyzers that bill per event such as Datadog. The cap and total files are written in the same unit. The cap resolves per event: the container's row in the cap file, then the file's `*` row, then the fleet-wide `absoluteCap`. All three default to none, and a resolved cap of `0` means keep everything, so protection is opt-in.
+The cap is a budget for one pattern in one container over one window (`resetIntervalMs`, default 4 minutes). The regulator counts it in `unit`: `bytes`, the UTF-8 size of each event as the forwarder hands it to the Receiver, the whole record and not only the message, or `events`, one per line, for analyzers that bill per event such as Datadog. The cap and total files are written in the same unit. The cap resolves per event: the container's row in the cap file, then the file's `*` row, then the fleet-wide `absoluteCap`. All three default to none, and a resolved cap of `0` means keep everything, so protection is opt-in.
 
 At or below the cap every line is kept. Above it a line is held and takes the container's action, with three exceptions: the first `baselineCount` lines of every pattern each window (default 5), the error-class lines in `keepCounts`, and the optional share guard.
 

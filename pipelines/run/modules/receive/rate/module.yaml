@@ -83,8 +83,9 @@ module:
         so the cap is enforced per `(pattern, container)`.
 
         Defaults to the [k8s container name](https://doc.log10x.com/run/initialize/k8s/), which is
-        stable across pod replicas, scaling from 1 to 10 pods does not bypass the cap, and a
-        sidecar never consumes the application container's allowance. Use `container`, never `pod`.
+        stable across pod replicas, so pods of one container on the same node share the cap, and a
+        sidecar never consumes the application container's allowance. Each regulator instance counts
+        its own, so pods spread across ten nodes get ten caps. Use `container`, never `pod`.
 
         When the field is absent on an event (non-k8s input, or no k8s extractor configured), the
         regulator falls back to a single node-wide bucket and enforces the cap per pattern across

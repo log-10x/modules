@@ -39,6 +39,8 @@ input:
     args:
       - port
       - $=yield TenXEnv.get("otelCollectorInputPort", "4317")
+      - maxQueuedLines
+      - $=yield TenXEnv.get("otelCollectorInputMaxQueuedLines", "20000")
 
     backpressure:
       intervalBytesLimit: $=parseBytes("2MB")

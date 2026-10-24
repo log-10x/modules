@@ -77,3 +77,22 @@ module:
             fields:
               - $=yield TenXEnv.get("enrichmentFields")
         ```
+
+    - names:
+      - metricTagFields
+      description: list of fields that label metric outputs without grouping the default aggregators
+      type: list
+      required: false
+      doc: |
+        Sets field names that every metric output adds to its tags, while the aggregators that group by [enrichmentFields](https://doc.log10x.com/run/initialize/#enrichmentfields) leave them out.
+
+        Use it for a value that changes for the whole process at once, such as the config generation the receiver stamps as `tenx_config_version`. Grouping the per-pattern counters by such a value would start every series over at zero each time it changes. Instead, one aggregator groups by these fields alone, so the value appears on a single series per value, and on the other counters the tag is empty.
+
+        Initializer modules append their fields here the same way they append to `enrichmentFields`.
+
+        ```yaml
+        aggregator:
+          - name: config_generation
+            fields:
+              - $=yield TenXEnv.get("metricTagFields")
+        ```

@@ -499,7 +499,7 @@ module:
         is a deterministic hash of the cap policy. The receiver's config-generation object reads that
         value and stamps it on every event as `tenx_config_version` (declared in this module's
         `metricTagFields`). The receiver's `config_generation` aggregator publishes it as one series per
-        generation, `config_generation_summaryVolume{tenx_config_version=...}`, so the running engine
+        generation, `config_generation_summaryBytes_total{tenx_config_version=...}`, so the running engine
         advertises which config generation it loaded; the per-pattern counters do not carry it, so a
         policy write does not restart their series. The MCP then verifies the policy it wrote is actually
         live by comparing the label to `hash(current caps)`, the config-generation closed loop.

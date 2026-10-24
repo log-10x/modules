@@ -64,9 +64,8 @@
 #
 #   otelcol-contrib --config=<this-file> --feature-gates=stanza.synchronousLogEmitter
 #
-# Every key below is checked against the contrib v0.160.0 and core v0.160.0
-# (v1.66.0) sources; check them against the release you deploy. A graceful stop
-# of the Collector while the `otlp/tenx` queue is full can still record the
+# Check every key below against the deployed Collector release. A graceful stop
+# of the Collector while the `otlp/tenx` queue is full can record the
 # position past the file receiver's last batch (up to 100 lines per file); a
 # killed Collector does not. file_storage writes without fsync by default, so
 # the hold survives a process restart, not a node crash; add `fsync: true` to

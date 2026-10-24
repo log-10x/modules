@@ -100,13 +100,14 @@ module:
       doc: |
         defines the window in milliseconds over which a pattern's recent share is measured. The
         counters reset every interval, so share reflects recent volume rather than all-time totals.
+        A regulator instance starts its first window at the first line it regulates and a new one
+        every interval after that, the same windows for all its patterns and services. They do not
+        follow the clock, and a policy file reload does not start a new window.
 
         Shorter windows (e.g., 1 minute) are more reactive but noisier; longer windows are smoother but
         slower to adapt. The default of 4 minutes balances the two.
 
-        **Validation:** Must be at least 60000 milliseconds (1 minute). The engine caps counter reset
-        intervals at 255 seconds, so the effective maximum window is ~4.25 minutes, values above that
-        are clamped.
+        **Validation:** Must be at least 60000 milliseconds (1 minute).
       defValue: 240000
 
     - names:
@@ -455,9 +456,11 @@ module:
         - **Hard bound.** Once the lines the service passed reach its total, every further line takes
           the service's action (`rateReceiverActionLookupFile`).
 
-        The `rateReceiverBaselineCount` sample, the `rateReceiverKeepCounts` lines and the lines an
-        active mute entry passes always pass and count toward the total, so an error storm or a
-        muted pattern can exceed it by that much.
+        The `rateReceiverBaselineCount` sample counts toward the total like any line, and once the total
+        is spent the service passes at most `rateReceiverBaselineMaxOverTotal` more sample lines in the
+        window. The `rateReceiverKeepCounts` lines and the lines an active mute entry passes always pass
+        and count toward the total, so an error storm or a muted pattern can exceed it by that much: the
+        keep count is per pattern, with no limit per service.
 
         **File format** (CSV; header row + one comma-separated entry per row):
 
@@ -558,10 +561,30 @@ module:
       type: number
       required: false
       doc: |
-        defines how many events of each `(pattern, container)` are always kept per window, regardless
-        of share, so even a heavily-capped pattern leaves a small forensic sample to inspect during an
-        incident.
+        defines how many events of each `(pattern, container)` are kept per window regardless of the cap
+        and the share, so even a heavily-capped pattern leaves a small forensic sample to inspect during
+        an incident. In a service with a total (`rateReceiverTotalLookupFile`) the sample counts toward
+        it, and once the total is spent the service passes at most `rateReceiverBaselineMaxOverTotal`
+        more sample lines in the window.
       defValue: 5
+
+    - names:
+      - rateReceiverBaselineMaxOverTotal
+      description: sample lines a service passes per window once it has passed its total
+      type: number
+      required: false
+      doc: |
+        defines how many `rateReceiverBaselineCount` sample lines a service passes per window on this
+        regulator instance once it has passed its total (`rateReceiverTotalLookupFile`). Within the
+        total the sample passes like any line. Past it, sample lines pass up to this count, and the rest
+        take the regular path: the keep count for the levels in `rateReceiverKeepCounts`, then the
+        service's action. This bounds a service that prints many new patterns in one window, each of
+        which would otherwise pass its sample over the total.
+
+        The count is in lines whatever `rateReceiverUnit` is, like the sample and the keep counts, so
+        under `bytes` a service can exceed its total by this many of its own lines. `0` removes the
+        bound, so every sample line passes. Read by the cap-file regulators, for services with a total.
+      defValue: 50
 
     - names:
       - rateReceiverAbsoluteCap

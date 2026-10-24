@@ -712,7 +712,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
         Each (pattern, container) pair gets its own 10 MB cap on each node. Pods of one container on the same node share it, because the container name is stable across replicas; each node's regulator counts its own, so pods spread across ten nodes get ten caps. To give one app a different cap, list it in a cap file, which wins over `absoluteCap` for that container.
 
-        The keep counts apply here too. To bound a whole service rather than each pattern, add a total file (`totalLookupFile`): when its caps alone let more than its total through in the previous window its largest patterns are held first, and once it has passed its total every further line takes its action.
+        The keep counts apply here too. To bound a whole service rather than each pattern, add a total file (`totalLookupFile`): when its caps alone let more than its total through in the previous window its largest patterns are held first, and once it has passed its total every further line takes its action, except the error-class keep counts and up to 50 more sample lines per window (`baselineMaxOverTotal`).
 
     === ":material-file-document-edit-outline: Mute File (GitOps)"
 

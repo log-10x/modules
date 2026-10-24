@@ -64,10 +64,13 @@
 #
 #   otelcol-contrib --config=<this-file> --feature-gates=stanza.synchronousLogEmitter
 #
-# The receiver, operator, queue and retry keys below are checked against the
-# v0.143.0 sources of the contrib file receiver and the core exporter helper,
-# and the file_storage keys against a contrib 0.160.0 run; check them against
-# the release you deploy.
+# Every key below is checked against the contrib v0.160.0 and core v0.160.0
+# (v1.66.0) sources; check them against the release you deploy. A graceful stop
+# of the Collector while the `otlp/tenx` queue is full can still record the
+# position past the file receiver's last batch (up to 100 lines per file); a
+# killed Collector does not. file_storage writes without fsync by default, so
+# the hold survives a process restart, not a node crash; add `fsync: true` to
+# the extension for that.
 #
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -102,6 +105,9 @@ receivers:
         combine_field: body
         combine_with: "\n"
         is_first_entry: 'not (body matches "^(\\s|at )")'
+        # An event larger than the queue's batch max_size is dropped with its
+        # request, so a combined event stops growing well below it.
+        max_log_size: 512KiB
 
   # Receive processed events back from the Log10x sidecar.
   #

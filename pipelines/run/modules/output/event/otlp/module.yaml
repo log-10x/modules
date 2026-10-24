@@ -103,6 +103,56 @@ module:
         the path.
 
     - names:
+        - outputOtlpInflight
+      description: most export requests outstanding at once
+      type: string
+      category: encoding
+      required: false
+      defValue: 4
+      doc: |
+        Number of `ExportLogsServiceRequest` calls the appender keeps open at
+        once, retries included. When every one is outstanding and the buffer
+        holds a full request, writing an event blocks until one is
+        acknowledged, so the pipeline slows to the destination's pace instead
+        of dropping records.
+
+    - names:
+        - outputOtlpRetryInitialMs
+      description: delay in ms before the first retry of a failed export
+      type: string
+      category: encoding
+      required: false
+      defValue: 200
+      doc: |
+        A failed or timed-out export is retried with the same records until
+        the destination accepts it. The delay starts at this value and doubles
+        on each further failure, up to `outputOtlpRetryMaxMs`.
+
+    - names:
+        - outputOtlpRetryMaxMs
+      description: longest delay in ms between retries of a failed export
+      type: string
+      category: encoding
+      required: false
+      defValue: 5000
+      doc: |
+        Upper bound of the doubling retry delay. Retries continue at this
+        interval for as long as the destination keeps refusing.
+
+    - names:
+        - outputOtlpDeadlineMs
+      description: time in ms an export may take before it counts as failed
+      type: string
+      category: encoding
+      required: false
+      defValue: 30000
+      doc: |
+        gRPC deadline of each export call. A destination that has not answered
+        within it is treated as a failure and the export is retried. Keep it
+        above the time the destination's slowest exporter takes to accept a
+        request.
+
+    - names:
         - outputOtlpFields
       description: list of TenXObject field names to encode
       type: list

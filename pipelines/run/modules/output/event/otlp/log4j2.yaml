@@ -3,7 +3,8 @@
 # Wires the `tenxOtlp` appender (com.log10x.ext.edge.output.otlp.OtlpLogsOutputAppender)
 # behind a dedicated logger per `outputOtlp` options group instance. The
 # appender parses each layout-rendered JSON envelope into an OTLP `LogRecord`
-# and ships it asynchronously over gRPC.
+# and ships it asynchronously over gRPC, retrying a failed export until the
+# destination accepts it.
 
 log4j:
 
@@ -28,6 +29,10 @@ log4j:
           tagField: $?outputOtlpTagField=tag
           batchSize: $?outputOtlpBatchSize=100
           flushIntervalMs: $?outputOtlpFlushIntervalMs=1000
+          inflight: $?outputOtlpInflight=4
+          retryInitialMs: $?outputOtlpRetryInitialMs=200
+          retryMaxMs: $?outputOtlpRetryMaxMs=5000
+          deadlineMs: $?outputOtlpDeadlineMs=30000
 
     loggers:
 

@@ -35,6 +35,23 @@ module:
         `endpoint` of your Collector exporter.
 
     - names:
+        - otelCollectorInputMaxQueuedLines
+      description: most lines the input queues before it refuses a request with UNAVAILABLE
+      type: String
+      required: false
+      category: input
+      defValue: 20000
+      doc: |
+        The input answers an OTLP export only once every line of it has been
+        written back to the Collector and acknowledged, removed by the output
+        filter, or rejected by the decoder, so the Collector keeps custody of
+        each line until then. Lines the engine has not yet read wait in a
+        queue; a request that would take that queue past this many lines is
+        refused with `UNAVAILABLE` and queues nothing, and the Collector's
+        exporter retries it. The default is about ten seconds of the input's
+        2 MB a second decode budget at roughly 1 KB a record.
+
+    - names:
         - otelCollectorInputMessageField
       description: dotted JSON path to the field carrying the log line text
       type: String

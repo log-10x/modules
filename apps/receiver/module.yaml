@@ -34,7 +34,8 @@ module:
         enables compact mode on the receiver (read-write only). When true, the
         receiver encodes emitted events using the [encode](https://doc.log10x.com/api/js/#TenXObject+encode)
         function, reducing log volume on compaction-capable destinations
-        (Splunk, self-hosted Elasticsearch; a no-op elsewhere) before
+        (Splunk, self-hosted Elasticsearch 8.17.0 and OpenSearch 2.19.0; a
+        no-op elsewhere) before
         shipping to the destination.
 
         When false (default), the receiver in read-write mode receives events

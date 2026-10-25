@@ -48,6 +48,15 @@ input:
     # is fixed (Fluentd-style), the recipe's `mutate { add_field }` writes it.
     sourcePattern: \"tag\":\"(.*?)\"
 
+    # Group each file's or container's stdout and stderr on their own, also
+    # when they share a tag; the tag stays the source. file input: path (or
+    # log.file.path), plus stream from Docker JSON logs. beats input:
+    # log.file.path, stream. gelf input: container_id.
+    sequenceFields:
+      - path
+      - container_id
+      - stream
+
     args:
       # Unix socket path takes precedence over TCP port when both are set
       - path

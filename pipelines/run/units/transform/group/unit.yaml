@@ -54,7 +54,7 @@ unit:
         This option provides a timeout period to flush the current group head and composed 
         TenXObjects into the pipeline for aggregation, filtering, and encoding to output.
 
-        The interval counts per source, from the batch that carried the source's last line. On a forwarder input that batch reaches the group step up to about 2 s after the line (`parallelEventFlushInterval`), so at the 5 s default a quiet source's lines leave 5 to 7 s after its last line, however busy the other sources on the connection are. A pause of about 3 s or more in a source's own lines can seal its open group.
+        The interval counts per source, from the batch that carried the source's last line. On a forwarder input that batch reaches the group step up to about 2 s after the line (`parallelEventFlushInterval`), so at the 5 s default a quiet source's lines leave 5 to 7 s after its last line, however busy the other sources on the connection are. A pause of about 3 s or more in a source's own lines can seal its open group. On an input that sets [inputSequencePattern](https://doc.log10x.com/run/input/stream/#inputsequencepattern) or [inputSequenceFields](https://doc.log10x.com/run/input/stream/#inputsequencefields), as the forwarder inputs do, each combination of source and sequence values counts as its own source here.
       defValue: 5sec
 
     - names:

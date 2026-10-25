@@ -45,6 +45,16 @@ input:
     # Use the wire-level Fluentd tag as the event's source.
     sourcePattern: \"tag\":\"(.*?)\"
 
+    # Group each container's stdout and stderr on their own, also when
+    # containers share a tag; the tag stays the source. Tailed container
+    # logs and kubernetes_metadata: docker.container_id, stream. Docker
+    # fluentd driver: container_id, source. Fluent Bit upstream: docker_id.
+    sequenceFields:
+      - docker_id
+      - container_id
+      - stream
+      - source
+
     args:
       # Listen on this TCP port
       - port

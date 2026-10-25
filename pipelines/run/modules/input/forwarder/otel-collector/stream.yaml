@@ -36,6 +36,17 @@ input:
 
     sourcePattern: \"tag\":\"(.*?)\"
 
+    # Group each container's stdout and stderr on their own, also when
+    # containers share a service.name; the tag stays the source. filelog
+    # receiver with the container parser: log.file.path, log.iostream and
+    # the k8s.* resource attributes. k8sattributes: container.id.
+    sequenceFields:
+      - log.file.path
+      - k8s.pod.uid
+      - k8s.container.name
+      - container.id
+      - log.iostream
+
     args:
       - port
       - $=yield TenXEnv.get("otelCollectorInputPort", "4317")

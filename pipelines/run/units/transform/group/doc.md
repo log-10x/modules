@@ -23,7 +23,7 @@ tenXObjects which evaluate as truthy against [groupExpressions](https://doc.log1
 All subsequent TenXObjects read from the same source will join the current group until either:
 - Another group is started marked by a subsequent instance which evaluates as truthy against `groupExpressions`.
 - The number of TenXObjects in the current group exceeds [groupMaxSize](#groupmaxsize).
-- The [groupFlushTimeout](#groupflushtimeout) elapses. The interval counts per source, from the batch that carried the source's last line. On a forwarder input that batch reaches the group step up to about 2 s after the line (`parallelEventFlushInterval`), so at the 5 s default a quiet source's lines leave 5 to 7 s after its last line, however busy the other sources on the connection are. A pause of about 3 s or more in a source's own lines can seal its open group.
+- The [groupFlushTimeout](#groupflushtimeout) elapses. The interval counts per source, from the batch that carried the source's last line. On a forwarder input that batch reaches the group step up to about 2 s after the line (`parallelEventFlushInterval`), so at the 5 s default a quiet source's lines leave 5 to 7 s after its last line, however busy the other sources on the connection are. A pause of about 3 s or more in a source's own lines can seal its open group. On an input that sets [inputSequencePattern](https://doc.log10x.com/run/input/stream/#inputsequencepattern) or [inputSequenceFields](https://doc.log10x.com/run/input/stream/#inputsequencefields), as the forwarder inputs do, each combination of source and sequence values counts as its own source here.
 
 At that point the group is sealed as new composite TenXObject and flushed forward for aggregation and output.
 Each composite TenXObject returns the number of instances grouped within it via the [groupSize](https://doc.log10x.com/api/js/#TenXObject+groupSize) member.
@@ -140,3 +140,7 @@ a logical origin (e.g., log file, host address).
 
 This value ensure each TenXObject is grouped alongside instances 
 from the same source and is accessible via the [source](https://doc.log10x.com/api/js/#TenXObject+source) member.
+
+[Sequence patterns](https://doc.log10x.com/run/input/stream/#inputsequencepattern) and
+[fields](https://doc.log10x.com/run/input/stream/#inputsequencefields) group the events of one source further,
+for example by container and stream when several containers share one forwarder tag, without changing the source value.

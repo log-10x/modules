@@ -256,6 +256,49 @@ unit:
         applied to select its 'source' value.
       
     - names:
+       - inputSequencePattern
+      description: a regex pattern whose captured values separate events of one source into their own sequences
+      type: string
+      category: parse
+      required: false
+      doc: |
+        defines a regex pattern whose capture groups, from every match in the current event text,
+        are combined with the event's 'source' value to select the sequence it joins.
+
+        Events with the same source but different captured values are sequenced and grouped apart,
+        while each keeps the source value set by [inputSourcePattern](https://doc.log10x.com/run/input/stream/#inputsourcepattern).
+        The source is also the tag a forwarder output writes back, so this pattern separates events
+        without changing that tag.
+
+        For example, a forwarder that sends every container under one tag can set
+        `sequencePattern` to: `\"(?:container_id|stream)\":\"(.*?)\"`
+        so lines from different containers, and the stdout and stderr lines of one container,
+        never join each other's multiline events (e.g., stack traces).
+
+        A line in which nothing matches is sequenced by its source value alone.
+        [inputSourceFilter](https://doc.log10x.com/run/input/stream/#inputsourcefilter) does not apply to this pattern.
+
+    - names:
+      - inputSequenceFields
+      description: JSON fields whose values separate events of one source into their own sequences
+      type: list
+      category: parse
+      required: false
+      doc: |
+        specifies a list of JSON field names whose values are combined with the event's 'source' value
+        to select the sequence it joins. The values are captured from every matching capture group within
+        [inputSequencePattern](https://doc.log10x.com/run/input/stream/#inputsequencepattern),
+        or from the entire event if no sequence pattern is set.
+
+        A field matches by its own name at any depth of the JSON object, so `docker_id` matches
+        the `docker_id` field inside a `kubernetes` object. A name that contains dots, such as `log.iostream`,
+        matches a field whose name is that exact text. The values of all listed fields present in the event
+        are captured, in the order they appear.
+
+        For example, setting `sequenceFields` to `[docker_id, stream]` sequences the stdout and stderr lines
+        of each container apart from each other and from other containers that share the same source.
+
+    - names:
       - inputBackpressureIntervalBytesLimit
       description: the max allowed number of bytes to read within 'inputBackpressureIntervalBytesDuration'
       type: string

@@ -48,6 +48,15 @@ input:
     # is fixed (Fluentd-style), the recipe's `ingest` transform writes it.
     sourcePattern: \"tag\":\"(.*?)\"
 
+    # Group each file's or container's stdout and stderr on their own, also
+    # when they share a tag; the tag stays the source. kubernetes_logs: file,
+    # kubernetes.container_id, stream. docker_logs: container_id, stream.
+    # file source: file.
+    sequenceFields:
+      - file
+      - container_id
+      - stream
+
     args:
       # Unix socket path takes precedence over TCP port when both are set
       - path

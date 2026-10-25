@@ -64,7 +64,7 @@ module:
       description: regex pattern whose captured values group events of one tag apart
       type: string
       required: false
-      defValue: '"(?:docker_id|container_id|stream|source)":"(.*?)"'
+      defValue: '"(docker_id|container_id|stream|source)":"(.*?)"'
       doc: |
         defines a regex pattern whose captured values, combined with the event source,
         select the sequence each record joins. Records under one tag whose captured values differ

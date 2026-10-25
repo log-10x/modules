@@ -264,6 +264,9 @@ unit:
       doc: |
         defines a regex pattern whose capture groups, from every match in the current event text,
         are combined with the event's 'source' value to select the sequence it joins.
+        Each match counts as one value, whatever order the matches appear in, so a pattern that
+        captures a field's name with its value keys the same record the same way when a forwarder
+        writes its fields in a different order.
 
         Events with the same source but different captured values are sequenced and grouped apart,
         while each keeps the source value set by [inputSourcePattern](https://doc.log10x.com/run/input/stream/#inputsourcepattern).
@@ -271,7 +274,7 @@ unit:
         without changing that tag.
 
         For example, a forwarder that sends every container under one tag can set
-        `sequencePattern` to: `\"(?:container_id|stream)\":\"(.*?)\"`
+        `sequencePattern` to: `\"(container_id|stream)\":\"(.*?)\"`
         so lines from different containers, and the stdout and stderr lines of one container,
         never join each other's multiline events (e.g., stack traces).
 
@@ -293,7 +296,7 @@ unit:
         A field matches by its own name at any depth of the JSON object, so `docker_id` matches
         the `docker_id` field inside a `kubernetes` object. A name that contains dots, such as `log.iostream`,
         matches a field whose name is that exact text. The values of all listed fields present in the event
-        are captured, in the order they appear.
+        are captured with their names, whatever order the fields appear in.
 
         For example, setting `sequenceFields` to `[docker_id, stream]` sequences the stdout and stderr lines
         of each container apart from each other and from other containers that share the same source.

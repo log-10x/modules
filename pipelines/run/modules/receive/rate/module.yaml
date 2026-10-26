@@ -180,8 +180,9 @@ module:
         sample rate under a mute. A listed level skips its `rateReceiverSeverityFloors` draw.
 
         The count is per pattern, per container, per regulator instance (one per node), per window
-        (`rateReceiverResetIntervalMs`). The lines it passes count toward the container's total, so
-        an error storm can exceed the total by the count times the storming patterns.
+        (`rateReceiverResetIntervalMs`). The lines it passes count toward the container's total, and
+        once the total is spent the container passes at most `rateReceiverKeepMaxOverTotal` more of
+        them in the window.
 
         Keys must match the level vocabulary emitted by the level enrichment. The module's settings
         set `ERROR=50`, `CRITICAL=50` and `FATAL=50`, and entries merge by level, so those three
@@ -458,9 +459,10 @@ module:
 
         The `rateReceiverBaselineCount` sample counts toward the total like any line, and once the total
         is spent the service passes at most `rateReceiverBaselineMaxOverTotal` more sample lines in the
-        window. The `rateReceiverKeepCounts` lines and the lines an active mute entry passes always pass
-        and count toward the total, so an error storm or a muted pattern can exceed it by that much: the
-        keep count is per pattern, with no limit per service.
+        window. The `rateReceiverKeepCounts` lines count toward the total the same way, and once it is
+        spent the service passes at most `rateReceiverKeepMaxOverTotal` more of them in the window. The
+        lines an active mute entry passes always pass and count toward the total, so a muted pattern can
+        exceed it by that much.
 
         **File format** (CSV; header row + one comma-separated entry per row):
 
@@ -587,6 +589,24 @@ module:
         under `bytes` a service can exceed its total by this many of its own lines. `0` removes the
         bound, so every sample line passes. Read by the cap-file regulators, for services with a total.
       defValue: 50
+
+    - names:
+      - rateReceiverKeepMaxOverTotal
+      description: keep-count lines a service passes per window once it has passed its total
+      type: number
+      required: false
+      doc: |
+        defines how many `rateReceiverKeepCounts` lines a service passes per window on this regulator
+        instance once it has passed its total (`rateReceiverTotalLookupFile`). Within the total a
+        keep-count line passes like any line. Past it, keep-count lines pass up to this count, and the
+        rest take the service's action. This bounds a service that prints many new error patterns in
+        one window, each of which would otherwise pass its keep count over the total.
+
+        The count is in lines whatever `rateReceiverUnit` is, like the keep counts, so under `bytes` a
+        service can exceed its total by this many of its own lines. `0` removes the bound, so every
+        keep-count line passes. The lines an active mute entry passes follow the entry and are not
+        counted here. Read by the cap-file regulators, for services with a total.
+      defValue: 500
 
     - names:
       - rateReceiverAbsoluteCap

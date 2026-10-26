@@ -25,7 +25,7 @@ An optional total file bounds what each service passes per window on this node, 
 - **Largest first.** When the service's caps alone let more than its total through in the previous window, every pattern's cap scales by total / that amount for the whole window, or by what they let through so far this window once that is larger. The service's largest patterns reach the scaled cap first and are held, and its small ones keep passing. The scale follows the previous window, so the window after a storm is scaled by the storm for its whole length and recovers the window after. The first window after a quiet one fills its total in arrival order before the scale applies. A service whose first lines of this window and of the last window it sent in are two window lengths or more apart scales by total / its units so far this window instead.
 - **Hard bound.** Once the lines the service passed reach its total, every further line takes the service's action.
 
-The baseline sample counts toward the total like any line. Once the total is spent, the service passes at most `baselineMaxOverTotal` more sample lines in the window (default 50, counted in lines whatever the `unit`), and the rest of its samples take the service's action, so a service that prints many new patterns at once exceeds its total by that many lines at most. The error-class lines in `keepCounts` and the lines a mute entry passes always pass and count toward the total, so the service's other patterns give way first; an error storm can exceed the total by the keep count per storming pattern, with no limit per service. Each regulator instance holds its own total; the MCP's budget run (`log10x_setup_recurring`) divides a fleet budget across instances, and a node added between runs enforces its own total until the next run.
+The baseline sample counts toward the total like any line. Once the total is spent, the service passes at most `baselineMaxOverTotal` more sample lines in the window (default 50, counted in lines whatever the `unit`), and the rest of its samples take the service's action. The error-class lines in `keepCounts` count toward the total the same way, and once it is spent the service passes at most `keepMaxOverTotal` more of them in the window (default 500, counted in lines), so with the shipped settings a burst of new error patterns exceeds the total by at most 550 lines. The lines a mute entry passes always pass and count toward the total, so the service's other patterns give way first. Each regulator instance holds its own total; the MCP's budget run (`log10x_setup_recurring`) divides a fleet budget across instances, and a node added between runs enforces its own total until the next run.
 
 **File format**, CSV with a header row, keyed by the `containerField` value, read through `totalLookupFile` (`TOTAL_LOOKUP_FILE`):
 
@@ -157,6 +157,7 @@ rateReceiver:
   warmupMs: 0                # per-instance grace before capping; 0 caps from the first line
   baselineCount: 5
   baselineMaxOverTotal: 50   # sample lines a service passes per window once over its total; 0 = no bound
+  keepMaxOverTotal: 500      # keep-count lines a service passes per window once over its total; 0 = no bound
   capLookup:
     # file: $=path("data/caps") + "/caps.csv"   # optional per-container caps, with a * row
     retain: $=parseDuration("10m")

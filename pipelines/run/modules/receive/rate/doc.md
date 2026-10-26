@@ -10,7 +10,7 @@ The rate regulator watches each container's recent volume and acts on any one [p
 
 The cap is a budget for one pattern in one container over one window (`resetIntervalMs`, default 4 minutes). The regulator counts it in `unit`: `bytes`, the UTF-8 size of each event as the forwarder hands it to the Receiver, the whole record and not only the message, or `events`, one per line, for analyzers that bill per event such as Datadog. The cap and total files are written in the same unit. The cap resolves per event: the container's row in the cap file, then the file's `*` row, then the fleet-wide `absoluteCap`. All three default to none, and a resolved cap of `0` means keep everything, so protection is opt-in.
 
-Each regulator instance starts its first window at the first line it regulates and a new one every `resetIntervalMs` after that, the same windows for all its patterns and services. They do not follow the clock, so a count over a 4-minute span of the clock can include the end of one window and the start of the next. A policy file reload does not start a new window.
+Windows start at each multiple of `resetIntervalMs` since the Unix epoch, so every node's windows line up with the clock: with the default of 4 minutes they run from :00 to :04, :04 to :08 and on through the hour, the same windows for all patterns and services. The first window after the engine starts is partial and ends at the next multiple. A policy file reload does not start a new window.
 
 At or below the cap every line is kept. Above it a line is held and takes the container's action, with three exceptions: the first `baselineCount` lines of every pattern each window (default 5), the error-class lines in `keepCounts`, and the optional share guard.
 

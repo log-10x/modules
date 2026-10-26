@@ -100,9 +100,9 @@ module:
       doc: |
         defines the window in milliseconds over which a pattern's recent share is measured. The
         counters reset every interval, so share reflects recent volume rather than all-time totals.
-        A regulator instance starts its first window at the first line it regulates and a new one
-        every interval after that, the same windows for all its patterns and services. They do not
-        follow the clock, and a policy file reload does not start a new window.
+        Windows start at each multiple of the interval since the Unix epoch, so every node's windows
+        line up with the clock, the same windows for all patterns and services. The first window
+        after a start is partial, and a policy file reload does not start a new window.
 
         Shorter windows (e.g., 1 minute) are more reactive but noisier; longer windows are smoother but
         slower to adapt. The default of 4 minutes balances the two.

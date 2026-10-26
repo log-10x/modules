@@ -42,6 +42,10 @@ input:
     # Extract the event source from the injected "tag" field
     sourcePattern: $=TenXEnv.get("forwardSourcePattern", "\"tag\":\"(.*?)\"")
 
+    # Group each container's stdout and stderr on their own, also when
+    # containers share a tag; the tag stays the source
+    sequencePattern: $=TenXEnv.get("forwardSequencePattern", "\"(docker_id|container_id|stream|source)\":\"(.*?)\"")
+
     # Sets the recommended backpressure limit for the 10x pipeline
     backpressure:
       intervalBytesLimit: $=parseBytes("2MB")

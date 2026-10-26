@@ -45,6 +45,16 @@ input:
     # Use the wire-level Fluent Bit tag as the event's source.
     sourcePattern: \"tag\":\"(.*?)\"
 
+    # Group each container's stdout and stderr on their own, also when
+    # containers share a tag; the tag stays the source. Tail input and
+    # kubernetes filter: docker_id, stream. Docker fluentd driver:
+    # container_id, source.
+    sequenceFields:
+      - docker_id
+      - container_id
+      - stream
+      - source
+
     args:
       # Listen on this TCP port
       - port

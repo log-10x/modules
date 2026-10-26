@@ -92,6 +92,10 @@ input:
     enabled: true
     sourceFilter: '\\\"tenx\\\":true'
 
+    # Group each file's stdout and stderr on their own. The event is the
+    # escaped JSON inside Filebeat's log line: log.file.path and stream.
+    sequencePattern: '\\\"(path|stream)\\\":\\\"(.*?)\\\"'
+
     extractors:
       - outerSelector
       - filebeat

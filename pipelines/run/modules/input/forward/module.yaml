@@ -60,6 +60,22 @@ module:
         The default pattern extracts this tag as the event source.
 
     - names:
+        - forwardSequencePattern
+      description: regex pattern whose captured values group events of one tag apart
+      type: string
+      required: false
+      defValue: '"(docker_id|container_id|stream|source)":"(.*?)"'
+      doc: |
+        defines a regex pattern whose captured values, combined with the event source,
+        select the sequence each record joins. Records under one tag whose captured values differ
+        are grouped apart, so multiline events (e.g., stack traces) of different containers, or of
+        one container's stdout and stderr, never mix. The source, and the tag written back, stay unchanged.
+
+        The default captures the container ID (`docker_id` from Fluent Bit's kubernetes filter,
+        `container_id` from the Docker fluentd logging driver) and the stream (`stream` or `source`).
+        A record in which nothing matches is grouped by its tag alone.
+
+    - names:
         - forwardExtractors
       description: JSON / regex extractor names applied to each Forward record
       type: list

@@ -696,7 +696,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
             - FATAL=50
         ```
 
-        At or below the cap every event passes through untouched. Above it, a pattern keeps its first 5 lines per window, plus 50 lines of each error-class level, and the rest take the container's action (`pass` unless an action file or `defaultAction` sets one). The most one pattern in one container passes per window is therefore the cap plus those lines.
+        At or below the cap every event passes through untouched. Above it, a pattern keeps its first 5 lines per window, plus up to 50 lines of each error-class level, released across the window, and the rest take the container's action (`pass` unless an action file or `defaultAction` sets one). The most one pattern in one container passes per window is therefore the cap plus those lines.
 
     === ":material-kubernetes: Multi-App Kubernetes"
 

@@ -283,8 +283,9 @@ module:
           pushes the change, as the repo is set up. The mute file is the interface.
 
         **Error-class lines still pass by count.** Under an active entry, the levels in
-        `rateReceiverKeepCounts` pass their first lines per pattern per window before the
-        sample rate applies, so a `0.0` mute never silences ERROR/CRITICAL/FATAL traffic.
+        `rateReceiverKeepCounts` pass up to their count per pattern per window, released
+        across the window, before the sample rate applies, so a `0.0` mute never silences
+        ERROR/CRITICAL/FATAL traffic.
 
         **Lines a mute passes still count.** In a container with a cap file row, the lines an
         active entry passes count toward the service's total (`rateReceiverTotalLookupFile`), so

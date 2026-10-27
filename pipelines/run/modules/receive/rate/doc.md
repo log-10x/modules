@@ -44,7 +44,7 @@ A missing total file loads as an empty table, so no service has a total until a 
 
 ## :material-shield-alert-outline: Error-class lines
 
-Error-class lines are never held to zero. `keepCounts` passes a fixed number of lines per pattern per window for each listed level, once the pattern is over its cap or its service is over its total, and under an active mute entry. The shipped list is `ERROR=50`, `CRITICAL=50` and `FATAL=50`; the lines past the count take the container's action. The count is per pattern, per container, per node, per window, so it bounds what an error storm adds to the bill.
+Error-class lines are never held to zero. `keepCounts` passes a fixed number of lines per pattern per window for each listed level, once the pattern is over its cap or its service is over its total, and under an active mute entry. The shipped list is `ERROR=50`, `CRITICAL=50` and `FATAL=50`; the lines past the count take the container's action. The count is per pattern, per container, per node, per window, so it bounds what an error storm adds to the bill. With a cap file, `keepCountSlices` (default 4) releases the count through the window: the allowance grows by a quarter each minute of a 4-minute window, 12, 25, 37 and 50 lines in all for `ERROR=50`, so a sustained storm passes 12 or 13 lines every minute. Lines a minute leaves unused carry to the next, so a burst late in the window passes more than one early in it, never more than the count, and lines under a mute entry share the same count.
 
 ERROR, CRITICAL and FATAL always keep a count, 50 unless `keepCounts` sets another: the module sets the three itself and entries merge by level, so changing one means setting it. Any other level not in `keepCounts`, and a level set to `-1` there, follows `severityFloors`, the fraction of a held pattern's lines kept at random. The shipped floors are `0` for every level, and any level with no floor of its own takes `minRetentionThreshold` (`0`). Both lists read the [severity](https://doc.log10x.com/run/initialize/level/) the level enrichment produced, so they apply whatever field the original log used. A config without `keepCounts` therefore still keeps them; `severityFloors` must stay set, since an empty or missing list stops the launch.
 
@@ -146,6 +146,7 @@ rateReceiver:
     - ERROR=50
     - CRITICAL=50
     - FATAL=50
+  keepCountSlices: 4         # slices of the window through which the keep count accumulates; 1 = all at the window start
   severityFloors:            # random share kept for the other levels once held
     - TRACE=0
     - DEBUG=0

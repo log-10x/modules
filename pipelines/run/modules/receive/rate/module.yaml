@@ -200,6 +200,28 @@ module:
         ```
 
     - names:
+      - rateReceiverKeepCountSlices
+      description: equal slices of the window through which each pattern's keep count is released
+      type: number
+      required: false
+      doc: |
+        defines how many equal slices of the window (`rateReceiverResetIntervalMs`) release the
+        `rateReceiverKeepCounts` lines of a pattern once it is over its cap or its container is over
+        its total. The allowance accumulates through the window: by the end of the first of S slices
+        the pattern may have passed the count x 1 / S lines, by the end of the second the count x
+        2 / S, rounded down, and the whole count in the last, so with `ERROR=50`, 4 slices and the
+        4-minute window a sustained storm passes 12, 13, 12 and 13 lines in the window's four
+        minutes and reaches the destination in every one of them. Lines a slice leaves unused carry
+        to the next, so a burst late in the window passes more than one early in it, never more than
+        the count. Lines an active mute-file entry passes and the lines released here share one count
+        per window. Slices start on the clock like windows, so with the defaults each slice is one
+        clock minute. `1` releases the whole count at the start of the window; a value below 1 or not
+        a number acts as 1, and a fraction is rounded down. Past the container's total every
+        keep-count line counts toward `rateReceiverKeepMaxOverTotal`. Read by the cap-file
+        regulators.
+      defValue: 4
+
+    - names:
       - rateReceiverLookupFile
       description: declarative mute file keyed by field-set
       type: string

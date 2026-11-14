@@ -414,12 +414,14 @@ Follow the steps below. Steps that require customization link to the relevant [C
             Port         24225
             Tag_Prefix   tenx.
 
-        # Write processed events (those with the tenx. prefix only) to Folder B.
+        # Write the message of each processed event (tenx. prefix only, templates
+        # excluded) to Folder B, one file per tag.
         [OUTPUT]
             Name         file
-            Match        tenx.*
+            Match_Regex  ^tenx\.(?!tenx-template).*
             Path         ${FOLDER_B}
-            Format       plain
+            Format       template
+            Template     {log}
         ```
 
         Start log10x first, then fluent-bit: `tenx run @run/input/forwarder/fluentbit @apps/receiver && fluent-bit -c fluent-bit-splunk.conf`.
@@ -427,10 +429,12 @@ Follow the steps below. Steps that require customization link to the relevant [C
         **Step 3**: Configure Splunk UF to monitor Folder B:
 
         ```ini title="inputs.conf"
-        [monitor://${FOLDER_B}]
+        [monitor://${FOLDER_B}/tenx.app.logs]
         index = main
         sourcetype = app_logs
         ```
+
+        The `file` output writes each record's `log` value alone, to a file named after the record's tag: `tenx.` followed by the input's tag. Monitor that file; the folder also receives a file for the engine's status records.
 
         This keeps Splunk UF as the forwarder (handling buffering, retries, timeouts) while 10x receives events inline. See the [Splunk UF module](https://doc.log10x.com/run/input/forwarder/splunkUF/) for details.
 
@@ -649,9 +653,10 @@ Follow the steps below. Steps that require customization link to the relevant [C
         # Received events written to Folder B for Splunk UF
         [OUTPUT]
             Name         file
-            Match        *
+            Match_Regex  ^tenx\.(?!tenx-template).*
             Path         ${FOLDER_B}
-            Format       plain
+            Format       template
+            Template     {log}
         ```
 
         Splunk UF continues to monitor Folder B via `inputs.conf`. No changes to the UF configuration.

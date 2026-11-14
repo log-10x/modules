@@ -103,11 +103,10 @@ module:
       required: false
       category: lifecycle
       doc: |
-        controls the time duration that the output stream will
-        wait for the sub-process to terminate gracefully (e.g., '5s').
-        If the process timeouts, the output will forcibly terminate it. If set to 0,
-        the output stream will wait indefinitely for the sub-process to terminate.
-        This value only applies when [procOutDestroyMode](https://doc.log10x.com/run/output/event/process/#procoutdestroymode) is set to `graceful`.
+        controls the time to wait for the sub-process to exit after its stdin is closed,
+        and again after it is sent a termination signal, before it is killed (e.g., '5s').
+        When 0 or not set, each wait is 10 seconds.
+        This value applies when [procOutDestroyMode](https://doc.log10x.com/run/output/event/process/#procoutdestroymode) is `graceful`, and when a `cached` sub-process is closed.
 
     - names:
       - procOutMaxCacheSize

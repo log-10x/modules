@@ -8,5 +8,7 @@
 tokenDelims: $?tokenDelims=<>|. ][:-+/*=\\,{}_();'\"$\t\n@
 
 # 'ipv4SingleToken' keeps a dotted-quad IPv4 address (e.g. 10.0.1.14) as one variable token
-# instead of four numbers and three '.' delimiters.
-ipv4SingleToken: $?ipv4SingleToken=false
+# instead of four numbers and three '.' delimiters. It has no default here on purpose: when the
+# option is not set, the key is left out, so an engine that does not know the field still starts
+# with these settings. The engine's own default is off.
+ipv4SingleToken: $?ipv4SingleToken

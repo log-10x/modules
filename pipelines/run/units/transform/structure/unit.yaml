@@ -30,3 +30,14 @@ module:
         defines which characters break a string of event characters into tokens to classify as symbols or variables.
       defValue: <>|. ][:-+/*=\\,{}_();'\"$\t\n@
       
+
+    - names:
+      - ipv4SingleToken
+      description: keep an IPv4 address as one variable
+      type: boolean
+      required: false
+      doc: |
+        controls whether a dotted-quad IPv4 address (four numeric parts 0 to 255 joined by single dots,
+        e.g. 10.0.1.14) is kept as one variable token instead of four numbers and three '.' delimiters.
+        A run of five or more dot-separated numbers is cut at its dots as before.
+      defValue: false

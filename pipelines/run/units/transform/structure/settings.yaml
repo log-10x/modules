@@ -6,3 +6,7 @@
 # 'tokenDelims' defines which characters break a string of event characters into tokens to 
 # classify as symbols or variables.
 tokenDelims: $?tokenDelims=<>|. ][:-+/*=\\,{}_();'\"$\t\n@
+
+# 'ipv4SingleToken' keeps a dotted-quad IPv4 address (e.g. 10.0.1.14) as one variable token
+# instead of four numbers and three '.' delimiters.
+ipv4SingleToken: $?ipv4SingleToken=false

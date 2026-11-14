@@ -30,9 +30,8 @@
 #   4. Log10x processes the event (rate/policy filtering, optional compaction).
 #   5. The processed event comes back to the Collector on `:24225` via the
 #      `otlp/tenx` receiver, surfacing on the `logs/from-tenx` pipeline. The
-#      OTLP `LogRecord.body` carries the message verbatim; everything else
-#      that came in on OTLP returns as a log-record attribute (the resource-
-#      vs-log distinction collapses; everything comes back as a log attribute).
+#      OTLP `LogRecord.body` carries the message verbatim; resource attributes
+#      return under `Resource` and log-record attributes on the log record.
 #   6. `logs/from-tenx` holds only destination exporters, no processors.
 #      Keep this pipeline processor-free so enrichment runs exactly once.
 #

@@ -12,14 +12,15 @@ Entries live in a CSV cap-file, typically committed to a git repo and edited by 
 
 A cap-file declares, for each pattern, whether its events are compacted or preserved. Patterns not listed fall back to `compactReceiverDefault`.
 
-**File format**, CSV with a header row, keyed by the fields named in `compactReceiverFieldNames` joined with `_` (the shipped configuration uses the pattern field, `message_pattern`):
+**File format**, CSV: a header row, then one entry per row, keyed by the fields named in `compactReceiverFieldNames` joined with `_` (the shipped configuration uses the pattern field, `message_pattern`):
 
 ```csv
-fieldSet,value
-<fieldSet>,<true|false>[:<untilEpochSec>][:<reason>]
+pattern_hash,value
+<key>,<true|false>[:<untilEpochSec>][:<reason>]
 ```
 
-- `fieldSet`, the event fields named by `compactReceiverFieldNames` joined with `_`. With the shipped configuration this is the pattern's `message_pattern` value.
+- The header row names the columns and is never matched as an entry. The engine reads the first column as the key and the second as the value, so the names themselves are not used; the shipped `compact-cap.csv` has the header `pattern_hash,value`.
+- The key, the event fields named by `compactReceiverFieldNames` joined with `_`. With the shipped configuration this is the pattern's `message_pattern` value. With `compactReceiverFieldNames` set to `[templateHash]`, as the Splunk app's field map uses, it is the template hash in double quotes, since a hash can start with `#` or hold a space.
 - `value`, `true` compacts via `encode()`; `false` explicitly preserves `fullText` for this pattern (beats the default).
 - `untilEpochSec`, optional Unix-epoch (seconds) expiry. Past it the entry self-heals and the pattern falls back to `compactReceiverDefault`.
 - `reason`, optional free-text for audit. Must not contain commas (would break CSV parsing).
@@ -27,7 +28,7 @@ fieldSet,value
 **Example** (with `compactReceiverDefault: false`):
 
 ```csv
-fieldSet,value
+pattern_hash,value
 payment_retry_gateway_timeout,true:1745856000:OPS-5123 spike
 auth_audit_trail,false:1745856000:compliance keep verbose
 ```

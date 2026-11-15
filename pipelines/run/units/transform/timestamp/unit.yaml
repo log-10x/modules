@@ -66,6 +66,19 @@ unit:
         controls the maximum number of timestamps to add into an TenXObject's
         [timestamp](https://doc.log10x.com/api/js/#TenXObject+timestamp) array. Set to 0 for unlimited.
       defValue: 0
+
+    - names:
+      - timestampFieldName
+      description: name of the field that holds the event's time
+      type: string
+      required: false
+      doc: |
+        names the field that holds the event's time, such as 'eventTime'. With [timestampMaxPerObject](https://doc.log10x.com/run/transform/timestamp/#timestampmaxperobject)
+        set to 1, an TenXObject whose [text](https://doc.log10x.com/api/js/#TenXBaseObject+text) holds the name as a whole word, followed by delimiters only
+        and then a timestamp that [timestampPatterns](https://doc.log10x.com/run/transform/timestamp/#timestamppatterns) read, gets that timestamp
+        as its one timestamp. An object without the name, or whose value after the name no pattern reads, keeps the first timestamp found.
+        The name is looked for once per new template, when its timestamps are first searched.
+      defValue: null
       
     - names: 
       - timestampSearchLengthLimitFromStart

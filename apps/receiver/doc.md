@@ -481,7 +481,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
         ```yaml title="conf.d/tenx.d/conf.yaml"
         logs:
           - type: file
-            path: ${FOLDER_B}/*.log
+            path: ${FOLDER_B}/tenx.app.*   # the file output names each file after its tag, here tenx.app.logs
             service: myapp
             source: myapp
         ```

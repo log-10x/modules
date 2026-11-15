@@ -12,3 +12,9 @@ tokenDelims: $?tokenDelims=<>|. ][:-+/*=\\,{}_();'\"$\t\n@
 # option is not set, the key is left out, so an engine that does not know the field still starts
 # with these settings. The engine's own default is off.
 ipv4SingleToken: $?ipv4SingleToken
+
+# 'windowsPathSingleToken' keeps a Windows path (e.g. C:\Program Files\App\app.exe) as one variable token
+# instead of its names, backslashes and punctuation. It has no default here on purpose: when the option is
+# not set, the key is left out, so an engine that does not know the field still starts with these settings.
+# The engine's own default is off.
+windowsPathSingleToken: $?windowsPathSingleToken

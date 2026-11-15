@@ -6,7 +6,7 @@ The Reporter app is the **read-only insights arm** of the 10x pipeline. It pinpo
 
 **Deployment**: a DaemonSet alongside your forwarder, *not* a sidecar injected into it, and *not* a cloud app polling your SIEM's REST API. The reporter tails the same event stream your forwarder sees (pre-SIEM), publishes cost insight metrics, and fails independently: if the reporter goes down, your logs continue flowing to the SIEM uninterrupted.
 
-Not in the critical log path. No mutation of existing fluent-bit / fluentd / otel-collector configs. Similar deployment pattern to `datadog-agent` or `splunk-otel-collector`.
+Not in the critical log path. Each tab below adds what sends the Reporter a copy of each event, and the forwarder's existing destinations stay as they are. Similar deployment pattern to `datadog-agent` or `splunk-otel-collector`.
 
 The engine never moves or stores log data. Its only write is per-pattern metrics, sent to a time-series backend of the customer's choice (Prometheus, Datadog, Elastic, CloudWatch, and others). With no backend configured, metrics are collected locally and sent nowhere; fully air-gapped operation is supported. Events never leave the customer's path.
 
@@ -113,12 +113,38 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
     === ":simple-logstash: Logstash"
 
-        Add a `tcp` output that sends a copy of each event to the Reporter's Logstash input on port 5044, the same handoff as the [tenx-ingest.conf](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/logstash/conf/tenx-ingest.conf) recipe. Logstash sends each event to every output in the `output` block, so the existing outputs stay as they are:
+        Give the copy for the Reporter its own pipeline with a persisted queue, so the existing outputs do not wait for the Reporter. In `pipelines.yml`, the `ingest` pipeline holds the existing inputs and filters and sends each event to two pipelines: `destinations`, which holds the existing outputs, and `tenx-report`, which sends a copy to the Reporter's Logstash input on port 5044, the same handoff as the [tenx-ingest.conf](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/logstash/conf/tenx-ingest.conf) recipe:
 
-        ```ruby title="my-logstash.conf"
+        ```yaml title="pipelines.yml"
+        - pipeline.id: ingest
+          path.config: "/etc/logstash/conf.d/ingest.conf"
+        - pipeline.id: destinations
+          path.config: "/etc/logstash/conf.d/destinations.conf"
+        - pipeline.id: tenx-report
+          queue.type: persisted
+          path.config: "/etc/logstash/conf.d/tenx-report.conf"
+        ```
+
+        ```ruby title="ingest.conf"
+        input {
+          # Existing inputs and filters stay here.
+        }
         output {
-          # Existing outputs (e.g. Elastic, Splunk) stay here.
+          pipeline { send_to => ["destinations"] }
+          pipeline { send_to => ["tenx-report"] }
+        }
+        ```
 
+        ```ruby title="destinations.conf"
+        input { pipeline { address => "destinations" } }
+        output {
+          # Existing outputs (e.g. Elastic, Splunk) move here.
+        }
+        ```
+
+        ```ruby title="tenx-report.conf"
+        input { pipeline { address => "tenx-report" } }
+        output {
           # Report: send a copy of each event to the Reporter.
           tcp {
             host  => "127.0.0.1"
@@ -127,6 +153,8 @@ Follow the steps below. Steps that require customization link to the relevant [C
           }
         }
         ```
+
+        While the Reporter is down, the `tenx-report` queue keeps the copies on disk and the existing outputs keep receiving events. The Reporter receives the queued copies when it is back. If the queue fills up first, at `queue.max_bytes` (1024mb unless set), Logstash stops reading new events until the Reporter is back.
 
     === ":simple-opentelemetry: OTel Collector"
 
@@ -306,20 +334,23 @@ Follow the steps below. Steps that require customization link to the relevant [C
     === ":simple-beats: Filebeat"
 
         ```console title="Nix/OSX"
-        $ filebeat -c my-filebeat.yml -e 2>&1 | /opt/tenx-edge/bin/tenx run @run/input/forwarder/filebeat @apps/reporter
+        $ filebeat -c my-filebeat.yml -e 2>&1 | receiverReadOnly=true /opt/tenx-edge/bin/tenx run @run/input/forwarder/filebeat @apps/reporter
         ```
 
         ```console title="Windows"
+        $ set receiverReadOnly=true
         $ filebeat -c my-filebeat.yml -e 2>&1 | "c:\program files\tenx-edge\tenx" run @run/input/forwarder/filebeat @apps/reporter
         ```
 
+        `receiverReadOnly=true` keeps the Reporter from sending events back to Filebeat.
+
     === ":simple-logstash: Logstash"
 
-        Start the Reporter with its Logstash input first, then Logstash:
+        Start the Reporter with its Logstash input first, then Logstash, which reads `pipelines.yml` from its settings folder:
 
         ```console
         $ receiverReadOnly=true tenx run @run/input/forwarder/logstash @apps/reporter
-        $ logstash -f my-logstash.conf
+        $ logstash --path.settings /etc/logstash
         ```
 
         `receiverReadOnly=true` keeps the Reporter from sending events back to Logstash.

@@ -147,3 +147,23 @@ module:
         Each output stream references it via `$?outputDropFilter`. Named
         outputDropFilter rather than outputFilter, which is a built-in per-stream
         engine option.
+
+    - names:
+      - receiverReadOnly
+      description: read-only mode, receive events, emit metrics, do not write back to the forwarder
+      type: boolean
+      required: false
+      defValue: false
+      doc: |
+        when true, the return output each forwarder input opens (Forward for
+        Fluent Bit, Fluentd and Vector, Unix socket for Filebeat, TCP socket
+        for Logstash, OTLP for the OpenTelemetry Collector) is not constructed,
+        so no event and no template is written back to the forwarder; the
+        aggregators still run and publish their metrics.
+
+        The [Reporter](https://doc.log10x.com/apps/reporter/) sets it to
+        `true`. With the [Receiver](https://doc.log10x.com/apps/receiver/) it
+        defaults to `false`. Declared here so that it is accepted as a launch
+        argument or a configuration key with any app that loads a forwarder
+        input; the Receiver and Reporter apps declare it with the same name,
+        type and default.

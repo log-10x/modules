@@ -11,6 +11,12 @@ runtimeAttributes:
   - app:reporter
   - env:edge
 
+# The Reporter reads events and publishes metrics; it never writes events back
+# to the forwarder. 'receiverReadOnly' keeps the return output a forwarder
+# input opens (https://doc.log10x.com/run/input/forwarder/) from being
+# constructed. A value given after '@apps/reporter' replaces this one.
+receiverReadOnly: true
+
 include:
   - apps/shared      
   - run/aggregate/report  # https://doc.log10x.com/run/aggregate/#report

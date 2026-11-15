@@ -64,8 +64,8 @@ module:
         sets a startup delay wait time in milliseconds before the process is considered available for events.
         if provided, will add a wait as part of starting the process before emitting events into it.
         max value for this argument is 10,000 (ie 10 seconds).
-        if [procOutStartupWaitPattern](https://doc.log10x.com/run/output/event/process/#procoutstartupwaitpattern) is also provided, the process will be considered
-        a failure if the wait time has passed before a line matching 'procOutStartupWaitPattern' was emitted.
+        if [procOutStartupWaitPattern](https://doc.log10x.com/run/output/event/process/#procoutstartupwaitpattern) is also provided, the output waits at most this long
+        for a line matching it: if the process is still running after that, events are written to it, and if it has exited, the output closes.
 
     - names:
         - procOutStartupWaitPattern
@@ -78,8 +78,8 @@ module:
         if provided, will wait until the process has emitted a line to it's output that matches the regex
         before emitting events into it.
         if [procOutStartupWaitMs](https://doc.log10x.com/run/output/event/process/#procOutStartupWaitMs) is also provided, will only wait for the specified
-        wait time, after which if no line was emitted to match the provided regex the process will be considered
-        a failure.
+        wait time, after which events are written to the process if it is still running, and the output
+        closes if it has exited.
 
     - names:
         - procOutDestroyMode

@@ -46,6 +46,9 @@ log4j:
           # A dedicated logger whose name matches the socket appender is used to
           # to write object/template values for this output instance
         - name: $loggerName
+          # 'level' passes every value written to this output, so the root logger's
+          #  level (set for the engine's own log) does not drop them
+          level: all
           additivity: false
           appenderRef:
             - ref: $loggerName

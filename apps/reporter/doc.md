@@ -113,56 +113,39 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
     === ":simple-logstash: Logstash"
 
-        Add a `pipe` output to delegate events to the reporter:
+        Add a `tcp` output that sends a copy of each event to the Reporter's Logstash input on port 5044, the same handoff as the [tenx-ingest.conf](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/logstash/conf/tenx-ingest.conf) recipe. Logstash sends each event to every output in the `output` block, so the existing outputs stay as they are:
 
         ```ruby title="my-logstash.conf"
         output {
-          pipe {
-            id => "tenx_pipeline"
-            ttl => -1
+          # Existing outputs (e.g. Elastic, Splunk) stay here.
 
-            # Nix
-            command => "${TENX_BIN:/opt/tenx-edge/bin/tenx} run @run/input/forwarder/logstash/report/config.yaml @apps/reporter"
-
-            # Windows
-            # command => "${TENX_BIN:'c:\\program files\\tenx\\tenx-edge.exe'} run @run/input/forwarder/logstash/report/config.yaml @apps/reporter"
+          # Report: send a copy of each event to the Reporter.
+          tcp {
+            host  => "127.0.0.1"
+            port  => 5044
+            codec => json_lines
           }
         }
         ```
 
     === ":simple-opentelemetry: OTel Collector"
 
-        !!! note "Requires otel-collector-contrib"
-            The OpenTelemetry Collector integration requires the **contrib** distribution for `syslogexporter` support.
+        Add an `otlp` exporter that sends a copy of each log record to the Reporter's OTLP input on port 4317, the same handoff as the [tenx-sidecar.yaml](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/otel-collector/conf/tenx-sidecar.yaml) recipe, and add it to the exporters of the existing logs pipeline. The existing exporters stay as they are:
 
-        **Step 1**: Copy the OTel Collector configuration:
+        ```yaml title="my-otelcol.yaml"
+        exporters:
+          # Report: send a copy of each log record to the Reporter.
+          otlp/tenx:
+            endpoint: 127.0.0.1:4317
+            tls:
+              insecure: true
 
-        ```bash
-        cp $TENX_MODULES/pipelines/run/modules/input/forwarder/otel-collector/report/tenxNix.yaml /etc/otelcol-contrib/
-        ```
-
-        **Step 2**: Update the configuration to match your log sources:
-
-        ```yaml title="report/tenxNix.yaml"
-        receivers:
-          filelog:
-            include:
-              - /var/log/**/*.log  # Customize paths
-            start_at: end
-        ```
-
-        **Step 3**: Configure your final exporters (Elastic, Splunk, etc.) in the same pipeline:
-
-        ```yaml title="report/tenxNix.yaml"
         service:
           pipelines:
             logs:
-              receivers: [filelog, otlp]
-              processors: [memory_limiter, batch]
-              exporters: [syslog/tenx, elasticsearch]  # Add your exporters
+              receivers: [filelog]                    # existing receivers
+              exporters: [elasticsearch, otlp/tenx]   # existing exporters, plus otlp/tenx
         ```
-
-        Reporter mode is **read-only**. Logs flow to your final destinations unchanged; the engine never moves or stores log data. Its only write is per-pattern metrics, sent to a time-series backend of your choice (Prometheus, Datadog, Elastic, CloudWatch, and others).
 
     === ":simple-splunk: Splunk UF"
 
@@ -332,23 +315,25 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
     === ":simple-logstash: Logstash"
 
+        Start the Reporter with its Logstash input first, then Logstash:
+
         ```console
+        $ receiverReadOnly=true tenx run @run/input/forwarder/logstash @apps/reporter
         $ logstash -f my-logstash.conf
         ```
 
+        `receiverReadOnly=true` keeps the Reporter from sending events back to Logstash.
+
     === ":simple-opentelemetry: OTel Collector"
 
-        **Step 1**: Start Log10x Reporter first:
+        Start the Reporter with its OTLP input first, then the Collector:
 
         ```console
-        $ tenx run @run/input/forwarder/otel-collector/report @apps/reporter
+        $ receiverReadOnly=true tenx run @run/input/forwarder/otel-collector @apps/reporter
+        $ otelcol-contrib --config=my-otelcol.yaml
         ```
 
-        **Step 2**: Start OTel Collector with the 10x configuration:
-
-        ```console
-        $ otelcol-contrib --config=/etc/otelcol-contrib/report/tenxNix.yaml
-        ```
+        `receiverReadOnly=true` keeps the Reporter from sending log records back to the Collector.
 
     === ":simple-splunk: Splunk UF"
 

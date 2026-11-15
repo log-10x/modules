@@ -58,3 +58,69 @@ This module is recommended for **VM/traditional infrastructure** where Splunk UF
     | File | Purpose |
     |------|---------|
     | [`fluentbit/conf/tenx-sidecar.conf`](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-sidecar.conf) | Reference Fluent Bit config showing the 10x sidecar handoff |
+
+## Quickstart
+
+These steps send compact events to Splunk through the Universal Forwarder. The [Log10x App](https://doc.log10x.com/apps/receiver/compact/splunk/) expands them at search time.
+
+**1. Run Log10x** with the three options the Splunk app needs and `receiverOptimize`:
+
+```bash
+tenx @run/input/forwarder/fluentbit @apps/receiver receiverOptimize true varMaxRecurIndexes 0 timestampZone UTC timestampMaxPerObject 1
+```
+
+**2. Write the processed events to Folder B.** Fluent Bit reads Folder A, hands each record to Log10x, and writes what comes back into Folder B: each source's compact events in a file of their own, one event per line, and the template records in another file, one JSON object per line.
+
+```ini title="fluent-bit.conf"
+[INPUT]
+    Name            tail
+    Path            /var/log/app/app.log
+    Tag             app.logs
+    Read_from_Head  true
+
+[OUTPUT]
+    Name            forward
+    Match           app.*
+    Host            127.0.0.1
+    Port            24224
+
+[INPUT]
+    Name            forward
+    Listen          0.0.0.0
+    Port            24225
+    Tag_Prefix      tenx.
+
+[OUTPUT]
+    Name            file
+    Match           tenx.app.logs
+    Path            /var/log/tenx
+    File            app.log
+    Format          template
+    Template        {log}
+
+[OUTPUT]
+    Name            file
+    Match           tenx.tenx-template
+    Path            /var/log/tenx
+    File            templates.log
+    Format          plain
+```
+
+**3. Monitor Folder B with the Universal Forwarder.** Add both files to `inputs.conf` on the forwarder:
+
+```ini title="inputs.conf"
+[monitor:///var/log/tenx/app.log]
+index = your_logs_index
+sourcetype = tenx_encoded
+_meta = tenx_sourcetype::your:original:sourcetype
+
+[monitor:///var/log/tenx/templates.log]
+index = tenx_dml
+sourcetype = tenx_dml_raw_json
+```
+
+`tenx_encoded` is the sourcetype the app expands. `_meta` adds the indexed field `tenx_sourcetype`, holding the sourcetype the events have when sent raw (for example `XmlWinEventLog` or `aws:cloudtrail`); the app's `txf` macro reads it to apply that sourcetype's field extractions. The template records go to the `tenx_dml` index, from which the app fills its KV Store.
+
+The forwarder reads a file once it holds at least 256 bytes. A compact file that stays smaller is forwarded after it grows past that size.
+
+**4. Install the Log10x App** on the search heads and on the instances that parse the events: the indexers, or the heavy forwarder the Universal Forwarder sends to. The app sets each compact event's time while the event is parsed.

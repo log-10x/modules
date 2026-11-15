@@ -47,19 +47,16 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
     === ":simple-fluentd: Fluentd"
 
-        **Step 1**: Include the 10x reporter configuration:
-
-        ```toml title="my-fluentd.conf"
-        @include "#{ENV['TENX_MODULES']}/pipelines/run/modules/input/forwarder/fluentd/conf/tenx-report.conf"
-        ```
-
-        **Step 2**: Use a `copy` directive to report on events while still sending them to output:
+        Use a `copy` directive to report on events while still sending them to output. The second `<store>` sends a copy of each event to the Reporter's Forward input on port 24224, the same handoff as the [tenx-sidecar.conf](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentd/conf/tenx-sidecar.conf) recipe:
 
         ```xml title="my-fluentd.conf"
         <source>
           @type tail
           path /path/to/file.log
           tag my_logs
+          <parse>
+            @type none
+          </parse>
         </source>
 
         <match my_logs>
@@ -72,8 +69,11 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
           # Report to 10x
           <store>
-            @type relabel
-            @label @TENX
+            @type forward
+            <server>
+              host 127.0.0.1
+              port 24224
+            </server>
           </store>
         </match>
         ```
@@ -83,24 +83,15 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
     === ":simple-fluentbit: Fluent-bit"
 
-        **Step 1**: Include the 10x reporter configuration:
+        Add a `forward` output that sends a copy of each event to the Reporter's Forward input on port 24224, the same handoff as the [tenx-sidecar.conf](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-sidecar.conf) recipe. The existing outputs stay as they are. The output catches all events; to report on a subset, update the `Match` field:
 
         ```toml title="my-fluent-bit.conf"
-        # Nix
-        @INCLUDE /etc/tenx/config/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-report.conf
-
-        # Windows
-        # @INCLUDE c:/program files/tenx-edge/config/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-report.conf
-        ```
-
-        **Step 2**: The Lua filter catches all events by default. To report on a subset, update the `Match` field:
-
-        ```toml title="tenx-report.conf"
-        [FILTER]
-            Name Lua
-            Match *
-            script ${TENX_MODULES}/${tenx_lua}
-            call tenx_process
+        # Report: send a copy of each event to the Reporter.
+        [OUTPUT]
+            Name         forward
+            Match        *
+            Host         127.0.0.1
+            Port         24224
         ```
 
     === ":simple-beats: Filebeat"
@@ -198,11 +189,12 @@ Follow the steps below. Steps that require customization link to the relevant [C
             Path         ${FOLDER_A}/*.log
             Tag          app.logs
 
-        # Include 10x reporter - sends events to 10x subprocess
-        @INCLUDE ${TENX_MODULES}/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-report.conf
-
-        # Include Unix socket - receives processed events back from 10x
-        @INCLUDE ${TENX_MODULES}/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-unix.conf
+        # Report: send a copy of each event to the Reporter.
+        [OUTPUT]
+            Name         forward
+            Match        app.*
+            Host         127.0.0.1
+            Port         24224
 
         # Write events (unchanged) to Folder B
         [OUTPUT]
@@ -247,11 +239,12 @@ Follow the steps below. Steps that require customization link to the relevant [C
             Path         ${FOLDER_A}/*.log
             Tag          app.logs
 
-        # Include 10x reporter - sends events to 10x subprocess
-        @INCLUDE ${TENX_MODULES}/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-report.conf
-
-        # Include Unix socket - receives processed events back from 10x
-        @INCLUDE ${TENX_MODULES}/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-unix.conf
+        # Report: send a copy of each event to the Reporter.
+        [OUTPUT]
+            Name         forward
+            Match        app.*
+            Host         127.0.0.1
+            Port         24224
 
         # Write events (unchanged) to Folder B
         [OUTPUT]
@@ -266,7 +259,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
         ```yaml title="conf.d/tenx.d/conf.yaml"
         logs:
           - type: file
-            path: ${FOLDER_B}/*.log
+            path: ${FOLDER_B}/*   # the file output names each file after its tag, here app.logs
             service: myapp
             source: myapp
         ```
@@ -311,13 +304,19 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
     === ":simple-fluentd: Fluentd"
 
+        Start the Reporter first, then Fluentd:
+
         ```console
+        $ tenx run @apps/reporter
         $ fluentd -c my-fluentd.conf
         ```
 
     === ":simple-fluentbit: Fluent-bit"
 
+        Start the Reporter first, then Fluent Bit:
+
         ```console
+        $ tenx run @apps/reporter
         $ fluent-bit -c my-fluent-bit.conf
         ```
 
@@ -353,9 +352,10 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
     === ":simple-splunk: Splunk UF"
 
-        **Step 1**: Start Fluent Bit with the 10x reporter:
+        **Step 1**: Start the Reporter first, then Fluent Bit:
 
         ```console
+        $ tenx run @apps/reporter
         $ fluent-bit -c fluent-bit-splunk.conf
         ```
 
@@ -369,9 +369,10 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
     === ":simple-datadog: Datadog Agent"
 
-        **Step 1**: Start Fluent Bit with the 10x reporter:
+        **Step 1**: Start the Reporter first, then Fluent Bit:
 
         ```console
+        $ tenx run @apps/reporter
         $ fluent-bit -c fluent-bit-datadog.conf
         ```
 

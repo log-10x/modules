@@ -246,34 +246,43 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
     === ":simple-logstash: Logstash"
 
-        Set up [multiple pipelines](https://www.elastic.co/guide/en/logstash/current/multiple-pipelines.html) in `pipelines.yml`:
+        Run two [pipelines](https://www.elastic.co/guide/en/logstash/current/multiple-pipelines.html) side by side, as the [pipelines.yml](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/logstash/conf/pipelines.yml) recipe does. The `ingest` pipeline holds your sources and filters and hands each event to Log10x on port 5044. The `destinations` pipeline takes the processed events back on port 5045 and holds your real outputs:
 
         ```yaml title="pipelines.yml"
-        - pipeline.id: raw_input
-          path.config: "/path/to/conf/upstream.conf"
-        - pipeline.id: tenx_pipeline
-          path.config: "${TENX_CONFIG}/pipelines/run/input/forwarder/logstash/receive/tenx-pipe-out.conf"
-        - pipeline.id: tenx_unix_pipeline
-          path.config: "${TENX_CONFIG}/pipelines/run/input/forwarder/logstash/receive/tenx-pipe-in-unix.conf"
-        - pipeline.id: processed
-          path.config: "/path/to/conf/downstream.conf"
+        - pipeline.id: ingest
+          path.config: "/path/to/conf/tenx-ingest.conf"
+        - pipeline.id: destinations
+          path.config: "/path/to/conf/tenx-destinations.conf"
         ```
 
-        ```ruby title="upstream.conf"
+        ```ruby title="tenx-ingest.conf"
         input {
-          file { path => /path/to/log }
+          file { path => "/path/to/log" }
+        }
+        filter {
+          # Log10x reads the `tag` field as the event's source.
+          mutate { add_field => { "tag" => "logstash" } }
         }
         output {
-          pipeline { send_to => tenx_input_pipeline }
+          tcp {
+            host  => "127.0.0.1"
+            port  => 5044
+            codec => json_lines
+          }
         }
         ```
 
-        ```ruby title="downstream.conf"
+        ```ruby title="tenx-destinations.conf"
         input {
-          pipeline { address => user_output_pipeline }
+          tcp {
+            host  => "0.0.0.0"
+            port  => 5045
+            codec => json_lines
+          }
         }
         output {
-          stdout { codec => json }
+          # Replace stdout with your real destinations.
+          stdout { codec => json_lines }
         }
         ```
 
@@ -598,9 +607,9 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
     === ":simple-logstash: Logstash"
 
-        Use multiple outputs. Logstash natively sends to all configured outputs:
+        Add the S3 output to the `ingest` pipeline beside the `tcp` hand-off to Log10x. Logstash sends each event to every output, so the archive gets every event and the `destinations` pipeline gets the processed stream:
 
-        ```ruby
+        ```ruby title="tenx-ingest.conf"
         output {
           s3 {
             bucket => "your-archive-bucket"
@@ -608,9 +617,11 @@ Follow the steps below. Steps that require customization link to the relevant [C
             size_file => 52428800
             time_file => 60
           }
-          pipe {
-            command => "/opt/tenx-edge/bin/tenx run ..."
-            # → 10x sidecar processes and receives these events
+          # Hand off to Log10x; processed events return to the destinations pipeline.
+          tcp {
+            host  => "127.0.0.1"
+            port  => 5044
+            codec => json_lines
           }
         }
         ```
@@ -778,8 +789,11 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
     === ":simple-logstash: Logstash"
 
+        Start Logstash first, so its port 5045 is listening when Log10x starts, then start Log10x. Logstash reads `pipelines.yml` from its settings folder:
+
         ```console
-        $ logstash -f my-logstash.conf
+        $ logstash --path.settings /etc/logstash
+        $ tenx run @run/input/forwarder/logstash @apps/receiver
         ```
 
     === ":simple-opentelemetry: OTel Collector"

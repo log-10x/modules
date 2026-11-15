@@ -45,3 +45,22 @@ module:
         and a version next to `.jar` (`analyzer-3.2.0.0.jar:3.2.0.0`). Setting this option needs an engine
         that supports it; an older engine does not start when it is set.
       defValue: false
+
+    - names:
+      - windowsPathSingleToken
+      description: keep a Windows path as one value
+      type: boolean
+      required: false
+      doc: |
+        controls whether a Windows path is kept as one variable token instead of its folder and file names,
+        backslashes and punctuation. A path starts with a drive letter and `:\` (`C:\Windows\explorer.exe`),
+        with two backslashes, a host name and a share (`\\host\share\dir`), or with one backslash and two or more
+        names (`\Device\HarddiskVolume2\Windows`, `\REGISTRY\MACHINE\SOFTWARE`). A backslash opens a path at the
+        start of the event or after a space, tab, line break, `=`, `<`, `>`, `:`, `"`, `/`, `|`, `*`, `'` or `,`.
+        Spaces stay inside a path. It ends at the first character a Windows name cannot hold (`< > : " / | ? *`),
+        a tab, a line break, `'`, `,` or the value separator of compact lines; a trailing backslash and trailing
+        spaces are left out. These stay cut as before: a backslash inside a word (`DOMAIN\user`), a single
+        backslash followed by `b`, `f`, `n`, `r`, `t` or `u` where no drive letter comes before it (`\t`, `\n`
+        inside a quoted value), and doubled backslashes (`C:\\Users`). Setting this option needs an engine that supports it; an older engine does not start when
+        it is set.
+      defValue: false

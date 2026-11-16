@@ -75,6 +75,7 @@ tenx @run/input/forwarder/fluentbit @apps/receiver receiverOptimize true varMaxR
 [INPUT]
     Name            tail
     Path            /var/log/app/app.log
+    DB              /var/log/app/app.log.db
     Tag             app.logs
     Read_from_Head  true
 
@@ -83,6 +84,7 @@ tenx @run/input/forwarder/fluentbit @apps/receiver receiverOptimize true varMaxR
     Match           app.*
     Host            127.0.0.1
     Port            24224
+    Retry_Limit     False
 
 [INPUT]
     Name            forward

@@ -102,7 +102,7 @@ Run the dev app on your log files locally to preview how edge and cloud apps wil
           @apps/dev
         ```
 
-        Skip `-e TENX_LICENSE_KEY` to run with the image's built-in limited license (fine for previewing savings on local logs).
+        Skip `-e TENX_LICENSE_KEY` to run on the built-in Free tier (up to 10 nodes, a commercial term).
 
     === ":material-docker: Docker (+ :material-github: GitOps config)"
 
@@ -118,7 +118,7 @@ Run the dev app on your log files locally to preview how edge and cloud apps wil
           @apps/dev
         ```
 
-        Skip `-e TENX_LICENSE_KEY` to run with the image's built-in limited license (fine for previewing savings on local logs).
+        Skip `-e TENX_LICENSE_KEY` to run on the built-in Free tier (up to 10 nodes, a commercial term).
 
 ???+ tenx-top10-events "Step 7: Analyze Output"
 

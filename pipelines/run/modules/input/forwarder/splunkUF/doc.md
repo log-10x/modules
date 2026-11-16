@@ -63,21 +63,25 @@ This module is recommended for **VM/traditional infrastructure** where Splunk UF
 
 These steps send compact events to Splunk through the Universal Forwarder. The [Log10x App](https://doc.log10x.com/apps/receiver/compact/splunk/) expands them at search time.
 
-**1. Run Log10x** on the host that runs Fluent Bit ([install on Linux](https://doc.log10x.com/install/linux/)), with the three options the Splunk app needs and `receiverOptimize`:
+**1. Run Log10x** on the host that runs Fluent Bit ([install on Linux](https://doc.log10x.com/install/linux/)), with the three options the Splunk app needs, `receiverOptimize` and `groupJoinLines false`:
 
 ```bash
-tenx @run/input/forwarder/fluentbit @apps/receiver receiverOptimize true varMaxRecurIndexes 0 timestampZone UTC timestampMaxPerObject 1
+tenx @run/input/forwarder/fluentbit @apps/receiver receiverOptimize true varMaxRecurIndexes 0 timestampZone UTC timestampMaxPerObject 1 groupJoinLines false
 ```
 
 **2. Write the processed events to Folder B.** Fluent Bit reads Folder A, hands each record to Log10x, and writes what comes back into Folder B: each source's compact events in a file of their own, one event per line, and the template records in another file, one JSON object per line.
 
 ```ini title="fluent-bit.conf"
+[SERVICE]
+    storage.path    /var/log/app/flb-storage
+
 [INPUT]
     Name            tail
     Path            /var/log/app/app.log
     DB              /var/log/app/app.log.db
     Tag             app.logs
     Read_from_Head  true
+    storage.type    filesystem
 
 [OUTPUT]
     Name            forward

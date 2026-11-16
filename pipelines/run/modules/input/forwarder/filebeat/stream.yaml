@@ -105,8 +105,8 @@ input:
     # stops reading and the forwarder buffers (forwarderInputBytesLimit, 2 MB a
     # second by default; 0 sets none).
     backpressure:
-      intervalBytesLimit: $=parseBytes(TenXEnv.get("forwarderInputBytesLimit", "2MB"))
-      intervalBytesDuration: $=parseDuration(TenXEnv.get("forwarderInputBytesInterval", "1s"))
+      intervalBytesLimit: $=yield parseBytes(TenXEnv.get("forwarderInputBytesLimit", "2MB"))
+      intervalBytesDuration: $=yield parseDuration(TenXEnv.get("forwarderInputBytesInterval", "1s"))
 
 # ============================== Output =======================================
 

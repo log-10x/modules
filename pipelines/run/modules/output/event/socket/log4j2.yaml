@@ -41,10 +41,13 @@ log4j:
           bufferSize: 2000000
 
           # TCP: when the destination refuses the connection or drops it, try
-          # again every second until it accepts. log4j's own default waits
-          # 30 seconds between attempts, and a value written while no
-          # connection is open is not sent
+          # again every second until it accepts (log4j's own default waits 30
+          # seconds between attempts)
           reconnectionDelayMillis: 1000
+
+          # report a failed write to the output, which waits and tries the value
+          # again until it is written; ignored, the value was lost
+          ignoreExceptions: false
 
     loggers:
       logger:

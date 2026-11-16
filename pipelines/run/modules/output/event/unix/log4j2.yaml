@@ -37,6 +37,10 @@ log4j:
       
           bufferSize: 2000000 # Ensure a large buffer size for very long lines
 
+          # report a failed write to the output, which waits and tries the value
+          # again until it is written; ignored, the value was lost
+          ignoreExceptions: false
+
           connectTimeoutMillis: $?outputUnixSocketConnectTimeout=5000
 
     loggers:

@@ -53,9 +53,12 @@ input:
       - maxQueuedLines
       - $=yield TenXEnv.get("otelCollectorInputMaxQueuedLines", "20000")
 
+    # The bytes this input reads in each forwarderInputBytesInterval before it
+    # stops reading and the forwarder buffers (forwarderInputBytesLimit, 2 MB a
+    # second by default; 0 sets none).
     backpressure:
-      intervalBytesLimit: $=parseBytes("2MB")
-      intervalBytesDuration: $=parseDuration("1s")
+      intervalBytesLimit: $=parseBytes(TenXEnv.get("forwarderInputBytesLimit", "2MB"))
+      intervalBytesDuration: '$=parseBytes(TenXEnv.get("forwarderInputBytesLimit", "2MB")) ? parseDuration(TenXEnv.get("forwarderInputBytesInterval", "1s")) : 0'
 
 # ============================== Output =======================================
 

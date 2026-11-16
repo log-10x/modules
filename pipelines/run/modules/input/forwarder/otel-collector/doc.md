@@ -2,7 +2,7 @@
 icon: simple/opentelemetry
 ---
 
-Runs 10x Engine as a [sidecar](https://doc.log10x.com/engine/launcher/sidecar) to the [OpenTelemetry Collector](https://opentelemetry.io/docs/collector/) for reporting, receiving, and optimizing events before they ship to their destination (Elasticsearch, Splunk, S3, Kafka, …). The Collector and Log10x run as peer processes. On Kubernetes, the Helm chart connects the two containers over unix domain sockets on a shared `/tmp` emptyDir: the Collector sends events to Log10x via syslog on `/tmp/tenx-otel-in.sock` and receives processed events back via fluentforward on `/tmp/tenx-otel-out.sock`. The Architecture and Quickstart below show the VM/CLI recipe instead, where the Collector sends events via its native [OTLP/gRPC exporter](https://github.com/open-telemetry/opentelemetry-collector/tree/main/exporter/otlpexporter) and receives them back via its OTLP/gRPC receiver. Every value on the OTLP wire survives the round trip: resource attributes, scope info, log-record attributes, severity, timestamp, and body, so k8s metadata (`k8s.pod.name`, `k8s.namespace.name`, `k8s.container.name`, labels, …) reaches your destinations with its name and value unchanged. Each attribute also keeps its place: a resource attribute returns under `Resource` and a log-record attribute on the log record. See [What an event looks like on the way back](#what-an-event-looks-like-on-the-way-back).
+Runs 10x Engine as a [sidecar](https://doc.log10x.com/engine/launcher/sidecar) to the [OpenTelemetry Collector](https://opentelemetry.io/docs/collector/) for reporting, receiving, and optimizing events before they ship to their destination (Elasticsearch, Splunk, S3, Kafka, …). The Collector and Log10x run as peer processes. On Kubernetes, the Helm chart connects the two containers over unix domain sockets on a shared `/tmp` emptyDir: the Collector sends events to Log10x via syslog on `/tmp/tenx-otel-in.sock` and receives processed events back via fluentforward on `/tmp/tenx-otel-out.sock`. The Architecture and Quickstart below show the VM/CLI recipe instead, where the Collector sends events via its native [OTLP/gRPC exporter](https://github.com/open-telemetry/opentelemetry-collector/tree/main/exporter/otlpexporter) and receives them back via its OTLP/gRPC receiver. Resource attributes, log-record attributes, timestamps and body survive the round trip, so k8s metadata (`k8s.pod.name`, `k8s.namespace.name`, `k8s.container.name`, labels, …) reaches your destinations with its name and value unchanged. Each attribute also keeps its place: a resource attribute returns under `Resource` and a log-record attribute on the log record. See [What an event looks like on the way back](#what-an-event-looks-like-on-the-way-back).
 
 !!! note "Distribution"
     Both the OTLP receiver and OTLP exporter ship in the core `otelcol` distribution, no `otelcol-contrib` build is required. Tested against `otelcol` v0.151.0+.
@@ -45,13 +45,14 @@ graph LR
 
 ### What an event looks like on the way back
 
-Values survive the round trip, and each attribute returns where it arrived.
+Attributes, timestamps and body survive the round trip, and each attribute returns where it arrived.
 
-**Every value comes back.** Resource attributes, scope info, log-record
-attributes, severity, timestamp and body all return to the Collector, each with
-the same key and the same value. The `LogRecord.body` carries the message
-verbatim in its original `AnyValue` shape, so a `body.stringValue` is
-byte-for-byte unchanged. Nothing is dropped and nothing is rewritten.
+**Attributes, timestamps and body come back.** Resource attributes, log-record
+attributes, timestamps and body return to the Collector, each with the same key
+and the same value. The `LogRecord.body` carries the message verbatim in its
+original `AnyValue` shape, so a `body.stringValue` is byte-for-byte unchanged.
+Severity and the instrumentation scope do not come back: a returning record has
+no severity and an empty scope.
 
 **The resource-versus-log-record split comes back too.** Log10x reads the
 incoming record as one flat set of top-level fields and notes which of them
@@ -72,7 +73,7 @@ What else changes between in and out depends on the Receiver app mode:
 
 | Mode | Difference vs the event the Collector sent in |
 |------|------------------------------------------------|
-| Receive (default) | No field added, none removed, no value changed. Every attribute returns where it arrived, as described above. |
+| Receive (default) | No attribute added, none removed, no value changed. Every attribute returns where it arrived, as described above. |
 | Receive + `symbolMessageHashField <name>` | As above, plus one new field named `<name>` carrying the symbol-pattern hash (a stable identifier for the message pattern, usable as a dedup key, metric dimension, or correlation ID). |
 | `receiverOptimize true` | The value of the field captured by `otelCollectorInputMessageField` (default `body`) is replaced with a compact encoded form. Each new template is sent once as its own LogRecord, with no body and the attributes `templateHash`, `template` and `tenx_tag` = `tenx-template`; route on `tenx_tag` to send templates to their own destination. All other fields stay verbatim. |
 | `receiverOptimize true` + `symbolMessageHashField <name>` | Both of the above. |

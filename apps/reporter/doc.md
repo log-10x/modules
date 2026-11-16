@@ -6,7 +6,7 @@ The Reporter app is the **read-only insights arm** of the 10x pipeline. It pinpo
 
 **Deployment**: a DaemonSet alongside your forwarder, *not* a sidecar injected into it, and *not* a cloud app polling your SIEM's REST API. The reporter tails the same event stream your forwarder sees (pre-SIEM) and publishes cost insight metrics.
 
-With Fluent Bit, Fluentd and the OTel Collector, logs keep reaching their destination while the Reporter is down. With Logstash and Filebeat, the forwarder stops until the Reporter is back, Logstash once the Reporter's queue is full and Filebeat at once, so run the Reporter as part of the same deployment. Each tab below adds what sends the Reporter a copy of each event, and the forwarder's existing destinations stay as they are. Similar deployment pattern to `datadog-agent` or `splunk-otel-collector`.
+With Fluent Bit, Fluentd, the OTel Collector and the Splunk Universal Forwarder, logs keep reaching their destination while the Reporter is down. Logstash stops reading once the Reporter's queue is full, and resumes when the Reporter is back. Filebeat exits when the Reporter goes down, and resumes where it stopped once it is started again. No line is lost or sent twice, so run the Reporter as part of the same deployment. Each tab below adds what sends the Reporter a copy of each event, and the forwarder's existing destinations stay as they are. Similar deployment pattern to `datadog-agent` or `splunk-otel-collector`.
 
 The engine never moves or stores log data. Its only write is per-pattern metrics, sent to a time-series backend of the customer's choice (Prometheus, Datadog, Elastic, CloudWatch, and others). With no backend configured, metrics are collected locally and sent nowhere; fully air-gapped operation is supported. Events never leave the customer's path.
 
@@ -212,7 +212,8 @@ Follow the steps below. Steps that require customization link to the relevant [C
             Name         file
             Match        *
             Path         ${FOLDER_B}
-            Format       plain
+            Format       template
+            Template     {log}
         ```
 
         **Step 3**: Configure Splunk UF to monitor Folder B:
@@ -262,7 +263,8 @@ Follow the steps below. Steps that require customization link to the relevant [C
             Name         file
             Match        *
             Path         ${FOLDER_B}
-            Format       plain
+            Format       template
+            Template     {log}
         ```
 
         **Step 3**: Configure Datadog Agent to monitor Folder B:

@@ -20,3 +20,6 @@ is encoded into the object's TenXTemplate. Subsequent TenXObjects
 associated with that template will skip the timestamp discovery process, 
 making timestamp extraction highly efficient.
 
+#### Times with no date
+
+A timestamp that holds a time of day and no date (for example `18:14:50`) takes its date from the clock when the line is read. A live stream gets the right day. A file read on a later day than it was written is dated by the day it is read, so its event times are off by whole days.

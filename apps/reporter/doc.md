@@ -4,9 +4,9 @@ icon: material/play-circle-outline
 
 The Reporter app is the **read-only insights arm** of the 10x pipeline. It pinpoints high-cost app/infra events **before** forwarders ship them to log analyzers, enabling storage and licensing **cost optimization**.
 
-**Deployment**: a DaemonSet alongside your forwarder, *not* a sidecar injected into it, and *not* a cloud app polling your SIEM's REST API. The reporter tails the same event stream your forwarder sees (pre-SIEM) and publishes cost insight metrics. If the reporter goes down, Fluent Bit, Fluentd, the OTel Collector and the file relays keep sending logs to the SIEM, Logstash does while the Reporter's queue has room, and Filebeat, which pipes events into the reporter, stops with it.
+**Deployment**: a DaemonSet alongside your forwarder, *not* a sidecar injected into it, and *not* a cloud app polling your SIEM's REST API. The reporter tails the same event stream your forwarder sees (pre-SIEM) and publishes cost insight metrics.
 
-Not in the critical log path of Fluent Bit, Fluentd, the OTel Collector or the file relays. Each tab below adds what sends the Reporter a copy of each event, and the forwarder's existing destinations stay as they are. Similar deployment pattern to `datadog-agent` or `splunk-otel-collector`.
+With Fluent Bit, Fluentd and the OTel Collector, logs keep reaching their destination while the Reporter is down. With Logstash and Filebeat, the forwarder stops until the Reporter is back, Logstash once the Reporter's queue is full and Filebeat at once, so run the Reporter as part of the same deployment. Each tab below adds what sends the Reporter a copy of each event, and the forwarder's existing destinations stay as they are. Similar deployment pattern to `datadog-agent` or `splunk-otel-collector`.
 
 The engine never moves or stores log data. Its only write is per-pattern metrics, sent to a time-series backend of the customer's choice (Prometheus, Datadog, Elastic, CloudWatch, and others). With no backend configured, metrics are collected locally and sent nowhere; fully air-gapped operation is supported. Events never leave the customer's path.
 

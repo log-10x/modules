@@ -92,7 +92,7 @@ sinks:
       method: newline_delimited
 
   # `destinations` is the terminal sink, replace the console sink below
-  # with your real destinations (`elasticsearch`, `splunk_hec`, `kafka`,
+  # with your real destinations (`elasticsearch`, `splunk_hec_logs`, `kafka`,
   # `aws_s3`, …). Keep its `inputs:` pointed only at `tenx_out`; that
   # structural wiring is what keeps the `ingest` transform from running
   # a second time on returning events.

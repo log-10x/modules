@@ -38,7 +38,7 @@ graph LR
 - 📤 **socket sink** → Log10x, Vector forwards the enriched event to the Log10x sidecar over TCP `:9000` (or a Unix socket on Linux/macOS) as newline-delimited JSON.
 - ⚡ **10x Engine**, The Receiver app applies rate/policy-based filtering and optionally compacts events for volume reduction.
 - 📥 **fluent source**, Processed events come back to Vector on `:9001` over the Fluent Forward protocol. Only your destination sinks consume `tenx_out`; no transforms sit between them, so enrichment never re-fires.
-- 📤 **Destinations**, Vector's destination sinks (`elasticsearch`, `splunk_hec`, `kafka`, `aws_s3`, …) consume `tenx_out` and ship to the real destinations.
+- 📤 **Destinations**, Vector's destination sinks (`elasticsearch`, `splunk_hec_logs`, `kafka`, `aws_s3`, …) consume `tenx_out` and ship to the real destinations.
 
 ### What an event looks like on the way back
 

@@ -383,4 +383,4 @@ The heavy forwarder writes each event to the file and also sends it to the index
 
 A sender pointed at a Fluent Bit HEC input in front of the Receiver is compacted; a source posting straight to Splunk's own HEC endpoint is not covered.
 
-A Windows Universal Forwarder's event log input is not measured. Duplicates when Splunk's HEC answers 503 are not measured.
+A Windows Universal Forwarder's event log input is not measured. Fluent Bit's Splunk output has no indexer acknowledgement, so when Splunk's HEC answers 503 a resent chunk can be indexed twice, as on any Fluent Bit path to HEC; under an overloaded indexer this happened to under 1% of events.

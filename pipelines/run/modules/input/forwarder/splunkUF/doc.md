@@ -63,7 +63,7 @@ This module is recommended for **VM/traditional infrastructure** where Splunk UF
 
 These steps send compact events to Splunk through the Universal Forwarder. The [Log10x App](https://doc.log10x.com/apps/receiver/compact/splunk/) expands them at search time.
 
-**1. Run Log10x** on the host that runs Fluent Bit ([install on Linux](https://doc.log10x.com/install/linux/)), with the three options the Splunk app needs, `receiverOptimize` and `groupJoinLines false`:
+**1. Run Log10x** on the host that runs Fluent Bit ([install on Linux](https://doc.log10x.com/install/linux/)), with the five arguments the Splunk app needs:
 
 ```bash
 tenx @run/input/forwarder/fluentbit @apps/receiver receiverOptimize true varMaxRecurIndexes 0 timestampZone UTC timestampMaxPerObject 1 groupJoinLines false

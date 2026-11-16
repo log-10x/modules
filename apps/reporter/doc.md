@@ -6,7 +6,7 @@ The Reporter app is the **read-only insights arm** of the 10x pipeline. It pinpo
 
 **Deployment**: a DaemonSet alongside your forwarder, *not* a sidecar injected into it, and *not* a cloud app polling your SIEM's REST API. The reporter tails the same event stream your forwarder sees (pre-SIEM), publishes cost insight metrics, and fails independently: if the reporter goes down, your logs continue flowing to the SIEM uninterrupted.
 
-Not in the critical log path. No mutation of existing fluent-bit / fluentd / otel-collector configs. Similar deployment pattern to `datadog-agent` or `splunk-otel-collector`.
+Not in the critical log path. Each tab below adds what sends the Reporter a copy of each event, and the forwarder's existing destinations stay as they are. Similar deployment pattern to `datadog-agent` or `splunk-otel-collector`.
 
 The engine never moves or stores log data. Its only write is per-pattern metrics, sent to a time-series backend of the customer's choice (Prometheus, Datadog, Elastic, CloudWatch, and others). With no backend configured, metrics are collected locally and sent nowhere; fully air-gapped operation is supported. Events never leave the customer's path.
 
@@ -47,19 +47,16 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
     === ":simple-fluentd: Fluentd"
 
-        **Step 1**: Include the 10x reporter configuration:
-
-        ```toml title="my-fluentd.conf"
-        @include "#{ENV['TENX_MODULES']}/pipelines/run/modules/input/forwarder/fluentd/conf/tenx-report.conf"
-        ```
-
-        **Step 2**: Use a `copy` directive to report on events while still sending them to output:
+        Use a `copy` directive to report on events while still sending them to output. The second `<store>` sends a copy of each event to the Reporter's Forward input on port 24224, the same handoff as the [tenx-sidecar.conf](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentd/conf/tenx-sidecar.conf) recipe:
 
         ```xml title="my-fluentd.conf"
         <source>
           @type tail
           path /path/to/file.log
           tag my_logs
+          <parse>
+            @type none
+          </parse>
         </source>
 
         <match my_logs>
@@ -72,8 +69,11 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
           # Report to 10x
           <store>
-            @type relabel
-            @label @TENX
+            @type forward
+            <server>
+              host 127.0.0.1
+              port 24224
+            </server>
           </store>
         </match>
         ```
@@ -83,24 +83,15 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
     === ":simple-fluentbit: Fluent-bit"
 
-        **Step 1**: Include the 10x reporter configuration:
+        Add a `forward` output that sends a copy of each event to the Reporter's Forward input on port 24224, the same handoff as the [tenx-sidecar.conf](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-sidecar.conf) recipe. The existing outputs stay as they are. The output catches all events; to report on a subset, update the `Match` field:
 
         ```toml title="my-fluent-bit.conf"
-        # Nix
-        @INCLUDE /etc/tenx/config/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-report.conf
-
-        # Windows
-        # @INCLUDE c:/program files/tenx-edge/config/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-report.conf
-        ```
-
-        **Step 2**: The Lua filter catches all events by default. To report on a subset, update the `Match` field:
-
-        ```toml title="tenx-report.conf"
-        [FILTER]
-            Name Lua
-            Match *
-            script ${TENX_MODULES}/${tenx_lua}
-            call tenx_process
+        # Report: send a copy of each event to the Reporter.
+        [OUTPUT]
+            Name         forward
+            Match        *
+            Host         127.0.0.1
+            Port         24224
         ```
 
     === ":simple-beats: Filebeat"
@@ -122,56 +113,67 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
     === ":simple-logstash: Logstash"
 
-        Add a `pipe` output to delegate events to the reporter:
+        Give the copy for the Reporter its own pipeline with a persisted queue, so the existing outputs do not wait for the Reporter. In `pipelines.yml`, the `ingest` pipeline holds the existing inputs and filters and sends each event to two pipelines: `destinations`, which holds the existing outputs, and `tenx-report`, which sends a copy to the Reporter's Logstash input on port 5044, the same handoff as the [tenx-ingest.conf](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/logstash/conf/tenx-ingest.conf) recipe:
 
-        ```ruby title="my-logstash.conf"
+        ```yaml title="pipelines.yml"
+        - pipeline.id: ingest
+          path.config: "/etc/logstash/conf.d/ingest.conf"
+        - pipeline.id: destinations
+          path.config: "/etc/logstash/conf.d/destinations.conf"
+        - pipeline.id: tenx-report
+          queue.type: persisted
+          path.config: "/etc/logstash/conf.d/tenx-report.conf"
+        ```
+
+        ```ruby title="ingest.conf"
+        input {
+          # Existing inputs and filters stay here.
+        }
         output {
-          pipe {
-            id => "tenx_pipeline"
-            ttl => -1
+          pipeline { send_to => ["destinations"] }
+          pipeline { send_to => ["tenx-report"] }
+        }
+        ```
 
-            # Nix
-            command => "${TENX_BIN:/opt/tenx-edge/bin/tenx} run @run/input/forwarder/logstash/report/config.yaml @apps/reporter"
+        ```ruby title="destinations.conf"
+        input { pipeline { address => "destinations" } }
+        output {
+          # Existing outputs (e.g. Elastic, Splunk) move here.
+        }
+        ```
 
-            # Windows
-            # command => "${TENX_BIN:'c:\\program files\\tenx\\tenx-edge.exe'} run @run/input/forwarder/logstash/report/config.yaml @apps/reporter"
+        ```ruby title="tenx-report.conf"
+        input { pipeline { address => "tenx-report" } }
+        output {
+          # Report: send a copy of each event to the Reporter.
+          tcp {
+            host  => "127.0.0.1"
+            port  => 5044
+            codec => json_lines
           }
         }
         ```
 
+        While the Reporter is down, the `tenx-report` queue keeps the copies on disk and the existing outputs keep receiving events. The Reporter receives the queued copies when it is back. If the queue fills up first, at `queue.max_bytes` (1024mb unless set), Logstash stops reading new events until the Reporter is back.
+
     === ":simple-opentelemetry: OTel Collector"
 
-        !!! note "Requires otel-collector-contrib"
-            The OpenTelemetry Collector integration requires the **contrib** distribution for `syslogexporter` support.
+        Add an `otlp` exporter that sends a copy of each log record to the Reporter's OTLP input on port 4317, the same handoff as the [tenx-sidecar.yaml](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/input/forwarder/otel-collector/conf/tenx-sidecar.yaml) recipe, and add it to the exporters of the existing logs pipeline. The existing exporters stay as they are:
 
-        **Step 1**: Copy the OTel Collector configuration:
+        ```yaml title="my-otelcol.yaml"
+        exporters:
+          # Report: send a copy of each log record to the Reporter.
+          otlp/tenx:
+            endpoint: 127.0.0.1:4317
+            tls:
+              insecure: true
 
-        ```bash
-        cp $TENX_MODULES/pipelines/run/modules/input/forwarder/otel-collector/report/tenxNix.yaml /etc/otelcol-contrib/
-        ```
-
-        **Step 2**: Update the configuration to match your log sources:
-
-        ```yaml title="report/tenxNix.yaml"
-        receivers:
-          filelog:
-            include:
-              - /var/log/**/*.log  # Customize paths
-            start_at: end
-        ```
-
-        **Step 3**: Configure your final exporters (Elastic, Splunk, etc.) in the same pipeline:
-
-        ```yaml title="report/tenxNix.yaml"
         service:
           pipelines:
             logs:
-              receivers: [filelog, otlp]
-              processors: [memory_limiter, batch]
-              exporters: [syslog/tenx, elasticsearch]  # Add your exporters
+              receivers: [filelog]                    # existing receivers
+              exporters: [elasticsearch, otlp/tenx]   # existing exporters, plus otlp/tenx
         ```
-
-        Reporter mode is **read-only**. Logs flow to your final destinations unchanged; the engine never moves or stores log data. Its only write is per-pattern metrics, sent to a time-series backend of your choice (Prometheus, Datadog, Elastic, CloudWatch, and others).
 
     === ":simple-splunk: Splunk UF"
 
@@ -198,11 +200,12 @@ Follow the steps below. Steps that require customization link to the relevant [C
             Path         ${FOLDER_A}/*.log
             Tag          app.logs
 
-        # Include 10x reporter - sends events to 10x subprocess
-        @INCLUDE ${TENX_MODULES}/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-report.conf
-
-        # Include Unix socket - receives processed events back from 10x
-        @INCLUDE ${TENX_MODULES}/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-unix.conf
+        # Report: send a copy of each event to the Reporter.
+        [OUTPUT]
+            Name         forward
+            Match        app.*
+            Host         127.0.0.1
+            Port         24224
 
         # Write events (unchanged) to Folder B
         [OUTPUT]
@@ -247,11 +250,12 @@ Follow the steps below. Steps that require customization link to the relevant [C
             Path         ${FOLDER_A}/*.log
             Tag          app.logs
 
-        # Include 10x reporter - sends events to 10x subprocess
-        @INCLUDE ${TENX_MODULES}/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-report.conf
-
-        # Include Unix socket - receives processed events back from 10x
-        @INCLUDE ${TENX_MODULES}/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-unix.conf
+        # Report: send a copy of each event to the Reporter.
+        [OUTPUT]
+            Name         forward
+            Match        app.*
+            Host         127.0.0.1
+            Port         24224
 
         # Write events (unchanged) to Folder B
         [OUTPUT]
@@ -266,7 +270,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
         ```yaml title="conf.d/tenx.d/conf.yaml"
         logs:
           - type: file
-            path: ${FOLDER_B}/*.log
+            path: ${FOLDER_B}/*   # the file output names each file after its tag, here app.logs
             service: myapp
             source: myapp
         ```
@@ -311,51 +315,63 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
     === ":simple-fluentd: Fluentd"
 
+        Start the Reporter first, then Fluentd:
+
         ```console
+        $ tenx run @apps/reporter
         $ fluentd -c my-fluentd.conf
         ```
 
     === ":simple-fluentbit: Fluent-bit"
 
+        Start the Reporter first, then Fluent Bit:
+
         ```console
+        $ tenx run @apps/reporter
         $ fluent-bit -c my-fluent-bit.conf
         ```
 
     === ":simple-beats: Filebeat"
 
         ```console title="Nix/OSX"
-        $ filebeat -c my-filebeat.yml -e 2>&1 | /opt/tenx-edge/bin/tenx run @run/input/forwarder/filebeat @apps/reporter
+        $ filebeat -c my-filebeat.yml -e 2>&1 | receiverReadOnly=true /opt/tenx-edge/bin/tenx run @run/input/forwarder/filebeat @apps/reporter
         ```
 
         ```console title="Windows"
+        $ set receiverReadOnly=true
         $ filebeat -c my-filebeat.yml -e 2>&1 | "c:\program files\tenx-edge\tenx" run @run/input/forwarder/filebeat @apps/reporter
         ```
 
+        `receiverReadOnly=true` keeps the Reporter from sending events back to Filebeat.
+
     === ":simple-logstash: Logstash"
 
+        Start the Reporter with its Logstash input first, then Logstash, which reads `pipelines.yml` from its settings folder:
+
         ```console
-        $ logstash -f my-logstash.conf
+        $ receiverReadOnly=true tenx run @run/input/forwarder/logstash @apps/reporter
+        $ logstash --path.settings /etc/logstash
         ```
+
+        `receiverReadOnly=true` keeps the Reporter from sending events back to Logstash.
 
     === ":simple-opentelemetry: OTel Collector"
 
-        **Step 1**: Start Log10x Reporter first:
+        Start the Reporter with its OTLP input first, then the Collector:
 
         ```console
-        $ tenx run @run/input/forwarder/otel-collector/report @apps/reporter
+        $ receiverReadOnly=true tenx run @run/input/forwarder/otel-collector @apps/reporter
+        $ otelcol-contrib --config=my-otelcol.yaml
         ```
 
-        **Step 2**: Start OTel Collector with the 10x configuration:
-
-        ```console
-        $ otelcol-contrib --config=/etc/otelcol-contrib/report/tenxNix.yaml
-        ```
+        `receiverReadOnly=true` keeps the Reporter from sending log records back to the Collector.
 
     === ":simple-splunk: Splunk UF"
 
-        **Step 1**: Start Fluent Bit with the 10x reporter:
+        **Step 1**: Start the Reporter first, then Fluent Bit:
 
         ```console
+        $ tenx run @apps/reporter
         $ fluent-bit -c fluent-bit-splunk.conf
         ```
 
@@ -369,9 +385,10 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
     === ":simple-datadog: Datadog Agent"
 
-        **Step 1**: Start Fluent Bit with the 10x reporter:
+        **Step 1**: Start the Reporter first, then Fluent Bit:
 
         ```console
+        $ tenx run @apps/reporter
         $ fluent-bit -c fluent-bit-datadog.conf
         ```
 

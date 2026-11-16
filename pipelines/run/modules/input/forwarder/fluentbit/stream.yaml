@@ -63,12 +63,13 @@ input:
       - '$=yield TenXEnv.get("fluentbitInputPath", "") ? "path" : ""'
       - $=yield TenXEnv.get("fluentbitInputPath", "")
 
-    # Backpressure ceiling, Log10x stops draining the Forward socket once
-    # this many bytes have arrived in `intervalBytesDuration`, signalling
-    # Fluent Bit to buffer instead of overwhelming the pipeline.
+    # The bytes this input reads in each forwarderInputBytesInterval before it
+    # stops reading and the forwarder buffers (forwarderInputBytesLimit; 0, the
+    # default, sets none). The pipeline's object limit stops reading too when
+    # the pipeline is full, so memory stays bounded either way.
     backpressure:
-      intervalBytesLimit: $=parseBytes("2MB")
-      intervalBytesDuration: $=parseDuration("1s")
+      intervalBytesLimit: $=parseBytes(TenXEnv.get("forwarderInputBytesLimit", "0"))
+      intervalBytesDuration: $=parseDuration(TenXEnv.get("forwarderInputBytesInterval", "1s"))
 
 # ============================== Output =======================================
 

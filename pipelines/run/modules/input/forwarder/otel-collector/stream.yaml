@@ -52,6 +52,9 @@ input:
       - $=yield TenXEnv.get("otelCollectorInputPort", "4317")
       - maxQueuedLines
       - $=yield TenXEnv.get("otelCollectorInputMaxQueuedLines", "20000")
+      # The largest OTLP export request taken, in bytes (16 MB by default)
+      - maxMessageSize
+      - $=yield parseBytes(TenXEnv.get("otelCollectorInputMaxMessageSize", "16MB"))
 
     # The bytes this input reads in each forwarderInputBytesInterval before it
     # stops reading and the forwarder buffers (forwarderInputBytesLimit, 2 MB a

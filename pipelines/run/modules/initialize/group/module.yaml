@@ -54,3 +54,14 @@ unit:
         - `QUERY` and `LOCATION`: PostgreSQL lines that give the internal query and the source location of the error above them.
 
         The rule reads the line's own text, once per template, so a line's place in its event holds across restarts and nodes.
+
+    - names:
+        - groupJoinLines
+      description: whether a line with no timestamp, severity or group indicator joins the event above it.
+      type: boolean
+      required: false
+      defValue: true
+      doc: |
+        Whether a line with no timestamp, severity or group indicator of its own joins the event above it (on by default). This is how a stack trace or a pretty-printed object that arrives one line at a time, from a file or as one forwarder record per line, becomes one event.
+
+        Set `groupJoinLines false` when every record already is one event and the event count must stay the same, as when the Receiver sends compact events to Splunk next to a raw index: each forwarder record then stays its own event, whatever its text. A record that holds several lines (a forwarder's multi-line record, such as a Windows event) stays one event either way. Off, the option also leaves the lines of a file input unjoined.

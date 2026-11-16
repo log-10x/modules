@@ -316,7 +316,6 @@ Follow the steps below. Steps that require customization link to the relevant [C
           pipelines:
             logs/to-tenx:
               receivers: [filelog]
-              processors: [batch]
               exporters: [otlp/tenx]
             logs/from-tenx:
               receivers: [otlp/tenx]
@@ -588,10 +587,21 @@ Follow the steps below. Steps that require customization link to the relevant [C
             endpoint: 127.0.0.1:4317
             tls:
               insecure: true
-            # One sender keeps records in the order they were read; the engine
-            # groups multi-line events from consecutive records.
+            retry_on_failure:
+              enabled: true
+              max_elapsed_time: 0
             sending_queue:
+              enabled: true
+              # One sender keeps records in the order they were read; the engine
+              # groups multi-line events from consecutive records.
               num_consumers: 1
+              block_on_overflow: true
+              # Requests of at most 2 MiB, whatever the batch processor sends.
+              batch:
+                flush_timeout: 1s
+                sizer: bytes
+                min_size: 1048576
+                max_size: 2097152
 
         service:
           pipelines:

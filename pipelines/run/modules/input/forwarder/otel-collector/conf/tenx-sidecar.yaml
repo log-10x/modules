@@ -152,7 +152,9 @@ exporters:
       # full instead of dropping a batch.
       storage: file_storage
       block_on_overflow: true
-      # Requests to Log10x stay under the 4 MiB gRPC message limit it accepts.
+      # Requests to Log10x stay well under the largest message it takes
+      # (otelCollectorInputMaxMessageSize, 16 MB).
+      # The size is counted before compression, as Log10x counts it.
       batch:
         flush_timeout: 1s
         sizer: bytes

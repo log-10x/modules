@@ -156,7 +156,7 @@ Where Universal Forwarders send to a heavy forwarder, the Receiver can run on th
 
 **1. Prerequisites.**
 
-- A heavy forwarder that parses the chosen sourcetypes, with the add-ons that parse them and their inputs disabled. The file destination works on Splunk 9.4 through 10.6.
+- A heavy forwarder that parses the chosen sourcetypes, with the add-ons that parse them installed and the add-ons' inputs disabled. The file destination works on Splunk 9.4 through 10.6.
 - On the heavy forwarder's host: Docker, for Fluent Bit and the Receiver, and Python 3.9 or later, for the field map tool.
 - The indexers' HEC, reachable from that host.
 
@@ -184,7 +184,7 @@ INGEST_EVAL = $pd:_destinationKey$=if(index=="<index>", "rfs:tenx", null())
 
 `<index>` is the index the Universal Forwarders give the events. The route sends those events to the file only. Restart the heavy forwarder after the first install. Splunk writes one file per sourcetype and hour of events, under `/opt/tenx/rfs/year=<YYYY>/month=<MM>/day=<DD>/sourcetype=<sourcetype>/`, in folders that only the user Splunk runs as can read, so Fluent Bit runs as root or as that user.
 
-The route reads the index at its own place among the heavy forwarder's rules. Where a rule of the heavy forwarder's own sets the index before it, route by sourcetype instead, `if(sourcetype=="XmlWinEventLog", "rfs:tenx", null())`, and the events are written with the index that rule set.
+Where a rule of the heavy forwarder's own sets the index before the route runs, route by sourcetype instead, `if(sourcetype=="XmlWinEventLog", "rfs:tenx", null())`, and the events are written with the index that rule set.
 
 **3. Run Fluent Bit and the Receiver on the heavy forwarder's host.** Fluent Bit reads each sourcetype's folder, keeps its buffer on disk, hands each event to the Receiver, and sends what comes back to the HEC. Put these two files in `/opt/tenx/fluent-bit`:
 
@@ -383,4 +383,4 @@ The heavy forwarder writes each event to the file and also sends it to the index
 
 A sender pointed at a Fluent Bit HEC input in front of the Receiver is compacted; a source posting straight to Splunk's own HEC endpoint is not covered.
 
-A Windows Universal Forwarder's event log input is not measured. Fluent Bit's Splunk output has no indexer acknowledgement, so when Splunk's HEC answers 503 a resent chunk can be indexed twice, as on any Fluent Bit path to HEC; under an overloaded indexer this happened to under 1% of events.
+Fluent Bit's Splunk output has no indexer acknowledgement, so when Splunk's HEC answers 503 a resent chunk can be indexed twice, as on any Fluent Bit path to HEC; under an overloaded indexer this happened to under 1% of events.

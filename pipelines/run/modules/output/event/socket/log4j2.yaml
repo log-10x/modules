@@ -40,6 +40,12 @@ log4j:
           # ensure a large buffer size for very long lines
           bufferSize: 2000000
 
+          # TCP: when the destination refuses the connection or drops it, try
+          # again every second until it accepts. log4j's own default waits
+          # 30 seconds between attempts, and a value written while no
+          # connection is open is not sent
+          reconnectionDelayMillis: 1000
+
     loggers:
       logger:
 

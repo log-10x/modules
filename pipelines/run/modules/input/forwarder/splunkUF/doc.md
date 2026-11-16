@@ -130,3 +130,6 @@ For a source read by a [field map](https://github.com/log-10x/splunk-app/blob/ma
 The forwarder reads a file once it holds at least 256 bytes. A compact file that stays smaller is forwarded after it grows past that size.
 
 **4. Install the Log10x App** on the search heads and on the instances that parse the events: the indexers, or the heavy forwarder the Universal Forwarder sends to. The app sets each compact event's time while the event is parsed.
+
+!!! warning
+    With the Receiver on each host, before the heavy forwarder, the heavy forwarder's index-time rules do not apply to compact events: index overrides, masks (`SEDCMD`, `_raw` rewrites), `nullQueue` filters and index-time fields. A value such a mask hides on raw events is readable after expansion, and events such a filter drops are indexed and counted against the license.

@@ -33,16 +33,23 @@ module:
         joined with `_` (the shipped configuration keys on `message_pattern`), matching the same
         pattern identity the Reporter attributes cost to.
 
-        **File format** (CSV; header row + one comma-separated entry per row):
+        **File format** (CSV; a header row, then one entry per row):
 
         ```
-        fieldSet,value
-        <fieldSet>,<true|false>[:<untilEpochSec>][:<reason>]
+        pattern_hash,value
+        <key>,<true|false>[:<untilEpochSec>][:<reason>]
         ```
 
-        - `fieldSet`, the event fields named by `compactReceiverFieldNames`
+        - The header row names the columns and is never matched as an
+          entry. The engine reads the first column as the key and the
+          second as the value, so the names themselves are not used; the
+          shipped `compact-cap.csv` has the header `pattern_hash,value`.
+        - The key, the event fields named by `compactReceiverFieldNames`
           joined with `_`. With the shipped configuration this is the
-          pattern's `message_pattern` value.
+          pattern's `message_pattern` value. With `compactReceiverFieldNames`
+          set to `[templateHash]`, as the Splunk app's field map uses, it is
+          the template hash in double quotes, since a hash can start with `#`
+          or hold a space.
         - `value`, `true` (compact via `encode()`) or `false` (explicitly
           preserve `fullText` for this pattern, beating the default).
         - `untilEpochSec`, optional Unix-epoch (seconds) expiry. Past it the
@@ -54,7 +61,7 @@ module:
         **Example**:
 
         ```
-        fieldSet,value
+        pattern_hash,value
         payment_retry_gateway_timeout,true:1745856000:OPS-5123 spike
         auth_audit_trail,false:1745856000:compliance keep verbose
         ```

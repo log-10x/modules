@@ -1,0 +1,36 @@
+#
+# 🔟❎ 'run' Reporter module
+
+module:
+
+  name: reporter
+
+  title: Reporter
+
+  description: report on costly log/trace events before they ship to output; read events and publish metrics, never write events back to the forwarder
+
+  # 'configFolder' specifies a folder containing default configuration files for the settings defined by this module
+  configFolder: apps/reporter
+
+  # 'doc' specifies the markdown doc content, only required when generating docs.
+  doc: '+include $=TenXEnv.get("docGenerate") ? "apps/reporter/doc.md":""'
+
+  allowMultiple: false
+
+  options:
+
+    - names:
+      - receiverReadOnly
+      description: read-only mode, receive events, emit metrics, do not write back to the forwarder
+      type: boolean
+      required: false
+      defValue: false
+      doc: |
+        the Reporter's configuration sets it to `true`: a forwarder input's
+        return output is not constructed and no event is written back to the
+        forwarder. Declared here as well as in the
+        [forwarder inputs](https://doc.log10x.com/run/input/forwarder/) module
+        so that the Reporter's own setting is accepted when the Reporter runs
+        with an input that is not a forwarder input module, such as the
+        [Forward input](https://doc.log10x.com/run/input/forward/) of the
+        Reporter chart.

@@ -342,3 +342,5 @@ The 10x Engine automatically expands serialized instances using [TenXTemplate](h
 The Template loader reads TenXTemplate schemas as JSON objects from a [template file](https://doc.log10x.com/run/template/#templatefile) or from configured [input](https://doc.log10x.com/run/input/).
 
 At runtime each compact TenXObject will replace its template's `$` variable [placeholders](#varplaceholder) with its own instance-specific [variable](https://doc.log10x.com/api/js/#TenXBaseObject+vars) and [timestamp](https://doc.log10x.com/api/js/#TenXObject+timestamp) values  to render its original full-text representation accessible via the [text](https://doc.log10x.com/api/js/#TenXObject+text) field.
+
+An event of 65,535 characters or more is written to a compact output as plain text with no template, so when compact events are expanded an output that filters on `isEncoded` leaves it out and one that filters on `isObject` keeps it.

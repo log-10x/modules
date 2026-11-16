@@ -148,7 +148,7 @@ The forwarder reads a file once it holds at least 256 bytes. A compact file that
 **4. Install the Log10x App** on the search heads and on the instances that parse the events: the indexers, or the heavy forwarder the Universal Forwarder sends to. The app sets each compact event's time while the event is parsed.
 
 !!! warning
-    With the Receiver on each host, before the heavy forwarder, the heavy forwarder's index-time rules do not apply to compact events: index overrides, masks (`SEDCMD`, `_raw` rewrites), `nullQueue` filters and index-time fields. A value such a mask hides on raw events is readable after expansion, and events such a filter drops are indexed and counted against the license.
+    With the Receiver on each host, before the heavy forwarder, the heavy forwarder's index-time rules do not apply to compact events: index overrides, masks (`SEDCMD`, `_raw` rewrites), `nullQueue` filters and index-time fields. A value such a mask hides on raw events is readable after expansion, and events such a filter drops are indexed and counted against the license. To keep these rules, [place the Receiver after the heavy forwarder's parsing](#receiver-beside-a-heavy-forwarder).
 
 ## Receiver beside a heavy forwarder
 

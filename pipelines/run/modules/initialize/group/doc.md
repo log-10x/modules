@@ -38,7 +38,7 @@ The group module calculates two static fields for each TenXTemplate:
 TenXObjects qualify as group heads (`isGroup = true`) when they meet one of these conditions:
 
 1. **Timestamp** - Presence of a timestamp marks them as heads.
-2. **Severity level** - Assignment of a severity level designates them as heads.
+2. **Severity level** - Assignment of a severity level designates them as heads, unless the line is one `name=value` pair (its name holds no space and its value no other `=`). Such a line is a field of the event above it: the classic text of a Windows event writes `OpCode=Info` and `Type=Warning` on lines of their own.
 3. **Group indicator** - Starting with any configured [groupIndicators](#groupindicators) pattern confirms them as heads.
 
 A line whose label is listed in [groupChildLabels](#groupchildlabels) is a child even when it has a timestamp. The label is the word before the line's first colon and two spaces. PostgreSQL writes its log prefix and a label on each line of one error, so its `DETAIL`, `HINT`, `CONTEXT` and `STATEMENT` lines join the `ERROR` line above them as one event.

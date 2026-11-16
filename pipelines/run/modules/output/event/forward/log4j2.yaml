@@ -51,6 +51,12 @@ log4j:
             senderMaxRetryIntervalMillis: 30000
             connectionTimeoutMillis: 10000
             readTimeoutMillis: 5000
+            # Each chunk asks the Fluentd or Fluent Bit forward input for an ack
+            # and stays in the buffer until the ack arrives (readTimeoutMillis);
+            # a chunk with no ack is sent again on a new connection. A chunk
+            # written into a connection the destination has closed (it restarted)
+            # is otherwise lost without an error
+            ackResponseMode: true
             jvmHeapBufferMode: true
             socketAddress: $?outputForwardAddress
             hostAddress: $?outputForwardHostAddress=127.0.0.1

@@ -64,12 +64,11 @@ input:
       - $=yield TenXEnv.get("fluentbitInputPath", "")
 
     # The bytes this input reads in each forwarderInputBytesInterval before it
-    # stops reading and the forwarder buffers (forwarderInputBytesLimit; 0, the
-    # default, sets none). The pipeline's object limit stops reading too when
-    # the pipeline is full, so memory stays bounded either way.
+    # stops reading and the forwarder buffers (forwarderInputBytesLimit, 2 MB a
+    # second by default; 0 sets none).
     backpressure:
-      intervalBytesLimit: $=parseBytes(TenXEnv.get("forwarderInputBytesLimit", "0"))
-      intervalBytesDuration: '$=parseBytes(TenXEnv.get("forwarderInputBytesLimit", "0")) ? parseDuration(TenXEnv.get("forwarderInputBytesInterval", "1s")) : 0'
+      intervalBytesLimit: $=parseBytes(TenXEnv.get("forwarderInputBytesLimit", "2MB"))
+      intervalBytesDuration: '$=parseBytes(TenXEnv.get("forwarderInputBytesLimit", "2MB")) ? parseDuration(TenXEnv.get("forwarderInputBytesInterval", "1s")) : 0'
 
 # ============================== Output =======================================
 

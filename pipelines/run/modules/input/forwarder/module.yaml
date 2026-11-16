@@ -66,7 +66,7 @@ module:
       description: the most bytes a forwarder input reads in each forwarderInputBytesInterval, 0 for no limit
       type: string
       required: false
-      defValue: "0"
+      defValue: 2MB
       doc: |
         The most bytes a forwarder input (Fluent Bit, Fluentd, Vector,
         Filebeat, Logstash, OpenTelemetry Collector) reads from its socket in
@@ -75,13 +75,13 @@ module:
         forwarder holds the events in its own buffer meanwhile; no event is
         dropped.
 
-        `0` (the default) sets no byte limit. The input then stops reading only
-        when the pipeline holds as many events as `objectLimitMaxInstances`
-        allows (by default 5,000 for each 100 MB of heap), so memory stays
-        bounded while the Receiver reads as fast as it processes.
+        The default is `2MB` a second. `0` sets no byte limit: the input then
+        stops reading only when the pipeline holds as many events as
+        `objectLimitMaxInstances` allows (by default 5,000 for each 100 MB of
+        heap).
 
-        Set it to hold a Receiver below a rate, for example on a host it shares
-        with other work: `forwarderInputBytesLimit 20MB`.
+        Raise it to let one Receiver take more than 2 MB a second, for example
+        `forwarderInputBytesLimit 20MB`.
 
     - names:
       - forwarderInputBytesInterval

@@ -85,6 +85,15 @@ filebeat.inputs:
     paths:
       - /var/log/app.log
 
+    # An event starts at a line that starts with a date; every other line
+    # joins the event before it.
+    parsers:
+      - multiline:
+          type: pattern
+          pattern: '^\d{4}-\d{2}-\d{2}'
+          negate: true
+          match: after
+
     processors:
       # Hands every event off to Log10x via Filebeat's stdout, then cancels
       # it locally so destinations only see events that came back on the
@@ -102,7 +111,7 @@ output.elasticsearch:
 **2. Run Filebeat through Log10x**, Filebeat is launched as a child process of the sidecar, so start them as a single pipeline:
 
 ```bash
-filebeat -c filebeat.yml -e 2>&1 | tenx run @run/input/forwarder/filebeat @apps/receiver
+filebeat -c filebeat.yml -e 2>&1 | tenx run @run/input/forwarder/filebeat @apps/receiver groupJoinLines false
 ```
 
 On Kubernetes, install the `log10x-elastic/filebeat` chart, which is the supported path. It carries the image swap, the licence wiring and probes that observe the engine as chart values:

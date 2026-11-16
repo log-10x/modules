@@ -67,7 +67,7 @@ The `tag` field stamped by Vector's ingest transform (typically from `.source_ty
 **1. Run Log10x:**
 
 ```bash
-tenx @run/input/forwarder/vector @apps/receiver
+tenx @run/input/forwarder/vector @apps/receiver groupJoinLines false
 ```
 
 **2. Wire up your Vector config**, start from the sidecar recipe and add your real sources + destinations:
@@ -78,6 +78,13 @@ sources:
     type: file
     include: [/var/log/app.log]
     read_from: end
+    # An event starts at a line that starts with a date; every other line
+    # joins the event before it.
+    multiline:
+      start_pattern: '^\d{4}-\d{2}-\d{2}'
+      condition_pattern: '^\d{4}-\d{2}-\d{2}'
+      mode: halt_before
+      timeout_ms: 1000
 
   # Receive processed events back from Log10x
   tenx_out:

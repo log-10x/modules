@@ -67,7 +67,7 @@ The original Fluentd tag is carried by the Forward protocol itself and surfaces 
 **1. Run Log10x:**
 
 ```bash
-tenx @run/input/forwarder/fluentd @apps/receiver
+tenx @run/input/forwarder/fluentd @apps/receiver groupJoinLines false
 ```
 
 **2. Wire up your Fluentd config**, include the sidecar recipe and route your sources to `@INGEST`:
@@ -80,8 +80,13 @@ tenx @run/input/forwarder/fluentd @apps/receiver
   path /var/log/app.log
   tag app.logs
   @label @INGEST          # routes the source into the sidecar
+  # An event starts at a line that starts with a date; every other line
+  # joins the event before it.
+  multiline_flush_interval 1s
   <parse>
-    @type json
+    @type multiline
+    format_firstline /^\d{4}-\d{2}-\d{2}/
+    format1 /^(?<log>.*)/
   </parse>
 </source>
 ```

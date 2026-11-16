@@ -69,7 +69,7 @@ The `tag` field that the ingest pipeline stamps becomes the event's `source` ins
 **1. Run Log10x:**
 
 ```bash
-tenx @run/input/forwarder/logstash @apps/receiver
+tenx @run/input/forwarder/logstash @apps/receiver groupJoinLines false
 ```
 
 **2. Wire up your Logstash config**, the recipe ships a `pipelines.yml` that runs the two legs side by side, an ingest leg that ends in `tcp { codec => json_lines }` and a destinations leg that starts with `tcp { codec => json_lines }`:
@@ -86,7 +86,16 @@ tenx @run/input/forwarder/logstash @apps/receiver
 
 ```ruby title="tenx-ingest.conf"
 input {
-  # ... your real sources ...
+  # ... your real sources. Join multi-line events in the input, for a file:
+  # file {
+  #   path  => "/var/log/app.log"
+  #   codec => multiline {
+  #     pattern => "^\d{4}-\d{2}-\d{2}"   # an event starts at a date
+  #     negate => true
+  #     what => "previous"
+  #     auto_flush_interval => 1
+  #   }
+  # }
 }
 filter {
   mutate {

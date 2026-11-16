@@ -53,7 +53,14 @@ export class GroupTemplate extends TenXTemplate {
                     (!TenXString.includes(name, " ")) && (!TenXString.includes(name, "\t"));
             }
 
-            if (childLabel) {
+            if (!TenXEnv.get("groupJoinLines", true)) {
+
+                // every line, or every record a forwarder sends, heads its own
+                // event: nothing joins the event above it
+                // https://doc.log10x.com/run/initialize/group/#groupjoinlines
+                groupHead = true;
+
+            } else if (childLabel) {
 
                 groupHead = false;
 

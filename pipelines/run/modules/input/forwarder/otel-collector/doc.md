@@ -117,6 +117,9 @@ exporters:
     endpoint: 127.0.0.1:4317
     tls:
       insecure: true
+    # Log10x answers a request once its records are written back, which can
+    # take several seconds; a shorter timeout sends the request again.
+    timeout: 30s
     # A refused or failed request is sent again, without a deadline.
     retry_on_failure:
       enabled: true

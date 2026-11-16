@@ -45,8 +45,6 @@ graph LR
 
 ### What an event looks like on the way back
 
-Attributes, timestamps and body survive the round trip, and each attribute returns where it arrived.
-
 **Attributes, timestamps and body come back.** Resource attributes, log-record
 attributes, timestamps and body return to the Collector, each with the same key
 and the same value. The `LogRecord.body` carries the message verbatim in its

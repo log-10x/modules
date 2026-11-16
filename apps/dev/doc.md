@@ -98,11 +98,11 @@ Run the dev app on your log files locally to preview how edge and cloud apps wil
           -v $TENX_CONFIG/data/sample/input:/etc/tenx/config/data/sample/input \
           -v $TENX_CONFIG/data/sample/output:/etc/tenx/config/data/sample/output \
           -e TENX_LICENSE_KEY="$(cat license.jwt)" \
-          log10x/pipeline-10x:1.1.81 \
+          log10x/pipeline-10x:1.1.180 \
           @apps/dev
         ```
 
-        Skip `-e TENX_LICENSE_KEY` to run with the image's built-in limited license (fine for previewing savings on local logs).
+        Skip `-e TENX_LICENSE_KEY` to run on the built-in Free tier (up to 10 nodes, a commercial term).
 
     === ":material-docker: Docker (+ :material-github: GitOps config)"
 
@@ -113,12 +113,12 @@ Run the dev app on your log files locally to preview how edge and cloud apps wil
         ```bash
         docker run --rm \
           -e TENX_LICENSE_KEY="$(cat license.jwt)" \
-          log10x/pipeline-10x:1.1.81 \
+          log10x/pipeline-10x:1.1.180 \
           '@github={"token": "<gh-token>", "repo": "my-user/my-repo"}' \
           @apps/dev
         ```
 
-        Skip `-e TENX_LICENSE_KEY` to run with the image's built-in limited license (fine for previewing savings on local logs).
+        Skip `-e TENX_LICENSE_KEY` to run on the built-in Free tier (up to 10 nodes, a commercial term).
 
 ???+ tenx-top10-events "Step 7: Analyze Output"
 
@@ -186,5 +186,5 @@ Run the dev app on your log files locally to preview how edge and cloud apps wil
     === ":simple-docker: Docker"
 
         ```bash
-        docker rmi log10x/pipeline-10x:1.1.81
+        docker rmi log10x/pipeline-10x:1.1.180
         ```

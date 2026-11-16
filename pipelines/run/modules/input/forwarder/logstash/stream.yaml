@@ -73,7 +73,7 @@ input:
     # the pipeline is full, so memory stays bounded either way.
     backpressure:
       intervalBytesLimit: $=parseBytes(TenXEnv.get("forwarderInputBytesLimit", "0"))
-      intervalBytesDuration: $=parseDuration(TenXEnv.get("forwarderInputBytesInterval", "1s"))
+      intervalBytesDuration: '$=parseBytes(TenXEnv.get("forwarderInputBytesLimit", "0")) ? parseDuration(TenXEnv.get("forwarderInputBytesInterval", "1s")) : 0'
 
 # ============================== Output =======================================
 

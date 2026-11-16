@@ -63,7 +63,7 @@ This module is recommended for **VM/traditional infrastructure** where Splunk UF
 
 These steps send compact events to Splunk through the Universal Forwarder. The [Log10x App](https://doc.log10x.com/apps/receiver/compact/splunk/) expands them at search time.
 
-**1. Run Log10x** with the three options the Splunk app needs and `receiverOptimize`:
+**1. Run Log10x** on the host that runs Fluent Bit ([install on Linux](https://doc.log10x.com/install/linux/)), with the three options the Splunk app needs and `receiverOptimize`:
 
 ```bash
 tenx @run/input/forwarder/fluentbit @apps/receiver receiverOptimize true varMaxRecurIndexes 0 timestampZone UTC timestampMaxPerObject 1
@@ -122,6 +122,10 @@ sourcetype = tenx_dml_raw_json
 ```
 
 `tenx_encoded` is the sourcetype the app expands. `_meta` adds the indexed field `tenx_sourcetype`, holding the sourcetype the events have when sent raw (for example `XmlWinEventLog` or `aws:cloudtrail`); the app's `txf` macro reads it to apply that sourcetype's field extractions. The template records go to the `tenx_dml` index, from which the app fills its KV Store.
+
+Create both indexes, `tenx_dml` and the compact index, where the events are indexed before the forwarder sends.
+
+For a source read by a [field map](https://github.com/log-10x/splunk-app/blob/main/tenx-for-splunk/README.md#data-models-and-detections-the-field-map), run Log10x for it as the field map describes and monitor its file with the field map's compact sourcetype in place of `tenx_encoded`, for Windows Security `sourcetype = tenx_win`.
 
 The forwarder reads a file once it holds at least 256 bytes. A compact file that stays smaller is forwarded after it grows past that size.
 

@@ -194,11 +194,13 @@ Follow the steps below. Steps that require customization link to the relevant [C
         [SERVICE]
             Flush        1
             Log_Level    info
+            storage.path ${FOLDER_A}/flb-storage
 
         [INPUT]
             Name         tail
             Path         ${FOLDER_A}/*.log
             Tag          app.logs
+            storage.type filesystem
 
         # Report: send a copy of each event to the Reporter.
         [OUTPUT]
@@ -245,11 +247,13 @@ Follow the steps below. Steps that require customization link to the relevant [C
         [SERVICE]
             Flush        1
             Log_Level    info
+            storage.path ${FOLDER_A}/flb-storage
 
         [INPUT]
             Name         tail
             Path         ${FOLDER_A}/*.log
             Tag          app.logs
+            storage.type filesystem
 
         # Report: send a copy of each event to the Reporter.
         [OUTPUT]

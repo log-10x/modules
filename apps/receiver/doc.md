@@ -587,6 +587,9 @@ Follow the steps below. Steps that require customization link to the relevant [C
             endpoint: 127.0.0.1:4317
             tls:
               insecure: true
+            # Log10x answers a request once its records are written back, which can
+            # take several seconds; a shorter timeout sends the request again.
+            timeout: 30s
             retry_on_failure:
               enabled: true
               max_elapsed_time: 0

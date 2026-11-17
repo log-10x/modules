@@ -4,6 +4,7 @@ hidden: true
 ---
 
 !!! info "Moved"
+
     Compiler documentation has moved to [Compile](https://doc.log10x.com/compile/).
 
     - **[Test](https://doc.log10x.com/compile/test/)**, run the compiler locally on sample inputs

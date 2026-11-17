@@ -98,7 +98,7 @@ Run the dev app on your log files locally to preview how edge and cloud apps wil
           -v $TENX_CONFIG/data/sample/input:/etc/tenx/config/data/sample/input \
           -v $TENX_CONFIG/data/sample/output:/etc/tenx/config/data/sample/output \
           -e TENX_LICENSE_KEY="$(cat license.jwt)" \
-          log10x/pipeline-10x:1.1.180 \
+          log10x/pipeline-10x:1.1.181 \
           @apps/dev
         ```
 
@@ -113,7 +113,7 @@ Run the dev app on your log files locally to preview how edge and cloud apps wil
         ```bash
         docker run --rm \
           -e TENX_LICENSE_KEY="$(cat license.jwt)" \
-          log10x/pipeline-10x:1.1.180 \
+          log10x/pipeline-10x:1.1.181 \
           '@github={"token": "<gh-token>", "repo": "my-user/my-repo"}' \
           @apps/dev
         ```
@@ -186,5 +186,5 @@ Run the dev app on your log files locally to preview how edge and cloud apps wil
     === ":simple-docker: Docker"
 
         ```bash
-        docker rmi log10x/pipeline-10x:1.1.180
+        docker rmi log10x/pipeline-10x:1.1.181
         ```

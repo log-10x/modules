@@ -475,5 +475,5 @@ Follow the steps below. Steps that require customization link to the relevant [C
     === ":simple-docker: Docker"
 
         ```bash
-        docker rmi log10x/pipeline-10x:1.1.180
+        docker rmi log10x/pipeline-10x:1.1.181
         ```

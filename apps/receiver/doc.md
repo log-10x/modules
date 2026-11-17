@@ -408,7 +408,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
               timeout_ms: 1000
 
         sinks:
-          # Replace `console` with your real destination(s), elasticsearch, splunk_hec, kafka, s3, etc.
+          # Replace `console` with your real destination(s), elasticsearch, splunk_hec_logs, kafka, s3, etc.
           final:
             type: console
             inputs:

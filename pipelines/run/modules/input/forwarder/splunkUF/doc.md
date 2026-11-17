@@ -317,6 +317,12 @@ The Receiver and the Fluent Bit that reads the files run in the network of the o
 
 **4. Set up the indexers and the search head.** On the indexers, create the compact indexes, `tenx_dml` and `tenx_probe`, and an HEC token whose `indexes` list them, and install the Log10x App (whole, or its `_indexers` package) and the add-ons. On the search head, install the Log10x App, the add-ons and CIM, and set the `tenx-events` macro to `index=* (sourcetype::tenx_encoded OR tenx_compact_st::tenx_win)`.
 
+Create the indexes the events go to and restart the indexers before the first event is sent. The search below returns no row once every indexer has loaded them.
+
+```spl
+index=_internal sourcetype=splunkd component=IndexerService "unconfigured/disabled/deleted index" | stats count by host
+```
+
 Generate the Windows Security [field map](https://github.com/log-10x/splunk-app/blob/main/tenx-for-splunk/README.md#data-models-and-detections-the-field-map) on the heavy forwarder's host, with the Log10x App package unpacked in `/opt/tenx` and `SPLUNK_ADMIN_PW` and `HEC_TOKEN` set. First send the source once with the cap file empty: every event arrives whole as `tenx_win`, and the template records reach `tenx_dml`. On the search head, load them into the KV store with `index=tenx_dml sourcetype=tenx_dml_raw_json | sendalert tenx_dml_to_kv`, then export the store in pages of 2,000 rows until a page holds no row:
 
 ```sh

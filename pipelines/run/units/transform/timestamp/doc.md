@@ -22,4 +22,4 @@ making timestamp extraction highly efficient.
 
 #### Times with no date
 
-A timestamp that holds a time of day and no date (for example `18:14:50`) takes its date from the clock when the line is read. A live stream gets the right day. A file read on a later day than it was written is dated by the day it is read, so its event times are off by whole days.
+A timestamp that holds a time of day and no date (for example `18:14:50`) takes the date written as `yyyy-MM-dd` just before it on the same line, as in FortiGate's `date=2026-11-13 time=01:59:25`. The date ends at most 16 characters before the time, and the characters between them hold no digit and no letters other than the field name `time`, in any case. Such an event has the same time on whatever day the line is read. A time of day with no such date takes its date from the clock when the line is read: a live stream gets the right day, and a file read on a later day than it was written is dated by the day it is read, so its event times are off by whole days.

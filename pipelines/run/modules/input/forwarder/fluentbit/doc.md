@@ -67,7 +67,7 @@ The original Fluent Bit tag is carried by the Forward protocol itself and surfac
 **1. Run Log10x:**
 
 ```bash
-tenx @run/input/forwarder/fluentbit @apps/receiver
+tenx @run/input/forwarder/fluentbit @apps/receiver groupJoinLines false
 ```
 
 **2. Wire up your Fluent Bit config**, include the sidecar recipe and `Match` your sources with the recipe's tag conventions:
@@ -75,11 +75,17 @@ tenx @run/input/forwarder/fluentbit @apps/receiver
 ```ini title="fluent-bit.conf"
 @INCLUDE ${TENX_MODULES}/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-sidecar.conf
 
+# The multiline parser the tail input names (an event starts at a line that
+# starts with a date); copy and edit it to match your logs.
+[SERVICE]
+    Parsers_File ${TENX_MODULES}/pipelines/run/modules/input/forwarder/fluentbit/conf/parsers_multiline.conf
+
+# Any tag NOT starting with `tenx.`; the tail joins multi-line events.
 [INPUT]
-    Name         tail
-    Path         /var/log/app.log
-    Tag          app.logs           # any tag NOT starting with `tenx.`
-    Parser       json
+    Name             tail
+    Path             /var/log/app.log
+    Tag              app.logs
+    multiline.parser event_start
 ```
 
 **3. Point destination outputs at the `tenx.*` namespace** (the recipe defaults to `stdout` for testing):

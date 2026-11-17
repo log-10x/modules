@@ -28,7 +28,7 @@
 #
 # Run Log10x:
 #
-#   tenx @run/input/forwarder/vector @apps/receiver
+#   tenx @run/input/forwarder/vector @apps/receiver groupJoinLines false
 #
 # Run Vector:
 #

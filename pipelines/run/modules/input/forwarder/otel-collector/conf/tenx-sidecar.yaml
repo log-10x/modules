@@ -55,7 +55,7 @@
 #
 # Run Log10x:
 #
-#   tenx @run/input/forwarder/otel-collector @apps/receiver
+#   tenx @run/input/forwarder/otel-collector @apps/receiver groupJoinLines false
 #
 # Run the Collector. filelog, its operators and file_storage ship in the contrib
 # distribution. The feature gate makes the file receiver hand each batch of

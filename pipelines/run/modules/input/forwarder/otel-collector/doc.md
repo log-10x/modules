@@ -95,7 +95,7 @@ Log10x reads the log line text via the JSON field configured by `otelCollectorIn
 **1. Run Log10x:**
 
 ```bash
-tenx @run/input/forwarder/otel-collector @apps/receiver
+tenx @run/input/forwarder/otel-collector @apps/receiver groupJoinLines false
 ```
 
 **2. Wire up your Collector config**, start from the sidecar recipe and add your real receivers + destination exporters. The `logs/to-tenx` pipeline carries everything from sources through enrichment to the `otlp/tenx` exporter; the `logs/from-tenx` pipeline carries the returning events directly to your destination exporters:
@@ -104,6 +104,10 @@ tenx @run/input/forwarder/otel-collector @apps/receiver
 receivers:
   filelog:
     include: [/var/log/app.log]
+    # An event starts at a line that starts with a date; every other line
+    # joins the event before it.
+    multiline:
+      line_start_pattern: '^\d{4}-\d{2}-\d{2}'
 
   # Receive processed events back from Log10x over OTLP/gRPC
   otlp/tenx:

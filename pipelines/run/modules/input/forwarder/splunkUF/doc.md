@@ -69,10 +69,12 @@ These steps send compact events to Splunk through the Universal Forwarder. The [
 tenx @run/input/forwarder/fluentbit @apps/receiver receiverOptimize true varMaxRecurIndexes 0 timestampZone UTC timestampMaxPerObject 1 groupJoinLines false
 ```
 
-**2. Write the processed events to Folder B.** Fluent Bit reads Folder A, hands each record to Log10x, and writes what comes back into Folder B: each source's compact events in a file of their own, one event per line, and the template records in another file, one JSON object per line.
+**2. Write the processed events to Folder B.** Fluent Bit reads Folder A, hands each record to Log10x, and writes what comes back into Folder B: each source's compact events in a file of their own, one event per line, and the template records in another file, one JSON object per line. It runs as two processes, each with a `storage.path` of its own: one reads Folder A and hands each record to Log10x, the other takes the records back and writes them.
 
 ```ini title="fluent-bit.conf"
 [SERVICE]
+    HTTP_Server     On
+    HTTP_Port       2020
     storage.path    /var/log/app/flb-storage
 
 [INPUT]
@@ -89,12 +91,20 @@ tenx @run/input/forwarder/fluentbit @apps/receiver receiverOptimize true varMaxR
     Host            127.0.0.1
     Port            24224
     Retry_Limit     False
+```
+
+```ini title="fluent-bit-back.conf"
+[SERVICE]
+    HTTP_Server     On
+    HTTP_Port       2021
+    storage.path    /var/log/app/flb-storage-back
 
 [INPUT]
     Name            forward
     Listen          0.0.0.0
     Port            24225
     Tag_Prefix      tenx.
+    storage.type    filesystem
 
 [OUTPUT]
     Name            file
@@ -111,6 +121,8 @@ tenx @run/input/forwarder/fluentbit @apps/receiver receiverOptimize true varMaxR
     File            templates.log
     Format          plain
 ```
+
+Start Fluent Bit once with each file, the one that writes Folder B first: `fluent-bit -c fluent-bit-back.conf` and `fluent-bit -c fluent-bit.conf`.
 
 **3. Monitor Folder B with the Universal Forwarder.** Add both files to `inputs.conf` on the forwarder:
 

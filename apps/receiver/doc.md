@@ -58,104 +58,49 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
     === ":simple-fluentd: Fluentd"
 
-        **Step 1**: Include the 10x receiver configuration:
+        **Step 1**: Copy the Fluentd sidecar recipe:
 
-        ```toml title="my-fluentd.conf"
-        # Nix/OSX
-        @include "#{ENV['TENX_MODULES']}/pipelines/run/modules/input/forwarder/fluentd/conf/tenx-receive-unix.conf"
-
-        # Windows
-        # @include "#{ENV['TENX_MODULES']}/pipelines/run/modules/input/forwarder/fluentd/conf/tenx-receive-stdio.conf"
+        ```bash
+        cp $TENX_MODULES/pipelines/run/modules/input/forwarder/fluentd/conf/tenx-sidecar.conf /etc/fluent/
         ```
 
-        **Step 2**: Apply the `@TENX` label to route events through the receiver:
+        **Step 2**: Replace its example `<source>` with yours, and route your sources to `@INGEST`:
 
-        === "Route Start"
+        ```xml title="tenx-sidecar.conf"
+        <source>
+          @type tail
+          path /var/log/app.log
+          pos_file /var/log/td-agent/app.log.pos
+          tag app.logs
+          @label @INGEST          # routes the source into the sidecar
+          # An event starts at a line that starts with a date; every other line
+          # joins the event before it.
+          multiline_flush_interval 1s
+          <parse>
+            @type multiline
+            format_firstline /^\d{4}-\d{2}-\d{2}/
+            format1 /^(?<log>.*)/
+          </parse>
+        </source>
+        ```
 
-            Process events directly after reading from input (simplest setup):
+        **Step 3**: Point `@OUTPUT` at your real destinations, in place of the `stdout` `<match>` in the recipe's `@OUTPUT` label:
 
-            ```xml title="my-fluentd.conf"
-            <source>
-              @type tail
-              path /path/to/file
-              tag my_tag
-              @label @TENX
-              # An event starts at a line that starts with a date; every
-              # other line joins the event before it.
-              multiline_flush_interval 1s
-              <parse>
-                @type multiline
-                format_firstline /^\d{4}-\d{2}-\d{2}/
-                format1 /^(?<log>.*)/
-              </parse>
-            </source>
-            ```
+        ```xml title="tenx-sidecar.conf"
+        <label @OUTPUT>
+          <match **>
+            @type your_output_plugin
+            # ... destination config
+          </match>
+        </label>
+        ```
 
-            Received events are marked with `@TENX-PROCESSED`. To re-apply `@ROOT`:
+        **Step 4**: Start Log10x first so the Forward port is listening, then Fluentd:
 
-            ```toml
-            @include "#{ENV['TENX_MODULES']}/pipelines/run/modules/forwarder/fluentd/conf/auxiliary/root.conf"
-            ```
-
-        === "Route End"
-
-            Process events after all filters have been applied:
-
-            ```xml title="my-fluentd.conf"
-            <source>
-              @type tail
-              tag my_logs
-            </source>
-
-            <filter my_logs>
-              @type filter1
-            </filter>
-
-            <filter my_logs>
-              @type filter2
-            </filter>
-
-            <match my_logs>
-              @type relabel
-              @label @TENX
-            </match>
-
-            <label @TENX-PROCESSED>
-              <match my_logs>
-                @type stdout
-              </match>
-            </label>
-            ```
-
-        === "Mid-Route"
-
-            Insert the receiver between specific plugins:
-
-            ```xml title="my-fluentd.conf"
-            <source>
-              @type tail
-              tag my_logs
-            </source>
-
-            <filter my_logs>
-              @type filter1
-            </filter>
-
-            <match my_logs>
-              @type relabel
-              @label @TENX
-            </match>
-
-            <label @TENX-PROCESSED>
-              <filter my_logs>
-                @type filter2
-              </filter>
-
-              <match my_logs>
-                @type stdout
-              </match>
-            </label>
-            ```
+        ```bash
+        tenx run @run/input/forwarder/fluentd @apps/receiver groupJoinLines false
+        fluentd -c /etc/fluent/tenx-sidecar.conf
+        ```
 
         !!! note
             For large files or volume surges, set [XMX](https://www.baeldung.com/jvm-parameters#explicit-heap-memory---xms-and-xmx-options) or use [read_bytes_limit_per_second](https://docs.fluentd.org/input/tail#read_bytes_limit_per_second).
@@ -408,7 +353,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
               timeout_ms: 1000
 
         sinks:
-          # Replace `console` with your real destination(s), elasticsearch, splunk_hec, kafka, s3, etc.
+          # Replace `console` with your real destination(s), elasticsearch, splunk_hec_logs, kafka, s3, etc.
           final:
             type: console
             inputs:

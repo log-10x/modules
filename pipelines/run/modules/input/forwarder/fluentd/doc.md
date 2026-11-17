@@ -70,14 +70,13 @@ The original Fluentd tag is carried by the Forward protocol itself and surfaces 
 tenx @run/input/forwarder/fluentd @apps/receiver groupJoinLines false
 ```
 
-**2. Wire up your Fluentd config**, include the sidecar recipe and route your sources to `@INGEST`:
+**2. Wire up your Fluentd config**, copy the sidecar recipe `conf/tenx-sidecar.conf` into it, replace its example `<source>` with yours, and route your sources to `@INGEST`:
 
 ```xml title="fluentd.conf"
-@include "#{ENV['TENX_MODULES']}/pipelines/run/modules/input/forwarder/fluentd/conf/tenx-sidecar.conf"
-
 <source>
   @type tail
   path /var/log/app.log
+  pos_file /var/log/td-agent/app.log.pos
   tag app.logs
   @label @INGEST          # routes the source into the sidecar
   # An event starts at a line that starts with a date; every other line
@@ -91,7 +90,7 @@ tenx @run/input/forwarder/fluentd @apps/receiver groupJoinLines false
 </source>
 ```
 
-**3. Point `@OUTPUT` at your real destinations** (the recipe defaults to `stdout` for testing):
+**3. Point `@OUTPUT` at your real destinations**, in place of the `stdout` `<match>` in the recipe's `@OUTPUT` label:
 
 ```xml
 <label @OUTPUT>

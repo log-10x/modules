@@ -5,6 +5,7 @@ icon: simple/opentelemetry
 Runs 10x Engine as a [sidecar](https://doc.log10x.com/engine/launcher/sidecar) to the [OpenTelemetry Collector](https://opentelemetry.io/docs/collector/) for reporting, receiving, and optimizing events before they ship to their destination (Elasticsearch, Splunk, S3, Kafka, …). The Collector and Log10x run as peer processes. On Kubernetes, the Helm chart connects the two containers over unix domain sockets on a shared `/tmp` emptyDir: the Collector sends events to Log10x via syslog on `/tmp/tenx-otel-in.sock` and receives processed events back via fluentforward on `/tmp/tenx-otel-out.sock`. The Architecture and Quickstart below show the VM/CLI recipe instead, where the Collector sends events via its native [OTLP/gRPC exporter](https://github.com/open-telemetry/opentelemetry-collector/tree/main/exporter/otlpexporter) and receives them back via its OTLP/gRPC receiver. Resource attributes, log-record attributes, timestamps and body survive the round trip, so k8s metadata (`k8s.pod.name`, `k8s.namespace.name`, `k8s.container.name`, labels, …) reaches your destinations with its name and value unchanged. Each attribute also keeps its place: a resource attribute returns under `Resource` and a log-record attribute on the log record. See [What an event looks like on the way back](#what-an-event-looks-like-on-the-way-back).
 
 !!! note "Distribution"
+
     Both the OTLP receiver and OTLP exporter ship in the core `otelcol` distribution, no `otelcol-contrib` build is required. Tested against `otelcol` v0.151.0+.
 
 ## Architecture

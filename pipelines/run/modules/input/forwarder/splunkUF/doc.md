@@ -186,12 +186,14 @@ INGEST_EVAL = $pd:_destinationKey$=if(index=="<index>", "rfs:tenx", null())
 
 Where a rule of the heavy forwarder's own sets the index before the route runs, route by sourcetype instead, `if(sourcetype=="XmlWinEventLog", "rfs:tenx", null())`, and the events are written with the index that rule set.
 
-**3. Run Fluent Bit and the Receiver on the heavy forwarder's host.** Fluent Bit reads each sourcetype's folder, keeps its buffer on disk, hands each event to the Receiver, and sends what comes back to the HEC. Put these two files in `/opt/tenx/fluent-bit`:
+**3. Run Fluent Bit and the Receiver on the heavy forwarder's host.** Fluent Bit runs as two processes, each with its buffer on disk: one reads each sourcetype's folder and hands each event to the Receiver, the other sends what comes back to the HEC. Put these two files in `/opt/tenx/fluent-bit`, for the first:
 
 ```ini title="fluent-bit.conf"
 [SERVICE]
     Flush                      1
     Parsers_File               /fluent-bit/etc/parsers.conf
+    HTTP_Server                On
+    HTTP_Port                  2020
     storage.path               /opt/tenx/fluent-bit-state/storage
     storage.sync               normal
     storage.backlog.mem_limit  16M
@@ -215,12 +217,31 @@ Where a rule of the heavy forwarder's own sets the index before the route runs, 
     Host         127.0.0.1
     Port         24224
     Retry_Limit  False
+```
+
+```ini title="parsers.conf"
+[PARSER]
+    Name    json
+    Format  json
+```
+
+And this one in `/opt/tenx/fluent-bit-back`, for the second:
+
+```ini title="fluent-bit.conf"
+[SERVICE]
+    Flush                      1
+    HTTP_Server                On
+    HTTP_Port                  2021
+    storage.path               /opt/tenx/fluent-bit-state/storage-back
+    storage.sync               normal
+    storage.backlog.mem_limit  16M
 
 [INPUT]
-    Name         forward
-    Listen       0.0.0.0
-    Port         24225
-    Tag_Prefix   tenx.
+    Name          forward
+    Listen        0.0.0.0
+    Port          24225
+    Tag_Prefix    tenx.
+    storage.type  filesystem
 
 [OUTPUT]
     Name              splunk
@@ -252,12 +273,6 @@ Where a rule of the heavy forwarder's own sets the index before the route runs, 
     event_sourcetype  tenx_dml_raw_json
 ```
 
-```ini title="parsers.conf"
-[PARSER]
-    Name    json
-    Format  json
-```
-
 `tenx_win` is the compact sourcetype of the Windows Security field map in step 4; without a field map, the `splunk` output sends `event_sourcetype tenx_encoded`. `event_index_key $index` sends each event to the index it had on the heavy forwarder; without the `$`, Fluent Bit sends the word `index`. A field that a rule of the heavy forwarder's own writes with `WRITE_META` reaches the indexers only when this output names it, as `event_field <field> $fields['<field>']`. A test instance with Splunk's default self-signed certificate needs `TLS.Verify Off` in both `splunk` outputs.
 
 Copy the Receiver's compact configuration out of the image, key its cap file on the template hash, and create the cap file with its header row:
@@ -272,30 +287,33 @@ sed -e 's/^\(  fieldNames:\)$/\1 [templateHash]/' -e '/^    - \$=yield TenXEnv.g
 printf 'pattern_hash,value\n' > /opt/tenx/receiver/win/compact-cap.csv
 ```
 
-Start Fluent Bit with `HEC_TOKEN` set in the environment, then the Receiver in Fluent Bit's network. `<network>` is a Docker network from which the HEC is reachable:
+Start the Fluent Bit that sends to the HEC, with `HEC_TOKEN` set in the environment, then the Receiver and the Fluent Bit that reads the files, both in its network. `<network>` is a Docker network from which the HEC is reachable:
 
 ```sh
-docker run -d --name tenx-fluentbit --network <network> -e HEC_TOKEN \
-  -v /opt/tenx/fluent-bit:/fluent-bit/etc:ro -v /opt/tenx/fluent-bit-state:/opt/tenx/fluent-bit-state \
-  -v /opt/tenx/rfs:/opt/tenx/rfs:ro fluent/fluent-bit:5.1.5
-docker run -d --name tenx-receiver-win --network container:tenx-fluentbit \
+docker run -d --name tenx-fluentbit-back --network <network> -e HEC_TOKEN \
+  -v /opt/tenx/fluent-bit-back:/fluent-bit/etc:ro -v /opt/tenx/fluent-bit-state:/opt/tenx/fluent-bit-state \
+  fluent/fluent-bit:5.1.5
+docker run -d --name tenx-receiver-win --network container:tenx-fluentbit-back \
   -v /opt/tenx/receiver/compact-config.yaml:/etc/tenx/config/pipelines/run/receive/compact/config.yaml:ro \
   -v /opt/tenx/receiver/win:/opt/tenx/receiver/win log10x/edge-10x:1.1.181 \
   @run/input/forwarder/fluentbit @apps/receiver varMaxRecurIndexes 0 timestampZone UTC timestampMaxPerObject 1 \
   groupJoinLines false fluentbitInputPort 24224 fluentbitOutputHost 127.0.0.1 fluentbitOutputPort 24225 \
   fluentbitInputMessageField event compactReceiverLookupFile /opt/tenx/receiver/win/compact-cap.csv
+docker run -d --name tenx-fluentbit --network container:tenx-fluentbit-back \
+  -v /opt/tenx/fluent-bit:/fluent-bit/etc:ro -v /opt/tenx/fluent-bit-state:/opt/tenx/fluent-bit-state \
+  -v /opt/tenx/rfs:/opt/tenx/rfs:ro fluent/fluent-bit:5.1.5
 ```
 
 With the cap file, the Receiver compacts only the templates the field map lists, and every other event arrives whole. Without a field map, the Receiver takes `receiverOptimize true` in place of the cap file and compacts every template:
 
 ```sh
-docker run -d --name tenx-receiver --network container:tenx-fluentbit log10x/edge-10x:1.1.181 \
+docker run -d --name tenx-receiver --network container:tenx-fluentbit-back log10x/edge-10x:1.1.181 \
   @run/input/forwarder/fluentbit @apps/receiver receiverOptimize true varMaxRecurIndexes 0 timestampZone UTC \
   timestampMaxPerObject 1 groupJoinLines false fluentbitInputPort 24224 fluentbitOutputHost 127.0.0.1 \
   fluentbitOutputPort 24225 fluentbitInputMessageField event
 ```
 
-The Receiver runs in Fluent Bit's network, so restart it after each restart of Fluent Bit.
+The Receiver and the Fluent Bit that reads the files run in the network of the one that sends to the HEC, so restart both after each restart of it.
 
 **4. Set up the indexers and the search head.** On the indexers, create the compact indexes, `tenx_dml` and `tenx_probe`, and an HEC token whose `indexes` list them, and install the Log10x App (whole, or its `_indexers` package) and the add-ons. On the search head, install the Log10x App, the add-ons and CIM, and set the `tenx-events` macro to `index=* (sourcetype::tenx_encoded OR tenx_compact_st::tenx_win)`.
 

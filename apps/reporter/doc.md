@@ -167,6 +167,19 @@ Follow the steps below. Steps that require customization link to the relevant [C
             endpoint: 127.0.0.1:4317
             tls:
               insecure: true
+            # The Reporter answers a request once its records are processed, which
+            # can take several seconds; a shorter timeout sends the request again.
+            timeout: 30s
+            # Requests of at most 2 MiB, whatever the pipeline's batch processor
+            # sends: the Reporter refuses a request above its message limit, and
+            # the Collector drops a refused request.
+            sending_queue:
+              enabled: true
+              batch:
+                flush_timeout: 1s
+                sizer: bytes
+                min_size: 1048576
+                max_size: 2097152
 
         service:
           pipelines:

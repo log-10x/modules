@@ -62,6 +62,39 @@ module:
   options:
 
     - names:
+      - forwarderInputBytesLimit
+      description: the most bytes a forwarder input reads in each forwarderInputBytesInterval, 0 for no limit
+      type: string
+      required: false
+      defValue: 2MB
+      doc: |
+        The most bytes a forwarder input (Fluent Bit, Fluentd, Vector,
+        Filebeat, Logstash, OpenTelemetry Collector) reads from its socket in
+        each `forwarderInputBytesInterval`, such as `20MB`. When the limit is
+        reached, the input stops reading until the interval ends, and the
+        forwarder holds the events in its own buffer meanwhile; no event is
+        dropped.
+
+        The default is `2MB` a second. `0` sets no byte limit: the input then
+        stops reading only when the pipeline holds as many events as
+        `objectLimitMaxInstances` allows (by default 5,000 for each 100 MB of
+        heap).
+
+        Raise it to let one Receiver take more than 2 MB a second, for example
+        `forwarderInputBytesLimit 20MB`.
+
+    - names:
+      - forwarderInputBytesInterval
+      description: the interval forwarderInputBytesLimit counts bytes over
+      type: string
+      required: false
+      defValue: 1s
+      doc: |
+        The interval over which `forwarderInputBytesLimit` counts the bytes a
+        forwarder input reads, such as `1s` (the default) or `1m`. Has no
+        effect while `forwarderInputBytesLimit` is `0`.
+
+    - names:
       - outputEncodeField
       description: the single field expression each forwarder's output stream writes per event
       type: string
@@ -147,3 +180,23 @@ module:
         Each output stream references it via `$?outputDropFilter`. Named
         outputDropFilter rather than outputFilter, which is a built-in per-stream
         engine option.
+
+    - names:
+      - receiverReadOnly
+      description: read-only mode, receive events, emit metrics, do not write back to the forwarder
+      type: boolean
+      required: false
+      defValue: false
+      doc: |
+        when true, the return output each forwarder input opens (Forward for
+        Fluent Bit, Fluentd and Vector, Unix socket for Filebeat, TCP socket
+        for Logstash, OTLP for the OpenTelemetry Collector) is not constructed,
+        so no event and no template is written back to the forwarder; the
+        aggregators still run and publish their metrics.
+
+        The [Reporter](https://doc.log10x.com/apps/reporter/) sets it to
+        `true`. With the [Receiver](https://doc.log10x.com/apps/receiver/) it
+        defaults to `false`. Declared here so that it is accepted as a launch
+        argument or a configuration key with any app that loads a forwarder
+        input; the Receiver and Reporter apps declare it with the same name,
+        type and default.

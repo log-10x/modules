@@ -37,6 +37,10 @@ log4j:
       
           bufferSize: 2000000 # Ensure a large buffer size for very long lines
 
+          # report a failed write to the output, which waits and tries the value
+          # again until it is written; ignored, the value was lost
+          ignoreExceptions: false
+
           connectTimeoutMillis: $?outputUnixSocketConnectTimeout=5000
 
     loggers:
@@ -45,6 +49,9 @@ log4j:
           # A dedicated logger whose name matches the socket appender is used to
           # to write object/template values for this output instance 
         - name: $loggerName
+          # 'level' passes every value written to this output, so the root logger's
+          #  level (set for the engine's own log) does not drop them
+          level: all
           additivity: false
           appenderRef:
             - ref: $loggerName

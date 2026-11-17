@@ -39,7 +39,28 @@ export class GroupTemplate extends TenXTemplate {
                 }
             }
 
-            if (childLabel) {
+            // a line that is one name=value pair, its name without a space and its
+            // value without another '=', is a field of the record above it. A
+            // severity word in its value names that field's value, not a new
+            // record: the classic text of a Windows event writes each field on
+            // its own line, and `OpCode=Info` or `Type=Warning` read as INFO or
+            // WARN and cut the event in two
+            var nameValueLine = false;
+            var nameEnd = TenXString.indexOf(event, "=", 0);
+            if (nameEnd > 0) {
+                var name = TenXString.substring(event, 0, nameEnd);
+                nameValueLine = (TenXString.indexOf(event, "=", nameEnd + 1) == -1) &&
+                    (!TenXString.includes(name, " ")) && (!TenXString.includes(name, "\t"));
+            }
+
+            if (!TenXEnv.get("groupJoinLines", true)) {
+
+                // every line, or every record a forwarder sends, heads its own
+                // event: nothing joins the event above it
+                // https://doc.log10x.com/run/initialize/group/#groupjoinlines
+                groupHead = true;
+
+            } else if (childLabel) {
 
                 groupHead = false;
 
@@ -58,7 +79,7 @@ export class GroupTemplate extends TenXTemplate {
                 // defeats, so dump lines weld into their parent event
                 groupHead = false;
 
-            } else if (TenXTemplate.getStatic(TenXEnv.get("levelField"))) {
+            } else if ((TenXTemplate.getStatic(TenXEnv.get("levelField"))) && (!nameValueLine)) {
 
                 // templates with an assigned severity level are assumed to be a group head
                 groupHead = true;

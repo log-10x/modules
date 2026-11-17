@@ -40,8 +40,20 @@ log4j:
 
           fluentdUnixSocketConfig:
             maxBufferSize: 536870912
-            bufferChunkInitialSize: 1048576
-            bufferChunkRetentionSize: 4194304
+            # A chunk is sent as one PackedForward message. Fluent Bit's forward
+            # input (5.x) refuses a whole message whose events would decode past
+            # its MessagePack budget (16 times Buffer_Max_Size, 98 MB by default),
+            # charging each event a zone of about 8 KB whatever its size: about
+            # 11,900 events per message by default, logged once as "invalid
+            # PackedForward payload or MessagePack allocation budget exceeded".
+            # Without an ack the sender is not told and every event of the
+            # message is lost; with one, the refused chunk is sent again and
+            # refused again, holding up the chunks behind it. An event takes at
+            # least 12 bytes in a message (its time and an empty record), so a
+            # 128 KB chunk holds at most about 10,900 events, whatever their
+            # size, and stays under the input's 1 MB receive chunk
+            bufferChunkInitialSize: 65536
+            bufferChunkRetentionSize: 131072
             bufferChunkRetentionTimeMillis: 1000
             flushAttemptIntervalMillis: 600
             waitUntilBufferFlushed: 10
@@ -50,7 +62,18 @@ log4j:
             senderBaseRetryIntervalMillis: 400
             senderMaxRetryIntervalMillis: 30000
             connectionTimeoutMillis: 10000
-            readTimeoutMillis: 5000
+            # How long a chunk waits for its ack before it is sent again. A
+            # forwarder that is slow to ack (its own storage busy) or that holds
+            # the connection open without reading would otherwise get the same
+            # chunk twice; a dead destination resets the connection and the
+            # chunk is retried at once, whatever this value
+            readTimeoutMillis: 120000
+            # Each chunk asks the Fluentd or Fluent Bit forward input for an ack
+            # and stays in the buffer until the ack arrives (readTimeoutMillis);
+            # a chunk with no ack is sent again on a new connection. A chunk
+            # written into a connection the destination has closed (it restarted)
+            # is otherwise lost without an error
+            ackResponseMode: true
             jvmHeapBufferMode: true
             socketAddress: $?outputForwardAddress
             hostAddress: $?outputForwardHostAddress=127.0.0.1
@@ -63,6 +86,9 @@ log4j:
           # A dedicated logger whose name matches the file appender is used to
           # to write object/template values for this output instance
         - name: $loggerName
+          # 'level' passes every value written to this output, so the root logger's
+          #  level (set for the engine's own log) does not drop them
+          level: all
           additivity: false
           appenderRef:
             - ref: $loggerName

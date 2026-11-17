@@ -54,6 +54,8 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
 ??? tenx-forwarderinputs "Step 3: Configure Your Forwarder"
 
+    Join multi-line events (stack traces, messages that span lines) in the forwarder, and give the Receiver `groupJoinLines false` so that each forwarder record is one event. The Receiver joins records in the order the forwarder delivers them, and a forwarder that retries a chunk after later ones (when it starts before the Receiver listens, or after a timeout) delivers them out of order. Each tab below joins a log whose events start with a date (`^\d{4}-\d{2}-\d{2}`); set the pattern to the first line of the events in your logs.
+
     === ":simple-fluentd: Fluentd"
 
         **Step 1**: Include the 10x receiver configuration:
@@ -78,6 +80,14 @@ Follow the steps below. Steps that require customization link to the relevant [C
               path /path/to/file
               tag my_tag
               @label @TENX
+              # An event starts at a line that starts with a date; every
+              # other line joins the event before it.
+              multiline_flush_interval 1s
+              <parse>
+                @type multiline
+                format_firstline /^\d{4}-\d{2}-\d{2}/
+                format1 /^(?<log>.*)/
+              </parse>
             </source>
             ```
 
@@ -167,14 +177,15 @@ Follow the steps below. Steps that require customization link to the relevant [C
         [SERVICE]
             Flush        1
             Log_Level    info
+            Parsers_File ${TENX_MODULES}/pipelines/run/modules/input/forwarder/fluentbit/conf/parsers_multiline.conf
 
         # Replace with your real sources, tag with anything NOT starting
         # with `tenx.` so the bypass works.
         [INPUT]
-            Name         tail
-            Path         /var/log/app.log
-            Tag          app.logs
-            Parser       json
+            Name             tail
+            Path             /var/log/app.log
+            Tag              app.logs
+            multiline.parser event_start
 
         # Enrichment filters Match the user-tag scheme only (NOT `*`).
         [FILTER]
@@ -207,10 +218,23 @@ Follow the steps below. Steps that require customization link to the relevant [C
             Format       json_lines
         ```
 
+        The tail input joins multi-line events with the parser the module ships in `conf/parsers_multiline.conf`. To change the pattern, copy that file, edit its rules and point `Parsers_File` at the copy:
+
+        ```toml title="parsers_multiline.conf"
+        # An event starts at a line that starts with a date; every other
+        # line joins the event before it.
+        [MULTILINE_PARSER]
+            Name          event_start
+            Type          regex
+            Flush_Timeout 1000
+            Rule          "start_state"  "/^\d{4}-\d{2}-\d{2}/"        "cont"
+            Rule          "cont"         "/^(?!\d{4}-\d{2}-\d{2})/"    "cont"
+        ```
+
         **Step 3**: Start Log10x first so the Forward port is listening, then Fluent Bit:
 
         ```bash
-        tenx run @run/input/forwarder/fluentbit @apps/receiver
+        tenx run @run/input/forwarder/fluentbit @apps/receiver groupJoinLines false
         fluent-bit -c /etc/fluent-bit/tenx-sidecar.conf
         ```
 
@@ -238,6 +262,15 @@ Follow the steps below. Steps that require customization link to the relevant [C
             paths:
               - /path/to/log
 
+            # An event starts at a line that starts with a date; every
+            # other line joins the event before it.
+            parsers:
+              - multiline:
+                  type: pattern
+                  pattern: '^\d{4}-\d{2}-\d{2}'
+                  negate: true
+                  match: after
+
             processors:
               - script:
                   lang: javascript
@@ -257,7 +290,17 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
         ```ruby title="tenx-ingest.conf"
         input {
-          file { path => "/path/to/log" }
+          file {
+            path => "/path/to/log"
+            # An event starts at a line that starts with a date; every
+            # other line joins the event before it.
+            codec => multiline {
+              pattern => "^\d{4}-\d{2}-\d{2}"
+              negate => true
+              what => "previous"
+              auto_flush_interval => 1
+            }
+          }
         }
         filter {
           # Log10x reads the `tag` field as the event's source.
@@ -306,6 +349,10 @@ Follow the steps below. Steps that require customization link to the relevant [C
             include:
               - /var/log/**/*.log
             start_at: end
+            # An event starts at a line that starts with a date; every
+            # other line joins the event before it.
+            multiline:
+              line_start_pattern: '^\d{4}-\d{2}-\d{2}'
 
         exporters:
           # Replace `debug` with your real destinations, elasticsearch, splunk_hec, kafka, awss3, etc.
@@ -316,7 +363,6 @@ Follow the steps below. Steps that require customization link to the relevant [C
           pipelines:
             logs/to-tenx:
               receivers: [filelog]
-              processors: [batch]
               exporters: [otlp/tenx]
             logs/from-tenx:
               receivers: [otlp/tenx]
@@ -326,7 +372,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
         **Step 3**: Start Log10x first so the OTLP/gRPC port is listening, then the Collector:
 
         ```bash
-        tenx run @run/input/forwarder/otel-collector @apps/receiver
+        tenx run @run/input/forwarder/otel-collector @apps/receiver groupJoinLines false
         otelcol --config=/etc/otelcol/tenx-sidecar.yaml
         ```
 
@@ -353,6 +399,13 @@ Follow the steps below. Steps that require customization link to the relevant [C
             include:
               - /var/log/**/*.log
             read_from: end
+            # An event starts at a line that starts with a date; every
+            # other line joins the event before it.
+            multiline:
+              start_pattern: '^\d{4}-\d{2}-\d{2}'
+              condition_pattern: '^\d{4}-\d{2}-\d{2}'
+              mode: halt_before
+              timeout_ms: 1000
 
         sinks:
           # Replace `console` with your real destination(s), elasticsearch, splunk_hec, kafka, s3, etc.
@@ -367,7 +420,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
         **Step 3**: Start Log10x first, then Vector:
 
         ```bash
-        tenx run @run/input/forwarder/vector/receive @apps/receiver
+        tenx run @run/input/forwarder/vector/receive @apps/receiver groupJoinLines false
         vector --config /etc/vector/tenxNix.yaml
         ```
 
@@ -392,11 +445,15 @@ Follow the steps below. Steps that require customization link to the relevant [C
         [SERVICE]
             Flush        1
             Log_Level    info
+            Parsers_File ${TENX_MODULES}/pipelines/run/modules/input/forwarder/fluentbit/conf/parsers_multiline.conf
 
+        # Joins multi-line events with the module's parser (see the
+        # Fluent-bit tab).
         [INPUT]
-            Name         tail
-            Path         ${FOLDER_A}/*.log
-            Tag          app.logs
+            Name             tail
+            Path             ${FOLDER_A}/*.log
+            Tag              app.logs
+            multiline.parser event_start
 
         # Ingest: hand off to the Log10x sidecar.
         [OUTPUT]
@@ -422,7 +479,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
             Format       plain
         ```
 
-        Start log10x first, then fluent-bit: `tenx run @run/input/forwarder/fluentbit @apps/receiver && fluent-bit -c fluent-bit-splunk.conf`.
+        Start log10x first, then fluent-bit: `tenx run @run/input/forwarder/fluentbit @apps/receiver groupJoinLines false && fluent-bit -c fluent-bit-splunk.conf`.
 
         **Step 3**: Configure Splunk UF to monitor Folder B:
 
@@ -453,11 +510,15 @@ Follow the steps below. Steps that require customization link to the relevant [C
         [SERVICE]
             Flush        1
             Log_Level    info
+            Parsers_File ${TENX_MODULES}/pipelines/run/modules/input/forwarder/fluentbit/conf/parsers_multiline.conf
 
+        # Joins multi-line events with the module's parser (see the
+        # Fluent-bit tab).
         [INPUT]
-            Name         tail
-            Path         ${FOLDER_A}/*.log
-            Tag          app.logs
+            Name             tail
+            Path             ${FOLDER_A}/*.log
+            Tag              app.logs
+            multiline.parser event_start
 
         # Ingest: hand off to the Log10x sidecar.
         [OUTPUT]
@@ -483,7 +544,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
             Format       plain
         ```
 
-        Start log10x first, then fluent-bit: `tenx run @run/input/forwarder/fluentbit @apps/receiver && fluent-bit -c fluent-bit-datadog.conf`.
+        Start log10x first, then fluent-bit: `tenx run @run/input/forwarder/fluentbit @apps/receiver groupJoinLines false && fluent-bit -c fluent-bit-datadog.conf`.
 
         **Step 3**: Configure Datadog Agent to monitor Folder B:
 
@@ -588,10 +649,24 @@ Follow the steps below. Steps that require customization link to the relevant [C
             endpoint: 127.0.0.1:4317
             tls:
               insecure: true
-            # One sender keeps records in the order they were read; the engine
-            # groups multi-line events from consecutive records.
+            # Log10x answers a request once its records are written back, which can
+            # take several seconds; a shorter timeout sends the request again.
+            timeout: 30s
+            retry_on_failure:
+              enabled: true
+              max_elapsed_time: 0
             sending_queue:
+              enabled: true
+              # One sender keeps records in the order they were read; the engine
+              # groups multi-line events from consecutive records.
               num_consumers: 1
+              block_on_overflow: true
+              # Requests of at most 2 MiB, whatever the batch processor sends.
+              batch:
+                flush_timeout: 1s
+                sizer: bytes
+                min_size: 1048576
+                max_size: 2097152
 
         service:
           pipelines:
@@ -773,18 +848,18 @@ Follow the steps below. Steps that require customization link to the relevant [C
         Start Log10x first so its Forward port is listening when Fluent Bit starts, then start Fluent Bit:
 
         ```console
-        $ tenx run @run/input/forwarder/fluentbit @apps/receiver
+        $ tenx run @run/input/forwarder/fluentbit @apps/receiver groupJoinLines false
         $ fluent-bit -c /etc/fluent-bit/tenx-sidecar.conf
         ```
 
     === ":simple-beats: Filebeat"
 
         ```console title="Nix/OSX"
-        $ filebeat -c my-filebeat.yml -e 2>&1 | /opt/tenx-edge/bin/tenx run @run/input/forwarder/filebeat @apps/receiver
+        $ filebeat -c my-filebeat.yml -e 2>&1 | /opt/tenx-edge/bin/tenx run @run/input/forwarder/filebeat @apps/receiver groupJoinLines false
         ```
 
         ```console title="Windows"
-        $ filebeat -c my-filebeat.yml -e 2>&1 | "c:\program files\tenx-edge\tenx" run @run/input/forwarder/filebeat @apps/receiver
+        $ filebeat -c my-filebeat.yml -e 2>&1 | "c:\program files\tenx-edge\tenx" run @run/input/forwarder/filebeat @apps/receiver groupJoinLines false
         ```
 
     === ":simple-logstash: Logstash"
@@ -793,7 +868,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
 
         ```console
         $ logstash --path.settings /etc/logstash
-        $ tenx run @run/input/forwarder/logstash @apps/receiver
+        $ tenx run @run/input/forwarder/logstash @apps/receiver groupJoinLines false
         ```
 
     === ":simple-opentelemetry: OTel Collector"
@@ -801,7 +876,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
         Start Log10x first so its OTLP/gRPC port is listening when the Collector starts, then start the Collector:
 
         ```console
-        $ tenx run @run/input/forwarder/otel-collector @apps/receiver
+        $ tenx run @run/input/forwarder/otel-collector @apps/receiver groupJoinLines false
         $ otelcol --config=/etc/otelcol/tenx-sidecar.yaml
         ```
 
@@ -810,7 +885,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
         **Step 1**: Start Log10x first, then Fluent Bit:
 
         ```console
-        $ tenx run @run/input/forwarder/fluentbit @apps/receiver
+        $ tenx run @run/input/forwarder/fluentbit @apps/receiver groupJoinLines false
         $ fluent-bit -c fluent-bit-splunk.conf
         ```
 
@@ -827,7 +902,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
         **Step 1**: Start Log10x first, then Fluent Bit:
 
         ```console
-        $ tenx run @run/input/forwarder/fluentbit @apps/receiver
+        $ tenx run @run/input/forwarder/fluentbit @apps/receiver groupJoinLines false
         $ fluent-bit -c fluent-bit-datadog.conf
         ```
 

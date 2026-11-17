@@ -25,6 +25,14 @@
 # 'timestamp' array. Set to 0 for unlimited.
 maxPerObject: $?timestampMaxPerObject=0
 
+# 'fieldName' names the field that holds the event's time (e.g., 'eventTime'). With
+# 'maxPerObject' set to 1, an object whose text holds the name, followed by delimiters only
+# and then a timestamp the formats below read, gets that timestamp as its one timestamp.
+# It has no default here on purpose: when the option is not set, the key is left out, so an
+# engine that does not know the field still starts with these settings. Unset, the first
+# timestamp found is kept.
+fieldName: $?timestampFieldName
+
 # 'searchDirection' controls the direction(s) from with timestamps are searched for
 #  within the object's 'text' field. Possible values:
 

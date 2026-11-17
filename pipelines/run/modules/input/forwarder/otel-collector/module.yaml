@@ -52,6 +52,23 @@ module:
         2 MB a second decode budget at roughly 1 KB a record.
 
     - names:
+        - otelCollectorInputMaxMessageSize
+      description: largest OTLP export request the input takes, in bytes
+      type: String
+      required: false
+      category: input
+      defValue: 16MB
+      doc: |
+        The size counts the request decompressed. A larger request is
+        refused, and the Collector's OTLP exporter treats the refusal as
+        permanent: it drops the request's records. gRPC's own default is
+        4 MiB, which a Collector's `batch` processor at its defaults (8,192
+        records) passes once records average more than about 500 bytes. Keep
+        the Collector's requests below this limit with `sending_queue.batch`
+        (`sizer: bytes`, `max_size`) on the exporter that sends to Log10x, as
+        the sidecar recipe does.
+
+    - names:
         - otelCollectorInputMessageField
       description: dotted JSON path to the field carrying the log line text
       type: String

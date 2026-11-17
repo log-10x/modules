@@ -40,12 +40,24 @@ log4j:
           # ensure a large buffer size for very long lines
           bufferSize: 2000000
 
+          # TCP: when the destination refuses the connection or drops it, try
+          # again every second until it accepts (log4j's own default waits 30
+          # seconds between attempts)
+          reconnectionDelayMillis: 1000
+
+          # report a failed write to the output, which waits and tries the value
+          # again until it is written; ignored, the value was lost
+          ignoreExceptions: false
+
     loggers:
       logger:
 
           # A dedicated logger whose name matches the socket appender is used to
           # to write object/template values for this output instance
         - name: $loggerName
+          # 'level' passes every value written to this output, so the root logger's
+          #  level (set for the engine's own log) does not drop them
+          level: all
           additivity: false
           appenderRef:
             - ref: $loggerName

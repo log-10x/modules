@@ -138,3 +138,83 @@ module:
         of being dynamic values with high cardinality and, as such, should not 
         be captured as symbol values.
       
+    - names:
+      - textMaxFileSize
+      description: largest file to read, in bytes
+      type: number
+      required: false
+      category: text
+      doc: |
+        sets the size above which a file is skipped. Unset, files over 51,200 bytes are skipped;
+        0 reads files of any size, such as a log sample read with 'textLogFields'.
+
+    - names:
+      - textSymbolType
+      description: symbol type of the words this parser writes
+      type: string
+      required: false
+      category: text
+      doc: |
+        sets the type of the symbol entries this parser writes: 'text' (the default) or 'enum'.
+        A linked library knows at run time only the words of the types its link step lists
+        in [wordTypes](https://doc.log10x.com/compile/link/#symbolwordtypes), which leaves
+        'text' out. Set 'enum' for words that must be template text at run time, such as the
+        field names and fixed values of a log format.
+
+    - names:
+      - textLogFields
+      description: read each line as a log event and keep field names and fixed values
+      type: boolean
+      required: false
+      category: logs
+      doc: |
+        reads each line of a file as a log event. The parser writes the names of the event's
+        fields: JSON keys, XML element and attribute names (and the value of a 'Name' attribute,
+        which names the element's text), key=value keys, 'Label: value' lines and the columns
+        of a CSV header row. Of the values, it writes only the words of fields that took at most
+        'textMaxValues' distinct values over at least 'textMinEvents' events, so names and fixed
+        values such as actions and event types are kept and per-event values such as users,
+        addresses and identifiers are not. Words of a line with no fields are written when they
+        appear on at least 'textMinEvents' lines.
+
+    - names:
+      - textMaxValues
+      description: most distinct values a field may take for its value words to be kept
+      type: number
+      required: false
+      category: logs
+      doc: |
+        with 'textLogFields', the most distinct values a field may take for the words of its
+        values to be written (default 10). 0 writes field names only.
+
+    - names:
+      - textMinEvents
+      description: fewest events a field must appear in for its value words to be kept
+      type: number
+      required: false
+      category: logs
+      doc: |
+        with 'textLogFields', the fewest events a field must appear in for the words of its
+        values to be written, and the fewest lines a word of a line with no fields must appear
+        on (default 20).
+
+    - names:
+      - textExcludeWords
+      description: words this parser never writes
+      type: list
+      required: false
+      category: logs
+      doc: |
+        lists words this parser never writes, such as the host, user and domain names of a
+        public sample whose field names and fixed values are wanted but whose own names are not.
+
+    - names:
+      - textValueKeys
+      description: keys whose string values are read when field values are not
+      type: list
+      required: false
+      category: parser
+      doc: |
+        with 'textParserFactoryClass' set and 'textScanFieldValues' off, lists the keys whose string
+        values are read as well, such as the 'name' key under which a schema file lists the field
+        names of a log format. Other string values, such as descriptions, are not read.

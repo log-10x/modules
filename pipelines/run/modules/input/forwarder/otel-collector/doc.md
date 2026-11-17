@@ -95,7 +95,7 @@ Log10x reads the log line text via the JSON field configured by `otelCollectorIn
 **1. Run Log10x:**
 
 ```bash
-tenx @run/input/forwarder/otel-collector @apps/receiver
+tenx @run/input/forwarder/otel-collector @apps/receiver groupJoinLines false
 ```
 
 **2. Wire up your Collector config**, start from the sidecar recipe and add your real receivers + destination exporters. The `logs/to-tenx` pipeline carries everything from sources through enrichment to the `otlp/tenx` exporter; the `logs/from-tenx` pipeline carries the returning events directly to your destination exporters:
@@ -104,6 +104,10 @@ tenx @run/input/forwarder/otel-collector @apps/receiver
 receivers:
   filelog:
     include: [/var/log/app.log]
+    # An event starts at a line that starts with a date; every other line
+    # joins the event before it.
+    multiline:
+      line_start_pattern: '^\d{4}-\d{2}-\d{2}'
 
   # Receive processed events back from Log10x over OTLP/gRPC
   otlp/tenx:
@@ -111,19 +115,33 @@ receivers:
       grpc:
         endpoint: 0.0.0.0:24225
 
-processors:
-  batch: {}
-
 exporters:
   # Hand off to the Log10x sidecar over OTLP/gRPC
   otlp/tenx:
     endpoint: 127.0.0.1:4317
     tls:
       insecure: true
-    # One sender keeps records in the order they were read; the engine
-    # groups multi-line events from consecutive records.
+    # Log10x answers a request once its records are written back, which can
+    # take several seconds; a shorter timeout sends the request again.
+    timeout: 30s
+    # A refused or failed request is sent again, without a deadline.
+    retry_on_failure:
+      enabled: true
+      max_elapsed_time: 0
     sending_queue:
+      enabled: true
+      # One sender keeps records in the order they were read; the engine
+      # groups multi-line events from consecutive records.
       num_consumers: 1
+      # A full queue holds the receivers back instead of dropping records.
+      block_on_overflow: true
+      # Requests of at most 2 MiB, well under the largest Log10x takes
+      # (otelCollectorInputMaxMessageSize); a backlog read at once is split.
+      batch:
+        flush_timeout: 1s
+        sizer: bytes
+        min_size: 1048576
+        max_size: 2097152
 
   debug:
     verbosity: detailed
@@ -132,7 +150,6 @@ service:
   pipelines:
     logs/to-tenx:
       receivers: [filelog]
-      processors: [batch]
       exporters: [otlp/tenx]
     logs/from-tenx:
       receivers: [otlp/tenx]

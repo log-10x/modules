@@ -45,6 +45,18 @@ module:
         with `<transport unix>` + a matching `path`. Ignored on Windows.
 
     - names:
+        - fluentdInputMaxConnections
+      description: the most connections the Forward input keeps open at once, 0 for no limit
+      type: number
+      required: false
+      category: input
+      defValue: 512
+      doc: |
+        The most client connections the input keeps open at once. A
+        connection beyond it is closed as soon as it is accepted, with a
+        warning, and its sender connects again later. `0` sets no limit.
+
+    - names:
         - fluentdInputMessageField
       description: name of the JSON field carrying the original log line
       type: String

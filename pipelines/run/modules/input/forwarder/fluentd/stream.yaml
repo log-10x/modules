@@ -62,6 +62,9 @@ input:
       # Pass path if it exists, which will set it instead of the port
       - '$=yield TenXEnv.get("fluentdInputPath", "") ? "path" : ""'
       - $=yield TenXEnv.get("fluentdInputPath", "")
+      # The most connections open at once (0: no limit)
+      - maxConnections
+      - $=yield TenXEnv.get("fluentdInputMaxConnections", "512")
 
     # The bytes this input reads in each forwarderInputBytesInterval before it
     # stops reading and the forwarder buffers (forwarderInputBytesLimit, 2 MB a

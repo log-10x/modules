@@ -125,6 +125,22 @@ output:
 # conf/tenx*.yml above).
 outputUnixSocket:
 
+  # Template emitter, only fires in encoding modes (outputWriteTemplates=true).
+  # It comes first: outputs that share an address write each event's records
+  # in the order they are declared, so Filebeat reads each template before
+  # the first event that uses it.
+  - address: $=rawOutputUnixSocketAddress
+    writeObjects: $?outputWriteTemplates=false
+
+    filter: (extractorKey == "message") && isNewTemplate()
+
+    # Send custom TenXTemplate JSON, with duplicated templateHash field as
+    # 'templateHashDocId'. Filebeat's `decode_json_fields` uses that to set
+    # the correct document ID for ES indexing while also removing it from
+    # the body. See:
+    # https://www.elastic.co/guide/en/beats/filebeat/current/decode-json-fields.html
+    fields: customTemplate=stringify("templateHashDocId", templateHash, "templateHash", templateHash, "template", template)
+
   # Main event emitter
   - address: $=rawOutputUnixSocketAddress
 
@@ -139,16 +155,3 @@ outputUnixSocket:
     # When grouping events and emitting back to Filebeat, escape the line
     # break to keep the on-wire JSON valid.
     encodeGroupDelimiter: "\\n"
-
-  # Template emitter, only fires in encoding modes (outputWriteTemplates=true)
-  - address: $=rawOutputUnixSocketAddress
-    writeObjects: $?outputWriteTemplates=false
-
-    filter: (extractorKey == "message") && isNewTemplate()
-
-    # Send custom TenXTemplate JSON, with duplicated templateHash field as
-    # 'templateHashDocId'. Filebeat's `decode_json_fields` uses that to set
-    # the correct document ID for ES indexing while also removing it from
-    # the body. See:
-    # https://www.elastic.co/guide/en/beats/filebeat/current/decode-json-fields.html
-    fields: customTemplate=stringify("templateHashDocId", templateHash, "templateHash", templateHash, "template", template)

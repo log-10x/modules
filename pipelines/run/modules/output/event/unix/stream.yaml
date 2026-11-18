@@ -12,6 +12,45 @@ tenx: run
 
 output:
 
+    # If 'outputUnixSocketWriteTemplates' is true, encode Template values for TenXObjects as JSON objects.
+    # To learn more about TenXTemplates, see https://doc.log10x.com/run/template
+    # This output comes first: outputs that share an address write each
+    # event's records in the order they are declared, so a reader gets each
+    # template before the first event that uses it.
+  - type: event
+
+    # 'name' assigns a logical name to this output instance
+    name: $outputUnixSocketAddress
+
+    # 'foreach' sets 'unixSocketOutput' as the options group for whose instances
+    #  to create matching output streams to allow multiple Unix domain socket outputs.
+    foreach: unixSocketOutput
+
+    # 'path' points to the log4j2 configuration used for this output at:
+    #  https://github.com/log-10x/modules/blob/main/pipelines/run/modules/output/event/unix/log4j2.yaml
+    path: run/modules/output/event/unix
+
+    # 'group' sets 'outputUnixSocketAddress' as the key for grouping all socket outputs
+    #  targeting a socket into a single log4j2 appender. This
+    #  prevents a situation where multiple non-synchronized appenders may be trying
+    #  to write to the same Unix domain socket.
+    group:
+      - $outputUnixSocketAddress
+
+    # 'enabled' is false by default. 'outputUnixSocketWriteTemplates' must be set to
+    # true for templates to be encoded.
+    # `receiverReadOnly=true` short-circuits so no templates are emitted in read-only mode.
+    enabled: $=yield !TenXEnv.get("receiverReadOnly", false) && TenXEnv.get("outputUnixSocketWriteTemplates", false)
+
+    # 'filter' uses the 'isNewTemplate' 10x JavaScript function to skip templates
+    #  loaded via the https://doc.log10x.com/run/template/#templatefiles argument or previously written to this output
+    filter: isNewTemplate()
+
+    encodeType: json
+    fields:
+      - templateHash
+      - template
+
     # 'type' defines the type of output (e.g., stdout, event, metric).
     #  The 'Unix' output utilizes a log4j2 file appender to emit object/template values
   - type: event
@@ -57,39 +96,3 @@ output:
     #  to write to for each TenXObject passed to this output.
     fields:
       - $?outputUnixSocketFields
-
-    # If 'outputUnixSocketWriteTemplates' is true, encode Template values for TenXObjects as JSON objects.
-    # To learn more about TenXTemplates, see https://doc.log10x.com/run/template
-  - type: event
-
-    # 'name' assigns a logical name to this output instance
-    name: $outputUnixSocketAddress
-
-    # 'foreach' sets 'unixSocketOutput' as the options group for whose instances
-    #  to create matching output streams to allow multiple Unix domain socket outputs.
-    foreach: unixSocketOutput
-
-    # 'path' points to the log4j2 configuration used for this output at:
-    #  https://github.com/log-10x/modules/blob/main/pipelines/run/modules/output/event/unix/log4j2.yaml
-    path: run/modules/output/event/unix
-
-    # 'group' sets 'outputUnixSocketAddress' as the key for grouping all socket outputs
-    #  targeting a socket into a single log4j2 appender. This
-    #  prevents a situation where multiple non-synchronized appenders may be trying
-    #  to write to the same Unix domain socket.
-    group:
-      - $outputUnixSocketAddress
-
-    # 'enabled' is false by default. 'outputUnixSocketWriteTemplates' must be set to
-    # true for templates to be encoded.
-    # `receiverReadOnly=true` short-circuits so no templates are emitted in read-only mode.
-    enabled: $=yield !TenXEnv.get("receiverReadOnly", false) && TenXEnv.get("outputUnixSocketWriteTemplates", false)
-
-    # 'filter' uses the 'isNewTemplate' 10x JavaScript function to skip templates
-    #  loaded via the https://doc.log10x.com/run/template/#templatefiles argument or previously written to this output
-    filter: isNewTemplate()
-
-    encodeType: json
-    fields:
-      - templateHash
-      - template

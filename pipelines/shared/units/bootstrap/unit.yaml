@@ -146,6 +146,23 @@ unit:
         ```
 
     - names:
+      - drainMaxMs
+      - TENX_DRAIN_MAX_MS
+      description: the longest a stop waits, in milliseconds, for the pipeline to process the events it holds
+      type: number
+      required: false
+      doc: |
+        The longest a stop (SIGTERM, such as a Kubernetes pod deletion) waits, in milliseconds,
+        for the pipeline to process the events it holds. The stop waits while events are still
+        read or written or the process still works, and ends after 10 seconds without any of that,
+        or once this time has passed. The outputs then send what they hold, and the process exits.
+        Events still in the pipeline at that point are lost.
+
+        Set it a few seconds below the time the platform allows for a stop (30 seconds by default
+        in Kubernetes), so the outputs' last send is not cut off. Unset, the stop waits at most
+        25000 milliseconds.
+
+    - names:
       - includePaths
       description: pipeline include folders
       type: list

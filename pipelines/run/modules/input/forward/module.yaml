@@ -49,6 +49,17 @@ module:
         Example: `/tmp/tenx-forward-in.sock`
 
     - names:
+        - forwardInputMaxConnections
+      description: the most connections the Forward input keeps open at once, 0 for no limit
+      type: number
+      required: false
+      defValue: 512
+      doc: |
+        The most client connections the input keeps open at once. A
+        connection beyond it is closed as soon as it is accepted, with a
+        warning, and its sender connects again later. `0` sets no limit.
+
+    - names:
         - forwardSourcePattern
       description: event source capture regex pattern
       type: string

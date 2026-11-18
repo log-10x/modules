@@ -118,17 +118,19 @@ module:
       defValue:
       doc: |
         The name of a record field that holds the time the forwarder read the
-        record, such as `tenx_time`: an integer of nanoseconds, a string of
+        record, such as `tenx_time`: nanoseconds as an integer or a string of
         digits, or seconds with a fraction. When set, the Fluent Bit and
         Fluentd inputs hold each record until it has waited
         `forwarderOrderWait`, and pass the records of each source (the
         forwarder's tag) on in the order of that field. Chunks that reach the
         Receiver out of order (a forwarder sends several at once, and retries
         each failed one after its own wait) then come out in the order the
-        forwarder read them, so the lines of a multi-line event join the same
-        way on every run. The field is removed from the record.
+        forwarder read them, so the lines of a multi-line event join as they
+        would in read order. A pause in a source's records can still end its
+        open event (see `groupFlushTimeout`). The field is removed from the
+        record.
 
-        Every record reaches the pipeline `forwarderOrderWait` later. A record
+        Each record reaches the pipeline up to `forwarderOrderWait` later. A record
         that arrives after a later one of its source has gone on is passed on
         at once, out of place, and counted in a warning. A record without the
         field is passed on at once. Unset (the default), records are joined in
@@ -155,8 +157,9 @@ module:
       doc: |
         The most bytes of records the input holds while they wait, such as
         `64MB` (the default). Above it the input stops reading until records
-        go on, and the forwarder buffers. Has no effect while
-        `forwarderOrderField` is unset.
+        go on, and the forwarder buffers. Until then the input reads ahead of
+        `forwarderInputBytesLimit`. Has no effect while `forwarderOrderField`
+        is unset.
 
     - names:
       - outputEncodeField

@@ -40,8 +40,9 @@ log4j:
 
           fluentdUnixSocketConfig:
             # The most bytes of events held while the destination does not take
-            # them (outputForwardMaxBufferSize); when full, the output waits
-            maxBufferSize: $?outputForwardMaxBufferSize=536870912
+            # them (outputForwardMaxBufferSize, such as 8MB or 1048576); when
+            # full, the output waits
+            maxBufferSize: '$=TenXEnv.get("outputForwardMaxBufferSize") ? parseBytes(parseInt(TenXEnv.get("outputForwardMaxBufferSize"), TenXEnv.get("outputForwardMaxBufferSize"))) : 536870912'
             # A chunk is sent as one PackedForward message. Fluent Bit's forward
             # input (5.x) refuses a whole message whose events would decode past
             # its MessagePack budget (16 times Buffer_Max_Size, 98 MB by default),

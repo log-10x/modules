@@ -53,9 +53,7 @@ export class GroupTemplate extends TenXTemplate {
                     (!TenXString.includes(name, " ")) && (!TenXString.includes(name, "\t"));
             }
 
-            // groupJoinLines false stops joins, as a launch argument (a boolean) or
-            // as an environment variable, whose value is the text "false"
-            if ((!TenXEnv.get("groupJoinLines", true)) || (TenXEnv.get("groupJoinLines", true) == "false")) {
+            if (!TenXEnv.get("groupJoinLines", true)) {
 
                 // every line, or every record a forwarder sends, heads its own
                 // event: nothing joins the event above it

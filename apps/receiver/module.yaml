@@ -108,7 +108,7 @@ module:
         shape's events are written as their text, with no template and no template record, so a
         shape seen once (an LLM answer, a free-text message) adds nothing to memory or to the
         template records. 0 or 1 makes every template on its first sight, as when the option is
-        not set. 2 is the value tested. A value above 127 makes the template on the 127th sight.
+        not set. A value above 127 makes the template on the 127th sight.
 
         A Receiver option: the Receiver takes it as a launch argument or an environment variable.
         Another app given it as a launch argument does not launch, and ignores the variable.
@@ -149,4 +149,4 @@ module:
         is above 1. A waiting shape is forgotten only after that many other waiting shapes were seen
         since its last sight, so a shape that comes back within that many new shapes gets its template
         on its Nth sight. A forgotten shape is counted from one again, and its events go on as text.
-        At most twice that many shapes are held: about 3 MB at 65,536, flat however many shapes go by.
+        At most twice that many shapes are held: about 5 MB at 65,536, however many shapes go by.

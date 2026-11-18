@@ -119,6 +119,20 @@ module:
         and [outputForwardTagField](https://doc.log10x.com/run/output/event/forward/#outputforwardtagfield) returned empty
 
     - names:
+        - outputForwardMaxBufferSize
+      description: the most bytes of events this output holds while its destination does not take them
+      type: string
+      category: host
+      required: false
+      defValue: 536870912
+      doc: |
+        The most bytes of events this output holds while its destination does
+        not take them. When it is full, the output waits, and the pipeline's
+        input stops reading. Events it holds are lost if the process is
+        killed. An event larger than half of it may never be sent, and the
+        events after it then wait.
+
+    - names:
         - outputForwardFilter
       description: a JavaScript expression an TenXObject must evaluate as 'truthy' against to be written to this output
       type: string

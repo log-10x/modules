@@ -94,3 +94,7 @@ outputForward:
     encodeType: $?fluentbitOutputEncodeType=delimited
 
     writeTemplates: $?outputWriteTemplates=false
+
+    # The most bytes of events held while the forwarder does not take them
+    # (forwarderOutputMaxBufferSize; unset: 536870912)
+    maxBufferSize: '$=yield TenXEnv.get("forwarderOutputMaxBufferSize") ? parseBytes(TenXEnv.get("forwarderOutputMaxBufferSize")) : 536870912'

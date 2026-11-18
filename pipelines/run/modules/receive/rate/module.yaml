@@ -248,6 +248,10 @@ module:
           separated by `_`. With `rateReceiverFieldNames: [message_pattern]` the key is just
           the pattern (e.g. `Error_syncing_pod`). With `[message_pattern, container]`
           the key is `message_pattern_container` (e.g. `heartbeat_debug_frontend`).
+          An event the Receiver writes as its text while its shape waits for a template
+          ([templateCreateAfter](https://doc.log10x.com/apps/receiver/#templatecreateafter))
+          carries the template fields it will have, so it gets the key the same event gets
+          with a template; when those fields are empty its key is its `pendingTemplateHash`.
         - `sampleRate`, probability in `[0, 1.0]` that a matching event is retained.
           `0` = full mute; `0.1` = keep 10%; `1.0` = no-op.
         - `untilEpochSec`, mute expires at this Unix epoch (seconds). Past that, the

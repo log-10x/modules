@@ -74,3 +74,16 @@ timestampPostfix: $?timestampPostfix=)
 #  can be found one slot behind in the TenXObject's variable array, saving
 #  the need to encode this variable multiple times.
 varMaxRecurIndexes: $?varMaxRecurIndexes=10
+
+# 'templateCreateAfter' makes a template on the Nth sight of an event shape instead of the
+#  first; until then the shape's events go on without a template and are written as their
+#  text. 0 or 1 makes every template on its first sight (the option off). It is a Receiver
+#  option (apps/receiver/module.yaml): it is read only while the app's runtimeAttributes
+#  hold 'app:receiver', which the Receiver's own config sets, so an environment variable
+#  of that name does not switch it on in another app.
+#  https://doc.log10x.com/apps/receiver/#templatecreateafter
+templateCreateAfter: $=TenXString.includes(";" + TenXString.join(";", TenXEnv.get("runtimeAttributes")) + ";", ";app:receiver;") ? TenXEnv.get("templateCreateAfter", 0):0
+
+# 'templateCreateAfterShapes' is how many shapes waiting for a template a template map
+#  surely remembers while 'templateCreateAfter' is above 1.
+templateCreateAfterShapes: $?templateCreateAfterShapes=65536

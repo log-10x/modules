@@ -146,8 +146,9 @@ module:
         How long each record is held for records read before it to arrive,
         such as `10s` (the default) or `30s`. Chunks that arrive further apart
         than this are joined in the order they arrive. When the Receiver
-        stops, it first processes the records held, in order; a stop the
-        platform ends sooner loses the rest. Has no effect while
+        stops, it first processes the records held, in order, for up to
+        `drainMaxMs`; what is still held when that time passes, or when the
+        platform ends the stop sooner, is lost. Has no effect while
         `forwarderOrderField` is unset.
 
     - names:

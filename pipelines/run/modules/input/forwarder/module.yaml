@@ -200,3 +200,47 @@ module:
         argument or a configuration key with any app that loads a forwarder
         input; the Receiver and Reporter apps declare it with the same name,
         type and default.
+
+    - names:
+      - splunkFieldsForm
+      description: "add each compact event's fields, as Splunk extracts them from its text, to its record. Possible values: [json, meta]"
+      type: string
+      required: false
+      doc: |
+        When set, each event the Receiver writes with `encode()` also carries the
+        fields Splunk's key-value extraction finds in its text (`name=value` and
+        `name="value"` pairs separated by spaces or commas, as the FortiGate
+        add-on reads them), so Splunk indexes them with the compact event:
+
+        - **json**: a `fields` object in the record, for the HTTP Event Collector
+        - **meta**: a `meta` text of `name::"value"` pairs in the record, which
+          the Log10x App's unwrap rule adds to the event on a heavy forwarder
+
+        Each event that carries fields also carries `tenx_mapped`. An event whose
+        fields cannot be written exactly as Splunk extracts them, such as one with
+        a value longer than `splunkFieldsMaxValue`, is written whole instead.
+        The record must not already have a key named `fields` or `meta`.
+        Unset (the default), records are written as before.
+
+    - names:
+      - splunkFieldsMaxValue
+      description: the longest field value splunkFieldsForm writes; an event with a longer value is written whole
+      type: number
+      required: false
+      defValue: 1000
+      doc: |
+        The most characters of a field value `splunkFieldsForm` writes. An event
+        with a longer value is written whole, so that Splunk extracts its fields
+        from its text. Splunk returns up to 1,000 characters of an indexed value
+        in a search.
+
+    - names:
+      - splunkFieldsNames
+      description: the fields splunkFieldsForm writes, all or a list of names
+      type: string
+      required: false
+      defValue: all
+      doc: |
+        `all` (the default) writes every field of the event. A list of names,
+        separated by commas, writes only those fields, for example the fields
+        the data models and detections in use read.

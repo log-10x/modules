@@ -30,3 +30,18 @@ module:
         defines which characters break a string of event characters into tokens to classify as symbols or variables.
       defValue: <>|. ][:-+/*=\\,{}_();'\"$\t\n@
       
+
+    - names:
+      - ipv4SingleToken
+      description: keep an IPv4 address as one value
+      type: boolean
+      required: false
+      doc: |
+        controls whether a dotted-quad IPv4 address (four numeric parts 0 to 255 joined by single dots,
+        e.g. `10.0.1.14`) is kept as one variable token instead of four numbers and three '.' delimiters.
+        A port or prefix length after the address (`10.0.1.14:443`, `10.0.0.0/8`) stays a separate value.
+        These stay cut at their dots: a run of five or more dot-separated numbers, a run followed by `_`
+        (`1.0.0.6_0`), a browser version after a word and `/` whose last three parts are 0 (`Chrome/125.0.0.0`),
+        and a version next to `.jar` (`analyzer-3.2.0.0.jar:3.2.0.0`). Setting this option needs an engine
+        that supports it; an older engine does not start when it is set.
+      defValue: false

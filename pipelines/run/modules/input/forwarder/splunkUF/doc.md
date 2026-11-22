@@ -261,7 +261,7 @@ And this one in `/opt/tenx/fluent-bit-back`, for the second:
 
 `Format plain` writes each record as one JSON object: the time, host, source, sourcetype and index of the file destination's line, and the compact text in `event`. The tag `rfs.win.*` holds the path of the file Fluent Bit read, and with no `File` the output names each file after its tag, so each file in `/opt/tenx/compact/events/win` holds the events of one file of the file destination. The template records go to `templates.ndjson`.
 
-Create the second folder:
+Create the folders:
 
 ```sh
 mkdir -p /opt/tenx/fluent-bit-state /opt/tenx/compact/events/win /opt/tenx/compact/templates
@@ -300,7 +300,7 @@ crcSalt = <SOURCE>
 
 Restart the heavy forwarder. On every file under `/opt/tenx/compact/events/`, the app's rule `tenx-record-unwrap` gives each event the time, host, source and index its line holds, sets `tenx_sourcetype` to its original sourcetype, and makes the compact text the event; the `index` above applies only to a line that names none. `crcSalt = <SOURCE>` makes the heavy forwarder read a file whose first 256 bytes are the same as those of a file it has read, as two compact files can be. Set it before the first file is read: changing it later makes the heavy forwarder read every file again. For a second folder elsewhere, see [Receiver Beside a Heavy Forwarder](https://github.com/log-10x/splunk-app/blob/main/tenx-for-splunk/README.md#receiver-beside-a-heavy-forwarder) in the app's README.
 
-**5. Set up the indexers and the search head.** On the indexers, create the compact indexes and `tenx_dml`; they need nothing else of Log10x, because the heavy forwarder sends them parsed events. On the search head, install the Log10x App, the add-ons and CIM.
+**5. Set up the indexers and the search head.** On the indexers, create the compact indexes and `tenx_dml`; they need nothing else of Log10x, because the heavy forwarder sends them parsed events. On the search head, install the Log10x App and the add-ons.
 
 Create the indexes the events go to and restart the indexers before the first event is sent. The search below returns no row once every indexer has loaded them.
 

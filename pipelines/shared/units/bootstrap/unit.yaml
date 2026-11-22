@@ -155,8 +155,8 @@ unit:
         The longest a stop (SIGTERM, such as a Kubernetes pod deletion) waits, in milliseconds,
         for the pipeline to process the events it holds. The stop waits while events are still
         read or written or the process still works, and ends after 10 seconds without any of that,
-        or once this time has passed. The outputs then send what they hold, and the process exits.
-        Events still in the pipeline at that point are lost.
+        or once this time has passed. The outputs then send what they hold and the process exits,
+        and events still in the pipeline at that point are lost.
 
         Set it a few seconds below the time the platform allows for a stop (30 seconds by default
         in Kubernetes), so the outputs' last send is not cut off. Unset, the stop waits at most

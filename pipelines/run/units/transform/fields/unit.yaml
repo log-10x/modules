@@ -163,7 +163,8 @@ unit:
         its record, so that the destination can index them without expanding the
         event. Each entry is a field name as the template's field readers name it
         (see `fieldReaders`), or `name=outputName` to write it under another name,
-        such as `Event.EventData.NewProcessName=process_path`.
+        such as `Event.EventData.NewProcessName=process_path`. Two entries cannot
+        share an output name, and the launch stops when `fieldReaders` is not set.
 
         The fields are read from each event's text where its template places
         them, and an empty value is left out. An event is written whole

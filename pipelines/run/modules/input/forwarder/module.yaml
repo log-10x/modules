@@ -111,6 +111,57 @@ module:
         up to 512 MiB.
 
     - names:
+      - forwarderOrderField
+      description: the record field holding each record's read time; the Fluent Bit and Fluentd inputs put each source's records back in that order before joining lines
+      type: string
+      required: false
+      defValue:
+      doc: |
+        The name of a record field that holds the time the forwarder read the
+        record, such as `tenx_time`: nanoseconds as an integer or a string of
+        digits, or seconds with a fraction. When set, the Fluent Bit and
+        Fluentd inputs hold each record for `forwarderOrderWait` and pass the
+        records of each source (the forwarder's tag) on in the order of that
+        field.
+
+        Chunks that reach the Receiver out of order, as when a forwarder sends
+        several at once or retries a failed one, then come out in read order,
+        so the lines of a multi-line event join as read. A pause in a source's
+        records can still end its open event (see `groupFlushTimeout`). The
+        field is removed from the record.
+
+        Each record reaches the pipeline up to `forwarderOrderWait` later, and
+        a record without the field is passed on at once. A record that arrives
+        after a later one of its source has gone on is passed on at once, out
+        of place, and counted in a warning. Unset (the default), records are
+        joined in the order they arrive.
+
+    - names:
+      - forwarderOrderWait
+      description: how long a record waits for the records its forwarder read before it, when forwarderOrderField is set
+      type: string
+      required: false
+      defValue: 10s
+      doc: |
+        How long each record is held for records read before it to arrive,
+        such as `10s` (the default) or `30s`. Chunks that arrive further apart
+        than this are joined in the order they arrive. Has no effect while
+        `forwarderOrderField` is unset.
+
+    - names:
+      - forwarderOrderMaxBytes
+      description: the most bytes of records held for ordering, when forwarderOrderField is set
+      type: string
+      required: false
+      defValue: 64MB
+      doc: |
+        The most bytes of records the input holds while they wait, such as
+        `64MB` (the default). Above it the input stops reading until records
+        go on, and the forwarder buffers. Until then the input reads ahead of
+        `forwarderInputBytesLimit`. Has no effect while `forwarderOrderField`
+        is unset.
+
+    - names:
       - outputEncodeField
       description: the single field expression each forwarder's output stream writes per event
       type: string

@@ -261,8 +261,9 @@ unit:
       required: false
       defValue: '[\x00-\x1f]'
       doc: |
-        A Java regular expression that matches one character, such as `[\x00-\x1f]`.
+        A Java regular expression that matches one character, such as `'[\x00-\x1f]'`.
         An event with a listed value that holds such a character is written whole,
-        in either `compactFieldsForm`. This is for a destination that would read
-        such a value back changed. The default matches the control characters,
-        tabs and line breaks among them.
+        in either `compactFieldsForm`. This is for a destination that reads some
+        characters in an indexed value back as others, such as a tab as a space.
+        The default matches every control character. In a YAML file, write the
+        expression in quotes, since an unquoted `[...]` is a list.

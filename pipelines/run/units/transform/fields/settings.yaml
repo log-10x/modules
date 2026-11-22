@@ -42,6 +42,29 @@ fieldNameBreaks: $?fieldNameBreaks=, /\{}.()[]
 #  should be ',' vs. '_' (in which case the value would be 'RESULT').
 fieldValueBreaks: $?fieldValueBreaks=, /\{}()[]
 
+# 'fieldReaders' lists the readers that find each template's fields, in order:
+#  xml, kv, json or columns. When set, they replace the scan above.
+fieldReaders:
+  - $?fieldReaders
+
+# 'fieldPairDelimiters' sets the characters that separate pairs for the 'kv' reader.
+fieldPairDelimiters: $?fieldPairDelimiters
+
+# 'fieldColumns' names the columns the 'columns' reader reads, in order
+#  ('a,b,c'), or per value of the 'fieldColumnsKey' column ('TRAFFIC=a,b,c').
+fieldColumns:
+  - $?fieldColumns
+
+# 'fieldColumnsKey' sets the column, counted from 1, whose value selects a 'fieldColumns' entry.
+fieldColumnsKey: $?fieldColumnsKey=0
+
+# 'fieldColumnDelimiter' sets the character that separates columns.
+fieldColumnDelimiter: $?fieldColumnDelimiter
+
+# 'fieldNameAttributes' lists XML elements named by one of their attributes ('Data@Name').
+fieldNameAttributes:
+  - $?fieldNameAttributes
+
 # -------------------------- Template Format Settings  ------------------------
 
 # 'varPlaceholder' controls which character to encode for an TenXTemplate

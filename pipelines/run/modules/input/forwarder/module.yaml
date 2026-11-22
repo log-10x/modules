@@ -120,21 +120,21 @@ module:
         The name of a record field that holds the time the forwarder read the
         record, such as `tenx_time`: nanoseconds as an integer or a string of
         digits, or seconds with a fraction. When set, the Fluent Bit and
-        Fluentd inputs hold each record until it has waited
-        `forwarderOrderWait`, and pass the records of each source (the
-        forwarder's tag) on in the order of that field. Chunks that reach the
-        Receiver out of order (a forwarder sends several at once, and retries
-        each failed one after its own wait) then come out in the order the
-        forwarder read them, so the lines of a multi-line event join as they
-        would in read order. A pause in a source's records can still end its
-        open event (see `groupFlushTimeout`). The field is removed from the
-        record.
+        Fluentd inputs hold each record for `forwarderOrderWait` and pass the
+        records of each source (the forwarder's tag) on in the order of that
+        field.
 
-        Each record reaches the pipeline up to `forwarderOrderWait` later. A record
-        that arrives after a later one of its source has gone on is passed on
-        at once, out of place, and counted in a warning. A record without the
-        field is passed on at once. Unset (the default), records are joined in
-        the order they arrive.
+        Chunks that reach the Receiver out of order, as when a forwarder sends
+        several at once or retries a failed one, then come out in read order,
+        so the lines of a multi-line event join as read. A pause in a source's
+        records can still end its open event (see `groupFlushTimeout`). The
+        field is removed from the record.
+
+        Each record reaches the pipeline up to `forwarderOrderWait` later, and
+        a record without the field is passed on at once. A record that arrives
+        after a later one of its source has gone on is passed on at once, out
+        of place, and counted in a warning. Unset (the default), records are
+        joined in the order they arrive.
 
     - names:
       - forwarderOrderWait

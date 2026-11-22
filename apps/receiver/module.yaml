@@ -95,3 +95,51 @@ module:
         receiver:
           mode: readonly
         ```
+
+    - names:
+      - templateCreateAfter
+      description: on which sight of an event shape its template is made
+      type: number
+      required: false
+      category: advanced
+      defValue: 0
+      doc: |
+        makes a template on the Nth sight of an event shape instead of the first. Until then the
+        shape's events are written as their text, with no template and no template record. A shape
+        seen once, such as an LLM answer or a free-text message, so adds nothing to memory or to
+        the template records.
+
+        0 or 1 makes every template on its first sight, and a value above 127 acts as 127. The
+        Receiver takes the option as a launch argument or an environment variable; another app
+        given it as a launch argument does not launch, and ignores the variable.
+
+        A shape that reaches N gets the template its first event would have got, with the same
+        hash. The count is held in memory only, per process, and starts again at restart.
+
+        An event written as its text carries the level, message pattern and pattern hash its
+        template will have, so the rate regulator, mutes, caps, aggregators and search terms treat
+        it as the same event with a template. The template's actions, custom template scripts
+        included, run for each such event and once more when the template is made. When those
+        fields are empty, the regulator keys the event by `pendingTemplateHash`.
+
+        An empty event and an event whose text starts with `~` get their template on the first
+        sight, so a reader tells a compact line by its leading `~` alone. With more than one
+        worker, which events of a shape go as text varies between runs, but exactly N - 1 do and
+        every event decodes to the same text.
+
+        While lines are joined into events ([groupJoinLines](https://doc.log10x.com/run/initialize/group/#groupjoinlines)),
+        only the template of an event joined from several lines waits for its Nth sight.
+
+    - names:
+      - templateCreateAfterShapes
+      description: how many event shapes waiting for a template are surely remembered
+      type: number
+      required: false
+      category: advanced
+      defValue: 65536
+      doc: |
+        the number of event shapes seen but not yet given a template that the Receiver is sure to
+        remember while [templateCreateAfter](https://doc.log10x.com/apps/receiver/#templatecreateafter)
+        is above 1. A waiting shape is forgotten only after that many other waiting shapes were seen
+        since its last sight, and is then counted from one again while its events go on as text.
+        At most twice that many shapes are held: about 5 MB at 65,536, however many shapes go by.

@@ -35,7 +35,7 @@ If a JSON/KV field appears more than once within an TenXObject's text, it can be
 
 `fieldReaders` selects the readers that find the fields of each TenXTemplate, in place of the JSON and key-value scan: `xml`, `kv`, `json` and `columns`. The first reader that reads a template's text gives its fields, once per template. Each event of the template then reads its values from its own text at the same places.
 
-Names follow the format. An XML field is named by its path, such as `Event.System.EventID`, or by the attribute that `fieldNameAttributes` names, such as `Event.EventData.SubjectUserName` with `Data@Name`. A JSON field is named by its key path, such as `userIdentity.arn` or `resources[].ARN`. A column is named by its position in `fieldColumns`.
+An XML field is named by its path, such as `Event.System.EventID`, or by the attribute that `fieldNameAttributes` names, such as `Event.EventData.SubjectUserName` with `Data@Name`. A JSON field is named by its key path, such as `userIdentity.arn` or `resources[].ARN`. A column is named by its position in `fieldColumns`.
 
 ### :material-tag-multiple: Fields on compact events
 

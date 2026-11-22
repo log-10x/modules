@@ -65,6 +65,10 @@ fieldColumnDelimiter: $?fieldColumnDelimiter
 fieldNameAttributes:
   - $?fieldNameAttributes
 
+# 'compactFieldsUnsafeChars' matches the characters a value must not hold for
+#  'compactFields' to attach it; an event with such a value is written whole.
+compactFieldsUnsafeChars: $?compactFieldsUnsafeChars=[\x00-\x1f]
+
 # -------------------------- Template Format Settings  ------------------------
 
 # 'varPlaceholder' controls which character to encode for an TenXTemplate

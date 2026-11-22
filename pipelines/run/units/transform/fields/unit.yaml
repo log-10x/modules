@@ -75,7 +75,7 @@ unit:
         The readers that find the fields of each TenXTemplate, tried in order; the
         first that reads the template's text gives its fields. When set, these
         readers replace the JSON and key-value scan above for every consumer of
-        the fields. Unset (the default), the scan above runs as before.
+        the fields. Unset (the default), the scan above finds the fields.
 
         - **xml**: a text that is one XML element. Names are paths of local names
           joined by `.`, such as `Event.System.EventID`; an attribute is named
@@ -89,7 +89,7 @@ unit:
 
         The fields are found once per template. An event of the template reads
         each value from its own text at the same place. When the readers cannot
-        be sure of a field in an event, no consumer gets it: a lookup finds it
+        be sure of a field in an event, no consumer gets it. A lookup finds it
         missing, and `compactFields` writes the event whole.
 
         When several readers are listed, put `xml` and `json` first. `kv` and
@@ -104,7 +104,8 @@ unit:
       doc: |
         The characters that end an unquoted value and separate pairs for the `kv`
         reader. A line feed always separates pairs. The default is a space and a
-        comma; `=`, `"` and `\` are not accepted.
+        comma. Each must be a token delimiter (`tokenDelims`) other than `=`, `"`
+        or `\`, or the launch stops.
 
     - names:
       - fieldColumns
@@ -138,7 +139,8 @@ unit:
       required: false
       defValue: ','
       doc: |
-        The character that separates columns, other than `"` or a line break. A
+        The character that separates columns. It must be a token delimiter
+        (`tokenDelims`) other than `"` or a line break, or the launch stops. A
         column that opens with `"` runs to its closing quote, and `""` inside it
         is one quote.
 
@@ -159,10 +161,10 @@ unit:
       type: list
       required: false
       doc: |
-        The fields of each event that `encode()` writes beside its compact form, in
-        its record, so that the destination can index them without expanding the
-        event. Each entry is a field name as the template's field readers name it
-        (see `fieldReaders`), or `name=outputName` to write it under another name,
+        The fields of each event that `encode()` writes beside its compact form in
+        its record. A destination can then index them without expanding the event.
+        Each entry is a field name as the template's field readers name it (see
+        `fieldReaders`). An entry `name=outputName` writes it under another name,
         such as `Event.EventData.NewProcessName=process_path`. Two entries cannot
         share an output name, and the launch stops when `fieldReaders` is not set.
 
@@ -173,18 +175,18 @@ unit:
         - it has no template, or it is already compact;
         - it is a group of several lines;
         - the output writes no JSON record, as for raw lines, so every event is written whole;
-        - no field reader reads its template, or the reader's structure characters
-          are not all token delimiters;
+        - its record already has a key named `compactFieldsKey`;
+        - no field reader reads its template;
         - its text differs from its template's where names are read;
         - the reader cannot tell where a listed field's name or value ends;
         - a listed field occurs twice, other than as JSON array elements, which
           are written as a list;
         - a value, or a name read from the event, does not decode;
         - a value is longer than `compactFieldsMaxValue`;
-        - a value holds a control character and `compactFieldsForm` is `text`.
+        - a value holds a character that `compactFieldsUnsafeChars` matches.
 
-        `compactFieldsWhole()` returns the reason. Unset (the default), records
-        are written as before.
+        `compactFieldsWhole()` returns the reason. Unset (the default), `encode()`
+        writes no fields.
 
     - names:
       - compactFieldsForm
@@ -197,8 +199,7 @@ unit:
           `"fields":{"user":"bob","tags":["a","b"]}`.
         - **text**: one string under `compactFieldsKey` of `name<separator>"value"`
           pairs separated by spaces, with `\` and `"` in a value escaped by a
-          backslash, such as `"meta":"user::\"bob\""` with the separator `::`. An
-          event with a line break or other control character in a value is written whole.
+          backslash, such as `"meta":"user::\"bob\""` with the separator `::`.
 
     - names:
       - compactFieldsKey
@@ -207,8 +208,9 @@ unit:
       required: false
       defValue: fields
       doc: |
-        The key of the record that holds the fields. The record must not already
-        have a key of that name.
+        The key of the record that holds the fields. An event whose record already
+        has a key of that name is written whole. The launch stops when `encode()`
+        itself adds one, as `encode("routeState")` adds `routeState`.
 
     - names:
       - compactFieldsSeparator
@@ -251,3 +253,16 @@ unit:
         `true` leaves out spaces, tabs and line breaks at both ends of each value,
         for a destination whose own extraction trims them. A value left empty is
         not written.
+
+    - names:
+      - compactFieldsUnsafeChars
+      description: a regular expression for the characters a compactFields value must not hold
+      type: string
+      required: false
+      defValue: '[\x00-\x1f]'
+      doc: |
+        A Java regular expression that matches one character, such as `[\x00-\x1f]`.
+        An event with a listed value that holds such a character is written whole,
+        in either `compactFieldsForm`. This is for a destination that would read
+        such a value back changed. The default matches the control characters,
+        tabs and line breaks among them.

@@ -44,7 +44,7 @@ fieldReaders: [lines]
 fieldLineSeparators: ["=", ":\t"]
 ```
 
-A value ends at its line, so `Message` gives the first line of the message.
+A value ends at its line. To read `Message` as the whole message, add `fieldLineRestNames: [Message]`.
 
 ### :material-tag-multiple: Fields on compact events
 

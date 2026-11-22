@@ -195,8 +195,10 @@ unit:
       defValue: ":"
       doc: |
         The text that ends a heading for the `lines` reader. A line that holds
-        only a name and this mark is a heading, such as `Subject:`. It must be made
-        of token delimiters other than `-` or a line break.
+        only a name and this mark is a heading, such as `Subject:`. So is a line of a
+        name, this mark and spaces, where the next line with text is indented
+        deeper; otherwise it reads as any other line. The mark must be made of
+        token delimiters other than `-` or a line break.
 
         A heading names the lines after it that are indented deeper, up to an
         empty line or a line indented no deeper. A pair indented under no heading
@@ -213,6 +215,20 @@ unit:
       doc: |
         The text between a heading and a name under it, such as the `.` in
         `Subject.Account Name`. Nested headings are joined the same way.
+
+    - names:
+      - fieldLineRestNames
+      description: the names whose value runs to the end of the text for the lines field reader
+      type: list
+      required: false
+      doc: |
+        The names, as the `lines` reader gives them, whose value runs from their
+        separator to the end of the text, such as `Message`. The lines after such
+        a pair still give their own fields. A final line break is not part of the
+        value.
+
+        Such a value holds line breaks, so `compactFields` attaches it only where
+        `compactFieldsUnsafeChars` allows them.
 
     - names:
       - compactFields

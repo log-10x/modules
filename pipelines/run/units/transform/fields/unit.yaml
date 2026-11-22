@@ -88,7 +88,12 @@ unit:
         - **columns**: delimited columns named by position from `fieldColumns`.
 
         The fields are found once per template. An event of the template reads
-        each value from its own text at the same place.
+        each value from its own text at the same place. When the readers cannot
+        be sure of a field in an event, no consumer gets it: a lookup finds it
+        missing, and `compactFields` writes the event whole.
+
+        When several readers are listed, put `xml` and `json` first. `kv` and
+        `columns` read almost any line, so a reader listed after them is not tried.
 
     - names:
       - fieldPairDelimiters
@@ -99,7 +104,7 @@ unit:
       doc: |
         The characters that end an unquoted value and separate pairs for the `kv`
         reader. A line feed always separates pairs. The default is a space and a
-        comma.
+        comma; `=`, `"` and `\` are not accepted.
 
     - names:
       - fieldColumns
@@ -133,8 +138,9 @@ unit:
       required: false
       defValue: ','
       doc: |
-        The character that separates columns. A column that opens with `"` runs to
-        its closing quote, and `""` inside it is one quote.
+        The character that separates columns, other than `"` or a line break. A
+        column that opens with `"` runs to its closing quote, and `""` inside it
+        is one quote.
 
     - names:
       - fieldNameAttributes
@@ -160,11 +166,24 @@ unit:
         such as `Event.EventData.NewProcessName=process_path`.
 
         The fields are read from each event's text where its template places
-        them. An event is written whole (`fullText`), never with a field that
-        differs from its text, when its template has no field reader, a listed
-        field occurs twice in it (other than as JSON array elements, which are
-        written as a list), a value does not decode, or a value is longer than
-        `compactFieldsMaxValue`. Unset (the default), records are written as before.
+        them, and an empty value is left out. An event is written whole
+        (`fullText`) when:
+
+        - it has no template, or it is already compact;
+        - it is a group of several lines;
+        - the output writes no JSON record, as for raw lines, so every event is written whole;
+        - no field reader reads its template, or the reader's structure characters
+          are not all token delimiters;
+        - its text differs from its template's where names are read;
+        - the reader cannot tell where a listed field's name or value ends;
+        - a listed field occurs twice, other than as JSON array elements, which
+          are written as a list;
+        - a value, or a name read from the event, does not decode;
+        - a value is longer than `compactFieldsMaxValue`;
+        - a value holds a control character and `compactFieldsForm` is `text`.
+
+        `compactFieldsWhole()` returns the reason. Unset (the default), records
+        are written as before.
 
     - names:
       - compactFieldsForm

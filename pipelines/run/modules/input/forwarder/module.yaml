@@ -104,9 +104,12 @@ module:
         Fluentd, Vector) holds while the forwarder does not take them, such as
         `8MB` (units `B`, `kB`, `MB`, `GB`) or a number of bytes. When it is
         full, the output waits, the input stops reading, and the forwarder
-        buffers. Events the output holds are lost if the Receiver is killed
-        before it sends them, so a smaller value loses less. An event larger
-        than half of it may never be sent, and the events after it then wait.
+        buffers.
+
+        Events the output holds are lost if the Receiver is killed before it
+        sends them, so a smaller value loses less. An event larger than half
+        of it may never be sent, and the events after it then wait.
+
         A value that is not a size fails the launch. Unset, the output holds
         up to 512 MiB.
 

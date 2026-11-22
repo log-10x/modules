@@ -128,10 +128,12 @@ module:
         The most bytes of events this output holds while its destination does
         not take them, such as `8MB` (units `B`, `kB`, `MB`, `GB`; `1MB` is
         1,000,000 bytes) or a number of bytes. When it is full, the output
-        waits, and the pipeline's input stops reading. Events it holds are
-        lost if the process is killed. An event larger than half of it may
-        never be sent, and the events after it then wait. A value that is not
-        a size fails the launch. Unset, the output holds up to 512 MiB.
+        waits, and the pipeline's input stops reading.
+
+        Events it holds are lost if the process is killed. An event larger than
+        half of it may never be sent, and the events after it then wait. A
+        value that is not a size fails the launch; unset, the output holds up
+        to 512 MiB.
 
     - names:
         - outputForwardFilter

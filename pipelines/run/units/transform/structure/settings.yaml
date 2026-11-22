@@ -6,3 +6,7 @@
 # 'tokenDelims' defines which characters break a string of event characters into tokens to 
 # classify as symbols or variables.
 tokenDelims: $?tokenDelims=<>|. ][:-+/*=\\,{}_();'\"$\t\n@
+
+# 'macAddressValues' controls whether each octet of a MAC address is a variable. Unset, the key
+# is left out and the engine's default, true, applies.
+macAddressValues: $?macAddressValues

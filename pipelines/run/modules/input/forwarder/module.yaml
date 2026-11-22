@@ -95,20 +95,35 @@ module:
         effect while `forwarderInputBytesLimit` is `0`.
 
     - names:
+      - outputEncodeFilter
+      description: the condition under which each forwarder's output stream compacts an event with encode()
+      type: string
+      required: false
+      defValue: "false"
+      doc: |
+        Resolved once by the customer-facing config.yaml from the Receiver's mode
+        options, so every reader of the condition sees the same one:
+
+        - **receive mode** (default) and **outputOffload**: `false`, no event is compacted
+        - **receiverOptimize**: `true`, every event is compacted
+        - **compactReceiverLookupFile**: `shouldEncode()`, the cap file's per-pattern decision
+        - **outputSoftDrop**: `isRoute("compact") || <decide>`, where `<decide>` is
+          one of the three above
+
+        `outputEncodeField` compacts the events the condition holds for, and the
+        Receiver's `compact_events` aggregator counts them.
+
+    - names:
       - outputEncodeField
       description: the single field expression each forwarder's output stream writes per event
       type: string
       required: false
       defValue: fullText
       doc: |
-        Derived by the customer-facing config.yaml from `compact_emitted` (and
-        from the legacy per-pattern `compactReceiverLookupFile` lookup when set):
-
-        - **compact_emitted=false** (default): `fullText`, every event passes through full text
-        - **compact_emitted=true**: `encoded=encode()`, every emitted event compacted losslessly
-        - **compact-lookup (legacy)**: `encoded=shouldEncode() ? encode() : fullText`,
-          per-pattern decision via the compactReceiver module (requires
-          `compactReceiverLookupFile`)
+        Resolved once by the customer-facing config.yaml as
+        `encoded=(<outputEncodeFilter>) ? encode(...) : fullText(...)`. The
+        offload and soft-drop modes add the `routeState` field to both calls, and
+        `symbolMessageHashField` adds the pattern hash field.
 
         Advanced users can override directly to customize the output field expression.
 

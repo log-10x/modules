@@ -48,6 +48,10 @@ module:
         **Effect on forwarder output:**
         When optimization is enabled, the forwarder outputs compacted events and the
         aggregator tracks `optimized_size` metrics to measure optimization effectiveness.
+        With [compactFields](https://doc.log10x.com/run/transform/fields/) set, the
+        `compact_events` aggregator counts the events the receiver compacts as
+        `compact_events_summaryVolume`. Its `compact_fields_whole` tag holds the reason an
+        event was written whole, and is empty for an event written compact with its fields.
 
         **Usage (helm chart value):**
         ```yaml

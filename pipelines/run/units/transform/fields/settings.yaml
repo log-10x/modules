@@ -43,7 +43,7 @@ fieldNameBreaks: $?fieldNameBreaks=, /\{}.()[]
 fieldValueBreaks: $?fieldValueBreaks=, /\{}()[]
 
 # 'fieldReaders' lists the readers that find each template's fields, in order:
-#  xml, kv, json or columns. When set, they replace the scan above.
+#  xml, kv, json, columns or lines. When set, they replace the scan above.
 fieldReaders:
   - $?fieldReaders
 
@@ -64,6 +64,19 @@ fieldColumnDelimiter: $?fieldColumnDelimiter
 # 'fieldNameAttributes' lists XML elements named by one of their attributes ('Data@Name').
 fieldNameAttributes:
   - $?fieldNameAttributes
+
+# 'fieldLineSeparators' lists the text that ends a pair's name for the 'lines' reader ('=').
+fieldLineSeparators:
+  - $?fieldLineSeparators
+
+# 'fieldLineSpaces' sets the characters that indent a line and follow a separator for the 'lines' reader.
+fieldLineSpaces: $?fieldLineSpaces
+
+# 'fieldLineHeadingMark' sets the text that ends a heading line for the 'lines' reader ('Subject:').
+fieldLineHeadingMark: $?fieldLineHeadingMark
+
+# 'fieldLineHeadingJoin' sets the text between a heading and a name under it for the 'lines' reader.
+fieldLineHeadingJoin: $?fieldLineHeadingJoin
 
 # 'compactFieldsUnsafeChars' matches the characters a value must not hold for
 #  'compactFields' to attach it; an event with such a value is written whole.

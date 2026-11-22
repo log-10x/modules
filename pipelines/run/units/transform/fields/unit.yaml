@@ -68,7 +68,7 @@ unit:
 
     - names:
       - fieldReaders
-      description: "the readers that find a template's fields, in order. Possible values: [xml, kv, json, columns]"
+      description: "the readers that find a template's fields, in order. Possible values: [xml, kv, json, columns, lines]"
       type: list
       required: false
       doc: |
@@ -86,14 +86,19 @@ unit:
           joined by `.`, with `[]` for each array a value is in, such as
           `userIdentity.arn` or `resources[].ARN`.
         - **columns**: delimited columns named by position from `fieldColumns`.
+        - **lines**: a text of several `name<separator>value` lines, such as
+          `LogName=Security`, under headings such as `Subject:`. A pair under a
+          heading is named by it, such as `Subject.Account Name`. A name that
+          occurs twice in one event gives no field.
 
         The fields are found once per template. An event of the template reads
         each value from its own text at the same place. When the readers cannot
         be sure of a field in an event, no consumer gets it. A lookup finds it
         missing, and `compactFields` writes the event whole.
 
-        When several readers are listed, put `xml` and `json` first. `kv` and
-        `columns` read almost any line, so a reader listed after them is not tried.
+        When several readers are listed, put `xml` and `json` first, then `lines`.
+        `kv` and `columns` read almost any line, so a reader listed after them is
+        not tried.
 
     - names:
       - fieldPairDelimiters
@@ -154,6 +159,54 @@ unit:
         `element@attribute`. With `Data@Name`, the Windows event element
         `<Data Name='SubjectUserName'>bob</Data>` gives the field
         `Event.EventData.SubjectUserName` with the value `bob`.
+
+    - names:
+      - fieldLineSeparators
+      description: the text that ends a pair's name for the lines field reader
+      type: list
+      required: false
+      doc: |
+        The text that ends a pair's name for the `lines` reader, such as `=`, or a
+        colon and a tab. A line's first separator splits it into a name and a
+        value, and the value runs to the end of the line. The default is `=` and `:`.
+
+        Each must be made of token delimiters (`tokenDelims`) other than `-`, or
+        the launch stops. In YAML, write a tab as `"\t"`, in double quotes.
+
+    - names:
+      - fieldLineSpaces
+      description: the characters that indent a line and follow a separator for the lines field reader
+      type: string
+      required: false
+      defValue: " \t"
+      doc: |
+        The characters that indent a line, and that the `lines` reader leaves out
+        between a separator and its value. The default is a space and a tab. Each
+        must be a token delimiter other than `-`.
+
+    - names:
+      - fieldLineHeadingMark
+      description: the text that ends a heading line for the lines field reader
+      type: string
+      required: false
+      defValue: ":"
+      doc: |
+        The text that ends a heading for the `lines` reader. A line that holds
+        only a name and this mark is a heading, such as `Subject:`.
+
+        A heading names the lines after it that are indented deeper, up to an
+        empty line or a line indented no deeper. A pair indented under no heading
+        gives no field.
+
+    - names:
+      - fieldLineHeadingJoin
+      description: the text between a heading and a name under it for the lines field reader
+      type: string
+      required: false
+      defValue: "."
+      doc: |
+        The text between a heading and a name under it, such as the `.` in
+        `Subject.Account Name`. Nested headings are joined the same way.
 
     - names:
       - compactFields

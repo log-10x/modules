@@ -47,9 +47,8 @@ module:
         - The key, the event fields named by `compactReceiverFieldNames`
           joined with `_`. With the shipped configuration this is the
           pattern's `message_pattern` value. With `compactReceiverFieldNames`
-          set to `[templateHash]`, as the Splunk app's field map uses, it is
-          the template hash in double quotes, since a hash can start with `#`
-          or hold a space.
+          set to `[templateHash]`, it is the template hash in double quotes,
+          since a hash can start with `#` or hold a space.
         - `value`, `true` (compact via `encode()`) or `false` (explicitly
           preserve `fullText` for this pattern, beating the default).
         - `untilEpochSec`, optional Unix-epoch (seconds) expiry. Past it the

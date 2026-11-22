@@ -20,7 +20,7 @@ pattern_hash,value
 ```
 
 - The header row names the columns and is never matched as an entry. The engine reads the first column as the key and the second as the value, so the names themselves are not used; the shipped `compact-cap.csv` has the header `pattern_hash,value`.
-- The key, the event fields named by `compactReceiverFieldNames` joined with `_`. With the shipped configuration this is the pattern's `message_pattern` value. With `compactReceiverFieldNames` set to `[templateHash]`, as the Splunk app's field map uses, it is the template hash in double quotes, since a hash can start with `#` or hold a space.
+- The key, the event fields named by `compactReceiverFieldNames` joined with `_`. With the shipped configuration this is the pattern's `message_pattern` value. With `compactReceiverFieldNames` set to `[templateHash]`, it is the template hash in double quotes, since a hash can start with `#` or hold a space.
 - `value`, `true` compacts via `encode()`; `false` explicitly preserves `fullText` for this pattern (beats the default).
 - `untilEpochSec`, optional Unix-epoch (seconds) expiry. Past it the entry self-heals and the pattern falls back to `compactReceiverDefault`.
 - `reason`, optional free-text for audit. Must not contain commas (would break CSV parsing).

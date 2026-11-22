@@ -44,6 +44,8 @@ fieldReaders: [lines]
 fieldLineSeparators: ["=", ":\t"]
 ```
 
+A value ends at its line, so `Message` gives the first line of the message.
+
 ### :material-tag-multiple: Fields on compact events
 
 `compactFields` lists fields that `encode()` writes beside each compact event, in its record, so that a destination can index them without expanding the event:

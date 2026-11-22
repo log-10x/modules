@@ -89,7 +89,9 @@ unit:
         - **lines**: a text of several `name<separator>value` lines, such as
           `LogName=Security`, under headings such as `Subject:`. A pair under a
           heading is named by it, such as `Subject.Account Name`. A name that
-          occurs twice in one event gives no field.
+          occurs twice in one event gives no field. A text with one line of text
+          is left to the next reader. An event with a carriage return that does
+          not end a line gives no fields.
 
         The fields are found once per template. An event of the template reads
         each value from its own text at the same place. When the readers cannot
@@ -170,8 +172,9 @@ unit:
         colon and a tab. A line's first separator splits it into a name and a
         value, and the value runs to the end of the line. The default is `=` and `:`.
 
-        Each must be made of token delimiters (`tokenDelims`) other than `-`, or
-        the launch stops. In YAML, write a tab as `"\t"`, in double quotes.
+        Each must be made of token delimiters (`tokenDelims`) other than `-` or a
+        line break, or the launch stops. In YAML, write a tab as `"\t"`, in double
+        quotes.
 
     - names:
       - fieldLineSpaces
@@ -182,7 +185,7 @@ unit:
       doc: |
         The characters that indent a line, and that the `lines` reader leaves out
         between a separator and its value. The default is a space and a tab. Each
-        must be a token delimiter other than `-`.
+        must be a token delimiter other than `-` or a line break.
 
     - names:
       - fieldLineHeadingMark
@@ -192,11 +195,14 @@ unit:
       defValue: ":"
       doc: |
         The text that ends a heading for the `lines` reader. A line that holds
-        only a name and this mark is a heading, such as `Subject:`.
+        only a name and this mark is a heading, such as `Subject:`. It must be made
+        of token delimiters other than `-` or a line break.
 
         A heading names the lines after it that are indented deeper, up to an
         empty line or a line indented no deeper. A pair indented under no heading
-        gives no field.
+        gives no field, and neither do other pairs that share its name, such as
+        `Subject.Logon ID` for `Logon ID`. Nor does an indented pair in a text that
+        mixes tabs and spaces in its indentation.
 
     - names:
       - fieldLineHeadingJoin

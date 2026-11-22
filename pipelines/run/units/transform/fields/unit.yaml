@@ -104,8 +104,8 @@ unit:
       doc: |
         The characters that end an unquoted value and separate pairs for the `kv`
         reader. A line feed always separates pairs. The default is a space and a
-        comma. Each must be a token delimiter (`tokenDelims`) other than `=`, `"`
-        or `\`, or the launch stops.
+        comma. Each must be a token delimiter (`tokenDelims`) other than `=`, `"`,
+        `\` or `-`, or the launch stops.
 
     - names:
       - fieldColumns
@@ -140,7 +140,7 @@ unit:
       defValue: ','
       doc: |
         The character that separates columns. It must be a token delimiter
-        (`tokenDelims`) other than `"` or a line break, or the launch stops. A
+        (`tokenDelims`) other than `"`, `-` or a line break, or the launch stops. A
         column that opens with `"` runs to its closing quote, and `""` inside it
         is one quote.
 

@@ -41,7 +41,7 @@ graph LR
 - 🧪 **`logs/to-tenx`**, Your enrichment processors (`k8sattributes`, `resource`, `attributes`, `transform`, `filter`, …) run here exactly once before the event is handed off to Log10x. The processors live on this pipeline only; the return-path pipeline never sees them.
 - 📤 **OTLP exporter** → Log10x, The Collector forwards the enriched event to the Log10x sidecar over OTLP/gRPC on TCP `:4317`. Resource attributes, scope info, log-record attributes, and the body all travel on the wire.
 - ⚡ **10x Engine**, The Receiver app applies rate/policy-based filtering and optionally compacts events for volume reduction.
-- 📥 **`logs/from-tenx`**, Processed events come back to the Collector on `:24225` via its OTLP/gRPC receiver. Keep this pipeline processor-free; the destination exporters consume events directly so enrichment never re-fires on the return path.
+- 📥 **`logs/from-tenx`**, Processed events come back to the Collector on `:24225` via its OTLP/gRPC receiver. Keep enrichment processors off this pipeline so enrichment never re-fires on the return path; a Splunk destination takes one processor of its own (see [Sending to Splunk](#sending-to-splunk)).
 - 📤 **Destinations**, Your OTel destination exporters (`elasticsearch`, `splunkhec`, `kafka`, `awss3`, …) consume the return pipeline and ship to the real destinations.
 
 ### What an event looks like on the way back
@@ -153,5 +153,44 @@ service:
       receivers: [otlp/tenx]
       exporters: [debug]
 ```
+
+### Sending to Splunk
+
+The [Log10x App](https://doc.log10x.com/apps/receiver/compact/splunk/) expands compact events in Splunk. Two things on the return pipeline let it do so:
+
+- Each compact event carries the indexed field `tenx_time=sender`. Without it, the app takes an event's time from a timestamp in its own text where its template has one, in place of the time the Collector gave it.
+- Each template record reaches the app's `tenx_dml` index as the sourcetype `tenx_dml_raw_json`, with the template as its event.
+
+One `transform` processor on `logs/from-tenx` does both, and the Splunk HEC exporter sends the compact events as `tenx_encoded`:
+
+```yaml title="otelcol.yaml"
+processors:
+  transform/splunk:
+    error_mode: ignore
+    log_statements:
+      - context: log
+        statements:
+          - 'set(attributes["tenx_time"], "sender") where attributes["tenx_tag"] == nil'
+          - 'set(body, {"templateHash": attributes["templateHash"], "template": attributes["template"]}) where attributes["tenx_tag"] == "tenx-template"'
+          - 'set(attributes["com.splunk.index"], "tenx_dml") where attributes["tenx_tag"] == "tenx-template"'
+          - 'set(attributes["com.splunk.sourcetype"], "tenx_dml_raw_json") where attributes["tenx_tag"] == "tenx-template"'
+          - 'keep_keys(attributes, ["com.splunk.index", "com.splunk.sourcetype"]) where attributes["com.splunk.sourcetype"] == "tenx_dml_raw_json"'
+
+exporters:
+  splunk_hec:
+    token: "${env:SPLUNK_HEC_TOKEN}"
+    endpoint: "https://splunk.example.com:8088/services/collector"
+    sourcetype: tenx_encoded
+    index: app_logs
+
+service:
+  pipelines:
+    logs/from-tenx:
+      receivers: [otlp/tenx]
+      processors: [transform/splunk]
+      exporters: [splunk_hec]
+```
+
+The HEC token must allow the `tenx_dml` index as well as the index of the compact events. The processor adds `tenx_time` to compact events and changes nothing else on them.
 
 For Splunk integration see the [Log10x App](https://doc.log10x.com/apps/receiver/compact/splunk/) documentation. For Kubernetes deployment via the official OpenTelemetry Collector Helm chart see the [Helm sidecar overlay](https://doc.log10x.com/apps/receiver/deploy/#otel-collector).

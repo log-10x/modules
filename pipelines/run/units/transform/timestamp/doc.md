@@ -23,3 +23,9 @@ making timestamp extraction highly efficient.
 #### Times with no date
 
 A timestamp that holds a time of day and no date (for example `18:14:50`) takes the date written as `yyyy-MM-dd` just before it on the same line, as in FortiGate's `date=2026-11-13 time=01:59:25`. The date ends at most 16 characters before the time, and the characters between them hold no digit and no letters other than the field name `time`, in any case. Such an event has the same time on whatever day the line is read. A time of day with no such date takes its date from the clock when the line is read: a live stream gets the right day, and a file read on a later day than it was written is dated by the day it is read, so its event times are off by whole days.
+
+#### Times with no year
+
+A timestamp that holds a month and a day but no year, as classic syslog writes it (`Nov 23 12:07:10`), takes the latest year that puts it at most [timestampYearlessMaxAhead](https://doc.log10x.com/run/transform/timestamp/#timestampyearlessmaxahead) ahead of the clock, two days unless set.
+
+A sender whose clock runs a little ahead keeps the current year, and a line from the last days of December read in January takes the year before. A line read from a file starts from the year the file was last written in.

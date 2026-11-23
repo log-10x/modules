@@ -64,6 +64,11 @@ searchLengthLimitFromEnd: $?timestampSearchLengthLimitFromEnd=0
 #  If set to null, the host OS timezone is used.
 zone: $?timestampZone
 
+# 'yearlessMaxAhead' sets how far ahead of the clock a timestamp without a year
+#  (e.g., 'Nov 23 12:07:10') may be and still be dated in the current year; one
+#  further ahead is dated in the year before. Unset, the engine uses two days.
+yearlessMaxAhead: $?timestampYearlessMaxAhead
+
 # 'literals' specifies an array of strings literal values to treat as valid parts of timestamp (e.g., 'Z', 'T', 'GMT').
 literals:
   - |

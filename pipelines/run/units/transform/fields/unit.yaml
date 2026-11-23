@@ -89,14 +89,14 @@ unit:
         - **lines**: a text of several `name<separator>value` lines, such as
           `LogName=Security`, under headings such as `Subject:`. A pair under a
           heading is named by it, such as `Subject.Account Name`. A name that
-          occurs twice in one event gives no field. A text with one line of text
-          is left to the next reader. An event with a carriage return that does
-          not end a line gives no fields.
+          occurs twice in one event gives no field, and neither does an event with
+          a carriage return that does not end a line. A text with one line of text
+          is left to the next reader.
 
-        The fields are found once per template. An event of the template reads
-        each value from its own text at the same place. When the readers cannot
-        be sure of a field in an event, no consumer gets it. A lookup finds it
-        missing, and `compactFields` writes the event whole.
+        The fields are found once per template, and an event of the template
+        reads each value from its own text at the same place. When the readers
+        cannot be sure of a field in an event, no consumer gets it. A lookup finds
+        it missing, and `compactFields` writes the event whole.
 
         When several readers are listed, put `xml` and `json` first, then `lines`.
         `kv` and `columns` read almost any line, so a reader listed after them is
@@ -110,9 +110,9 @@ unit:
       defValue: ' ,'
       doc: |
         The characters that end an unquoted value and separate pairs for the `kv`
-        reader. A line feed always separates pairs. The default is a space and a
-        comma. Each must be a token delimiter (`tokenDelims`) other than `=`, `"`,
-        `\` or `-`, or the launch stops.
+        reader, a space and a comma by default. A line feed always separates pairs.
+        Each must be a token delimiter (`tokenDelims`) other than `=`, `"`, `\` or
+        `-`, or the launch stops.
 
     - names:
       - fieldColumns
@@ -194,18 +194,22 @@ unit:
       required: false
       defValue: ":"
       doc: |
-        The text that ends a heading for the `lines` reader. A line that holds
-        only a name and this mark is a heading, such as `Subject:`. So is a line of a
-        name, this mark and spaces, where the next line with text is a pair or a
-        heading indented deeper; otherwise it reads as any other line. The mark must
-        be made of token delimiters other than `-` or a line break.
+        The text that ends a heading for the `lines` reader. The mark must be made
+        of token delimiters other than `-` or a line break.
+
+        A line that holds only a name and this mark is a heading, such as
+        `Subject:`. So is a line of a name, this mark and spaces, where the next
+        line with text is a pair or a heading indented deeper. Any other such line
+        reads as an ordinary line.
 
         A heading names the lines after it that are indented deeper, up to an
         empty line or a line indented no deeper. A pair indented under no heading
         gives no field, and neither do other pairs that share its name, such as
         `Subject.Logon ID` for `Logon ID`. Nor does an indented pair in a text that
-        mixes tabs and spaces in its indentation. With `compactFields` set, an event
-        with a pair under no known heading is written whole.
+        mixes tabs and spaces in its indentation.
+
+        With `compactFields` set, an event with a pair under no known heading is
+        written whole.
 
     - names:
       - fieldLineHeadingJoin
@@ -350,5 +354,6 @@ unit:
         An event with a listed value that holds such a character is written whole,
         in either `compactFieldsForm`. This is for a destination that reads some
         characters in an indexed value back as others, such as a tab as a space.
+
         The default matches every control character. In a YAML file, write the
         expression in quotes, since an unquoted `[...]` is a list.

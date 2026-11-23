@@ -298,7 +298,9 @@ index = tenx_dml
 crcSalt = <SOURCE>
 ```
 
-Restart the heavy forwarder. On every file under `/opt/tenx/compact/events/`, the app's rule `tenx-record-unwrap` gives each event the time, host, source and index its line holds, sets `tenx_sourcetype` to its original sourcetype, and makes the compact text the event; the `index` above applies only to a line that names none. `crcSalt = <SOURCE>` makes the heavy forwarder read a file whose first 256 bytes are the same as those of a file it has read, as two compact files can be. Set it before the first file is read: changing it later makes the heavy forwarder read every file again. For a second folder elsewhere, see [Receiver Beside a Heavy Forwarder](https://github.com/log-10x/splunk-app/blob/main/tenx-for-splunk/README.md#receiver-beside-a-heavy-forwarder) in the app's README.
+Restart the heavy forwarder. On every file under `/opt/tenx/compact/events/`, the app's rule `tenx-record-unwrap` gives each event the time, host, source and index its line holds, sets `tenx_sourcetype` to its original sourcetype, and makes the compact text the event. The `index` above applies only to a line that names none.
+
+`crcSalt = <SOURCE>` makes the heavy forwarder read a file whose first 256 bytes are the same as those of a file it has read, as two compact files can be. Set it before the first file is read: changing it later makes the heavy forwarder read every file again. For a second folder elsewhere, see [Receiver Beside a Heavy Forwarder](https://github.com/log-10x/splunk-app/blob/main/tenx-for-splunk/README.md#receiver-beside-a-heavy-forwarder) in the app's README.
 
 **5. Set up the indexers and the search head.** On the indexers, create the compact indexes and `tenx_dml`; they need nothing else of Log10x, because the heavy forwarder sends them parsed events. On the search head, install the Log10x App and the add-ons.
 
@@ -368,7 +370,7 @@ find /opt/tenx/compact -type f -mmin +"$MINUTES" | grep -Fx -f /opt/tenx/compact
 
 Start the second Receiver as in step 3, named `tenx-receiver-win-2` and with `fluentbitInputPort 24227`.
 
-**The heavy forwarder's own rules** apply before compaction: the file holds each event as its `SEDCMD`, `_raw` masks and other index-time rules left it, and events a `nullQueue` filter drops are not written. Fields a rule of the heavy forwarder's own writes with `WRITE_META` are not on the compact events.
+**The heavy forwarder's own rules** apply before compaction: the file holds each event as its `SEDCMD`, `_raw` masks and other index-time rules left it. Events a `nullQueue` filter drops are not written. Fields a rule of the heavy forwarder's own writes with `WRITE_META` are not on the compact events.
 
 **A source that can be read only once**, such as an event log channel, gets its baseline from a clone on the heavy forwarder:
 
@@ -381,4 +383,6 @@ The heavy forwarder writes each event to the file and also sends it to the index
 
 A sender pointed at a Fluent Bit HEC input in front of the Receiver is compacted; a source posting straight to Splunk's own HEC endpoint is not covered.
 
-With indexer acknowledgement on the heavy forwarder's output to the indexers (`useACK = true`), an indexer restart loses no compact event; a block whose acknowledgement is lost in the restart is sent again, and its events are indexed twice. After a Receiver is stopped and started, Fluent Bit sends the records that waited on its retry schedule, whose wait between tries grows, so their compact events can arrive minutes after the Receiver is back.
+With indexer acknowledgement on the heavy forwarder's output to the indexers (`useACK = true`), an indexer restart loses no compact event. A block whose acknowledgement is lost in the restart is sent again, and its events are indexed twice.
+
+After a Receiver is stopped and started, Fluent Bit sends the records that waited on its retry schedule. The wait between tries grows, so their compact events can arrive minutes after the Receiver is back.

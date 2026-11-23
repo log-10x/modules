@@ -70,6 +70,10 @@ outputOtlp:
   - host: $=yield TenXEnv.get("otelCollectorOutputHost", "127.0.0.1")
     port: $=yield TenXEnv.get("otelCollectorOutputPort", "24225")
 
+    # Write the events outputDropFilter keeps: hard drop omits the ones the
+    # regulator marked for dropping.
+    filter: $?outputDropFilter=isObject && !isRoute("drop")
+
     fields:
       - $?outputEncodeField=fullText
 

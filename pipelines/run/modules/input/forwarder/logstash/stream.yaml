@@ -82,6 +82,10 @@ outputSocket:
     host: $=yield TenXEnv.get("logstashOutputHost", "127.0.0.1")
     port: $=yield TenXEnv.get("logstashOutputPort", "5045")
 
+    # Write the events outputDropFilter keeps: hard drop omits the ones the
+    # regulator marked for dropping.
+    filter: $?outputDropFilter=isObject && !isRoute("drop")
+
     fields:
       # Carries the whole Logstash record in receive mode and an encoded form
       # in compact mode. Picked automatically based on the Receiver app's

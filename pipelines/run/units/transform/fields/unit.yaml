@@ -81,7 +81,9 @@ unit:
           joined by `.`, such as `Event.System.EventID`; an attribute is named
           after its element, such as `Event.System.Execution.ProcessID`.
         - **kv**: `name=value` pairs separated by `fieldPairDelimiters`. A value that
-          opens with `"` runs to the next `"` not escaped by a backslash.
+          opens with `"` runs to the next `"` not escaped by a backslash. A value
+          that a delimiter ends inside a bracket it opened, as in `a=f(x y)`, gives
+          no field, since the text after the delimiter may belong to it.
         - **json**: a text that is one JSON object or array. Names are key paths
           joined by `.`, with `[]` for each array a value is in, such as
           `userIdentity.arn` or `resources[].ARN`.
@@ -185,7 +187,8 @@ unit:
       doc: |
         The characters that indent a line, and that the `lines` reader leaves out
         between a separator and its value. The default is a space and a tab. Each
-        must be a token delimiter other than `-` or a line break.
+        must be a token delimiter other than `-` or a line break, or the launch
+        stops.
 
     - names:
       - fieldLineHeadingMark
@@ -236,6 +239,18 @@ unit:
         `compactFieldsUnsafeChars` allows them.
 
     - names:
+      - fieldLineListNames
+      description: the names whose value is a list of lines for the lines field reader
+      type: list
+      required: false
+      doc: |
+        The names, as the `lines` reader gives them, whose value is a list, such
+        as `Privileges`. Its elements are the value on the name's line and each
+        line after it that is indented deeper and is not a pair or a heading.
+        Lines of spaces between them are skipped. `compactFields` writes the
+        elements as a list.
+
+    - names:
       - compactFields
       description: the fields each compact event carries beside it, as name or name=outputName
       type: list
@@ -267,8 +282,8 @@ unit:
         - its text differs from its template's where names are read;
         - the reader cannot tell where a listed field's name or value ends, or
           which headings name a field of the event;
-        - a listed field occurs twice, other than as JSON array elements, which
-          are written as a list;
+        - a listed field occurs twice, other than as the elements of a JSON
+          array or of a `fieldLineListNames` name, which are written as a list;
         - a value, or a name read from the event, does not decode;
         - a value is longer than `compactFieldsMaxValue`;
         - a value holds a character that `compactFieldsUnsafeChars` matches.

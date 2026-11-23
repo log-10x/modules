@@ -82,6 +82,10 @@ fieldLineHeadingJoin: $?fieldLineHeadingJoin
 fieldLineRestNames:
   - $?fieldLineRestNames
 
+# 'fieldLineListNames' lists the names whose value is a list of lines for the 'lines' reader ('Privileges').
+fieldLineListNames:
+  - $?fieldLineListNames
+
 # 'compactFieldsUnsafeChars' matches the characters a value must not hold for
 #  'compactFields' to attach it; an event with such a value is written whole.
 compactFieldsUnsafeChars: '$?compactFieldsUnsafeChars=[\x00-\x1f]'

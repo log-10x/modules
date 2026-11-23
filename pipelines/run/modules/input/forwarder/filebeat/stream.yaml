@@ -125,11 +125,11 @@ output:
 # conf/tenx*.yml above).
 outputUnixSocket:
 
-  # Main event emitter
+  # Main event emitter: the events outputDropFilter keeps, and none of
+  # Filebeat's own log lines.
   - address: $=rawOutputUnixSocketAddress
 
-    filter: extractorKey == "message"
-    
+    filter: '$=yield "(extractorKey == \"message\") && (" + TenXEnv.get("outputDropFilter", "isObject && !isRoute(\"drop\")") + ")"'
 
     fields:
       - $?outputEncodeField=fullText

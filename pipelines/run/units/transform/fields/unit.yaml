@@ -246,8 +246,8 @@ unit:
       doc: |
         The names, as the `lines` reader gives them, whose value is a list, such
         as `Privileges`. Its elements are the value on the name's line and each
-        line after it that is indented deeper and is not a pair or a heading.
-        Lines of spaces between them are skipped. `compactFields` writes the
+        line after it that is indented deeper and is not a pair or a heading,
+        skipping lines of spaces between them. `compactFields` writes the
         elements as a list.
 
     - names:

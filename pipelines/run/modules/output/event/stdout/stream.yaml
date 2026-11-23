@@ -16,6 +16,39 @@ include: run/modules/output/event/stdout/module.yaml
 output:
 
     # 'type' defines the output type (e.g., stdout, log4j, micrometer). 
+    #  This output utilizes a custom OutputStream to spawn and write into a spawned subprocess's stdin pipe.
+    # This template output comes first, so a template reaches the output before the events that use it.
+  - type: stdout
+
+    # 'foreach' sets 'stdout' as the options group for whose instances 
+    #  to create matching output streams to allow multiple stdout stream outputs.
+    foreach: stdout
+
+    # 'name' assigns a logical name to this output instance
+    name: $stdoutTarget
+
+    # 'path' points to the device output to write
+    path: $stdoutTarget
+
+    # 'group' sets the output target as the key for grouping all output streams.
+    group:
+      - $stdoutTarget
+
+    # 'enabled' is false by default. 'outputStdoutWriteTemplates' must be true to encode TenXTemplates 
+    # `receiverReadOnly=true` short-circuits so no templates are emitted in read-only mode.
+    enabled: $=yield !TenXEnv.get("receiverReadOnly", false) && TenXEnv.get("stdoutWriteTemplates", false) &&  !TenXEnv.get("stdoutLog4j2", false)
+
+    # 'filter' uses the 'isNewTemplate' 10x JavaScript function to skip templates 
+    #  loaded via the https://doc.log10x.com/run/template/#templatefiles argument or previously written to this output
+    filter: isNewTemplate()
+
+    encodeType: json
+    
+    fields:
+      - templateHash
+      - template
+
+    # 'type' defines the output type (e.g., stdout, log4j, micrometer). 
     #  This output utilizes the process' native output stream to emit TenXObject instance/template field values
   - type: stdout
  
@@ -55,35 +88,3 @@ output:
     #  to write to for each TenXObject passed to this output.
     fields:
       - $?stdoutFields
-
-    # 'type' defines the output type (e.g., stdout, log4j, micrometer). 
-    #  This output utilizes a custom OutputStream to spawn and write into a spawned subprocess's stdin pipe.
-  - type: stdout
-
-    # 'foreach' sets 'stdout' as the options group for whose instances 
-    #  to create matching output streams to allow multiple stdout stream outputs.
-    foreach: stdout
-
-    # 'name' assigns a logical name to this output instance
-    name: $stdoutTarget
-
-    # 'path' points to the device output to write
-    path: $stdoutTarget
-
-    # 'group' sets the output target as the key for grouping all output streams.
-    group:
-      - $stdoutTarget
-
-    # 'enabled' is false by default. 'outputStdoutWriteTemplates' must be true to encode TenXTemplates 
-    # `receiverReadOnly=true` short-circuits so no templates are emitted in read-only mode.
-    enabled: $=yield !TenXEnv.get("receiverReadOnly", false) && TenXEnv.get("stdoutWriteTemplates", false) &&  !TenXEnv.get("stdoutLog4j2", false)
-
-    # 'filter' uses the 'isNewTemplate' 10x JavaScript function to skip templates 
-    #  loaded via the https://doc.log10x.com/run/template/#templatefiles argument or previously written to this output
-    filter: isNewTemplate()
-
-    encodeType: json
-    
-    fields:
-      - templateHash
-      - template

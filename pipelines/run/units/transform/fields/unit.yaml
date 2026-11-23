@@ -239,10 +239,17 @@ unit:
       doc: |
         The fields of each event that `encode()` writes beside its compact form in
         its record. A destination can then index them without expanding the event.
+
         Each entry is a field name as the template's field readers name it (see
         `fieldReaders`). An entry `name=outputName` writes it under another name,
-        such as `Event.EventData.NewProcessName=process_path`. Two entries cannot
-        share an output name, and the launch stops when `fieldReaders` is not set.
+        such as `Event.EventData.NewProcessName=process_path`. The launch stops
+        when an entry is listed twice or `fieldReaders` is not set.
+
+        Entries that share an output name write their values under it as one list,
+        in the order of the event's text. When the event holds only one of those
+        values, it is written as a single value. A field with several entries, such
+        as `Event.System.Computer=Computer` and `Event.System.Computer=dest`, is
+        written under each output name.
 
         The fields are read from each event's text where its template places
         them, and an empty value is left out. An event is written whole
@@ -272,11 +279,12 @@ unit:
       required: false
       defValue: object
       doc: |
-        - **object** (the default): a JSON object under `compactFieldsKey`, such as
-          `"fields":{"user":"bob","tags":["a","b"]}`.
+        - **object** (the default): a JSON object under `compactFieldsKey`, with a
+          list as a JSON array, such as `"fields":{"user":"bob","tags":["a","b"]}`.
         - **text**: one string under `compactFieldsKey` of `name<separator>"value"`
           pairs separated by spaces, with `\` and `"` in a value escaped by a
           backslash, such as `"meta":"user::\"bob\""` with the separator `::`.
+          A list is one pair for each of its values.
 
     - names:
       - compactFieldsKey

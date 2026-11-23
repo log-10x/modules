@@ -63,3 +63,21 @@ compactFields:
 ```
 
 An event whose listed fields cannot be given exactly as its text holds them is written whole instead. `compactFieldsWhole()` returns why, so that an aggregator can count such events.
+
+### :material-file-cog: Profiles
+
+A profile sets `fieldReaders` and `compactFields` for one source. It lists the fields that the source's Splunk add-on reads to fill its CIM data models, under the add-on's names:
+
+- `windows-security-xml.yaml`: Windows Security events in XML.
+- `windows-security-classic.yaml`: Windows Security events in classic text.
+- `sysmon.yaml`: Sysmon events.
+- `stream-dns.yaml`, `stream-tcp.yaml` and `stream-ip.yaml`: Splunk Stream DNS, TCP and IP events.
+- `fortigate.yaml`: FortiGate key=value logs.
+
+The profiles are in the config folder [run/fields](https://github.com/log-10x/config/tree/main/pipelines/run/fields). Select one by its path on the launch line:
+
+```bash
+tenx @run/input/forwarder/fluentbit @apps/receiver receiverOptimize true @run/fields/sysmon.yaml
+```
+
+Select one profile per Receiver. Two profiles that share an entry list it twice, which stops the launch. The first lines of each file name the add-on version it was checked with and the data models its fields fill.

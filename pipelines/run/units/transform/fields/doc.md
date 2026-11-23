@@ -44,7 +44,7 @@ fieldReaders: [lines]
 fieldLineSeparators: ["=", ":\t"]
 ```
 
-A value ends at its line. To read `Message` as the whole message, add `fieldLineRestNames: [Message]`.
+A value ends at its line. To read `Message` as the whole message, add `fieldLineRestNames: [Message]`. To read `Privileges` as a list of its lines, add `fieldLineListNames: [Privileges]`.
 
 ### :material-tag-multiple: Fields on compact events
 

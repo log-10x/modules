@@ -196,15 +196,16 @@ unit:
       doc: |
         The text that ends a heading for the `lines` reader. A line that holds
         only a name and this mark is a heading, such as `Subject:`. So is a line of a
-        name, this mark and spaces, where the next line with text is indented
-        deeper; otherwise it reads as any other line. The mark must be made of
-        token delimiters other than `-` or a line break.
+        name, this mark and spaces, where the next line with text is a pair or a
+        heading indented deeper; otherwise it reads as any other line. The mark must
+        be made of token delimiters other than `-` or a line break.
 
         A heading names the lines after it that are indented deeper, up to an
         empty line or a line indented no deeper. A pair indented under no heading
         gives no field, and neither do other pairs that share its name, such as
         `Subject.Logon ID` for `Logon ID`. Nor does an indented pair in a text that
-        mixes tabs and spaces in its indentation.
+        mixes tabs and spaces in its indentation. With `compactFields` set, an event
+        with a pair under no known heading is written whole.
 
     - names:
       - fieldLineHeadingJoin
@@ -253,7 +254,8 @@ unit:
         - its record already has a key named `compactFieldsKey`;
         - no field reader reads its template;
         - its text differs from its template's where names are read;
-        - the reader cannot tell where a listed field's name or value ends;
+        - the reader cannot tell where a listed field's name or value ends, or
+          which headings name a field of the event;
         - a listed field occurs twice, other than as JSON array elements, which
           are written as a list;
         - a value, or a name read from the event, does not decode;

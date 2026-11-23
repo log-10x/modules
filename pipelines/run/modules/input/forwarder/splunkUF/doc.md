@@ -141,8 +141,6 @@ sourcetype = tenx_dml_raw_json
 
 Create both indexes, `tenx_dml` and the compact index, where the events are indexed before the forwarder sends.
 
-For a source read by a [field map](https://github.com/log-10x/splunk-app/blob/main/tenx-for-splunk/README.md#data-models-and-detections-the-field-map), run Log10x for it as the field map describes and monitor its file with the field map's compact sourcetype in place of `tenx_encoded`, for Windows Security `sourcetype = tenx_win`.
-
 The forwarder reads a file once it holds at least 256 bytes. A compact file that stays smaller is forwarded after it grows past that size.
 
 **4. Install the Log10x App** on the search heads and on the instances that parse the events: the indexers, or the heavy forwarder the Universal Forwarder sends to. The app sets each compact event's time while the event is parsed.
@@ -158,7 +156,7 @@ Where Universal Forwarders send to a heavy forwarder, the Receiver can run on th
 **1. Prerequisites.**
 
 - A heavy forwarder that parses the chosen sourcetypes, with the add-ons that parse them installed and the add-ons' inputs disabled. The file destination works on Splunk 9.4 through 10.6.
-- On the heavy forwarder's host: Docker, for Fluent Bit and the Receiver, and Python 3.9 or later, for the field map tool and the clean-up job.
+- On the heavy forwarder's host: Docker, for Fluent Bit and the Receiver, and Python 3.9 or later, for the clean-up job.
 
 **2. Write the chosen sourcetypes to a file destination.** In an app on the heavy forwarder, add the destination beside the existing `[tcpout]` groups, and route each chosen sourcetype to it:
 
@@ -263,16 +261,10 @@ And this one in `/opt/tenx/fluent-bit-back`, for the second:
 
 `Format plain` writes each record as one JSON object: the time, host, source, sourcetype and index of the file destination's line, and the compact text in `event`. The tag `rfs.win.*` holds the path of the file Fluent Bit read, and with no `File` the output names each file after its tag, so each file in `/opt/tenx/compact/events/win` holds the events of one file of the file destination. The template records go to `templates.ndjson`.
 
-Copy the Receiver's compact configuration out of the image, key its cap file on the template hash, and create the cap file with its header row and the second folder:
+Create the folders:
 
 ```sh
-mkdir -p /opt/tenx/receiver/win /opt/tenx/fluent-bit-state /opt/tenx/compact/events/win /opt/tenx/compact/templates
-docker create --name tenx-config log10x/edge-10x:1.1.181
-docker cp tenx-config:/etc/tenx/config/pipelines/run/receive/compact/config.yaml /opt/tenx/receiver/compact-config.shipped.yaml
-docker rm tenx-config
-sed -e 's/^\(  fieldNames:\)$/\1 [templateHash]/' -e '/^    - \$=yield TenXEnv.get("symbolMessageField")$/d' \
-  /opt/tenx/receiver/compact-config.shipped.yaml > /opt/tenx/receiver/compact-config.yaml
-printf 'pattern_hash,value\n' > /opt/tenx/receiver/win/compact-cap.csv
+mkdir -p /opt/tenx/fluent-bit-state /opt/tenx/compact/events/win /opt/tenx/compact/templates
 ```
 
 Start the Fluent Bit that writes the second folder, then the Receiver and the Fluent Bit that reads the files, both in its network:
@@ -281,24 +273,13 @@ Start the Fluent Bit that writes the second folder, then the Receiver and the Fl
 docker run -d --name tenx-fluentbit-back \
   -v /opt/tenx/fluent-bit-back:/fluent-bit/etc:ro -v /opt/tenx/fluent-bit-state:/opt/tenx/fluent-bit-state \
   -v /opt/tenx/compact:/opt/tenx/compact fluent/fluent-bit:5.1.5
-docker run -d --name tenx-receiver-win --network container:tenx-fluentbit-back \
-  -v /opt/tenx/receiver/compact-config.yaml:/etc/tenx/config/pipelines/run/receive/compact/config.yaml:ro \
-  -v /opt/tenx/receiver/win:/opt/tenx/receiver/win log10x/edge-10x:1.1.181 \
-  @run/input/forwarder/fluentbit @apps/receiver varMaxRecurIndexes 0 timestampZone UTC timestampMaxPerObject 1 \
-  groupJoinLines false fluentbitInputPort 24224 fluentbitOutputHost 127.0.0.1 fluentbitOutputPort 24225 \
-  fluentbitInputMessageField event compactReceiverLookupFile /opt/tenx/receiver/win/compact-cap.csv
-docker run -d --name tenx-fluentbit --network container:tenx-fluentbit-back \
-  -v /opt/tenx/fluent-bit:/fluent-bit/etc:ro -v /opt/tenx/fluent-bit-state:/opt/tenx/fluent-bit-state \
-  -v /opt/tenx/rfs:/opt/tenx/rfs:ro fluent/fluent-bit:5.1.5
-```
-
-With the cap file, the Receiver compacts only the templates the field map lists, and every other event arrives whole. Without a field map, the Receiver takes `receiverOptimize true` in place of the cap file and compacts every template:
-
-```sh
-docker run -d --name tenx-receiver --network container:tenx-fluentbit-back log10x/edge-10x:1.1.181 \
+docker run -d --name tenx-receiver-win --network container:tenx-fluentbit-back log10x/edge-10x:1.1.181 \
   @run/input/forwarder/fluentbit @apps/receiver receiverOptimize true varMaxRecurIndexes 0 timestampZone UTC \
   timestampMaxPerObject 1 groupJoinLines false fluentbitInputPort 24224 fluentbitOutputHost 127.0.0.1 \
   fluentbitOutputPort 24225 fluentbitInputMessageField event
+docker run -d --name tenx-fluentbit --network container:tenx-fluentbit-back \
+  -v /opt/tenx/fluent-bit:/fluent-bit/etc:ro -v /opt/tenx/fluent-bit-state:/opt/tenx/fluent-bit-state \
+  -v /opt/tenx/rfs:/opt/tenx/rfs:ro fluent/fluent-bit:5.1.5
 ```
 
 The Receiver and the Fluent Bit that reads the files run in the network of the one that writes the second folder, so restart both after each restart of it.
@@ -307,7 +288,7 @@ The Receiver and the Fluent Bit that reads the files run in the network of the o
 
 ```ini title="inputs.conf"
 [monitor:///opt/tenx/compact/events/win]
-sourcetype = tenx_win
+sourcetype = tenx_encoded
 index = <index>
 crcSalt = <SOURCE>
 
@@ -317,45 +298,15 @@ index = tenx_dml
 crcSalt = <SOURCE>
 ```
 
-Restart the heavy forwarder. On every file under `/opt/tenx/compact/events/`, the app's rule `tenx-record-unwrap` gives each event the time, host, source and index its line holds, sets `tenx_sourcetype` to its original sourcetype, and makes the compact text the event; the `index` above applies only to a line that names none. `tenx_win` is the compact sourcetype of the Windows Security field map in step 5; without a field map, monitor the folder with `sourcetype = tenx_encoded`. `crcSalt = <SOURCE>` makes the heavy forwarder read a file whose first 256 bytes are the same as those of a file it has read, as two compact files can be. Set it before the first file is read: changing it later makes the heavy forwarder read every file again. For a second folder elsewhere, see [Receiver Beside a Heavy Forwarder](https://github.com/log-10x/splunk-app/blob/main/tenx-for-splunk/README.md#receiver-beside-a-heavy-forwarder) in the app's README.
+Restart the heavy forwarder. On every file under `/opt/tenx/compact/events/`, the app's rule `tenx-record-unwrap` gives each event the time, host, source and index its line holds, sets `tenx_sourcetype` to its original sourcetype, and makes the compact text the event; the `index` above applies only to a line that names none. `crcSalt = <SOURCE>` makes the heavy forwarder read a file whose first 256 bytes are the same as those of a file it has read, as two compact files can be. Set it before the first file is read: changing it later makes the heavy forwarder read every file again. For a second folder elsewhere, see [Receiver Beside a Heavy Forwarder](https://github.com/log-10x/splunk-app/blob/main/tenx-for-splunk/README.md#receiver-beside-a-heavy-forwarder) in the app's README.
 
-**5. Set up the indexers and the search head.** On the indexers, create the compact indexes, `tenx_dml` and `tenx_probe`; they need nothing else of Log10x, because the heavy forwarder sends them parsed events. Create `tenx_probe` on the heavy forwarder too, and add the indexers as its search peers, so the field map tool can search through it: `$SPLUNK_HOME/bin/splunk add search-server https://<indexer>:8089 -remoteUsername admin -remotePassword <password>`, once per indexer. On the search head, install the Log10x App, the add-ons and CIM, and set the `tenx-events` macro to `index=* (sourcetype::tenx_encoded OR tenx_compact_st::tenx_win)`.
+**5. Set up the indexers and the search head.** On the indexers, create the compact indexes and `tenx_dml`; they need nothing else of Log10x, because the heavy forwarder sends them parsed events. On the search head, install the Log10x App and the add-ons.
 
 Create the indexes the events go to and restart the indexers before the first event is sent. The search below returns no row once every indexer has loaded them.
 
 ```spl
 index=_internal sourcetype=splunkd component=IndexerService "unconfigured/disabled/deleted index" | stats count by host
 ```
-
-Generate the Windows Security [field map](https://github.com/log-10x/splunk-app/blob/main/tenx-for-splunk/README.md#data-models-and-detections-the-field-map) on the heavy forwarder's host, with the Log10x App package unpacked in `/opt/tenx` and `SPLUNK_ADMIN_PW` set. First send the source once with the cap file empty: every event arrives whole as `tenx_win`, and the template records reach `tenx_dml`. On the search head, load them into the KV store with `index=tenx_dml sourcetype=tenx_dml_raw_json | sendalert tenx_dml_to_kv`, then export the store in pages of 2,000 rows until a page holds no row:
-
-```sh
-cd /opt/tenx
-n=0
-while :; do
-  curl -sk -u "admin:$SPLUNK_ADMIN_PW" "https://<search head>:8089/servicesNS/nobody/tenx-for-splunk/storage/collections/data/tenx_dml?output_mode=json&limit=2000&skip=$((n*2000))" > kv_$n.json
-  grep -q '"_key"' kv_$n.json || { rm kv_$n.json; break; }
-  n=$((n+1))
-done
-```
-
-Generate the field map app and its floor app:
-
-```sh
-python3 /opt/tenx/tenx-for-splunk/bin/tenx_field_map.py gen $(for f in kv_*.json; do printf -- '--records %s ' $f; done) \
-  --target windows-security --rules lookup --addon $SPLUNK_HOME/etc/apps/Splunk_TA_windows \
-  --app-name fm_win --cap-file /opt/tenx/receiver/win/compact-cap.csv --out fm_win
-```
-
-Install `fm_win` and `fm_win_floor` on the heavy forwarder and `fm_win` on the search head, and restart each after the first install. The field map's rules run on the heavy forwarder, where the compact events are parsed. Then activate the field map through the heavy forwarder's management port:
-
-```sh
-TENX_SPLUNKD_AUTH="admin:$SPLUNK_ADMIN_PW" python3 /opt/tenx/tenx-for-splunk/bin/tenx_field_map.py activate \
-  --app fm_win --cap-file /opt/tenx/receiver/win/compact-cap.csv \
-  --splunkd https://localhost:8089 --probe-index tenx_probe
-```
-
-`activate` sends its probe events to the heavy forwarder, which parses them as it parses the compact events, checks the floor app there, and finds the probes through the heavy forwarder's search peers. The Receiver rereads the cap file without a restart, and the events of the listed templates arrive compact from then on. On an instance with Splunk's default self-signed certificate, add `--tls-verify off`. Schedule `check` with the same arguments, as the field map describes.
 
 **6. Choose the sourcetypes.** Each sourcetype takes, on the heavy forwarder, a stanza in `props.conf` that names the route and a monitor of its folder in `/opt/tenx/compact/events`; and on its host a `tail` input on its folder, a `forward` output to a Receiver of its own on a port of its own, and a `file` output for its tag. A Windows Universal Forwarder's event log input gives the sourcetype `XmlWinEventLog:Security`, which the Windows add-on renames to `XmlWinEventLog` on the heavy forwarder; give `[XmlWinEventLog:Security]` the same `TRANSFORMS-zzz_tenx` line.
 
@@ -415,9 +366,9 @@ find /opt/tenx/compact -type f -mmin +"$MINUTES" | grep -Fx -f /opt/tenx/compact
     Port  24227
 ```
 
-Start the second Receiver with the field map line of step 3, named `tenx-receiver-win-2` and with `fluentbitInputPort 24227`. Both Receivers read the same cap file.
+Start the second Receiver as in step 3, named `tenx-receiver-win-2` and with `fluentbitInputPort 24227`.
 
-**The heavy forwarder's own rules** apply before compaction: the file holds each event as its `SEDCMD`, `_raw` masks and other index-time rules left it, and events a `nullQueue` filter drops are not written. A mask that changes the text of field-mapped events makes new templates, which arrive whole until the field map is generated and activated again. Fields a rule of the heavy forwarder's own writes with `WRITE_META` are not on the compact events.
+**The heavy forwarder's own rules** apply before compaction: the file holds each event as its `SEDCMD`, `_raw` masks and other index-time rules left it, and events a `nullQueue` filter drops are not written. Fields a rule of the heavy forwarder's own writes with `WRITE_META` are not on the compact events.
 
 **A source that can be read only once**, such as an event log channel, gets its baseline from a clone on the heavy forwarder:
 
@@ -426,8 +377,8 @@ Start the second Receiver with the field map line of step 3, named `tenx-receive
 INGEST_EVAL = $pd:_destinationKey$=if(index=="<index>" AND isnull(tenx_sourcetype), "rfs:tenx", null()), $pd:_doRouteClone$=if(index=="<index>" AND isnull(tenx_sourcetype), "true", null())
 ```
 
-The heavy forwarder writes each event to the file and also sends it to the indexers raw, both copies in the index the Universal Forwarder gave it. In the searches of step 7, read the raw copies with `index=<index> NOT sourcetype::tenx_* NOT tenx_compact_st=*` and the compact ones with `index=<index>` before `` `tx` ``.
+The heavy forwarder writes each event to the file and also sends it to the indexers raw, both copies in the index the Universal Forwarder gave it. In the searches of step 7, read the raw copies with `index=<index> NOT sourcetype::tenx_*` and the compact ones with `index=<index>` before `` `tx` ``.
 
 A sender pointed at a Fluent Bit HEC input in front of the Receiver is compacted; a source posting straight to Splunk's own HEC endpoint is not covered.
 
-With indexer acknowledgement on the heavy forwarder's output to the indexers (`useACK = true`), an indexer restart loses no compact event; a block whose acknowledgement is lost in the restart is sent again, and its events are indexed twice. After a Receiver is stopped and started, Fluent Bit sends the records that waited on its retry schedule, whose wait between tries grows, so their compact events can arrive minutes after the Receiver is back. A field map's index-time rules run on the heavy forwarder and use its CPU instead of the indexers'.
+With indexer acknowledgement on the heavy forwarder's output to the indexers (`useACK = true`), an indexer restart loses no compact event; a block whose acknowledgement is lost in the restart is sent again, and its events are indexed twice. After a Receiver is stopped and started, Fluent Bit sends the records that waited on its retry schedule, whose wait between tries grows, so their compact events can arrive minutes after the Receiver is back.

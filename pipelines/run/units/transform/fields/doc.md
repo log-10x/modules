@@ -27,6 +27,10 @@ To [drop](https://doc.log10x.com/api/js/#TenXObject+drop) the instance if either
 this.drop((this.visibility == "PRIVATE") || (this.port == 9000));
 ```
 
+### :material-format-letter-case: Names
+
+A field whose name is not a variable name, such as `user-agent` or `Account Name`, is named by the `l1e_` prefix and its name as written. This works in an output's `fields` (`l1e_user-agent`), in `get("l1e_user-agent")` and in `encode("l1e_user-agent")`, which writes the value under the key `l1e_user-agent`.
+
 ### :material-code-array: Arrays
 
 If a JSON/KV field appears more than once within an TenXObject's text, it can be accessed as an array field to access individual entries (e.g., `this.myField[i]`).      

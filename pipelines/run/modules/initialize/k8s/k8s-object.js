@@ -17,11 +17,12 @@ export class K8sUnit extends TenXUnit {
 export class K8sFluentObject extends TenXObject {
 
     static shouldLoad(config) {
-        return TenXEnv.get("k8sExtractorName") == "fluentK8s";
+        return (TenXEnv.get("k8sExtractorName") == "fluentK8s") || (TenXEnv.get("k8sExtractorName") == "filebeatK8s");
     }
 
     // Assigns namespace + container + user-service enrichments, and the team when
-    // k8sTeamLabel names a label. Always runs when the fluentK8s extractor is enabled.
+    // k8sTeamLabel names a label. Always runs when the fluentK8s or filebeatK8s
+    // extractor is enabled; both capture into the fields read here.
     constructor() {
 
         var namespace_name = this.namespace_name;
@@ -57,7 +58,7 @@ export class K8sFluentObject extends TenXObject {
 export class K8sFluentPodObject extends TenXObject {
 
     static shouldLoad(config) {
-        return TenXEnv.get("k8sExtractorName") == "fluentK8s" && TenXEnv.get("k8sPodNameField");
+        return ((TenXEnv.get("k8sExtractorName") == "fluentK8s") || (TenXEnv.get("k8sExtractorName") == "filebeatK8s")) && TenXEnv.get("k8sPodNameField");
     }
 
     constructor() {

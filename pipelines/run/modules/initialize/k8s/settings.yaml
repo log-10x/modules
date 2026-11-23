@@ -33,15 +33,14 @@ extractor:
     type: json
 
     actions:
-      # Capture common k8s metadata. Same caveat as fluentK8s: the pod.name
-      # capture stays unconditional because the engine rejects empty action
-      # entries.
-      - $="captureField:kubernetes.namespace:" + TenXEnv.get("k8sNamespaceNameField", "namespace")
-      - $="captureField:kubernetes.container.name:" + TenXEnv.get("k8sContainerNameField", "container")
-      - $="captureField:kubernetes.pod.name:" + TenXEnv.get("k8sPodNameField", "pod")
-      # The k8sTeamLabel pod label straight into the team field; when it is empty, the 'team'
-      # label into a field nothing reads.
-      - '$=yield "captureField:kubernetes.labels." + (TenXEnv.get("k8sTeamLabel") ? TenXEnv.get("k8sTeamLabel") + ":" + TenXEnv.get("k8sTeamField", "tenx_team") : "team:team_label")'
+      # Capture into the fields fluentK8s captures, which k8s-object.js assigns
+      # to the configured k8s field names. Same caveat as fluentK8s: the
+      # pod.name capture stays unconditional because the engine rejects empty
+      # action entries.
+      - captureField:kubernetes.namespace:namespace_name
+      - captureField:kubernetes.container.name:container_name
+      - captureField:kubernetes.pod.name:pod_name
+      - '$=yield "captureField:kubernetes.labels." + (TenXEnv.get("k8sTeamLabel") ? TenXEnv.get("k8sTeamLabel") : "team") + ":team_label"'
 
 # ============================ Aggregation Settings ===========================
 

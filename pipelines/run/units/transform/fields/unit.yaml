@@ -274,21 +274,22 @@ unit:
         them, and an empty value is left out. An event is written whole
         (`fullText`) when:
 
-        - it has no template, or it is already compact;
-        - it is a group of several lines;
-        - the output writes no JSON record, as for raw lines, so every event is written whole;
-        - its record already has a key named `compactFieldsKey`;
-        - no field reader reads its template;
-        - its text differs from its template's where names are read;
-        - the reader cannot tell where a listed field's name or value ends, or
+        - `noTemplate`: it has no template, or it is already compact;
+        - `group`: it is a group of several lines;
+        - `noRecord`: the output writes no JSON record, as for raw lines, so every event is written whole;
+        - `recordKey`: its record already has a key named `compactFieldsKey`;
+        - `notRead`: no field reader reads its template;
+        - `structure`: its text differs from its template's where names are read;
+        - `uncertain`: the reader cannot tell where a listed field's name or value ends, or
           which headings name a field of the event;
-        - a listed field occurs twice, other than as the elements of a JSON
+        - `repeated`: a listed field occurs twice, other than as the elements of a JSON
           array or of a `fieldLineListNames` name, which are written as a list;
-        - a value, or a name read from the event, does not decode;
-        - a value is longer than `compactFieldsMaxValue`;
-        - a value holds a character that `compactFieldsUnsafeChars` matches.
+        - `value`: a value, or a name read from the event, does not decode;
+        - `tooLong`: a value is longer than `compactFieldsMaxValue`;
+        - `unsafe`: a value holds a character that `compactFieldsUnsafeChars` matches.
 
-        `compactFieldsWhole()` returns the reason. Unset (the default), `encode()`
+        `compactFieldsWhole()` returns the reason's name, and an empty string
+        for an event written compact. Unset (the default), `encode()`
         writes no fields.
 
     - names:

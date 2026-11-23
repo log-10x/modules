@@ -329,13 +329,13 @@ unit:
 
     - names:
       - compactFieldsMaxValue
-      description: the longest value compactFields writes; an event with a longer one is written whole
+      description: the longest value compactFields writes, in UTF-8 bytes; an event with a longer one is written whole
       type: number
       required: false
       defValue: 1000
       doc: |
-        The most characters of a field value. An event with a longer value is
-        written whole.
+        The most bytes of a field value, counted in UTF-8. An event with a
+        longer value is written whole.
 
     - names:
       - compactFieldsDecode

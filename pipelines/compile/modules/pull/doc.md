@@ -213,3 +213,24 @@ The library's [manifest](https://doc.log10x.com/compile/link/#file-structure) li
     |------------|-------------|
     | [pytorch/pytorch](https://github.com/pytorch/pytorch) | Deep learning, training epochs, CUDA events |
     | [huggingface/transformers](https://github.com/huggingface/transformers) | NLP models, tokenization, inference logs |
+
+The runtime also loads a security library, a second file beside the default one. Its symbols come from public schema and catalog files of security log sources: field names, event types, listed values and Windows event messages. Its manifest lists each source with its license and the commit it was built from.
+
+??? tenx-symbols "Security Log Sources"
+
+    | Repository | Author | Description |
+    |------------|--------|-------------|
+    | [nasbench/EVTX-ETW-Resources](https://github.com/nasbench/EVTX-ETW-Resources) | Nasreddine Bencherchali | Windows event provider manifests |
+    | [OTRF/OSSEM-DD](https://github.com/OTRF/OSSEM-DD) | Open Threat Research Forge | Security event data dictionaries |
+    | [SwiftOnSecurity/sysmon-config](https://github.com/SwiftOnSecurity/sysmon-config) | SwiftOnSecurity | Sysmon configuration |
+    | [splunk/security_content](https://github.com/splunk/security_content) | Splunk Inc. | Security data source definitions |
+    | [boto/botocore](https://github.com/boto/botocore) | Amazon.com, Inc. | AWS service models |
+    | [elastic/integrations](https://github.com/elastic/integrations) | Elasticsearch B.V. | Integration field definitions |
+    | [wazuh/wazuh](https://github.com/wazuh/wazuh) | Wazuh Inc. | Log decoders |
+    | [linux-audit/audit-documentation](https://github.com/linux-audit/audit-documentation) | The Linux Audit project | Audit field and record type dictionaries |
+    | [dr4gon123/flores](https://github.com/dr4gon123/flores) | dr4gon123 | FortiOS log field and log ID reference, from Fortinet's documentation |
+    | [dr4gon123/palos](https://github.com/dr4gon123/palos) | dr4gon123 | PAN-OS syslog field reference, from Palo Alto Networks' documentation |
+    | [okta/okta-developer-docs](https://github.com/okta/okta-developer-docs) | Okta, Inc. | System Log event types |
+    | [okta/okta-management-openapi-spec](https://github.com/okta/okta-management-openapi-spec) | Okta, Inc. | Management API schemas |
+    | [googleapis/google-api-go-client](https://github.com/googleapis/google-api-go-client) | Google LLC | Admin SDK Reports API |
+    | [github/docs](https://github.com/github/docs) | GitHub, Inc. | Audit log events |

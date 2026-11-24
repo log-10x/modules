@@ -147,6 +147,7 @@ rateReceiver:
     - CRITICAL=50
     - FATAL=50
   keepCountSlices: 4         # slices of the window through which the keep count accumulates; 1 = all at the window start
+  totalSlices: 1             # slices of the window through which each service's total is released; 1 = all at the window start
   severityFloors:            # random share kept for the other levels once held
     - TRACE=0
     - DEBUG=0

@@ -162,20 +162,25 @@ Start Log10x with compaction on and the options the [Log10x App](https://doc.log
 tenx @run/input/forwarder/otel-collector @apps/receiver receiverOptimize true varMaxRecurIndexes 0 timestampZone UTC timestampMaxPerObject 1 groupJoinLines false
 ```
 
-The app expands compact events in Splunk. The return pipeline prepares the events for it in two ways:
+The app expands compact events in Splunk. The return pipeline prepares the events for it in three ways:
 
 - Each compact event carries the indexed field `tenx_time=sender`. Without it, the app takes an event's time from a timestamp in its own text where its template has one, in place of the time the Collector gave it.
 - Each template record reaches the app's `tenx_dml` index as the sourcetype `tenx_dml_raw_json`, with the template as its event.
+- Each compact event keeps the sourcetype `tenx_encoded`, by which the app finds it. The Splunk HEC exporter takes a `com.splunk.sourcetype` attribute of the record or its resource over its own `sourcetype` setting.
 
-One `transform` processor on `logs/from-tenx` does both, and the Splunk HEC exporter sends the compact events as `tenx_encoded`:
+One `transform` processor on `logs/from-tenx` does all three, and the Splunk HEC exporter sends the compact events as `tenx_encoded`:
 
 ```yaml title="otelcol.yaml"
 processors:
   transform/splunk:
     error_mode: ignore
     log_statements:
+      - context: resource
+        statements:
+          - 'delete_key(attributes, "com.splunk.sourcetype")'
       - context: log
         statements:
+          - 'delete_key(attributes, "com.splunk.sourcetype") where attributes["tenx_tag"] == nil'
           - 'set(attributes["tenx_time"], "sender") where attributes["tenx_tag"] == nil'
           - 'set(body, {"templateHash": attributes["templateHash"], "template": attributes["template"]}) where attributes["tenx_tag"] == "tenx-template"'
           - 'set(attributes["com.splunk.index"], "tenx_dml") where attributes["tenx_tag"] == "tenx-template"'
@@ -197,6 +202,6 @@ service:
       exporters: [splunk_hec]
 ```
 
-The `transform` processor and the `splunk_hec` exporter ship in `otelcol-contrib`. The HEC token must allow the `tenx_dml` index as well as the index of the compact events. The processor adds `tenx_time` to every event other than a template record and changes nothing else on it.
+The `transform` processor and the `splunk_hec` exporter ship in `otelcol-contrib`. The HEC token must allow the `tenx_dml` index as well as the index of the compact events. On every event other than a template record, the processor adds `tenx_time`, removes `com.splunk.sourcetype` and changes nothing else.
 
 For Splunk integration see the [Log10x App](https://doc.log10x.com/apps/receiver/compact/splunk/) documentation. For Kubernetes deployment via the official OpenTelemetry Collector Helm chart see the [Helm sidecar overlay](https://doc.log10x.com/apps/receiver/deploy/#otel-collector).

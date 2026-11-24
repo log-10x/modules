@@ -64,7 +64,7 @@ module:
 
         The hash is [TenXString.hash](https://doc.log10x.com/api/js/#TenXString.hash) of the name: xxHash64 of its UTF-8 bytes, big-endian, in base64url without padding. Any tool can compute the same value, so it works as a join key, a metric tag or a forwarder filter.
 
-        Metrics and aggregation carry the hash whether or not this option is set. Events sent back to a [log forwarder](https://doc.log10x.com/run/input/forwarder/) return as they arrived; set this option to add the hash to them, for example `symbolMessageHashField tenx_hash`.
+        Metrics and aggregation carry the hash whether or not this option is set. Events sent back to a [log forwarder](https://doc.log10x.com/run/input/forwarder/) return as they arrived; set this option to add the hash to them, for example `symbolMessageHashField tenx_pattern`. For events bound for Splunk, use a name other than `tenx_hash`: the Log10x App reads that field as a compact event's template id, so the events would stay compact.
 
     - names:
       - symbolOriginField

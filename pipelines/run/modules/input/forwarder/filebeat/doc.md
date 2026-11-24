@@ -120,7 +120,7 @@ On Kubernetes, install the `log10x-elastic/filebeat` chart, which is the support
 helm repo add log10x-elastic https://log-10x.github.io/elastic-helm-charts
 helm repo update
 helm upgrade --install my-receiver log10x-elastic/filebeat \
-  --version 1.5.0 \
+  --version 1.5.3 \
   --set tenx.enabled=true \
   --set-file tenx.licenseJwt=license.jwt \
   --namespace logging --create-namespace

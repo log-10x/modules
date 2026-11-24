@@ -116,12 +116,16 @@ module:
       description: write every event with its routeState field and compact the events the regulator marks compact
       type: boolean
       required: false
+      doc: |
+        Writes every event with its routeState field and compacts the events the regulator marks compact.
 
     - names:
       - outputOffload
       description: write every event as full text with its routeState field
       type: boolean
       required: false
+      doc: |
+        Writes every event as full text with its routeState field.
 
     - names:
       - outputDropFilter

@@ -30,9 +30,11 @@ input:
 
     path: com.log10x.ext.edge.input.otlp.OtlpLogsInputStream
 
+    # otelK8s reads the k8s.* resource attributes, and a Fluent Bit shaped
+    # `kubernetes` attribute ahead of them when a collector sets one.
     extractors:
       - otel
-      - "$=yield TenXEnv.get(\"k8sExtractorName\") ? \"fluentK8s\" : \"\""
+      - "$=yield TenXEnv.get(\"k8sExtractorName\") ? \"otelK8s\" : \"\""
 
     sourcePattern: \"tag\":\"(.*?)\"
 

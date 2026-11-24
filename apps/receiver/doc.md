@@ -133,6 +133,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
             multiline.parser event_start
 
         # Enrichment filters Match the user-tag scheme only (NOT `*`).
+        # This example reads CLUSTER_NAME, which must be set.
         [FILTER]
             Name         modify
             Match        app.*

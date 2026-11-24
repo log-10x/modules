@@ -70,11 +70,15 @@ The original Fluent Bit tag is carried by the Forward protocol itself and surfac
 tenx @run/input/forwarder/fluentbit @apps/receiver groupJoinLines false
 ```
 
-**2. Wire up your Fluent Bit config**, include the sidecar recipe and `Match` your sources with the recipe's tag conventions:
+**2. Wire up your Fluent Bit config**, start from a copy of the sidecar recipe:
+
+```bash
+cp $TENX_MODULES/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-sidecar.conf /etc/fluent-bit/fluent-bit.conf
+```
+
+In the copy, replace the example `dummy` input and `modify` filter with your sources, and add the multiline parser file to the `[SERVICE]` section. The example filter reads `CLUSTER_NAME`, and Fluent Bit stops at start when that variable is not set.
 
 ```ini title="fluent-bit.conf"
-@INCLUDE ${TENX_MODULES}/pipelines/run/modules/input/forwarder/fluentbit/conf/tenx-sidecar.conf
-
 # The multiline parser the tail input names (an event starts at a line that
 # starts with a date); copy and edit it to match your logs.
 [SERVICE]

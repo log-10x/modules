@@ -17,7 +17,7 @@ graph LR
     A["<div style='font-size: 14px;'>📂 Receivers</div><div style='font-size: 10px;'>filelog, otlp, journald</div>"] --> F["<div style='font-size: 14px;'>🧪 logs/to-tenx</div><div style='font-size: 10px;'>k8sattributes, resource, transform</div>"]
     F --> B["<div style='font-size: 14px;'>📤 otlp exporter</div><div style='font-size: 10px;'>OTLP/gRPC → :4317</div>"]
     B --> E["<div style='font-size: 14px;'>⚡ 10x Engine</div><div style='font-size: 10px;'>Receive/Optimize</div>"]
-    E --> C["<div style='font-size: 14px;'>📥 otlp receiver</div><div style='font-size: 10px;'>:24225 (no processors)</div>"]
+    E --> C["<div style='font-size: 14px;'>📥 otlp receiver</div><div style='font-size: 10px;'>:24225 (no enrichment)</div>"]
     C --> D["<div style='font-size: 14px;'>📤 Destinations</div><div style='font-size: 10px;'>ES, Splunk, S3, Kafka</div>"]
 
     classDef input fill:#2563eb,stroke:#1d4ed8,color:#ffffff,stroke-width:2px,rx:8,ry:8
@@ -156,7 +156,7 @@ service:
 
 ### Sending to Splunk
 
-The [Log10x App](https://doc.log10x.com/apps/receiver/compact/splunk/) expands compact events in Splunk. Two things on the return pipeline let it do so:
+The [Log10x App](https://doc.log10x.com/apps/receiver/compact/splunk/) expands compact events in Splunk. The return pipeline prepares the events for it in two ways:
 
 - Each compact event carries the indexed field `tenx_time=sender`. Without it, the app takes an event's time from a timestamp in its own text where its template has one, in place of the time the Collector gave it.
 - Each template record reaches the app's `tenx_dml` index as the sourcetype `tenx_dml_raw_json`, with the template as its event.
@@ -191,6 +191,6 @@ service:
       exporters: [splunk_hec]
 ```
 
-The HEC token must allow the `tenx_dml` index as well as the index of the compact events. The processor adds `tenx_time` to compact events and changes nothing else on them.
+The `transform` processor and the `splunk_hec` exporter ship in `otelcol-contrib`. The HEC token must allow the `tenx_dml` index as well as the index of the compact events. The processor adds `tenx_time` to every event other than a template record and changes nothing else on it.
 
 For Splunk integration see the [Log10x App](https://doc.log10x.com/apps/receiver/compact/splunk/) documentation. For Kubernetes deployment via the official OpenTelemetry Collector Helm chart see the [Helm sidecar overlay](https://doc.log10x.com/apps/receiver/deploy/#otel-collector).

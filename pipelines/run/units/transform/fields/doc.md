@@ -73,7 +73,8 @@ A profile sets `fieldReaders` and `compactFields` for one source. A security sou
 - `sysmon.yaml`: Sysmon events.
 - `stream-dns.yaml`, `stream-tcp.yaml` and `stream-ip.yaml`: Splunk Stream DNS, TCP and IP events.
 - `fortigate.yaml`: FortiGate key=value logs.
-- `kubernetes-json.yaml`: Kubernetes container logs sent as whole JSON records with the pod's metadata inside, as Fluent Bit's kubernetes filter writes them. It lists the stream, namespace, pod, container, node and `app.kubernetes.io/name` label under the names Splunk's JSON extraction gives them, so a search that filters or groups by them needs no expansion.
+
+`kubernetes-json.yaml` is for Kubernetes container logs that reach Splunk as whole JSON records, as Fluent Bit's kubernetes filter writes them. It lists the stream, namespace, pod, container, node and `app.kubernetes.io/name` label under the names Splunk's JSON extraction gives them. A search that filters or groups by these fields needs no expansion.
 
 The profiles are in the config folder [run/fields](https://github.com/log-10x/config/tree/main/pipelines/run/fields). Select one by its path on the launch line:
 

@@ -66,7 +66,7 @@ An event whose listed fields cannot be given exactly as its text holds them is w
 
 ### :material-file-cog: Profiles
 
-A profile sets `fieldReaders` and `compactFields` for one source. It lists the fields that the source's Splunk add-on reads to fill its CIM data models, under the add-on's names:
+A profile sets `fieldReaders` and `compactFields` for one source. A security source's profile lists the fields that its Splunk add-on reads to fill its CIM data models, under the add-on's names:
 
 - `windows-security-xml.yaml`: Windows Security events in XML.
 - `windows-security-classic.yaml`: Windows Security events in classic text.
@@ -74,10 +74,12 @@ A profile sets `fieldReaders` and `compactFields` for one source. It lists the f
 - `stream-dns.yaml`, `stream-tcp.yaml` and `stream-ip.yaml`: Splunk Stream DNS, TCP and IP events.
 - `fortigate.yaml`: FortiGate key=value logs.
 
+`kubernetes-json.yaml` is for Kubernetes container logs that reach Splunk as whole JSON records, as Fluent Bit's kubernetes filter writes them. It lists the stream, namespace, pod, container, node and `app.kubernetes.io/name` label under the names Splunk's JSON extraction gives them. A search that filters or groups by these fields needs no expansion.
+
 The profiles are in the config folder [run/fields](https://github.com/log-10x/config/tree/main/pipelines/run/fields). Select one by its path on the launch line:
 
 ```bash
 tenx @run/input/forwarder/fluentbit @apps/receiver receiverOptimize true @run/fields/sysmon.yaml
 ```
 
-Select one profile per Receiver. Two profiles that share an entry list it twice, which stops the launch. The first lines of each file name the add-on version it was checked with and the data models its fields fill.
+Select one profile per Receiver. Two profiles that share an entry list it twice, which stops the launch. The first lines of each file name what it was checked with and, for a security source, the data models its fields fill.

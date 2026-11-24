@@ -26,6 +26,7 @@ const ENV = {
 };
 
 const TenXEnv = { get: (name, def) => (name in ENV ? ENV[name] : def) };
+const TenXString = { length: (v) => (v == null ? 0 : String(v).length) };
 
 const MATCH_ACTIONS = ['captureAll', 'captureFirst', 'captureLast', 'captureArrays',
   'captureFirstArray', 'captureLastArray', 'setOuterText'];
@@ -146,7 +147,7 @@ function enrich(input, record) {
   const self = { ...fields, set: (name, v) => { out[name] = v; } };
   for (const c of classes) {
     if (!new Function('TenXEnv', 'config', c.shouldLoad)(TenXEnv, {})) continue;
-    new Function('TenXEnv', c.ctor).call(self, TenXEnv);
+    new Function('TenXEnv', 'TenXString', c.ctor).call(self, TenXEnv, TenXString);
   }
   for (const k of ['tenx_user_service', 'tenx_user_process']) if (self[k]) out[k] = self[k];
   return out;
@@ -241,7 +242,7 @@ test('each k8s script holds at most one TenXObject class', () => {
   for (const file of scripts) assert.ok(classes.filter((c) => c.file === file).length <= 1, file);
 });
 
-// The engine takes a var declaration only at the top level of a constructor.
+// A var declared inside an if block can fail at run time, so the k8s scripts keep vars at the top level.
 test('k8s constructors declare vars only at their top level', () => {
   for (const c of classes) {
     let depth = 0;

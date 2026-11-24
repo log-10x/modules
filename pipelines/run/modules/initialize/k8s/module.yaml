@@ -32,7 +32,7 @@ module:
       doc: |
         Defines the name of the [extractor](https://doc.log10x.com/run/input/extract/) to use for k8s context extraction.
 
-        `fluentK8s` reads the `kubernetes` map of Fluent Bit, Fluentd, Vector and Logstash records. `filebeatK8s` reads the map Filebeat's `add_kubernetes_metadata` writes. `otelK8s` reads the OpenTelemetry `k8s.*` resource attributes, and a Fluent Bit shaped `kubernetes` attribute first where a record has one. The OpenTelemetry Collector input uses `otelK8s` whenever this option is set.
+        `fluentK8s` reads `kubernetes.container_name`, `kubernetes.namespace_name`, `kubernetes.pod_name` and `kubernetes.labels`, the map Fluent Bit and Fluentd write. `filebeatK8s` reads the map Filebeat's `add_kubernetes_metadata` writes. `otelK8s` reads the OpenTelemetry `k8s.*` resource attributes, and a Fluent Bit shaped `kubernetes` attribute first where a record has one. The OpenTelemetry Collector input uses `otelK8s` whenever this option is set.
 
         To learn more see [k8s extractors](https://github.com/log-10x/modules/blob/main/pipelines/run/modules/initialize/k8s/settings.yaml)
       defValue: fluentK8s

@@ -1,21 +1,12 @@
 // @loader: tenx
 
-import {TenXEnv} from '@tenx/tenx'
+import {TenXEnv, TenXString} from '@tenx/tenx'
 
-// The pod-name enrichment, gated on k8sPodNameField being truthy via `shouldLoad`.
-// The class only loads when the operator has opted in, and the constructor (and its
-// `set(TenXEnv.get("k8sPodNameField"), ...)` call) is only parsed when the field name
-// is non-empty.
-//
-// Why a separate class: the engine parse-validates `set()` at init regardless of
-// runtime guards. If we inline `if (TenXEnv.get("k8sPodNameField")) { set(..., ...) }`
-// in K8sFluentObject's constructor, the engine still validates set()'s shape
-// against an empty field name when k8sPodNameField="" and refuses to load.
-// shouldLoad is plain JS, runs at class-load time before the constructor body
-// gets transpiled to DSL, so gating there avoids the parse pass entirely.
-//
-// Why a separate file: the engine keeps one constructor per script file, so in
-// k8s-object.js this one would replace K8sFluentObject's.
+// The pod-name enrichment. shouldLoad gates it on k8sPodNameField because the engine
+// validates each set() when it loads a script and refuses an empty field name, even
+// behind a runtime check. It has its own file because the engine keeps one constructor
+// per script file. A field the record lacks counts as true in a condition, so presence
+// is tested by length, and the Fluent Bit shaped values are set last so they win.
 export class K8sFluentPodObject extends TenXObject {
 
     static shouldLoad(config) {
@@ -24,18 +15,18 @@ export class K8sFluentPodObject extends TenXObject {
 
     constructor() {
 
-        if (this.pod_name) {
-            this.set(TenXEnv.get("k8sPodNameField"), this.pod_name);
-        }
-        if (this.pod_name && this.container_name) {
-            this.tenx_user_process = this.pod_name + "/" + this.container_name;
-        }
-
-        if (!this.pod_name && this.otel_pod_name) {
+        if (TenXString.length(this.otel_pod_name) > 0) {
             this.set(TenXEnv.get("k8sPodNameField"), this.otel_pod_name);
         }
-        if (!this.pod_name && this.otel_pod_name && this.otel_container_name) {
+        if ((TenXString.length(this.otel_pod_name) > 0) && (TenXString.length(this.otel_container_name) > 0)) {
             this.tenx_user_process = this.otel_pod_name + "/" + this.otel_container_name;
+        }
+
+        if (TenXString.length(this.pod_name) > 0) {
+            this.set(TenXEnv.get("k8sPodNameField"), this.pod_name);
+        }
+        if ((TenXString.length(this.pod_name) > 0) && (TenXString.length(this.container_name) > 0)) {
+            this.tenx_user_process = this.pod_name + "/" + this.container_name;
         }
     }
 }

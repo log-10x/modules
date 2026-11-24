@@ -156,7 +156,13 @@ service:
 
 ### Sending to Splunk
 
-The [Log10x App](https://doc.log10x.com/apps/receiver/compact/splunk/) expands compact events in Splunk. The return pipeline prepares the events for it in two ways:
+Start Log10x with compaction on and the options the [Log10x App](https://doc.log10x.com/apps/receiver/compact/splunk/) needs, which its setup page explains:
+
+```bash
+tenx @run/input/forwarder/otel-collector @apps/receiver receiverOptimize true varMaxRecurIndexes 0 timestampZone UTC timestampMaxPerObject 1 groupJoinLines false
+```
+
+The app expands compact events in Splunk. The return pipeline prepares the events for it in two ways:
 
 - Each compact event carries the indexed field `tenx_time=sender`. Without it, the app takes an event's time from a timestamp in its own text where its template has one, in place of the time the Collector gave it.
 - Each template record reaches the app's `tenx_dml` index as the sourcetype `tenx_dml_raw_json`, with the template as its event.

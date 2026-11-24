@@ -321,7 +321,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
         otelcol --config=/etc/otelcol/tenx-sidecar.yaml
         ```
 
-        Keep the egress pipeline (`logs/from-tenx`) processor-free, it carries returning events directly to your destination exporters so enrichment runs exactly once.
+        Keep enrichment processors off the egress pipeline (`logs/from-tenx`), so enrichment runs exactly once. A Splunk destination takes one processor of its own, shown in [Sending to Splunk](https://doc.log10x.com/run/input/forwarder/otel-collector/#sending-to-splunk).
 
     === ":simple-vector: Vector"
 

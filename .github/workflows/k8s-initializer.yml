@@ -1,0 +1,23 @@
+name: k8s initializer
+
+on:
+  pull_request:
+    paths:
+      - 'pipelines/run/modules/initialize/k8s/**'
+      - 'pipelines/run/modules/input/forwarder/*/stream.yaml'
+      - 'tests/**'
+      - '.github/workflows/k8s-initializer.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  k8s-fields:
+    name: k8s fields per forwarder input
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: node --test tests/

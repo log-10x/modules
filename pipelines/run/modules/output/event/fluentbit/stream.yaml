@@ -15,6 +15,41 @@ include: run/modules/output/event/fluentbit/module.yaml
 output:
 
     # 'type' defines the output type (e.g., stdout, log4j, micrometer).
+    #  This output utilizes a custom OutputStream to spawn and write into a spawned subprocess's stdin pipe.
+    # This template output comes first, so a template reaches the output before the events that use it.
+  - type: stream
+
+    # 'name' assigns a logical name to this output instance
+    name: $fluentbitOutCommand
+
+    # 'foreach' sets 'fluentbitEventOutputs' as the options group for whose instances
+    #  to create matching output streams to allow multiple process stream outputs.
+    foreach: fluentbitEventOutputs
+
+    # 'path' defines a class into whose instance TenXObject fields values
+    #  are written and flushed.
+    path: com.log10x.ext.edge.output.proc.fluentbit.FluentbitOutputStream
+
+    # 'group' sets the output stream as a key to group sub-processes sharing command and argument values.
+    group:
+      - $fluentbitOutCommand
+      - $?fluentbitOutInputArgs
+      - $?fluentbitOutOutputArgs
+
+    # 'enabled' must be set to true for templates to be encoded
+    enabled: $?fluentbitOutWriteTemplates=true
+
+    # 'filter' uses the 'isNewTemplate' 10x JavaScript function to skip templates
+    #  loaded via the https://doc.log10x.com/run/template/#templatefiles argument or previously written to this output
+    filter: isNewTemplate()
+
+    encodeType: json
+
+    fields:
+      - templateHash
+      - template
+
+    # 'type' defines the output type (e.g., stdout, log4j, micrometer).
     #  This output utilizes a custom OutputStream to spawn and write into a subprocess stdin pipe.
   - type: stream
 
@@ -52,37 +87,3 @@ output:
     #  to write to for each TenXObject passed to this output.
     fields:
       - $?fluentbitOutFields
-
-    # 'type' defines the output type (e.g., stdout, log4j, micrometer).
-    #  This output utilizes a custom OutputStream to spawn and write into a spawned subprocess's stdin pipe.
-  - type: stream
-
-    # 'name' assigns a logical name to this output instance
-    name: $fluentbitOutCommand
-
-    # 'foreach' sets 'fluentbitEventOutputs' as the options group for whose instances
-    #  to create matching output streams to allow multiple process stream outputs.
-    foreach: fluentbitEventOutputs
-
-    # 'path' defines a class into whose instance TenXObject fields values
-    #  are written and flushed.
-    path: com.log10x.ext.edge.output.proc.fluentbit.FluentbitOutputStream
-
-    # 'group' sets the output stream as a key to group sub-processes sharing command and argument values.
-    group:
-      - $fluentbitOutCommand
-      - $?fluentbitOutInputArgs
-      - $?fluentbitOutOutputArgs
-
-    # 'enabled' must be set to true for templates to be encoded
-    enabled: $?fluentbitOutWriteTemplates=true
-
-    # 'filter' uses the 'isNewTemplate' 10x JavaScript function to skip templates
-    #  loaded via the https://doc.log10x.com/run/template/#templatefiles argument or previously written to this output
-    filter: isNewTemplate()
-
-    encodeType: json
-
-    fields:
-      - templateHash
-      - template

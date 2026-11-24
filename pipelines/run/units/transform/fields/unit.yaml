@@ -66,3 +66,310 @@ unit:
         should be 'RESULT_SUCCESS', and as such the value terminator character 
         should be ',' vs. '_' (in which case the value would be 'RESULT').
 
+    - names:
+      - fieldReaders
+      description: "the readers that find a template's fields, in order. Possible values: [xml, kv, json, columns, lines]"
+      type: list
+      required: false
+      doc: |
+        The readers that find the fields of each TenXTemplate, tried in order; the
+        first that reads the template's text gives its fields. When set, these
+        readers replace the JSON and key-value scan above for every consumer of
+        the fields. Unset (the default), the scan above finds the fields.
+
+        - **xml**: a text that is one XML element. Names are paths of local names
+          joined by `.`, such as `Event.System.EventID`; an attribute is named
+          after its element, such as `Event.System.Execution.ProcessID`.
+        - **kv**: `name=value` pairs separated by `fieldPairDelimiters`. A value that
+          opens with `"` runs to the next `"` not escaped by a backslash. A value
+          that a delimiter ends inside a bracket it opened, as in `a=f(x y)`, gives
+          no field, since the text after the delimiter may belong to it.
+        - **json**: a text that is one JSON object or array. Names are key paths
+          joined by `.`, with `[]` for each array a value is in, such as
+          `userIdentity.arn` or `resources[].ARN`.
+        - **columns**: delimited columns named by position from `fieldColumns`.
+        - **lines**: a text of several `name<separator>value` lines, such as
+          `LogName=Security`, under headings such as `Subject:`. A pair under a
+          heading is named by it, such as `Subject.Account Name`. A name that
+          occurs twice in one event gives no field, and neither does an event with
+          a carriage return that does not end a line. A text with one line of text
+          is left to the next reader.
+
+        The fields are found once per template, and an event of the template
+        reads each value from its own text at the same place. When the readers
+        cannot be sure of a field in an event, no consumer gets it. A lookup finds
+        it missing, and `compactFields` writes the event whole.
+
+        When several readers are listed, put `xml` and `json` first, then `lines`.
+        `kv` and `columns` read almost any line, so a reader listed after them is
+        not tried.
+
+    - names:
+      - fieldPairDelimiters
+      description: the characters that separate key-value pairs for the kv field reader
+      type: string
+      required: false
+      defValue: ' ,'
+      doc: |
+        The characters that end an unquoted value and separate pairs for the `kv`
+        reader, a space and a comma by default. A line feed always separates pairs.
+        Each must be a token delimiter (`tokenDelims`) other than `=`, `"`, `\` or
+        `-`, or the launch stops.
+
+    - names:
+      - fieldColumns
+      description: the column names for the columns field reader
+      type: list
+      required: false
+      doc: |
+        The names of the columns the `columns` reader reads, in order, separated by
+        commas, such as `receive_time,serial,type`. An empty name leaves its
+        column unnamed. Columns past the last name are not read.
+
+        To name the columns by the value of one column, give one entry per value,
+        such as `TRAFFIC=future_use1,receive_time,serial,type` and
+        `THREAT=future_use1,receive_time,serial,type`, and set `fieldColumnsKey`.
+        An entry without `=` applies to any other value.
+
+    - names:
+      - fieldColumnsKey
+      description: the column, counted from 1, whose value selects a fieldColumns list
+      type: number
+      required: false
+      defValue: 0
+      doc: |
+        The column, counted from 1, whose value selects the `fieldColumns` entry
+        that names a line's columns. 0 (the default) uses the one entry without a value.
+
+    - names:
+      - fieldColumnDelimiter
+      description: the character that separates columns for the columns field reader
+      type: string
+      required: false
+      defValue: ','
+      doc: |
+        The character that separates columns. It must be a token delimiter
+        (`tokenDelims`) other than `"`, `-` or a line break, or the launch stops. A
+        column that opens with `"` runs to its closing quote, and `""` inside it
+        is one quote.
+
+    - names:
+      - fieldNameAttributes
+      description: XML elements whose attribute names their value, as element@attribute
+      type: list
+      required: false
+      doc: |
+        XML elements named by one of their attributes instead of their own name, as
+        `element@attribute`. With `Data@Name`, the Windows event element
+        `<Data Name='SubjectUserName'>bob</Data>` gives the field
+        `Event.EventData.SubjectUserName` with the value `bob`.
+
+    - names:
+      - fieldLineSeparators
+      description: the text that ends a pair's name for the lines field reader
+      type: list
+      required: false
+      doc: |
+        The text that ends a pair's name for the `lines` reader, such as `=`, or a
+        colon and a tab. A line's first separator splits it into a name and a
+        value, and the value runs to the end of the line. The default is `=` and `:`.
+
+        Each must be made of token delimiters (`tokenDelims`) other than `-` or a
+        line break, or the launch stops. In YAML, write a tab as `"\t"`, in double
+        quotes.
+
+    - names:
+      - fieldLineSpaces
+      description: the characters that indent a line and follow a separator for the lines field reader
+      type: string
+      required: false
+      defValue: " \t"
+      doc: |
+        The characters that indent a line, and that the `lines` reader leaves out
+        between a separator and its value. The default is a space and a tab. Each
+        must be a token delimiter other than `-` or a line break, or the launch
+        stops.
+
+    - names:
+      - fieldLineHeadingMark
+      description: the text that ends a heading line for the lines field reader
+      type: string
+      required: false
+      defValue: ":"
+      doc: |
+        The text that ends a heading for the `lines` reader. The mark must be made
+        of token delimiters other than `-` or a line break.
+
+        A line that holds only a name and this mark is a heading, such as
+        `Subject:`. So is a line of a name, this mark and spaces, where the next
+        line with text is a pair or a heading indented deeper. Any other such line
+        reads as an ordinary line.
+
+        A heading names the lines after it that are indented deeper, up to an
+        empty line or a line indented no deeper. A pair indented under no heading
+        gives no field, and neither do other pairs that share its name, such as
+        `Subject.Logon ID` for `Logon ID`. Nor does an indented pair in a text that
+        mixes tabs and spaces in its indentation.
+
+        With `compactFields` set, an event with a pair under no known heading is
+        written whole.
+
+    - names:
+      - fieldLineHeadingJoin
+      description: the text between a heading and a name under it for the lines field reader
+      type: string
+      required: false
+      defValue: "."
+      doc: |
+        The text between a heading and a name under it, such as the `.` in
+        `Subject.Account Name`. Nested headings are joined the same way.
+
+    - names:
+      - fieldLineRestNames
+      description: the names whose value runs to the end of the text for the lines field reader
+      type: list
+      required: false
+      doc: |
+        The names, as the `lines` reader gives them, whose value runs from their
+        separator to the end of the text, such as `Message`. The lines after such
+        a pair still give their own fields. A final line break is not part of the
+        value.
+
+        Such a value holds line breaks, so `compactFields` attaches it only where
+        `compactFieldsUnsafeChars` allows them.
+
+    - names:
+      - fieldLineListNames
+      description: the names whose value is a list of lines for the lines field reader
+      type: list
+      required: false
+      doc: |
+        The names, as the `lines` reader gives them, whose value is a list, such
+        as `Privileges`. Its elements are the value on the name's line and each
+        line after it that is indented deeper and is not a pair or a heading,
+        skipping lines of spaces between them. `compactFields` writes the
+        elements as a list.
+
+    - names:
+      - compactFields
+      description: the fields each compact event carries beside it, as name or name=outputName
+      type: list
+      required: false
+      doc: |
+        The fields of each event that `encode()` writes beside its compact form in
+        its record. A destination can then index them without expanding the event.
+
+        Each entry is a field name as the template's field readers name it (see
+        `fieldReaders`). An entry `name=outputName` writes it under another name,
+        such as `Event.EventData.NewProcessName=process_path`. The launch stops
+        when an entry is listed twice or `fieldReaders` is not set.
+
+        Entries that share an output name write their values under it as one list,
+        in the order of the event's text. When the event holds only one of those
+        values, it is written as a single value. A field with several entries, such
+        as `Event.System.Computer=Computer` and `Event.System.Computer=dest`, is
+        written under each output name.
+
+        The fields are read from each event's text where its template places
+        them, and an empty value is left out. An event is written whole
+        (`fullText`) when:
+
+        - `noTemplate`: it has no template, or it is already compact;
+        - `group`: it is a group of several lines;
+        - `noRecord`: the output writes no JSON record, as for raw lines, so every event is written whole;
+        - `recordKey`: its record already has a key named `compactFieldsKey`;
+        - `notRead`: no field reader reads its template;
+        - `structure`: its text differs from its template's where names are read;
+        - `uncertain`: the reader cannot tell where a listed field's name or value ends, or
+          which headings name a field of the event;
+        - `repeated`: a listed field occurs twice, other than as the elements of a JSON
+          array or of a `fieldLineListNames` name, which are written as a list;
+        - `value`: a value, or a name read from the event, does not decode;
+        - `tooLong`: a value is longer than `compactFieldsMaxValue`;
+        - `unsafe`: a value holds a character that `compactFieldsUnsafeChars` matches.
+
+        `compactFieldsWhole()` returns the reason's name, and an empty string
+        for an event written compact. Unset (the default), `encode()`
+        writes no fields.
+
+    - names:
+      - compactFieldsForm
+      description: "how compactFields are written in the record. Possible values: [object, text]"
+      type: string
+      required: false
+      defValue: object
+      doc: |
+        - **object** (the default): a JSON object under `compactFieldsKey`, with a
+          list as a JSON array, such as `"fields":{"user":"bob","tags":["a","b"]}`.
+        - **text**: one string under `compactFieldsKey` of `name<separator>"value"`
+          pairs separated by spaces, with `\` and `"` in a value escaped by a
+          backslash, such as `"meta":"user::\"bob\""` with the separator `::`.
+          A list is one pair for each of its values.
+
+    - names:
+      - compactFieldsKey
+      description: the record key compactFields are written under
+      type: string
+      required: false
+      defValue: fields
+      doc: |
+        The key of the record that holds the fields. An event whose record already
+        has a key of that name is written whole. The launch stops when `encode()`
+        itself adds one, as `encode("routeState")` adds `routeState`.
+
+    - names:
+      - compactFieldsSeparator
+      description: the text between a name and its value in the text form of compactFields
+      type: string
+      required: false
+      defValue: "="
+      doc: |
+        The text between a field's name and its quoted value when `compactFieldsForm`
+        is `text`.
+
+    - names:
+      - compactFieldsMaxValue
+      description: the longest value compactFields writes, in UTF-8 bytes; an event with a longer one is written whole
+      type: number
+      required: false
+      defValue: 1000
+      doc: |
+        The most bytes of a field value, counted in UTF-8. An event with a
+        longer value is written whole.
+
+    - names:
+      - compactFieldsDecode
+      description: whether compactFields values are decoded or written as their text stands in the event
+      type: boolean
+      required: false
+      defValue: true
+      doc: |
+        `true` (the default) writes each value decoded by its format: JSON escapes,
+        XML entities and quoted pair escapes. `false` writes the value's text as it
+        stands in the event, for a destination that reads it that way.
+
+    - names:
+      - compactFieldsTrim
+      description: whether compactFields values lose white space at both ends
+      type: boolean
+      required: false
+      defValue: false
+      doc: |
+        `true` leaves out spaces, tabs and line breaks at both ends of each value,
+        for a destination whose own extraction trims them. A value left empty is
+        not written.
+
+    - names:
+      - compactFieldsUnsafeChars
+      description: a regular expression for the characters a compactFields value must not hold
+      type: string
+      required: false
+      defValue: '[\x00-\x1f]'
+      doc: |
+        A Java regular expression that matches one character, such as `'[\x00-\x1f]'`.
+        An event with a listed value that holds such a character is written whole,
+        in either `compactFieldsForm`. This is for a destination that reads some
+        characters in an indexed value back as others, such as a tab as a space.
+
+        The default matches every control character. In a YAML file, write the
+        expression in quotes, since an unquoted `[...]` is a list.

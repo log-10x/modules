@@ -42,6 +42,54 @@ fieldNameBreaks: $?fieldNameBreaks=, /\{}.()[]
 #  should be ',' vs. '_' (in which case the value would be 'RESULT').
 fieldValueBreaks: $?fieldValueBreaks=, /\{}()[]
 
+# 'fieldReaders' lists the readers that find each template's fields, in order:
+#  xml, kv, json, columns or lines. When set, they replace the scan above.
+fieldReaders:
+  - $?fieldReaders
+
+# 'fieldPairDelimiters' sets the characters that separate pairs for the 'kv' reader.
+fieldPairDelimiters: $?fieldPairDelimiters
+
+# 'fieldColumns' names the columns the 'columns' reader reads, in order
+#  ('a,b,c'), or per value of the 'fieldColumnsKey' column ('TRAFFIC=a,b,c').
+fieldColumns:
+  - $?fieldColumns
+
+# 'fieldColumnsKey' sets the column, counted from 1, whose value selects a 'fieldColumns' entry.
+fieldColumnsKey: $?fieldColumnsKey=0
+
+# 'fieldColumnDelimiter' sets the character that separates columns.
+fieldColumnDelimiter: $?fieldColumnDelimiter
+
+# 'fieldNameAttributes' lists XML elements named by one of their attributes ('Data@Name').
+fieldNameAttributes:
+  - $?fieldNameAttributes
+
+# 'fieldLineSeparators' lists the text that ends a pair's name for the 'lines' reader ('=').
+fieldLineSeparators:
+  - $?fieldLineSeparators
+
+# 'fieldLineSpaces' sets the characters that indent a line and follow a separator for the 'lines' reader.
+fieldLineSpaces: $?fieldLineSpaces
+
+# 'fieldLineHeadingMark' sets the text that ends a heading line for the 'lines' reader ('Subject:').
+fieldLineHeadingMark: $?fieldLineHeadingMark
+
+# 'fieldLineHeadingJoin' sets the text between a heading and a name under it for the 'lines' reader.
+fieldLineHeadingJoin: $?fieldLineHeadingJoin
+
+# 'fieldLineRestNames' lists the names whose value runs to the end of the text for the 'lines' reader ('Message').
+fieldLineRestNames:
+  - $?fieldLineRestNames
+
+# 'fieldLineListNames' lists the names whose value is a list of lines for the 'lines' reader ('Privileges').
+fieldLineListNames:
+  - $?fieldLineListNames
+
+# 'compactFieldsUnsafeChars' matches the characters a value must not hold for
+#  'compactFields' to attach it; an event with such a value is written whole.
+compactFieldsUnsafeChars: '$?compactFieldsUnsafeChars=[\x00-\x1f]'
+
 # -------------------------- Template Format Settings  ------------------------
 
 # 'varPlaceholder' controls which character to encode for an TenXTemplate

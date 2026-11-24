@@ -30,3 +30,12 @@ module:
         defines which characters break a string of event characters into tokens to classify as symbols or variables.
       defValue: <>|. ][:-+/*=\\,{}_();'\"$\t\n@
       
+    - names:
+      - macAddressValues
+      description: read MAC address octets as values
+      type: boolean
+      required: false
+      doc: |
+        controls whether each octet of a MAC address written with `:` or `-` (e.g., `00:1a:2b:3c:4d:5e`) is a variable, even when the symbol library holds it.
+        Turn it off for sources that repeat a few MAC addresses, where the octets cost fewer bytes as template text than as values.
+      defValue: true

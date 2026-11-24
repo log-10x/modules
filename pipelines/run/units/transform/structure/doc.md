@@ -32,14 +32,15 @@ Each TenXObject instance contains variables unique to its instance as members an
 Each symbol links to its source code/binary [origin](https://doc.log10x.com/run/transform/symbol/) and its [context](https://doc.log10x.com/run/transform/symbol/#contexts) within the file (e.g., class, field, enum, printout).
 
 ### :material-variable: **`Variables`**
-Values the symbol library does not hold, and every number or digit-led token. These include:
+Values the symbol library does not hold, every number or digit-led token, and the octets of a MAC address (see [macAddressValues](#macaddressvalues)). These include:
 - Alphanumeric values (e.g., EDC8116I)  
 - Formatted/epoch timestamps (e.g., 2022-04-29T18:52:58.114201Z, 1719928783) 
 - Host addresses (e.g., 10.10.34.11:9000)
+- MAC addresses (e.g., 00:1a:2b:3c:4d:5e)
 - Span IDs (e.g., 0x051581bf3cb55c13) 
 
 ### :material-alphabetical-variant: **`Symbols`**
-Values extracted from source code and binary artifacts at compile-time and stored in a target [Symbol library](https://doc.log10x.com/run/symbol), plus configured literals. A token is a symbol when the library holds it and it is not a number or a digit-led token; no other test applies. These include:
+Values extracted from source code and binary artifacts at compile-time and stored in a target [Symbol library](https://doc.log10x.com/run/symbol), plus configured literals. A token is a symbol when the library holds it, it is not a number or a digit-led token, and it is not a MAC address octet. These include:
 - Class names (e.g., MyClient, MyServer)
 - Function/method names (e.g., info, warn) 
 - Enum literals (e.g., STATUS, ERROR, OK)

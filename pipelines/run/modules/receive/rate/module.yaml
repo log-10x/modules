@@ -87,6 +87,9 @@ module:
         sidecar never consumes the application container's allowance. Each regulator instance counts
         its own, so pods spread across ten nodes get ten caps. Use `container`, never `pod`.
 
+        It names a field the event holds after initialization, such as the k8s container field. A
+        record attribute becomes such a field only when an extractor captures it.
+
         When the field is absent on an event (non-k8s input, or no k8s extractor configured), the
         regulator falls back to a single node-wide bucket and enforces the cap per pattern across
         the node.
@@ -220,6 +223,25 @@ module:
         keep-count line counts toward `rateReceiverKeepMaxOverTotal`. Read by the cap-file
         regulators.
       defValue: 4
+
+    - names:
+      - rateReceiverTotalSlices
+      description: equal slices of the window through which each service's total is released
+      type: number
+      required: false
+      doc: |
+        defines how many equal slices of the window (`rateReceiverResetIntervalMs`) release a
+        service's total (`rateReceiverTotalLookupFile`). By the end of the first of S slices the
+        service may have passed its total x 1 / S, by the end of the second its total x 2 / S, and
+        its whole total in the last. What a slice leaves unused carries to the next, so a sudden
+        burst passes about one slice's share at a time instead of the whole total at the start of
+        the window. With the 4-minute window the default 6 slices release the total 40 seconds at a
+        time, and with a 1-minute window 10 seconds at a time. Slices start on the clock like windows.
+        A line held back only by its slice's share takes the service's action and counts toward
+        neither `rateReceiverBaselineMaxOverTotal` nor `rateReceiverKeepMaxOverTotal`. `1` releases
+        the whole total at the start of the window; a value below 1 or not a number acts as 1, and a
+        fraction is rounded down. Read by the cap-file regulators.
+      defValue: 6
 
     - names:
       - rateReceiverLookupFile
@@ -477,8 +499,9 @@ module:
           arrival order before the scale applies. A service whose first lines of this window and
           of the last window it sent in are two window lengths or more apart scales by total / its
           units so far this window instead.
-        - **Hard bound.** Once the lines the service passed reach its total, every further line takes
-          the service's action (`rateReceiverActionLookupFile`).
+        - **Hard bound.** Once the lines the service passed reach the share of its total released so
+          far (`rateReceiverTotalSlices`), every further line takes the service's action
+          (`rateReceiverActionLookupFile`).
 
         The `rateReceiverBaselineCount` sample counts toward the total like any line, and once the total
         is spent the service passes at most `rateReceiverBaselineMaxOverTotal` more sample lines in the

@@ -23,7 +23,7 @@ The share guard is off by default (`minSharePercent: 0`). Set above 0, it keeps 
 An optional total file bounds what each service passes per window on this node, across all its patterns. New patterns from a deploy each bring a full per-pattern cap, so a service without a total can send many times its budget until its caps are rewritten. Two rules apply once a service has a total:
 
 - **Largest first.** When the service's caps alone let more than its total through in the previous window, every pattern's cap scales by total / that amount for the whole window, or by what they let through so far this window once that is larger. The service's largest patterns reach the scaled cap first and are held, and its small ones keep passing. The scale follows the previous window, so the window after a storm is scaled by the storm for its whole length and recovers the window after. The first window after a quiet one fills its total in arrival order before the scale applies. A service whose first lines of this window and of the last window it sent in are two window lengths or more apart scales by total / its units so far this window instead.
-- **Hard bound.** Once the lines the service passed reach its total, every further line takes the service's action.
+- **Hard bound.** Once the lines the service passed reach the share of its total released so far, every further line takes the service's action. `totalSlices` (default 6) releases the total through the window in equal slices, and what a slice leaves unused carries to the next.
 
 The baseline sample counts toward the total like any line. Once the total is spent, the service passes at most `baselineMaxOverTotal` more sample lines in the window (default 50, counted in lines whatever the `unit`), and the rest of its samples take the service's action. The error-class lines in `keepCounts` count toward the total the same way, and once it is spent the service passes at most `keepMaxOverTotal` more of them in the window (default 500, counted in lines), so with the shipped settings a burst of new error patterns exceeds the total by at most 550 lines. The lines a mute entry passes always pass and count toward the total, so the service's other patterns give way first. Each regulator instance holds its own total; the MCP's budget run (`log10x_setup_recurring`) divides a fleet budget across instances, and a node added between runs enforces its own total until the next run.
 
@@ -147,6 +147,7 @@ rateReceiver:
     - CRITICAL=50
     - FATAL=50
   keepCountSlices: 4         # slices of the window through which the keep count accumulates; 1 = all at the window start
+  totalSlices: 6             # slices of the window through which each service's total is released; 1 = all at the window start
   severityFloors:            # random share kept for the other levels once held
     - TRACE=0
     - DEBUG=0

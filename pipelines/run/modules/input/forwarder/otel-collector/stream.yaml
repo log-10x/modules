@@ -30,9 +30,11 @@ input:
 
     path: com.log10x.ext.edge.input.otlp.OtlpLogsInputStream
 
+    # otelK8s reads the k8s.* resource attributes, and a Fluent Bit shaped
+    # `kubernetes` attribute ahead of them when a collector sets one.
     extractors:
       - otel
-      - "$=yield TenXEnv.get(\"k8sExtractorName\") ? \"fluentK8s\" : \"\""
+      - "$=yield TenXEnv.get(\"k8sExtractorName\") ? \"otelK8s\" : \"\""
 
     sourcePattern: \"tag\":\"(.*?)\"
 
@@ -69,6 +71,10 @@ outputOtlp:
 
   - host: $=yield TenXEnv.get("otelCollectorOutputHost", "127.0.0.1")
     port: $=yield TenXEnv.get("otelCollectorOutputPort", "24225")
+
+    # Write the events outputDropFilter keeps: hard drop omits the ones the
+    # regulator marked for dropping.
+    filter: $?outputDropFilter=isObject && !isRoute("drop")
 
     fields:
       - $?outputEncodeField=fullText

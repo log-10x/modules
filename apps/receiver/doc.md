@@ -133,6 +133,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
             multiline.parser event_start
 
         # Enrichment filters Match the user-tag scheme only (NOT `*`).
+        # This example reads CLUSTER_NAME, which must be set.
         [FILTER]
             Name         modify
             Match        app.*
@@ -321,7 +322,7 @@ Follow the steps below. Steps that require customization link to the relevant [C
         otelcol --config=/etc/otelcol/tenx-sidecar.yaml
         ```
 
-        Keep the egress pipeline (`logs/from-tenx`) processor-free, it carries returning events directly to your destination exporters so enrichment runs exactly once.
+        Keep enrichment processors off the egress pipeline (`logs/from-tenx`), so enrichment runs exactly once. A Splunk destination takes one processor of its own, shown in [Sending to Splunk](https://doc.log10x.com/run/input/forwarder/otel-collector/#sending-to-splunk).
 
     === ":simple-vector: Vector"
 
@@ -924,5 +925,5 @@ Follow the steps below. Steps that require customization link to the relevant [C
     === ":simple-docker: Docker"
 
         ```bash
-        docker rmi log10x/pipeline-10x:1.1.181
+        docker rmi log10x/pipeline-10x:1.1.183
         ```

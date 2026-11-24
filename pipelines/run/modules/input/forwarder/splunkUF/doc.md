@@ -273,7 +273,7 @@ Start the Fluent Bit that writes the second folder, then the Receiver and the Fl
 docker run -d --name tenx-fluentbit-back \
   -v /opt/tenx/fluent-bit-back:/fluent-bit/etc:ro -v /opt/tenx/fluent-bit-state:/opt/tenx/fluent-bit-state \
   -v /opt/tenx/compact:/opt/tenx/compact fluent/fluent-bit:5.1.5
-docker run -d --name tenx-receiver-win --network container:tenx-fluentbit-back log10x/edge-10x:1.1.181 \
+docker run -d --name tenx-receiver-win --network container:tenx-fluentbit-back log10x/edge-10x:1.1.183 \
   @run/input/forwarder/fluentbit @apps/receiver receiverOptimize true varMaxRecurIndexes 0 timestampZone UTC \
   timestampMaxPerObject 1 groupJoinLines false fluentbitInputPort 24224 fluentbitOutputHost 127.0.0.1 \
   fluentbitOutputPort 24225 fluentbitInputMessageField event

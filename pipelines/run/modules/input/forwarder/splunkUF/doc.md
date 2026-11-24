@@ -284,6 +284,14 @@ docker run -d --name tenx-fluentbit --network container:tenx-fluentbit-back \
 
 The Receiver and the Fluent Bit that reads the files run in the network of the one that writes the second folder, so restart both after each restart of it.
 
+Data models, `tstats` and detections read fields that Splunk stores at index time. For them, add the field profile of the source and three options to the Receiver's arguments:
+
+```sh
+@run/fields/windows-security-xml.yaml compactFieldsForm text compactFieldsKey meta compactFieldsSeparator ::
+```
+
+The [field profiles](https://doc.log10x.com/run/transform/fields/) include `windows-security-classic.yaml` for classic Windows text and `fortigate.yaml` for FortiGate. Each Receiver takes the profile of its own source.
+
 **4. Read the second folder on the heavy forwarder.** Install the Log10x App's `_indexers` package on the heavy forwarder (see [What to Install on Each Tier](https://github.com/log-10x/splunk-app/blob/main/tenx-for-splunk/README.md#what-to-install-on-each-tier)). In the app of step 2, monitor each Receiver's folder with the compact sourcetype of its events, and the template records:
 
 ```ini title="inputs.conf"
@@ -300,9 +308,18 @@ crcSalt = <SOURCE>
 
 Restart the heavy forwarder. On every file under `/opt/tenx/compact/events/`, the app's rule `tenx-record-unwrap` gives each event the time, host, source and index its line holds, sets `tenx_sourcetype` to its original sourcetype, and makes the compact text the event. The `index` above applies only to a line that names none.
 
+For data models, add this line to `local/props.conf` of the Log10x App on the heavy forwarder. Each compact event is then indexed under its original sourcetype, with the fields its Receiver's profile attached:
+
+```ini title="props.conf"
+[tenx_encoded]
+TRANSFORMS-tenx_type = tenx-original-sourcetype
+```
+
+Turn it on only where every Receiver runs a field profile, as [Compact Events Under the Original Sourcetype](https://github.com/log-10x/splunk-app/blob/main/tenx-for-splunk/README.md#compact-events-under-the-original-sourcetype) describes.
+
 `crcSalt = <SOURCE>` makes the heavy forwarder read a file whose first 256 bytes are the same as those of a file it has read, as two compact files can be. Set it before the first file is read: changing it later makes the heavy forwarder read every file again. For a second folder elsewhere, see [Receiver Beside a Heavy Forwarder](https://github.com/log-10x/splunk-app/blob/main/tenx-for-splunk/README.md#receiver-beside-a-heavy-forwarder) in the app's README.
 
-**5. Set up the indexers and the search head.** On the indexers, create the compact indexes and `tenx_dml`; they need nothing else of Log10x, because the heavy forwarder sends them parsed events. On the search head, install the Log10x App and the add-ons.
+**5. Set up the indexers and the search head.** On the indexers, create the compact indexes and `tenx_dml`; they need nothing else of Log10x, because the heavy forwarder sends them parsed events. On the search head, install the Log10x App and the add-ons. Create `tenx_dml` where the search head's own events are indexed as well, since the app writes copies of the templates there.
 
 Create the indexes the events go to and restart the indexers before the first event is sent. The search below returns no row once every indexer has loaded them.
 
@@ -310,9 +327,11 @@ Create the indexes the events go to and restart the indexers before the first ev
 index=_internal sourcetype=splunkd component=IndexerService "unconfigured/disabled/deleted index" | stats count by host
 ```
 
-**6. Choose the sourcetypes.** Each sourcetype takes, on the heavy forwarder, a stanza in `props.conf` that names the route and a monitor of its folder in `/opt/tenx/compact/events`; and on its host a `tail` input on its folder, a `forward` output to a Receiver of its own on a port of its own, and a `file` output for its tag. A Windows Universal Forwarder's event log input gives the sourcetype `XmlWinEventLog:Security`, which the Windows add-on renames to `XmlWinEventLog` on the heavy forwarder; give `[XmlWinEventLog:Security]` the same `TRANSFORMS-zzz_tenx` line.
+**6. Choose the sourcetypes.** Each sourcetype takes, on the heavy forwarder, a stanza in `props.conf` that names the route and a monitor of its folder in `/opt/tenx/compact/events`; and on its host a `tail` input on its folder, a `forward` output to a Receiver of its own on a port of its own, and a `file` output for its tag. A Windows Universal Forwarder's event log input gives the sourcetype `XmlWinEventLog:Security`, which the Windows add-on renames to `XmlWinEventLog` on the heavy forwarder; give `[XmlWinEventLog:Security]` the same `TRANSFORMS-zzz_tenx` line. Classic text events take it on `[WinEventLog:Security]`.
 
-**7. Check that it works.** Send a sample of the source a second time into a baseline index that the route does not take, for example a copy of a file in a second monitor stanza with `crcSalt = <SOURCE>`. Once the templates are in the KV store, count both arms on the search head, then compare the text and time of every event:
+The route goes on the sourcetype the heavy forwarder receives, because Splunk picks the `props.conf` stanza before an add-on renames the sourcetype. The FortiGate add-on renames `fgt_log` to `fortigate_traffic` and its siblings, so the line goes on `[fgt_log]`. The file destination writes the renamed sourcetype, so the `tail` input reads `sourcetype=fortigate_traffic`.
+
+**7. Check that it works.** Send a sample of the source a second time into a baseline index that the route does not take, for example a copy of a file in a second monitor stanza with `crcSalt = <SOURCE>`. Once the templates are in the KV store and the next knowledge bundle has taken them to the indexers, about a minute later, count both arms on the search head. Then compare the text and time of every event:
 
 ```spl
 | tstats count where (index=<baseline index> OR index=<index>) host=<host> by index sourcetype
@@ -322,7 +341,7 @@ index=_internal sourcetype=splunkd component=IndexerService "unconfigured/disabl
 | multisearch [search index=<baseline index> host=<host> | eval arm="raw", m=md5(_raw . strftime(_time, "%s.%6N")) | fields arm m] [search index=<index> host=<host> `tx` | eval arm="10x", m=md5(_raw . strftime(_time, "%s.%6N")) | fields arm m] | stats count(eval(arm="raw")) as raw count(eval(arm="10x")) as tenx by m | stats sum(raw) as raw_events sum(tenx) as tenx_events sum(eval(min(raw,tenx))) as equal sum(eval(if(tenx>raw,tenx-raw,0))) as doubled sum(eval(if(raw>tenx,raw-tenx,0))) as lost
 ```
 
-When every event arrived once with its text and time unchanged, `equal` is the same as both counts, and `doubled` and `lost` are 0.
+When every event arrived once with its text and time unchanged, `equal` is the same as both counts, and `doubled` and `lost` are 0. Before the templates reach the indexers, compact events come back unexpanded with `tenx_expand_refused` set to `no-template`, and every event counts as both doubled and lost.
 
 **8. Delete the files that have been read.** Neither Splunk nor Fluent Bit deletes them. A scheduled job on the heavy forwarder's host deletes the file destination's files, for example in `/etc/cron.d/tenx-rfs`:
 
@@ -386,3 +405,9 @@ A sender pointed at a Fluent Bit HEC input in front of the Receiver is compacted
 With indexer acknowledgement on the heavy forwarder's output to the indexers (`useACK = true`), an indexer restart loses no compact event. A block whose acknowledgement is lost in the restart is sent again, and its events are indexed twice.
 
 After a Receiver is stopped and started, Fluent Bit sends the records that waited on its retry schedule. The wait between tries grows, so their compact events can arrive minutes after the Receiver is back.
+
+Each Receiver reads up to 2 MB a second by default (`forwarderInputBytesLimit`), and records that arrive faster wait in Fluent Bit's buffer on disk. For a sourcetype that sends more, raise the limit, set it to 0 for no byte limit, or add Receivers as above.
+
+**Switching it off.** Remove the `TRANSFORMS-zzz_tenx` lines from the heavy forwarder's `props.conf` and restart it. The chosen sourcetypes then go to the indexers raw, and no new file reaches `/opt/tenx/rfs`. Once the files in `/opt/tenx/compact/events` stop changing and the heavy forwarder reports them as finished reading, stop Fluent Bit and the Receivers.
+
+Keep the Log10x App on the search head for the compact events already indexed. A `tx` search over an index that now also holds raw events warns that it leaves them out; name them in the app's `tenx-raw-events` macro to return both.

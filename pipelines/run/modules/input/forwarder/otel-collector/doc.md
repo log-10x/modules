@@ -182,6 +182,8 @@ processors:
         statements:
           - 'delete_key(attributes, "com.splunk.sourcetype") where attributes["tenx_tag"] == nil'
           - 'set(attributes["tenx_time"], "sender") where attributes["tenx_tag"] == nil'
+          - 'merge_maps(attributes, attributes["fields"], "upsert") where attributes["fields"] != nil'
+          - 'delete_key(attributes, "fields")'
           - 'set(body, {"templateHash": attributes["templateHash"], "template": attributes["template"]}) where attributes["tenx_tag"] == "tenx-template"'
           - 'set(attributes["com.splunk.index"], "tenx_dml") where attributes["tenx_tag"] == "tenx-template"'
           - 'set(attributes["com.splunk.sourcetype"], "tenx_dml_raw_json") where attributes["tenx_tag"] == "tenx-template"'
@@ -202,6 +204,6 @@ service:
       exporters: [splunk_hec]
 ```
 
-The `transform` processor and the `splunk_hec` exporter ship in `otelcol-contrib`. The HEC token must allow the `tenx_dml` index as well as the index of the compact events. On every event other than a template record, the processor adds `tenx_time`, removes `com.splunk.sourcetype` and changes nothing else.
+The `transform` processor and the `splunk_hec` exporter ship in `otelcol-contrib`. The HEC token must allow the `tenx_dml` index as well as the index of the compact events. On every event other than a template record, the processor adds `tenx_time`, removes `com.splunk.sourcetype` and lifts a field profile's `fields` map into the event's attributes.
 
 For Splunk integration see the [Log10x App](https://doc.log10x.com/apps/receiver/compact/splunk/) documentation. For Kubernetes deployment via the official OpenTelemetry Collector Helm chart see the [Helm sidecar overlay](https://doc.log10x.com/apps/receiver/deploy/#otel-collector).

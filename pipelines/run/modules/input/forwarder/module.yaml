@@ -25,7 +25,7 @@ module:
   #
   #   receiverOptimize=true  -> encode(<hash>)                  not on the wire
   #   outputOffload  truthy  -> fullText(<hash>,"routeState")    on the wire
-  #   outputSoftDrop truthy  -> isRoute("compact") ? encode(...) : fullText(...)
+  #   outputSoftDrop truthy  -> (outputEncodeFilter) ? encode(...) : fullText(...)
   #                                                              on the wire
   #   neither (receive mode) -> fullText(<hash>)                 not on the wire
   #
@@ -81,7 +81,7 @@ module:
         - **receiverOptimize**: `true`, every event is compacted
         - **compactReceiverLookupFile**: `shouldEncode()`, the cap file's per-pattern decision
         - **outputSoftDrop**: `!isRoute("tier_down") && !isRoute("offload") && (isRoute("compact") || <decide>)`,
-          where `<decide>` is one of the three above; the `tier_down` and `offload` slices stay full text
+          where `<decide>` is one of the three above; events marked `tier_down` or `offload` stay full text
 
         `outputEncodeField` compacts the events the condition holds for, and the
         Receiver's `compact_events` aggregator counts them.

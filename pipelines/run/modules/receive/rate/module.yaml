@@ -225,6 +225,23 @@ module:
       defValue: 4
 
     - names:
+      - rateReceiverTotalSlices
+      description: equal slices of the window through which each service's total is released
+      type: number
+      required: false
+      doc: |
+        defines how many equal slices of the window (`rateReceiverResetIntervalMs`) release a
+        service's total (`rateReceiverTotalLookupFile`). By the end of the first of S slices the
+        service may have passed its total x 1 / S, by the end of the second its total x 2 / S, and
+        its whole total in the last. What a slice leaves unused carries to the next, so a sudden
+        burst passes about one slice's share at a time instead of the whole total at the start of
+        the window. With a 1-minute window, 6 slices release the total 10 seconds at a time. Slices
+        start on the clock like windows. `1` releases the whole total at the start of the window; a
+        value below 1 or not a number acts as 1, and a fraction is rounded down. Read by the
+        cap-file regulators.
+      defValue: 1
+
+    - names:
       - rateReceiverLookupFile
       description: declarative mute file keyed by field-set
       type: string

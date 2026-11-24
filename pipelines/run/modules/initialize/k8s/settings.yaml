@@ -6,7 +6,7 @@
 # Set the 10x pipeline to 'run'
 tenx: run
 
-# ======================= k8s Fluent/Filebeat Extractors ======================
+# ================ k8s Fluent/Filebeat/OpenTelemetry Extractors ===============
 
 # Extractors for common k8s metadata based on the target forwarder format.
 # For more info on extractors see https://doc.log10x.com/run/input/extract
@@ -41,6 +41,22 @@ extractor:
       - captureField:kubernetes.container.name:container_name
       - captureField:kubernetes.pod.name:pod_name
       - '$=yield "captureField:kubernetes.labels." + (TenXEnv.get("k8sTeamLabel") ? TenXEnv.get("k8sTeamLabel") : "team") + ":team_label"'
+
+  - name: otelK8s
+    type: json
+
+    actions:
+      # The fluentK8s captures, then the OpenTelemetry k8s resource attributes
+      # the OpenTelemetry Collector input writes as flat top-level keys. Both sit
+      # in one extractor since an input takes one JSON extractor without a match action.
+      - captureField:kubernetes.namespace_name:namespace_name
+      - captureField:kubernetes.container_name:container_name
+      - captureField:kubernetes.pod_name:pod_name
+      - '$=yield "captureField:kubernetes.labels." + (TenXEnv.get("k8sTeamLabel") ? TenXEnv.get("k8sTeamLabel") : "team") + ":team_label"'
+      - captureField:k8s.namespace.name:otel_namespace_name
+      - captureField:k8s.container.name:otel_container_name
+      - captureField:k8s.pod.name:otel_pod_name
+      - '$=yield "captureField:k8s.pod.labels." + (TenXEnv.get("k8sTeamLabel") ? TenXEnv.get("k8sTeamLabel") : "team") + ":otel_team_label"'
 
 # ============================ Aggregation Settings ===========================
 

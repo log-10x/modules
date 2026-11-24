@@ -87,6 +87,9 @@ module:
         sidecar never consumes the application container's allowance. Each regulator instance counts
         its own, so pods spread across ten nodes get ten caps. Use `container`, never `pod`.
 
+        It names a field the event holds after initialization, such as the k8s container field. A
+        record attribute becomes such a field only when an extractor captures it.
+
         When the field is absent on an event (non-k8s input, or no k8s extractor configured), the
         regulator falls back to a single node-wide bucket and enforces the cap per pattern across
         the node.

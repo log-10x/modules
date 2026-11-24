@@ -79,7 +79,7 @@ What else changes between in and out depends on the Receiver app mode:
 
 `symbolMessageHashField` is unset by default, which is what makes the first row true: the receive path adds nothing of its own to the record. The pattern hash is still computed and still rides the event inside the engine as `tenx_hash` for metrics and aggregation, it just does not reach the wire. Naming a field opts in, either as a launch argument (`tenx @run/input/forwarder/otel-collector @apps/receiver symbolMessageHashField my_custom_hash`) or as an environment variable of the same name.
 
-Log10x reads the log line text via the JSON field configured by `otelCollectorInputMessageField` (default `body`); the `tag` field stamped by the input (from `service.name`, falling back to `k8s.pod.name`, then to the literal `"otel"`) becomes the event's source. All other resource and log-record attributes (`k8s.pod.name`, `k8s.namespace.name`, `service.name`, …) come through as flat top-level fields on the record, available for message-pattern and rate filtering.
+Log10x reads the log line text via the JSON field configured by `otelCollectorInputMessageField` (default `body`); the `tag` field stamped by the input (from `service.name`, falling back to `k8s.pod.name`, then to the literal `"otel"`) becomes the event's source. All other resource and log-record attributes (`k8s.pod.name`, `k8s.namespace.name`, `service.name`, …) come through as flat top-level fields on the record. The [k8s initializer](https://doc.log10x.com/run/initialize/k8s/) reads the container, pod and namespace names from the `k8s.*` attributes, so per-container rate caps and k8s metric labels need no extra Collector processor.
 
 ??? tenx-keyfiles "Key Files"
 

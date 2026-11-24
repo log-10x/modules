@@ -4,6 +4,8 @@ icon: material/kubernetes
 
 Enrich TenXObjects with Kubernetes context by extracting container, pod, and namespace [k8s names](https://kubernetes.io/docs/concepts/overview/working-with-objects/names/) from their enclosing text. 
 
+On the [OpenTelemetry Collector](https://doc.log10x.com/run/input/forwarder/otel-collector/) input the same names come from the `k8s.container.name`, `k8s.pod.name` and `k8s.namespace.name` resource attributes. The `k8sTeamLabel` pod label comes from `k8s.pod.labels.<label>`, the default name the Collector's `k8sattributes` processor gives an extracted pod label. A Fluent Bit shaped `kubernetes` attribute is read first where a record carries one.
+
 ### :material-math-log: Example
 
 For the event below, the `log` field contains raw text that is [structured](https://doc.log10x.com/run/transform/structure/) into a typed TenXObject. 

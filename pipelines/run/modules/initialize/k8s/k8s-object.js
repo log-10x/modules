@@ -17,17 +17,21 @@ export class K8sUnit extends TenXUnit {
 export class K8sFluentObject extends TenXObject {
 
     static shouldLoad(config) {
-        return (TenXEnv.get("k8sExtractorName") == "fluentK8s") || (TenXEnv.get("k8sExtractorName") == "filebeatK8s");
+        return (TenXEnv.get("k8sExtractorName") == "fluentK8s") || (TenXEnv.get("k8sExtractorName") == "filebeatK8s") || (TenXEnv.get("k8sExtractorName") == "otelK8s");
     }
 
     // Assigns namespace + container + user-service enrichments, and the team when
-    // k8sTeamLabel names a label. Always runs when the fluentK8s or filebeatK8s
-    // extractor is enabled; both capture into the fields read here.
+    // k8sTeamLabel names a label. Always runs when the fluentK8s, filebeatK8s or
+    // otelK8s extractor is enabled. A value the Fluent Bit or Filebeat shape does
+    // not carry comes from the otelK8s capture of its k8s.* attribute.
     constructor() {
 
         var namespace_name = this.namespace_name;
         if (namespace_name) {
             this.set(TenXEnv.get("k8sNamespaceNameField"), namespace_name);
+        }
+        if (!namespace_name && this.otel_namespace_name) {
+            this.set(TenXEnv.get("k8sNamespaceNameField"), this.otel_namespace_name);
         }
 
         var container_name = this.container_name;
@@ -35,42 +39,18 @@ export class K8sFluentObject extends TenXObject {
             this.set(TenXEnv.get("k8sContainerNameField"), container_name);
             this.tenx_user_service = container_name;
         }
+        if (!container_name && this.otel_container_name) {
+            this.set(TenXEnv.get("k8sContainerNameField"), this.otel_container_name);
+            this.tenx_user_service = this.otel_container_name;
+        }
 
         // The team that owns the container, read from the k8sTeamLabel pod label.
         var team_label = this.team_label;
         if (team_label && TenXEnv.get("k8sTeamLabel")) {
             this.set(TenXEnv.get("k8sTeamField", "tenx_team"), team_label);
         }
-    }
-}
-
-// Separate class for the pod-name enrichment. Gated on k8sPodNameField being
-// truthy via `shouldLoad`. The class only loads when the operator has opted in,
-// and the constructor (and its `set(TenXEnv.get("k8sPodNameField"), ...)` call)
-// is only parsed when the field name is non-empty.
-//
-// Why two classes: the engine parse-validates `set()` at init regardless of
-// runtime guards. If we inline `if (TenXEnv.get("k8sPodNameField")) { set(..., ...) }`
-// in K8sFluentObject's constructor, the engine still validates set()'s shape
-// against an empty field name when k8sPodNameField="" and refuses to load.
-// shouldLoad is plain JS, runs at class-load time before the constructor body
-// gets transpiled to DSL, so gating there avoids the parse pass entirely.
-export class K8sFluentPodObject extends TenXObject {
-
-    static shouldLoad(config) {
-        return ((TenXEnv.get("k8sExtractorName") == "fluentK8s") || (TenXEnv.get("k8sExtractorName") == "filebeatK8s")) && TenXEnv.get("k8sPodNameField");
-    }
-
-    constructor() {
-
-        var pod_name = this.pod_name;
-        if (pod_name) {
-            this.set(TenXEnv.get("k8sPodNameField"), pod_name);
-
-            var container_name = this.container_name;
-            if (container_name) {
-                this.tenx_user_process = pod_name + "/" + container_name;
-            }
+        if (!team_label && this.otel_team_label && TenXEnv.get("k8sTeamLabel")) {
+            this.set(TenXEnv.get("k8sTeamField", "tenx_team"), this.otel_team_label);
         }
     }
 }

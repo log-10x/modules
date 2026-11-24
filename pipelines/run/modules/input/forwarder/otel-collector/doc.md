@@ -206,4 +206,18 @@ service:
 
 The `transform` processor and the `splunk_hec` exporter ship in `otelcol-contrib`. The HEC token must allow the `tenx_dml` index as well as the index of the compact events. On every event other than a template record, the processor adds `tenx_time`, removes `com.splunk.sourcetype` and lifts a field profile's `fields` map into the event's attributes.
 
+Tiered events can be fetched by pattern in Splunk. The product attaches each event's pattern to it as the indexed field `tenx_pattern`. On the pipeline that carries the tiered events, one more `transform` statement, which the user adds to the Collector, copies that pattern into the event's `source`, after the container name:
+
+```yaml
+processors:
+  transform/lake:
+    error_mode: ignore
+    log_statements:
+      - context: log
+        statements:
+          - 'set(attributes["com.splunk.source"], Concat([resource.attributes["k8s.container.name"], attributes["tenx_pattern"]], ":"))'
+```
+
+Add `transform/lake` to the `processors` of that pipeline.
+
 For Splunk integration see the [Log10x App](https://doc.log10x.com/apps/receiver/compact/splunk/) documentation. For Kubernetes deployment via the official OpenTelemetry Collector Helm chart see the [Helm sidecar overlay](https://doc.log10x.com/apps/receiver/deploy/#otel-collector).
